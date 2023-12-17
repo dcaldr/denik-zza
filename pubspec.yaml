@@ -39,6 +39,7 @@ dependencies:
   drift: ^2.14.1 # https://pub.dev/packages/drift - ORM
   path_provider: ^2.1.1 # https://pub.dev/packages/path_provider - get path to local storage
   state_persistence: ^0.1.0
+  provider: ^6.1.1
 
 dev_dependencies:
   flutter_test:
