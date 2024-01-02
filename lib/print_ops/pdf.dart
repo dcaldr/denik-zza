@@ -7,63 +7,63 @@ import 'package:open_file/open_file.dart';
 
 class PDFGenerator {
   bool _hideHeader = true;
-  bool hideSquares = false;
+  bool _hideBorders = true;
   bool hideBody = false;
   //Colors // FIXME: to be refractored to a better place
-  PdfColor myTransparentColor =  PdfColor.fromHex("#FFFFFF00"); //transaprent
-  PdfColor myPrimaryColor = PdfColor.fromHex('#FF0000'); // black
-  PdfColor mySecondaryColor = PdfColor.fromHex('#00FF00'); //black
+  PdfColor myTransparentColor = PdfColor.fromHex("#FFFFFF00"); //transaprent
+  PdfColor myPrimaryColor = PdfColors.black;
+  PdfColor mySecondaryColor = PdfColors.black;
 
   pw.Widget _generateHeader() {
     pw.Widget headerWidget;
-
+    PdfColor headerPrimaryColor = myPrimaryColor;
     if (_hideHeader) {
-      headerWidget = pw.Container(
-        color: myTransparentColor,
-        /* decoration: pw.BoxDecoration(
-
-          border: pw.Border.all(width: 2.0), // Set border width to 0
-          color: myTransparentColor, // Set container color to white
-        ), */
-        child: pw.Center(
-          child: pw.Text(
-            'Dan bez hlavy 2ky atd',
-            style: pw.TextStyle(
-              fontSize: 24,
-              fontWeight: pw.FontWeight.bold,
-              //  color: PdfColors.red, // Set text color to white
-              //   color: myTransparentColor
-            ),
-          ),
-        ),
-      );
-    } else {
-      headerWidget = pw.Container(
-        decoration: pw.BoxDecoration(
-          border: pw.Border.all(width: 2.0),
-        ),
-        child: pw.Center(
-          child: pw.Text(
-            'Dan bez hlavy 2ky atd',
-            style: pw.TextStyle(
-              fontSize: 24,
-              fontWeight: pw.FontWeight.bold,
-            ),
-          ),
-        ),
-      );
+      //FIXME: ref
+      headerPrimaryColor = myTransparentColor;
     }
+
+    headerWidget = pw.Container(
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(
+          width: 2.0,
+          color: _hideBorders
+              ? myTransparentColor
+              : headerPrimaryColor, // Set border color conditionally, _hideHeader has priority
+        ),
+        color: headerPrimaryColor,
+      ),
+      child: pw.Center(
+        child: pw.Text(
+          'Dan bez hlavy 2ky atd',
+          style: pw.TextStyle(
+            fontSize: 24,
+            fontWeight: pw.FontWeight.bold,
+            color: headerPrimaryColor,
+          ),
+        ),
+      ),
+    );
+
     return headerWidget;
   }
 
-  List<pw.Widget> _generateNotes(List<String> notes) {
+  List<pw.Widget> _generateNotes(List<String> notes, [List<int> toSkip = const []]) {
     List<pw.Widget> noteTextWidgets = [];
+    PdfColor notePrimaryColor = myPrimaryColor;
     for (final note in notes) {
+      print(notes.indexOf(note));
+      if (toSkip.contains(notes.indexOf(note))) {
+        print("skipping note $note");
+        notePrimaryColor = myTransparentColor;
+      } else{
+        notePrimaryColor = myPrimaryColor;
+      }
       noteTextWidgets.add(
         pw.Text(
           note,
           style: pw.TextStyle(
             fontSize: 16,
+            color: notePrimaryColor,
           ),
         ),
       );
@@ -75,7 +75,12 @@ class PDFGenerator {
   pw.Widget _generateNotesWidget(List<pw.Widget> noteTextWidgets) {
     return pw.Container(
       decoration: pw.BoxDecoration(
-        border: pw.Border.all(width: 2.0),
+        border: pw.Border.all(
+          width: 2.0,
+          color: _hideBorders
+              ? myTransparentColor
+              : myPrimaryColor, // Set border color conditionally, //TODO: add more color logic
+        ),
       ),
       child: pw.Column(
         children: noteTextWidgets,
@@ -83,7 +88,7 @@ class PDFGenerator {
     );
   }
 
-  Future<void> generatePDF(String fileName, List<String> notes) async {
+  Future<void> generatePDF(String fileName, List<String> notes, [List<int> toSkip = const [2,]]) async {
     final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
     final pdf = pw.Document(
       theme: pw.ThemeData.withFont(
@@ -93,7 +98,7 @@ class PDFGenerator {
 
     pw.Widget headerWidget = _generateHeader();
 
-    List<pw.Widget> noteTextWidgets = _generateNotes(notes);
+    List<pw.Widget> noteTextWidgets = _generateNotes(notes,toSkip);
     pw.Widget notesWidget = _generateNotesWidget(noteTextWidgets);
 
     pdf.addPage(
