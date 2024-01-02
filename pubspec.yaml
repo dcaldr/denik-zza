@@ -40,6 +40,9 @@ dependencies:
   path_provider: ^2.1.1 # https://pub.dev/packages/path_provider - get path to local storage
   state_persistence: ^0.1.0
   provider: ^6.1.1
+  pdf: ^3.10.7
+  printing: ^5.11.1
+  open_file: ^3.3.2
 
 dev_dependencies:
   flutter_test:
