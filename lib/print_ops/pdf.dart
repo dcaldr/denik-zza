@@ -9,25 +9,30 @@ class PDFGenerator {
   bool _hideHeader = true;
   bool hideSquares = false;
   bool hideBody = false;
-  PdfColor myTransparentColor =  PdfColor.fromHex("#FFFFFF00"); // FIXME: to be refractored to a better place
+  //Colors // FIXME: to be refractored to a better place
+  PdfColor myTransparentColor =  PdfColor.fromHex("#FFFFFF00"); //transaprent
+  PdfColor myPrimaryColor = PdfColor.fromHex('#FF0000'); // black
+  PdfColor mySecondaryColor = PdfColor.fromHex('#00FF00'); //black
 
   pw.Widget _generateHeader() {
     pw.Widget headerWidget;
 
     if (_hideHeader) {
       headerWidget = pw.Container(
-        decoration: pw.BoxDecoration(
-          //color: myTransparentColor, // Set container color to white
+        color: myTransparentColor,
+        /* decoration: pw.BoxDecoration(
+
           border: pw.Border.all(width: 2.0), // Set border width to 0
-        ),
+          color: myTransparentColor, // Set container color to white
+        ), */
         child: pw.Center(
           child: pw.Text(
             'Dan bez hlavy 2ky atd',
             style: pw.TextStyle(
-                fontSize: 24,
-                fontWeight: pw.FontWeight.bold,
-                //  color: PdfColors.red, // Set text color to white
-                color: myTransparentColor
+              fontSize: 24,
+              fontWeight: pw.FontWeight.bold,
+              //  color: PdfColors.red, // Set text color to white
+              //   color: myTransparentColor
             ),
           ),
         ),
