@@ -6,27 +6,49 @@ import 'package:printing/printing.dart';
 import 'package:open_file/open_file.dart';
 
 class PDFGenerator {
-  bool _hideHeader = false;
+  bool _hideHeader = true;
   bool hideSquares = false;
+  bool hideBody = false;
+  PdfColor myTransparentColor =  PdfColor.fromHex("#FFFFFF00"); // FIXME: to be refractored to a better place
 
   pw.Widget _generateHeader() {
-    return _hideHeader
-        ? pw.SizedBox.shrink()
-        : pw.Container(
-      //color: PdfColors.white,
-      decoration: pw.BoxDecoration(
-        border: pw.Border.all(width: 2.0),
-      ),
-      child: pw.Center(
-        child: pw.Text(
-          'Dan bez hlavy 2ky atd',
-          style: pw.TextStyle(
-            fontSize: 24,
-            fontWeight: pw.FontWeight.bold,
+    pw.Widget headerWidget;
+
+    if (_hideHeader) {
+      headerWidget = pw.Container(
+        decoration: pw.BoxDecoration(
+          //color: myTransparentColor, // Set container color to white
+          border: pw.Border.all(width: 2.0), // Set border width to 0
+        ),
+        child: pw.Center(
+          child: pw.Text(
+            'Dan bez hlavy 2ky atd',
+            style: pw.TextStyle(
+                fontSize: 24,
+                fontWeight: pw.FontWeight.bold,
+                //  color: PdfColors.red, // Set text color to white
+                color: myTransparentColor
+            ),
           ),
         ),
-      ),
-    );
+      );
+    } else {
+      headerWidget = pw.Container(
+        decoration: pw.BoxDecoration(
+          border: pw.Border.all(width: 2.0),
+        ),
+        child: pw.Center(
+          child: pw.Text(
+            'Dan bez hlavy 2ky atd',
+            style: pw.TextStyle(
+              fontSize: 24,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+    }
+    return headerWidget;
   }
 
   List<pw.Widget> _generateNotes(List<String> notes) {
