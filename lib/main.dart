@@ -1,3 +1,4 @@
+import 'package:denik_zza/print_ops/pdf.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -112,6 +113,13 @@ class _MyHomePageState extends State<MyHomePage> {
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
+            ElevatedButton(
+              onPressed: () async{
+                PDFGenerator pdfGenerator = PDFGenerator();
+                await pdfGenerator.generatePDF('dan_bez_hlavy.pdf', notes);
+              },
+              child: const Text('testPDF'),
+            )
           ],
         ),
       ),
@@ -123,3 +131,11 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+List<String> notes = [
+  '10:35 bolest hlavy z programování',
+  '11:00 - dlouhodobě si stěžuje natolik, aby byl text zápisu co nejdelší',
+  'přitom obsahoval co nejvíce záludností',
+  'dále by docela rád viděl jak se dlouhý text dále kupí a kupí, ale to se snad nějakým způsobem dále natáhne aby bylo vidět, jestli se text dokáže zalomit sám, bez vložení dalších speciálních znaků',
+  '11:30 už to dále nezvládá',
+  '14:30 absolutně nechápe, jaktože je ještě naživu',
+];
