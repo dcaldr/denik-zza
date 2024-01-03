@@ -7,6 +7,9 @@ import 'in_memory_structures_tmp/memory_zaznam.dart';
 
 /// Methods for high-level database interactions.
 ///
+///  **Always use as ```dart
+///   DatabaseInterface dbInterface = DatabaseWrapper();
+///   ``` **
 /// Right now, this is just a empty Wrapper for database-in progress.
 /// Later on could be rewritten to point to a database.
 class DatabaseWrapper implements DatabaseInterface {
