@@ -6,8 +6,8 @@ import 'package:printing/printing.dart';
 import 'package:open_file/open_file.dart';
 
 class PDFGenerator {
-  bool _hideHeader = true;
-  bool _hideBorders = true;
+  final bool _hideHeader = true;
+  final bool _hideBorders = true;
   bool hideBody = false;
   //Colors // FIXME: to be refractored to a better place
   PdfColor myTransparentColor = PdfColor.fromHex("#FFFFFF00"); //transaprent
