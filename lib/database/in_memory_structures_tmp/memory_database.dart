@@ -1,4 +1,4 @@
-import '../databaseInterface.dart';
+import '../database_interface.dart';
 import 'memory_osoba.dart';
 import 'memory_zaznam.dart';
 

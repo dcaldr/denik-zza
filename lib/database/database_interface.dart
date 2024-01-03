@@ -11,11 +11,12 @@ abstract class DatabaseInterface {
 /// Returns `true` if the operation is successful.
 bool addZaznam(MemoryZaznam zaznam);
 
-/// Adds a new `MemoryZaznam` instance to the database with a quick method.
+/// Adds a new [MemoryZaznam] instance to the database with a quick method.
 ///
 /// This method creates a new `MemoryZaznam` instance with the provided `popis` and `idPacient` (default is 0),
 /// and adds it to the database. Returns `true` if the operation is successful.
-bool addQuickNewZaznam(String popis, {int idPacient=0});
+/// @Warning: uses idPacient 0 as default
+bool addQuickNewZaznam(String popis, {int idPacient=0}); //FIXME: idPacient 0 as default
 
 /// Adds a `MemoryOsoba` instance to the database.
 ///

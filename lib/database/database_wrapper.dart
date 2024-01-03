@@ -1,6 +1,6 @@
 
 
-import 'databaseInterface.dart';
+import 'database_interface.dart';
 import 'in_memory_structures_tmp/memory_database.dart';
 import 'in_memory_structures_tmp/memory_osoba.dart';
 import 'in_memory_structures_tmp/memory_zaznam.dart';
