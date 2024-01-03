@@ -1,3 +1,4 @@
+import '../databaseInterface.dart';
 import 'memory_osoba.dart';
 import 'memory_zaznam.dart';
 
@@ -6,14 +7,14 @@ import 'memory_zaznam.dart';
 /// This is a temporary solution for developing the app.
 /// will be replaced by a real database later on.
 
-class MemoryDatabase {
+class MemoryDatabase implements DatabaseInterface {
   static final MemoryDatabase _singleton = MemoryDatabase._internal();
   factory MemoryDatabase() {
     return _singleton;
   }
 
   MemoryDatabase._internal() {
-    addSingleOsoba(notNull);
+    addOsoba(notNull);
   }
 
   int idOsoby = 0;
@@ -24,20 +25,23 @@ class MemoryDatabase {
   /// for development to always have someone to work with
   MemoryOsoba notNull = MemoryOsoba.basic("Not", "Null");
 
-  bool addSingleZaznam(MemoryZaznam zaznam) {
+  @override
+  bool addZaznam(MemoryZaznam zaznam) {
     zaznam.idZaznamu = idZaznamu;
     idZaznamu++;
     zaznamy.add(zaznam);
     return true;
   }
 
-  bool addSingleOsoba(MemoryOsoba osoba) {
+  @override
+  bool addOsoba(MemoryOsoba osoba) {
     osoba.id = idOsoby;
     idOsoby++;
     osoby.add(osoba);
     return true;
   }
 
+  @override
   String quickPrintZaznamyOsoby(int idOsoby) {
     String result = "";
     // if id not present return empty string if present append name and surname
@@ -69,4 +73,22 @@ class MemoryDatabase {
     }
     return null;
   }
+
+
+
+  @override
+  void quickPrintAllOsoby() {
+    for (var element in osoby) {
+      print("${element.id} ${element.jmeno} ${element.prijmeni}");
+    }
+  }
+
+  @override
+  bool addQuickNewZaznam(String popis, {int idPacient = 0}) {
+   return addZaznam(MemoryZaznam.short(popis, idPacient));
+  }
+
+
+
+
 }
