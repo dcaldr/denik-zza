@@ -6,7 +6,7 @@ import 'package:printing/printing.dart';
 import 'package:open_file/open_file.dart';
 
 class PDFGenerator {
-  final bool _hideHeader = true;
+  final bool _hideHeader = false;
   final bool _hideBorders = true;
   bool hideBody = false;
   //Colors // FIXME: to be refractored to a better place
@@ -30,7 +30,7 @@ class PDFGenerator {
               ? myTransparentColor
               : headerPrimaryColor, // Set border color conditionally, _hideHeader has priority
         ),
-        color: headerPrimaryColor,
+
       ),
       child: pw.Center(
         child: pw.Text(
