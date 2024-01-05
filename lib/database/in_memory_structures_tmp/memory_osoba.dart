@@ -17,6 +17,17 @@ class MemoryOsoba {
       this.telefonniCislo, this.zdravotniPojistovna, this.cisloPojisteni, this.pohlavi,);
   MemoryOsoba.basic(this.jmeno, this.prijmeni);
 
-
+  MemoryOsoba.named({
+    required this.jmeno,
+    required this.prijmeni,
+    this.datumNarozeni,
+    this.adresa,
+    this.telefonniCislo,
+    this.zdravotniPojistovna,
+    this.cisloPojisteni,
+    this.pohlavi,
+  });
+  MemoryOsoba.dummyData( this.jmeno,  this.prijmeni, this.datumNarozeni, this.adresa,
+      this.telefonniCislo, this.zdravotniPojistovna, this.cisloPojisteni, this.pohlavi,);
 
 }
