@@ -26,7 +26,7 @@ class MemoryDatabase implements DatabaseInterface {
   MemoryOsoba notNull = MemoryOsoba.basic("Not", "Null");
 
   @override
-  bool addZaznam(MemoryZaznam zaznam) {
+  Future<bool> addZaznam(MemoryZaznam zaznam) async {
     zaznam.idZaznamu = idZaznamu;
     idZaznamu++;
     zaznamy.add(zaznam);
@@ -34,7 +34,7 @@ class MemoryDatabase implements DatabaseInterface {
   }
 
   @override
-  bool addOsoba(MemoryOsoba osoba) {
+  Future<bool> addOsoba(MemoryOsoba osoba) async {
     osoba.id = idOsoby;
     idOsoby++;
     osoby.add(osoba);
@@ -77,14 +77,14 @@ class MemoryDatabase implements DatabaseInterface {
 
 
   @override
-  void quickPrintAllOsoby() {
+  Future<void> quickPrintAllOsoby() async {
     for (var element in osoby) {
       print("${element.id} ${element.jmeno} ${element.prijmeni}");
     }
   }
 
   @override
-  bool addQuickNewZaznam(String popis, {int idPacient = 0}) {
+  Future<bool> addQuickNewZaznam(String popis, {int idPacient = 0}) async {
    return addZaznam(MemoryZaznam.short(popis, idPacient));
   }
 
