@@ -13,7 +13,7 @@ class MemoryOsoba {
   int? pohlavi; // muž ==1 ,žena == 2
   late   int id; // may use -1 means not assigned
 
-  MemoryOsoba(this.jmeno, this.prijmeni, this.datumNarozeni, this.adresa,
+  MemoryOsoba( this.jmeno,  this.prijmeni, this.datumNarozeni, this.adresa,
       this.telefonniCislo, this.zdravotniPojistovna, this.cisloPojisteni, this.pohlavi,);
   MemoryOsoba.basic(this.jmeno, this.prijmeni);
 
