@@ -1,10 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:printing/printing.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
 /*
  https://www.youtube.com/watch?v=HQ_ytw58tC4&t=20s&ab_channel=MitchKoko
  https://www.figma.com/file/UFtYbWaZOjjyK0OkjN1eHL/Den%C3%ADk-ZZA?type=design&node-id=0-1&mode=design&t=ljxD6YfuybVZWLmH-0
@@ -36,24 +29,14 @@ Icon(
             color: Colors.red,
             size: 50,
           )
- */
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false, // for deleting the debug text
-      home: Scaffold(
-        // phone main screen
-        appBar: AppBar(
 
-          
-        ),
-        backgroundColor: Color.fromARGB(255, 219, 141, 167),
-        body: Center(
-            // container
-            child: Container(
+
+4) WIDGETS - CENTER, COLUMN, ROW, LISTVIEW, GRIDVIEW, GESTURE DETECTOR
+
+
+5) CONTAINER
+child: Container(
           height: 200,
           width: 200,
           decoration: BoxDecoration(
@@ -66,8 +49,189 @@ class MyApp extends StatelessWidget {
             color: Colors.red,
             size: 50,
           ),
-        )),
-      ),
+        )
+
+6) APP-BAR
+ appBar: AppBar(
+            title: Text("Hello World"),
+            elevation: 0, // no shadows
+            leading: Icon(Icons.menu),
+            actions: [
+              IconButton(onPressed: () {}, icon: Icon(Icons.logout))
+            ] // logout icon,
+            )
+
+
+7) COLUMN
+  body: Column(
+          -mainAxisAlignment: MainAxisAlignment.center,
+          -mainAxisAlignment: MainAxisAlignment.end,
+          -mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+
+          -crossAxisAlignment: CrossAxisAlignment.start,
+
+          children: [
+            // box 1
+            Container(
+              height: 200, 
+              width: 200, 
+              color: Colors.deepPurple),
+
+            // box 2
+            Container(
+              height: 200, 
+              width: 200, 
+              color: Colors.deepPurple[400]),
+
+              EXPANDED WIDGET
+            // box 3
+            Expanded(
+              flex: 3, // RATIO OF THE BOXES
+                child: Container(
+              color: Colors.deepPurple[200],
+            )),
+          ],
+        )
+
+        8) LISTVIEW - for scrolling 
+
+        body: ListView(
+          scrollDirection: Axis.horizontal, FOR HORIZONTAL SCROLLING, BUT CHANGE HEIGHT WITH WIDTH
+          children: [
+            // box 1
+            Container(
+              height: 350,
+              color: Colors.deepPurple,
+            ),
+
+            // box 2
+            Container(
+              height: 350,
+              color: Colors.deepPurple[200],
+            ),
+
+            // box 3
+
+            Container(
+              height: 350,
+              color: Colors.deepPurple[400],
+            ),
+          ],
+        ),
+
+
+        // LISTVIEW FROM 0 TO 9 
+
+        body: ListView.builder(
+          itemCount: 10,
+          itemBuilder: (context, index) => ListTile(
+            title: Text(index.toString()),
+          ),
+          
+
+          // OWN LIST
+          List names = ["Ester", "Terka", "Zaneta", "Dan", "Vojta"];
+
+
+        body: ListView.builder(
+          itemCount: names.length,
+          itemBuilder: (context, index) => ListTile(
+            title: Text(names[index]),
+          ),
+        ),
+
+        ),
+
+
+        // 9) GRIDVIEW
+
+        body: GridView.builder(
+          itemCount: 64,
+          gridDelegate: 
+          SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 8), // 8 block in 1 row
+        itemBuilder: (context,index) => Container(
+          color: Colors.deepPurple,
+          margin: EdgeInsets.all(2),)
+        ),
+
+
+        // 10) STACK
+
+         body: Stack(
+            alignment: Alignment.center,
+        children: [
+          // big box
+          Container(
+            height: 300,
+            width: 300,
+            color: Colors.deepPurple,
+          ),
+          // medium box
+          Container(
+            height: 200,
+            width: 200,
+            color: Colors.deepPurple[400],
+          ),
+
+          // small box
+          Container(
+            height: 100,
+            width: 100,
+            color: Colors.deepPurple[200],
+          )
+        ],
+      )
+
+
+      11) GESTURE DETECTOR
+      
+         child: GestureDetector(
+              onTap: () {
+                print("Haha");
+              },
+              child: Container(
+                height: 200,
+                width: 200,
+                color: Colors.deepOrange[300],
+                child: Center(child: Text("Tap me"),
+            
+                ),
+              ),
+            ),
+ */
+
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  MyApp({super.key});
+
+  List names = ["Ester", "Terka", "Zaneta", "Dan", "Vojta"];
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false, // for deleting the debug text
+      home: Scaffold(
+          body: Center(
+            child: GestureDetector(
+              onTap: () {
+                print("Haha");
+              },
+              child: Container(
+                height: 200,
+                width: 200,
+                color: Colors.deepOrange[300],
+                child: Center(child: Text("Tap me"),
+            
+                ),
+              ),
+            ),
+          )
+            ),
     );
   }
 }
