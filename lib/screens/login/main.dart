@@ -202,7 +202,7 @@ child: Container(
             ),
  */
 
-import 'package:denik_zza/screens/login/first_page.dart';
+import 'package:denik_zza/screens/login/login_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
