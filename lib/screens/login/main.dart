@@ -202,6 +202,7 @@ child: Container(
             ),
  */
 
+import 'package:denik_zza/screens/login/first_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -209,31 +210,14 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  MyApp({super.key});
+  const MyApp({super.key});
 
-  List names = ["Ester", "Terka", "Zaneta", "Dan", "Vojta"];
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false, // for deleting the debug text
-      home: Scaffold(
-          body: Center(
-            child: GestureDetector(
-              onTap: () {
-                print("Haha");
-              },
-              child: Container(
-                height: 200,
-                width: 200,
-                color: Colors.deepOrange[300],
-                child: Center(child: Text("Tap me"),
-            
-                ),
-              ),
-            ),
-          )
-            ),
+      home: Login(),
     );
   }
 }
