@@ -1,6 +1,6 @@
 // ignore_for_file: prefer_const_constructors
 
-import 'package:denik_zza/screens/second_page.dart';
+import 'package:denik_zza/screens/login/second_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
