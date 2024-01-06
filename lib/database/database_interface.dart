@@ -11,7 +11,7 @@ abstract class DatabaseInterface {
 /// Returns `true` if the operation is successful.
 Future <bool> addZaznam(MemoryZaznam zaznam);
 
-/// Adds a new [MemoryZaznam] instance to the database with a quick method.
+/// Adds a new [MemoryZaznam] for testing purposes.
 ///
 /// This method creates a new `MemoryZaznam` instance with the provided `popis` and `idPacient` (default is 0),
 /// and adds it to the database. Returns `true` if the operation is successful.
@@ -24,7 +24,7 @@ Future <bool> addQuickNewZaznam(String popis, {int idPacient=0}); //FIXME: idPac
 /// Returns `true` if the operation is successful.
 Future <bool> addOsoba(MemoryOsoba osoba);
 
-/// Prints all `MemoryOsoba` instances in the database.
+/// Prints all `MemoryOsoba` instances in the database. (for testing purposes)
 ///
 /// This method iterates over all `MemoryOsoba` instances in the database and prints their details.
 Future <void> quickPrintAllOsoby();
