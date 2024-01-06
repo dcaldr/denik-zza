@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_const_constructors
+
 /*
  https://www.youtube.com/watch?v=HQ_ytw58tC4&t=20s&ab_channel=MitchKoko
  https://www.figma.com/file/UFtYbWaZOjjyK0OkjN1eHL/Den%C3%ADk-ZZA?type=design&node-id=0-1&mode=design&t=ljxD6YfuybVZWLmH-0
