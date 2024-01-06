@@ -43,6 +43,9 @@ dependencies:
   pdf: ^3.10.7
   printing: ^5.11.1
   open_file: ^3.3.2
+  # 06.01.2023 - database
+  sqlite3_flutter_libs: ^0.5.0
+  path: ^1.8.3
 
 dev_dependencies:
   flutter_test:
