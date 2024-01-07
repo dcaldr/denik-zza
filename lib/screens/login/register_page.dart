@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'package:denik_zza/screens/login/components/my_button.dart';
 import 'package:denik_zza/screens/login/components/my_textfield.dart';
 import 'package:flutter/material.dart';
 
@@ -78,23 +79,8 @@ class RegisterScreen extends StatelessWidget {
             SizedBox(height: 10),
 
             // button
-            ElevatedButton(
-              onPressed: () {
-                
-              },
-              style: ElevatedButton.styleFrom(
-                primary: Colors.black,
-                onPrimary: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(8.0), 
-                ),
-                padding: EdgeInsets.symmetric(
-                    vertical: 20, horizontal: 140), 
-              ),
-              child: Text("Potvrdit",
-                  style: TextStyle(fontSize: 16)), 
-            ),
+            Button(buttonText: "Potvrdit")
+           
           ],
         ),
       ),
