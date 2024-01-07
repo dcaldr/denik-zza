@@ -12,12 +12,11 @@ class Login extends StatelessWidget {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
 
-  // sign user method
-   // sign user method
   void signUserIn(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => Profile()), // Use the Profile class
+      MaterialPageRoute(
+          builder: (context) => Profile()), // Use the Profile class
     );
   }
 
@@ -28,7 +27,7 @@ class Login extends StatelessWidget {
       body: SafeArea(
         child: Center(
           child: Column(
-            children:  [
+            children: [
               SizedBox(height: 25),
 
               // logo
@@ -50,7 +49,6 @@ class Login extends StatelessWidget {
 
               SizedBox(height: 25),
 
-              
               //username
               MyTextField(
                 controller: usernameController,
@@ -59,7 +57,6 @@ class Login extends StatelessWidget {
               ),
 
               SizedBox(height: 10),
-
 
               // password textfield
               MyTextField(
@@ -71,29 +68,26 @@ class Login extends StatelessWidget {
               SizedBox(height: 10),
 
               // login button
-               Button(
+              Button(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => Profile()),
-                  );
+                  if (usernameController.text == 'ester' &&
+                      passwordController.text == 'ester') {
+                    signUserIn(context);
+                  } else {
+                    print('Invalid username or password');
+                  }
                 },
                 buttonText: "Prihlasit se",
                 verticalPadding: 20,
                 horizontalPadding: 130,
               ),
 
-              const SizedBox(height: 10,),
+              const SizedBox(
+                height: 10,
+              ),
 
-              // forgotten password text
+              // create new account
               CreateAccount(),
-
-              
-
-              
-
-              
-              
             ],
           ),
         ),

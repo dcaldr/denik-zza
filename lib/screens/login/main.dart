@@ -222,7 +222,7 @@ class MyApp extends StatelessWidget {
       home: Login(),
       routes: {
         '/register_screen':(context) => RegisterScreen(),
-        '/profile_screen':(context) => Profile(),
+        //'/profile_screen':(context) => Profile(),
       },
     );
   }
