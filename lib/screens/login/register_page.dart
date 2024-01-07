@@ -4,6 +4,8 @@ import 'package:denik_zza/screens/login/components/my_button.dart';
 import 'package:denik_zza/screens/login/components/my_textfield.dart';
 import 'package:flutter/material.dart';
 
+// popup bude docela hard
+
 class RegisterScreen extends StatelessWidget {
   RegisterScreen({super.key});
 

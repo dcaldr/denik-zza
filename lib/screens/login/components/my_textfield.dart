@@ -16,8 +16,6 @@ class MyTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    // ignore: prefer_const_constructors
     return Padding(
       padding:  EdgeInsets.symmetric(horizontal: 25.0),
       child: TextField(
