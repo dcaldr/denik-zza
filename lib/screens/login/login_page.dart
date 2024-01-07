@@ -64,7 +64,7 @@ class Login extends StatelessWidget {
               SizedBox(height: 10),
 
               // login button
-              Button(buttonText: "Hello", verticalPadding: 50, horizontalPadding: 120),
+              Button(buttonText: "Prihlasit se", verticalPadding: 20, horizontalPadding: 130),
 
               const SizedBox(height: 10,),
 
