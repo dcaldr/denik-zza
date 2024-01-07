@@ -202,6 +202,7 @@ child: Container(
             ),
  */
 
+import 'package:denik_zza/screens/actions/profile.dart';
 import 'package:denik_zza/screens/login/login_page.dart';
 import 'package:denik_zza/screens/login/register_page.dart';
 import 'package:flutter/material.dart';
@@ -221,6 +222,7 @@ class MyApp extends StatelessWidget {
       home: Login(),
       routes: {
         '/register_screen':(context) => RegisterScreen(),
+        '/profile_screen':(context) => Profile(),
       },
     );
   }

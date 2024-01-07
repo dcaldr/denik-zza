@@ -3,22 +3,22 @@ import 'package:flutter/material.dart';
 
 class Button extends StatelessWidget {
   final String buttonText;
-  final double verticalPadding; // New parameter for vertical padding
-  final double horizontalPadding; // New parameter for horizontal padding
+  final double verticalPadding;
+  final double horizontalPadding;
+  final VoidCallback onPressed;
 
   Button({
-    super.key,
+    Key? key,
     required this.buttonText,
     required this.verticalPadding,
     required this.horizontalPadding,
-  });
+    required this.onPressed,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-      onPressed: () {
-        // Your onPressed logic here
-      },
+      onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         primary: Colors.black,
         onPrimary: Colors.white,

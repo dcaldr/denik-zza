@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, unnecessary_const
 
+import 'package:denik_zza/screens/actions/profile.dart';
 import 'package:denik_zza/screens/login/components/create_account.dart';
 import 'package:denik_zza/screens/login/components/my_button.dart';
 import 'package:denik_zza/screens/login/components/my_textfield.dart';
@@ -11,8 +12,14 @@ class Login extends StatelessWidget {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
 
-  //sign user method
-  void signUserIn() {}
+  // sign user method
+   // sign user method
+  void signUserIn(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => Profile()), // Use the Profile class
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +71,17 @@ class Login extends StatelessWidget {
               SizedBox(height: 10),
 
               // login button
-              Button(buttonText: "Prihlasit se", verticalPadding: 20, horizontalPadding: 130),
+               Button(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Profile()),
+                  );
+                },
+                buttonText: "Prihlasit se",
+                verticalPadding: 20,
+                horizontalPadding: 130,
+              ),
 
               const SizedBox(height: 10,),
 

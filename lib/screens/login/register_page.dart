@@ -81,7 +81,7 @@ class RegisterScreen extends StatelessWidget {
             SizedBox(height: 10),
 
             // button
-            Button(buttonText: "Potvrdit", verticalPadding: 20, horizontalPadding: 142)
+            //Button(buttonText: "Potvrdit", verticalPadding: 20, horizontalPadding: 142)
            
           ],
         ),
