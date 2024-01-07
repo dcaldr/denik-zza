@@ -11,7 +11,7 @@ class CreateAccount extends StatelessWidget {
         // Přesměrování na jinou obrazovku
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => RegisterScreen()), // Nahraďte YourNextScreen() instancí vaší následující obrazovky
+          MaterialPageRoute(builder: (context) => RegisterScreen()), 
         );
       },
       child: Text(

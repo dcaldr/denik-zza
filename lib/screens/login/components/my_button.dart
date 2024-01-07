@@ -2,30 +2,33 @@ import 'package:flutter/material.dart';
 
 
 class Button extends StatelessWidget {
-    Button({super.key,required this.onTap});
 
-   Function()? onTap;
+  final String buttonText;
+    Button({super.key, required this.buttonText});
+
+ 
   
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    return GestureDetector(
-      onTap:  onTap,
-      child: Container(
-        padding: const EdgeInsets.all(25),
-        margin: const EdgeInsets.symmetric(horizontal: 25),
-        decoration: BoxDecoration(color: Colors.black,
-        borderRadius: BorderRadius.circular(8),),
-        child: const Center(child: Text("Přihlásit se",
-        style: TextStyle(color: Colors.white,
-         fontWeight: FontWeight.bold,
-         fontSize: 16,
-         ),
-       
+    return ElevatedButton(
+      onPressed: () {
+        // Your onPressed logic here
+      },
+      style: ElevatedButton.styleFrom(
+        primary: Colors.black,
+        onPrimary: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.0),
         ),
+        padding: EdgeInsets.symmetric(
+          vertical: 20,
+          horizontal: 110,
         ),
       ),
+      child: Text(
+        buttonText, 
+        style: TextStyle(fontSize: 16),
+      ),
     );
-  } 
-  
   }
+}

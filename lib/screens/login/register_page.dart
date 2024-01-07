@@ -80,25 +80,25 @@ class RegisterScreen extends StatelessWidget {
             // button
             ElevatedButton(
               onPressed: () {
-                // Implement your button functionality here
+                
               },
               style: ElevatedButton.styleFrom(
                 primary: Colors.black,
                 onPrimary: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius:
-                      BorderRadius.circular(8.0), // Adjust the radius as needed
+                      BorderRadius.circular(8.0), 
                 ),
                 padding: EdgeInsets.symmetric(
-                    vertical: 20, horizontal: 140), // Adjust padding for size
+                    vertical: 20, horizontal: 140), 
               ),
               child: Text("Potvrdit",
-                  style: TextStyle(fontSize: 16)), // Adjust font size
+                  style: TextStyle(fontSize: 16)), 
             ),
           ],
         ),
       ),
-      // Additional parts of your code...
+      
     );
   }
 }
