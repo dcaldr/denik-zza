@@ -64,7 +64,7 @@ class Login extends StatelessWidget {
               SizedBox(height: 10),
 
               // login button
-              Button(buttonText: "Zaregistrovat se"),
+              Button(buttonText: "Prihlasit se"),
 
               const SizedBox(height: 10,),
 
