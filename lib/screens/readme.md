@@ -12,7 +12,7 @@ CHECK LIST
 2) side bar
 3) logo nejde nacist ??? zmena profilovky nahrat profilovku
 4) popup neumim, je to tezsi, podivat se na to
-5) vsechny akce logika, list akci, pridavani do listu, search bar??? hardcore af
+5) vsechny akce logika, list akci, pridavani do listu, search bar??? to bude propojene s databazi i guess
 6) vytvorit screeny na akce, edit, detail
 7) pridat ucastnika csv import, screeny 
 8) novy zaznam, uprava, tisk screeny
