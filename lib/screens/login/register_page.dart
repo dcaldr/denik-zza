@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'package:denik_zza/screens/actions/profile.dart';
 import 'package:denik_zza/screens/login/components/my_button.dart';
 import 'package:denik_zza/screens/login/components/my_textfield.dart';
 import 'package:flutter/material.dart';
@@ -36,39 +37,37 @@ class RegisterScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(
-                      height:
-                          10), 
+                  SizedBox(height: 10),
                   MyTextField(
                     controller: usernameController,
                     hintText: 'Jmeno',
                     obscureText: false,
                   ),
-                  SizedBox(height: 10), 
+                  SizedBox(height: 10),
                   MyTextField(
                     controller: lastnameController,
                     hintText: 'Prijmeni',
                     obscureText: false,
                   ),
-                  SizedBox(height: 10), 
+                  SizedBox(height: 10),
                   MyTextField(
                     controller: loginName,
                     hintText: 'Prihlasovaci jmeno',
                     obscureText: false,
                   ),
-                  SizedBox(height: 10), 
+                  SizedBox(height: 10),
                   MyTextField(
                     controller: passwordController,
                     hintText: 'Heslo',
                     obscureText: true,
                   ),
-                  SizedBox(height: 10), 
+                  SizedBox(height: 10),
                   MyTextField(
                     controller: passwordAgain,
                     hintText: 'Heslo znovu',
                     obscureText: true,
                   ),
-                  SizedBox(height: 10), 
+                  SizedBox(height: 10),
                   MyTextField(
                     controller: phoneNumber,
                     hintText: 'Telefonni cislo',
@@ -80,13 +79,21 @@ class RegisterScreen extends StatelessWidget {
 
             SizedBox(height: 10),
 
-            // button
-            //Button(buttonText: "Potvrdit", verticalPadding: 20, horizontalPadding: 142)
-           
+            // button - temporarly navigates to profile screen
+            Button(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Profile()),
+                );
+              },
+              buttonText: "Potvrdit",
+              verticalPadding: 20,
+              horizontalPadding: 142,
+            ),
           ],
         ),
       ),
-      
     );
   }
 }
