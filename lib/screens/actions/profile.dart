@@ -1,3 +1,4 @@
+import 'package:denik_zza/screens/actions/change_profile.dart';
 import 'package:denik_zza/screens/login/components/my_textfield.dart';
 import 'package:flutter/material.dart';
 
@@ -23,6 +24,11 @@ class Profile extends StatelessWidget {
             icon: Icon(Icons.edit),
             onPressed: () {
               // Navigate to another screen for editing the profile
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ChangeProfile()),
+                );
+
             },
           ),
         ],
