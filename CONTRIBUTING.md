@@ -4,7 +4,7 @@
 - ```add:```    small addition 
 - ```feat:```   completed feature
 - ```fix:```    fix "completed" feature
-- ```ref:```    refractor
+- ```ref:```    refactor
 - ```doc:```    document code without any code changes
 - ```opt:```    optimalizations :D 
 - ```test:```   working with tests
