@@ -61,7 +61,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Get zzaAction based on ID
   /// Returns null if id is not present in database
-  Future<ZzaAction?> getZzaActionById(int id) async {
+  Future<ZzaAction?> getZzaActionByID(int id) async {
     List<ZzaAction> actionResult = await (select(zzaActions)
       ..where((a) => a.id.equals(id))
     ).get();
@@ -70,7 +70,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// Get records based on participant ID
-  Future<List<Record>> getRecordsByParticipant(int id) async {
+  Future<List<Record>> getRecordsByParticipantID(int id) async {
     List<Record> recordsResult = await (select(records)
       ..where((r) => r.participant.equals(id))
     ).get();
@@ -80,7 +80,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Get insurance company by ID
   /// Returns null if id is not present in database
-  Future<InsuranceCompany?> getInsuranceCompanyById(int id) async {
+  Future<InsuranceCompany?> getInsuranceCompanyByID(int id) async {
     List<InsuranceCompany> insCompanyResult = await (select(insuranceCompanies)
       ..where((i) => i.id.equals(id))
     ).get();
