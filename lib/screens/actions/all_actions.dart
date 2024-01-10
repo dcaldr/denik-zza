@@ -1,4 +1,5 @@
 import 'package:denik_zza/screens/actions/profile.dart';
+import 'package:denik_zza/screens/editing_actions/action_detail.dart';
 import 'package:denik_zza/screens/editing_actions/add_action.dart';
 import 'package:flutter/material.dart';
 
@@ -117,8 +118,10 @@ class ActionItem extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              // Handle detail button press
-              // You can navigate to the detailed view for the selected action
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ActionDetail()),
+                );
             },
             child: Text('Detail'),
           ),

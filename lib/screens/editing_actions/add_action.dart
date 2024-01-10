@@ -1,3 +1,6 @@
+import 'package:denik_zza/screens/actions/all_actions.dart';
+import 'package:denik_zza/screens/actions/profile.dart';
+import 'package:denik_zza/screens/editing_actions/action_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/login/components/my_button.dart';
 
@@ -39,6 +42,24 @@ class _AddActionPageState extends State<AddActionPage> {
           'Přidat akci',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.edit),
+            onPressed: () {
+              // Add navigation to the edit action page
+              // Navigator.push(context, MaterialPageRoute(builder: (context) => EditActionPage()));
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.info),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ActionDetail()), // Navigate to ActionDetail page
+              );
+            },
+          ),
+        ],
       ),
       drawer: Drawer(
         child: ListView(
@@ -49,7 +70,10 @@ class _AddActionPageState extends State<AddActionPage> {
                 style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
               ),
               onTap: () {
-                // Implement navigation to the profile page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Profile()),
+                );
               },
             ),
             ListTile(
@@ -58,7 +82,10 @@ class _AddActionPageState extends State<AddActionPage> {
                 style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
               ),
               onTap: () {
-                // Implement navigation to the AllActions page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AllActions()),
+                );
               },
             ),
             // Add more menu items as needed
@@ -92,10 +119,9 @@ class _AddActionPageState extends State<AddActionPage> {
                   Expanded(
                     child: TextField(
                       controller: startDateController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Datum začátku',
                         labelStyle: TextStyle(color: Colors.black),
-                        cursorColor: Colors.black, // Set cursor color here
                       ),
                       readOnly: true,
                       onTap: () => _selectDate(startDateController),
@@ -105,10 +131,9 @@ class _AddActionPageState extends State<AddActionPage> {
                   Expanded(
                     child: TextField(
                       controller: endDateController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Datum ukončení',
                         labelStyle: TextStyle(color: Colors.black),
-                        cursorColor: Colors.black, // Set cursor color here
                       ),
                       readOnly: true,
                       onTap: () => _selectDate(endDateController),
@@ -129,6 +154,15 @@ class _AddActionPageState extends State<AddActionPage> {
                 ),
               ),
               SizedBox(height: 20),
+              Row(
+                children: [
+                  Icon(Icons.person),
+                  SizedBox(width: 8),
+                  Text('Osob: 150', style: TextStyle(fontSize: 16)),
+                ],
+              ),
+              SizedBox(height: 20),
+              // Add more content here as needed
               Button(
                 onPressed: () {
                   // add action
