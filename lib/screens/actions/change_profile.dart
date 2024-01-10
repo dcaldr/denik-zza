@@ -1,4 +1,5 @@
 
+import 'package:denik_zza/screens/actions/all_actions.dart';
 import 'package:denik_zza/screens/actions/profile.dart';
 import 'package:denik_zza/screens/login/components/my_button.dart';
 import 'package:flutter/material.dart';
@@ -40,9 +41,12 @@ class ChangeProfile extends StatelessWidget {
               },
             ),
             ListTile(
-              title: Text('Menu Item 2'),
+              title: Text('Akce', style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),),
               onTap: () {
-                // Handle menu item 2
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AllActions()),
+                );
               },
             ),
             // Add more menu items as needed
