@@ -1,4 +1,5 @@
 import 'package:denik_zza/screens/actions/profile.dart';
+import 'package:denik_zza/screens/editing_actions/add_action.dart';
 import 'package:flutter/material.dart';
 
 class AllActions extends StatelessWidget {
@@ -16,7 +17,10 @@ class AllActions extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.add),
             onPressed: () {
-              // Handle add action button press
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AddActionPage()),
+                );
             },
           ),
           IconButton(
