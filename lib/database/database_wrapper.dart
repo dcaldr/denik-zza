@@ -26,7 +26,7 @@ class DatabaseWrapper implements DatabaseInterface {
   @override
   Future<bool> addZaznam(MemoryZaznam zaznam) async => _memoryDatabase.addZaznam(zaznam);
   @override
-  Future<bool> addQuickNewZaznam( String popis, {int idPacient = 1} ) async {
+  Future<bool> quickAddNewZaznam( String popis, {int idPacient = 1} ) async {
     return _memoryDatabase.addZaznam(MemoryZaznam.short( popis,  idPacient));
   }
 
