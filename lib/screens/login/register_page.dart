@@ -79,13 +79,11 @@ class RegisterScreen extends StatelessWidget {
 
             SizedBox(height: 10),
 
-            // button - temporarly navigates to profile screen
+            // Button - shows the success pop-up
             Button(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Profile()),
-                );
+                // Show the success pop-up
+                _showSuccessDialog(context);
               },
               buttonText: "Potvrdit",
               verticalPadding: 20,
@@ -94,6 +92,37 @@ class RegisterScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  // Function to show the success dialog
+  Future<void> _showSuccessDialog(BuildContext context) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Úspěch'),
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Registrace proběhla úspěšně!'),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  // Close the dialog and navigate to the profile screen
+                  Navigator.of(context).pop();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Profile()),
+                  );
+                },
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
