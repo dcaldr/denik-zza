@@ -84,7 +84,7 @@ class MemoryDatabase implements DatabaseInterface {
   }
 
   @override
-  Future<bool> addQuickNewZaznam(String popis, {int idPacient = 0}) async {
+  Future<bool> quickAddNewZaznam(String popis, {int idPacient = 0}) async {
    return addZaznam(MemoryZaznam.short(popis, idPacient));
   }
 

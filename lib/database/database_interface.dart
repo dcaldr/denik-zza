@@ -16,7 +16,7 @@ Future <bool> addZaznam(MemoryZaznam zaznam);
 /// This method creates a new `MemoryZaznam` instance with the provided `popis` and `idPacient` (default is 0),
 /// and adds it to the database. Returns `true` if the operation is successful.
 /// @Warning: uses idPacient 0 as default
-Future <bool> addQuickNewZaznam(String popis, {int idPacient=0}); //FIXME: idPacient 0 as default
+Future <bool> quickAddNewZaznam(String popis, {int idPacient=0}); //FIXME: idPacient 0 as default
 
 /// Adds a `MemoryOsoba` instance to the database.
 ///
