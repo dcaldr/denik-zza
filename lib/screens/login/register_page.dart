@@ -1,6 +1,6 @@
 // ignore_for_file: prefer_const_constructors
 
-import 'package:denik_zza/screens/actions/profile.dart';
+import 'package:denik_zza/screens/login/login_page.dart';
 import 'package:denik_zza/screens/login/components/my_button.dart';
 import 'package:denik_zza/screens/login/components/my_textfield.dart';
 import 'package:flutter/material.dart';
@@ -114,7 +114,7 @@ class RegisterScreen extends StatelessWidget {
                   Navigator.of(context).pop();
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => Profile()),
+                    MaterialPageRoute(builder: (context) => Login()),
                   );
                 },
                 child: Text('OK'),
