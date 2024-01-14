@@ -549,6 +549,16 @@ class $ParticipantsTable extends Participants
               minTextLength: 0, maxTextLength: 13),
           type: DriftSqlType.string,
           requiredDuringInsert: true);
+  static const VerificationMeta _wasPrintedMeta =
+      const VerificationMeta('wasPrinted');
+  @override
+  late final GeneratedColumn<bool> wasPrinted = GeneratedColumn<bool>(
+      'was_printed', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("was_printed" IN (0, 1))'),
+      defaultValue: const Constant(false));
   static const VerificationMeta _insuranceCompanyMeta =
       const VerificationMeta('insuranceCompany');
   @override
@@ -576,6 +586,7 @@ class $ParticipantsTable extends Participants
         birthNumber,
         birthDate,
         parentPhoneNumber,
+        wasPrinted,
         insuranceCompany,
         zzaAction
       ];
@@ -632,6 +643,12 @@ class $ParticipantsTable extends Participants
     } else if (isInserting) {
       context.missing(_parentPhoneNumberMeta);
     }
+    if (data.containsKey('was_printed')) {
+      context.handle(
+          _wasPrintedMeta,
+          wasPrinted.isAcceptableOrUnknown(
+              data['was_printed']!, _wasPrintedMeta));
+    }
     if (data.containsKey('insurance_company')) {
       context.handle(
           _insuranceCompanyMeta,
@@ -669,6 +686,8 @@ class $ParticipantsTable extends Participants
           .read(DriftSqlType.dateTime, data['${effectivePrefix}birth_date'])!,
       parentPhoneNumber: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}parent_phone_number'])!,
+      wasPrinted: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}was_printed'])!,
       insuranceCompany: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}insurance_company'])!,
       zzaAction: attachedDatabase.typeMapping
@@ -690,6 +709,7 @@ class Participant extends DataClass implements Insertable<Participant> {
   final String birthNumber;
   final DateTime birthDate;
   final String parentPhoneNumber;
+  final bool wasPrinted;
   final int insuranceCompany;
   final int zzaAction;
   const Participant(
@@ -700,6 +720,7 @@ class Participant extends DataClass implements Insertable<Participant> {
       required this.birthNumber,
       required this.birthDate,
       required this.parentPhoneNumber,
+      required this.wasPrinted,
       required this.insuranceCompany,
       required this.zzaAction});
   @override
@@ -712,6 +733,7 @@ class Participant extends DataClass implements Insertable<Participant> {
     map['birth_number'] = Variable<String>(birthNumber);
     map['birth_date'] = Variable<DateTime>(birthDate);
     map['parent_phone_number'] = Variable<String>(parentPhoneNumber);
+    map['was_printed'] = Variable<bool>(wasPrinted);
     map['insurance_company'] = Variable<int>(insuranceCompany);
     map['zza_action'] = Variable<int>(zzaAction);
     return map;
@@ -726,6 +748,7 @@ class Participant extends DataClass implements Insertable<Participant> {
       birthNumber: Value(birthNumber),
       birthDate: Value(birthDate),
       parentPhoneNumber: Value(parentPhoneNumber),
+      wasPrinted: Value(wasPrinted),
       insuranceCompany: Value(insuranceCompany),
       zzaAction: Value(zzaAction),
     );
@@ -742,6 +765,7 @@ class Participant extends DataClass implements Insertable<Participant> {
       birthNumber: serializer.fromJson<String>(json['birthNumber']),
       birthDate: serializer.fromJson<DateTime>(json['birthDate']),
       parentPhoneNumber: serializer.fromJson<String>(json['parentPhoneNumber']),
+      wasPrinted: serializer.fromJson<bool>(json['wasPrinted']),
       insuranceCompany: serializer.fromJson<int>(json['insuranceCompany']),
       zzaAction: serializer.fromJson<int>(json['zzaAction']),
     );
@@ -757,6 +781,7 @@ class Participant extends DataClass implements Insertable<Participant> {
       'birthNumber': serializer.toJson<String>(birthNumber),
       'birthDate': serializer.toJson<DateTime>(birthDate),
       'parentPhoneNumber': serializer.toJson<String>(parentPhoneNumber),
+      'wasPrinted': serializer.toJson<bool>(wasPrinted),
       'insuranceCompany': serializer.toJson<int>(insuranceCompany),
       'zzaAction': serializer.toJson<int>(zzaAction),
     };
@@ -770,6 +795,7 @@ class Participant extends DataClass implements Insertable<Participant> {
           String? birthNumber,
           DateTime? birthDate,
           String? parentPhoneNumber,
+          bool? wasPrinted,
           int? insuranceCompany,
           int? zzaAction}) =>
       Participant(
@@ -780,6 +806,7 @@ class Participant extends DataClass implements Insertable<Participant> {
         birthNumber: birthNumber ?? this.birthNumber,
         birthDate: birthDate ?? this.birthDate,
         parentPhoneNumber: parentPhoneNumber ?? this.parentPhoneNumber,
+        wasPrinted: wasPrinted ?? this.wasPrinted,
         insuranceCompany: insuranceCompany ?? this.insuranceCompany,
         zzaAction: zzaAction ?? this.zzaAction,
       );
@@ -793,6 +820,7 @@ class Participant extends DataClass implements Insertable<Participant> {
           ..write('birthNumber: $birthNumber, ')
           ..write('birthDate: $birthDate, ')
           ..write('parentPhoneNumber: $parentPhoneNumber, ')
+          ..write('wasPrinted: $wasPrinted, ')
           ..write('insuranceCompany: $insuranceCompany, ')
           ..write('zzaAction: $zzaAction')
           ..write(')'))
@@ -801,7 +829,7 @@ class Participant extends DataClass implements Insertable<Participant> {
 
   @override
   int get hashCode => Object.hash(id, firstName, lastName, address, birthNumber,
-      birthDate, parentPhoneNumber, insuranceCompany, zzaAction);
+      birthDate, parentPhoneNumber, wasPrinted, insuranceCompany, zzaAction);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -813,6 +841,7 @@ class Participant extends DataClass implements Insertable<Participant> {
           other.birthNumber == this.birthNumber &&
           other.birthDate == this.birthDate &&
           other.parentPhoneNumber == this.parentPhoneNumber &&
+          other.wasPrinted == this.wasPrinted &&
           other.insuranceCompany == this.insuranceCompany &&
           other.zzaAction == this.zzaAction);
 }
@@ -825,6 +854,7 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
   final Value<String> birthNumber;
   final Value<DateTime> birthDate;
   final Value<String> parentPhoneNumber;
+  final Value<bool> wasPrinted;
   final Value<int> insuranceCompany;
   final Value<int> zzaAction;
   const ParticipantsCompanion({
@@ -835,6 +865,7 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
     this.birthNumber = const Value.absent(),
     this.birthDate = const Value.absent(),
     this.parentPhoneNumber = const Value.absent(),
+    this.wasPrinted = const Value.absent(),
     this.insuranceCompany = const Value.absent(),
     this.zzaAction = const Value.absent(),
   });
@@ -846,6 +877,7 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
     required String birthNumber,
     required DateTime birthDate,
     required String parentPhoneNumber,
+    this.wasPrinted = const Value.absent(),
     required int insuranceCompany,
     required int zzaAction,
   })  : firstName = Value(firstName),
@@ -864,6 +896,7 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
     Expression<String>? birthNumber,
     Expression<DateTime>? birthDate,
     Expression<String>? parentPhoneNumber,
+    Expression<bool>? wasPrinted,
     Expression<int>? insuranceCompany,
     Expression<int>? zzaAction,
   }) {
@@ -875,6 +908,7 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
       if (birthNumber != null) 'birth_number': birthNumber,
       if (birthDate != null) 'birth_date': birthDate,
       if (parentPhoneNumber != null) 'parent_phone_number': parentPhoneNumber,
+      if (wasPrinted != null) 'was_printed': wasPrinted,
       if (insuranceCompany != null) 'insurance_company': insuranceCompany,
       if (zzaAction != null) 'zza_action': zzaAction,
     });
@@ -888,6 +922,7 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
       Value<String>? birthNumber,
       Value<DateTime>? birthDate,
       Value<String>? parentPhoneNumber,
+      Value<bool>? wasPrinted,
       Value<int>? insuranceCompany,
       Value<int>? zzaAction}) {
     return ParticipantsCompanion(
@@ -898,6 +933,7 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
       birthNumber: birthNumber ?? this.birthNumber,
       birthDate: birthDate ?? this.birthDate,
       parentPhoneNumber: parentPhoneNumber ?? this.parentPhoneNumber,
+      wasPrinted: wasPrinted ?? this.wasPrinted,
       insuranceCompany: insuranceCompany ?? this.insuranceCompany,
       zzaAction: zzaAction ?? this.zzaAction,
     );
@@ -927,6 +963,9 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
     if (parentPhoneNumber.present) {
       map['parent_phone_number'] = Variable<String>(parentPhoneNumber.value);
     }
+    if (wasPrinted.present) {
+      map['was_printed'] = Variable<bool>(wasPrinted.value);
+    }
     if (insuranceCompany.present) {
       map['insurance_company'] = Variable<int>(insuranceCompany.value);
     }
@@ -946,6 +985,7 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
           ..write('birthNumber: $birthNumber, ')
           ..write('birthDate: $birthDate, ')
           ..write('parentPhoneNumber: $parentPhoneNumber, ')
+          ..write('wasPrinted: $wasPrinted, ')
           ..write('insuranceCompany: $insuranceCompany, ')
           ..write('zzaAction: $zzaAction')
           ..write(')'))
