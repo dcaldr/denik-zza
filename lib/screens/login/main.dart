@@ -81,8 +81,8 @@ child: Container(
 
             // box 2
             Container(
-              height: 200, 
-              width: 200, 
+              height: 200,
+              width: 200,
               color: Colors.deepPurple[400]),
 
               EXPANDED WIDGET
