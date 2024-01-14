@@ -25,8 +25,6 @@ class ChangeProfile extends StatelessWidget {
         ),
       ),
 
-
-      
       drawer: Drawer(
         // Your drawer content here
         child: ListView(
@@ -51,7 +49,6 @@ class ChangeProfile extends StatelessWidget {
             ),
             // Add more menu items as needed
           ],
-          
         ),
       ),
 

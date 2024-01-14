@@ -1,6 +1,7 @@
 import 'package:denik_zza/screens/actions/change_profile.dart';
 import 'package:denik_zza/screens/login/components/my_textfield.dart';
 import 'package:flutter/material.dart';
+import 'package:denik_zza/screens/actions/all_actions.dart';
 
 class Profile extends StatelessWidget {
   Profile({Key? key});
@@ -33,8 +34,38 @@ class Profile extends StatelessWidget {
           ),
         ],
       ),
+
+      drawer: Drawer(
+        child: ListView(
+          children: [
+            ListTile(
+              title: Text(
+                'Profil',
+                style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Profile()),
+                );
+              },
+            ),
+            ListTile(
+              title: Text(
+                'Akce',
+                style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AllActions()),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
       body: SingleChildScrollView(
-         
 
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
