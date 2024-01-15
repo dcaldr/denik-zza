@@ -15,6 +15,12 @@ class ActionDetail extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Název akce
+              SizedBox(height: 0),
+              Text(
+                'Tábor Jurský Park',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               // Ikona pro "lidé"
               Row(
                 children: [

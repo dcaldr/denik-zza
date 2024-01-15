@@ -8,7 +8,7 @@ Zde bude prakticky grafická stránka aplikace
 
 CHECK LIST
 
-1) zapomenute heslo chybi, dodelat screen, navigace z login screen
+1) zapomenute heslo chybi, dodelat screen, navigace z login screen- update: snad vše done
 2) side bar
 3) logo nejde nacist ??? zmena profilovky nahrat profilovku
 4) popup neumim, je to tezsi, podivat se na to - update: něco mám tak snad v pohodě kdyžtak zkontrolovat
