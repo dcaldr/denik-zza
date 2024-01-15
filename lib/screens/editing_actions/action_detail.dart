@@ -1,5 +1,7 @@
+
 import 'package:denik_zza/screens/login/components/my_button.dart';
 import 'package:flutter/material.dart';
+import 'package:denik_zza/screens/actions/change_profile.dart';
 
 
 class ActionDetail extends StatelessWidget {
@@ -8,6 +10,19 @@ class ActionDetail extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Detail Akce'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.edit),
+            onPressed: () {
+              // Navigate to another screen for editing the profile
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ChangeProfile()),
+                );
+
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
