@@ -78,7 +78,6 @@ class AllActions extends StatelessWidget {
                 Row(
                   children: [
                     Text('Pocet ucastniku'),
-                    Icon(Icons.people),
                   ],
                 ),
               ],
