@@ -26,8 +26,8 @@ class Participants extends Table {
   BoolColumn get wasPrinted => boolean().withDefault(const Constant(false))();
 
   // Foreign keys
-  IntColumn get insuranceCompany => integer().references(InsuranceCompanies, #id)();
-  IntColumn get zzaAction => integer().references(ZzaActions, #id)();
+  IntColumn get insuranceCompanyFK => integer().references(InsuranceCompanies, #id)();
+  IntColumn get zzaActionFK => integer().references(ZzaActions, #id)();
 }
 
 class Paramedics extends Table {
@@ -49,8 +49,8 @@ class Records extends Table {
   BoolColumn get wasPrinted => boolean().withDefault(const Constant(false))();
 
   // Foreign keys
-  IntColumn get paramedic => integer().references(Paramedics, #id)();
-  IntColumn get participant => integer().references(Participants, #id)();
+  IntColumn get paramedicFK => integer().references(Paramedics, #id)();
+  IntColumn get participantFK => integer().references(Participants, #id)();
 }
 
 class AllergiesLimitations extends Table {
@@ -58,7 +58,7 @@ class AllergiesLimitations extends Table {
   TextColumn get description => text().withLength(min: 0, max: 1024)();
 
   // Foreign keys
-  IntColumn get participant => integer().references(Participants, #id)();
+  IntColumn get participantFK => integer().references(Participants, #id)();
 }
 
 class Medications extends Table {
@@ -68,5 +68,5 @@ class Medications extends Table {
   TextColumn get dosageTiming => text().withLength(min: 0, max: 1024)();
 
   // Foreign keys
-  IntColumn get participant => integer().references(Participants, #id)();
+  IntColumn get participantFK => integer().references(Participants, #id)();
 }

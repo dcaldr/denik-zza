@@ -82,11 +82,13 @@ class AppDatabase extends _$AppDatabase {
   /// Get records based on participant ID
   Future<List<Record>> getRecordsByParticipantID(int id) async {
     List<Record> recordsResult = await (select(records)
-      ..where((r) => r.participant.equals(id))
+      ..where((r) => r.participantFK.equals(id))
     ).get();
 
     return recordsResult;
   }
+
+
 
   /// Get insurance company by ID
   /// Returns null if id is not present in database
