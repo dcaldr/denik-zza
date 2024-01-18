@@ -549,6 +549,26 @@ class $ParticipantsTable extends Participants
               minTextLength: 0, maxTextLength: 13),
           type: DriftSqlType.string,
           requiredDuringInsert: true);
+  static const VerificationMeta _eligibleConfirmationMeta =
+      const VerificationMeta('eligibleConfirmation');
+  @override
+  late final GeneratedColumn<bool> eligibleConfirmation = GeneratedColumn<bool>(
+      'eligible_confirmation', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("eligible_confirmation" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _nonInfectiousConfirmationMeta =
+      const VerificationMeta('nonInfectiousConfirmation');
+  @override
+  late final GeneratedColumn<bool> nonInfectiousConfirmation =
+      GeneratedColumn<bool>('non_infectious_confirmation', aliasedName, false,
+          type: DriftSqlType.bool,
+          requiredDuringInsert: false,
+          defaultConstraints: GeneratedColumn.constraintIsAlways(
+              'CHECK ("non_infectious_confirmation" IN (0, 1))'),
+          defaultValue: const Constant(false));
   static const VerificationMeta _wasPrintedMeta =
       const VerificationMeta('wasPrinted');
   @override
@@ -586,6 +606,8 @@ class $ParticipantsTable extends Participants
         birthNumber,
         birthDate,
         parentPhoneNumber,
+        eligibleConfirmation,
+        nonInfectiousConfirmation,
         wasPrinted,
         insuranceCompany,
         zzaAction
@@ -643,6 +665,19 @@ class $ParticipantsTable extends Participants
     } else if (isInserting) {
       context.missing(_parentPhoneNumberMeta);
     }
+    if (data.containsKey('eligible_confirmation')) {
+      context.handle(
+          _eligibleConfirmationMeta,
+          eligibleConfirmation.isAcceptableOrUnknown(
+              data['eligible_confirmation']!, _eligibleConfirmationMeta));
+    }
+    if (data.containsKey('non_infectious_confirmation')) {
+      context.handle(
+          _nonInfectiousConfirmationMeta,
+          nonInfectiousConfirmation.isAcceptableOrUnknown(
+              data['non_infectious_confirmation']!,
+              _nonInfectiousConfirmationMeta));
+    }
     if (data.containsKey('was_printed')) {
       context.handle(
           _wasPrintedMeta,
@@ -686,6 +721,11 @@ class $ParticipantsTable extends Participants
           .read(DriftSqlType.dateTime, data['${effectivePrefix}birth_date'])!,
       parentPhoneNumber: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}parent_phone_number'])!,
+      eligibleConfirmation: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}eligible_confirmation'])!,
+      nonInfectiousConfirmation: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool,
+          data['${effectivePrefix}non_infectious_confirmation'])!,
       wasPrinted: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}was_printed'])!,
       insuranceCompany: attachedDatabase.typeMapping
@@ -709,6 +749,8 @@ class Participant extends DataClass implements Insertable<Participant> {
   final String birthNumber;
   final DateTime birthDate;
   final String parentPhoneNumber;
+  final bool eligibleConfirmation;
+  final bool nonInfectiousConfirmation;
   final bool wasPrinted;
   final int insuranceCompany;
   final int zzaAction;
@@ -720,6 +762,8 @@ class Participant extends DataClass implements Insertable<Participant> {
       required this.birthNumber,
       required this.birthDate,
       required this.parentPhoneNumber,
+      required this.eligibleConfirmation,
+      required this.nonInfectiousConfirmation,
       required this.wasPrinted,
       required this.insuranceCompany,
       required this.zzaAction});
@@ -733,6 +777,9 @@ class Participant extends DataClass implements Insertable<Participant> {
     map['birth_number'] = Variable<String>(birthNumber);
     map['birth_date'] = Variable<DateTime>(birthDate);
     map['parent_phone_number'] = Variable<String>(parentPhoneNumber);
+    map['eligible_confirmation'] = Variable<bool>(eligibleConfirmation);
+    map['non_infectious_confirmation'] =
+        Variable<bool>(nonInfectiousConfirmation);
     map['was_printed'] = Variable<bool>(wasPrinted);
     map['insurance_company'] = Variable<int>(insuranceCompany);
     map['zza_action'] = Variable<int>(zzaAction);
@@ -748,6 +795,8 @@ class Participant extends DataClass implements Insertable<Participant> {
       birthNumber: Value(birthNumber),
       birthDate: Value(birthDate),
       parentPhoneNumber: Value(parentPhoneNumber),
+      eligibleConfirmation: Value(eligibleConfirmation),
+      nonInfectiousConfirmation: Value(nonInfectiousConfirmation),
       wasPrinted: Value(wasPrinted),
       insuranceCompany: Value(insuranceCompany),
       zzaAction: Value(zzaAction),
@@ -765,6 +814,10 @@ class Participant extends DataClass implements Insertable<Participant> {
       birthNumber: serializer.fromJson<String>(json['birthNumber']),
       birthDate: serializer.fromJson<DateTime>(json['birthDate']),
       parentPhoneNumber: serializer.fromJson<String>(json['parentPhoneNumber']),
+      eligibleConfirmation:
+          serializer.fromJson<bool>(json['eligibleConfirmation']),
+      nonInfectiousConfirmation:
+          serializer.fromJson<bool>(json['nonInfectiousConfirmation']),
       wasPrinted: serializer.fromJson<bool>(json['wasPrinted']),
       insuranceCompany: serializer.fromJson<int>(json['insuranceCompany']),
       zzaAction: serializer.fromJson<int>(json['zzaAction']),
@@ -781,6 +834,9 @@ class Participant extends DataClass implements Insertable<Participant> {
       'birthNumber': serializer.toJson<String>(birthNumber),
       'birthDate': serializer.toJson<DateTime>(birthDate),
       'parentPhoneNumber': serializer.toJson<String>(parentPhoneNumber),
+      'eligibleConfirmation': serializer.toJson<bool>(eligibleConfirmation),
+      'nonInfectiousConfirmation':
+          serializer.toJson<bool>(nonInfectiousConfirmation),
       'wasPrinted': serializer.toJson<bool>(wasPrinted),
       'insuranceCompany': serializer.toJson<int>(insuranceCompany),
       'zzaAction': serializer.toJson<int>(zzaAction),
@@ -795,6 +851,8 @@ class Participant extends DataClass implements Insertable<Participant> {
           String? birthNumber,
           DateTime? birthDate,
           String? parentPhoneNumber,
+          bool? eligibleConfirmation,
+          bool? nonInfectiousConfirmation,
           bool? wasPrinted,
           int? insuranceCompany,
           int? zzaAction}) =>
@@ -806,6 +864,9 @@ class Participant extends DataClass implements Insertable<Participant> {
         birthNumber: birthNumber ?? this.birthNumber,
         birthDate: birthDate ?? this.birthDate,
         parentPhoneNumber: parentPhoneNumber ?? this.parentPhoneNumber,
+        eligibleConfirmation: eligibleConfirmation ?? this.eligibleConfirmation,
+        nonInfectiousConfirmation:
+            nonInfectiousConfirmation ?? this.nonInfectiousConfirmation,
         wasPrinted: wasPrinted ?? this.wasPrinted,
         insuranceCompany: insuranceCompany ?? this.insuranceCompany,
         zzaAction: zzaAction ?? this.zzaAction,
@@ -820,6 +881,8 @@ class Participant extends DataClass implements Insertable<Participant> {
           ..write('birthNumber: $birthNumber, ')
           ..write('birthDate: $birthDate, ')
           ..write('parentPhoneNumber: $parentPhoneNumber, ')
+          ..write('eligibleConfirmation: $eligibleConfirmation, ')
+          ..write('nonInfectiousConfirmation: $nonInfectiousConfirmation, ')
           ..write('wasPrinted: $wasPrinted, ')
           ..write('insuranceCompany: $insuranceCompany, ')
           ..write('zzaAction: $zzaAction')
@@ -828,8 +891,19 @@ class Participant extends DataClass implements Insertable<Participant> {
   }
 
   @override
-  int get hashCode => Object.hash(id, firstName, lastName, address, birthNumber,
-      birthDate, parentPhoneNumber, wasPrinted, insuranceCompany, zzaAction);
+  int get hashCode => Object.hash(
+      id,
+      firstName,
+      lastName,
+      address,
+      birthNumber,
+      birthDate,
+      parentPhoneNumber,
+      eligibleConfirmation,
+      nonInfectiousConfirmation,
+      wasPrinted,
+      insuranceCompany,
+      zzaAction);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -841,6 +915,8 @@ class Participant extends DataClass implements Insertable<Participant> {
           other.birthNumber == this.birthNumber &&
           other.birthDate == this.birthDate &&
           other.parentPhoneNumber == this.parentPhoneNumber &&
+          other.eligibleConfirmation == this.eligibleConfirmation &&
+          other.nonInfectiousConfirmation == this.nonInfectiousConfirmation &&
           other.wasPrinted == this.wasPrinted &&
           other.insuranceCompany == this.insuranceCompany &&
           other.zzaAction == this.zzaAction);
@@ -854,6 +930,8 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
   final Value<String> birthNumber;
   final Value<DateTime> birthDate;
   final Value<String> parentPhoneNumber;
+  final Value<bool> eligibleConfirmation;
+  final Value<bool> nonInfectiousConfirmation;
   final Value<bool> wasPrinted;
   final Value<int> insuranceCompany;
   final Value<int> zzaAction;
@@ -865,6 +943,8 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
     this.birthNumber = const Value.absent(),
     this.birthDate = const Value.absent(),
     this.parentPhoneNumber = const Value.absent(),
+    this.eligibleConfirmation = const Value.absent(),
+    this.nonInfectiousConfirmation = const Value.absent(),
     this.wasPrinted = const Value.absent(),
     this.insuranceCompany = const Value.absent(),
     this.zzaAction = const Value.absent(),
@@ -877,6 +957,8 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
     required String birthNumber,
     required DateTime birthDate,
     required String parentPhoneNumber,
+    this.eligibleConfirmation = const Value.absent(),
+    this.nonInfectiousConfirmation = const Value.absent(),
     this.wasPrinted = const Value.absent(),
     required int insuranceCompany,
     required int zzaAction,
@@ -896,6 +978,8 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
     Expression<String>? birthNumber,
     Expression<DateTime>? birthDate,
     Expression<String>? parentPhoneNumber,
+    Expression<bool>? eligibleConfirmation,
+    Expression<bool>? nonInfectiousConfirmation,
     Expression<bool>? wasPrinted,
     Expression<int>? insuranceCompany,
     Expression<int>? zzaAction,
@@ -908,6 +992,10 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
       if (birthNumber != null) 'birth_number': birthNumber,
       if (birthDate != null) 'birth_date': birthDate,
       if (parentPhoneNumber != null) 'parent_phone_number': parentPhoneNumber,
+      if (eligibleConfirmation != null)
+        'eligible_confirmation': eligibleConfirmation,
+      if (nonInfectiousConfirmation != null)
+        'non_infectious_confirmation': nonInfectiousConfirmation,
       if (wasPrinted != null) 'was_printed': wasPrinted,
       if (insuranceCompany != null) 'insurance_company': insuranceCompany,
       if (zzaAction != null) 'zza_action': zzaAction,
@@ -922,6 +1010,8 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
       Value<String>? birthNumber,
       Value<DateTime>? birthDate,
       Value<String>? parentPhoneNumber,
+      Value<bool>? eligibleConfirmation,
+      Value<bool>? nonInfectiousConfirmation,
       Value<bool>? wasPrinted,
       Value<int>? insuranceCompany,
       Value<int>? zzaAction}) {
@@ -933,6 +1023,9 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
       birthNumber: birthNumber ?? this.birthNumber,
       birthDate: birthDate ?? this.birthDate,
       parentPhoneNumber: parentPhoneNumber ?? this.parentPhoneNumber,
+      eligibleConfirmation: eligibleConfirmation ?? this.eligibleConfirmation,
+      nonInfectiousConfirmation:
+          nonInfectiousConfirmation ?? this.nonInfectiousConfirmation,
       wasPrinted: wasPrinted ?? this.wasPrinted,
       insuranceCompany: insuranceCompany ?? this.insuranceCompany,
       zzaAction: zzaAction ?? this.zzaAction,
@@ -963,6 +1056,13 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
     if (parentPhoneNumber.present) {
       map['parent_phone_number'] = Variable<String>(parentPhoneNumber.value);
     }
+    if (eligibleConfirmation.present) {
+      map['eligible_confirmation'] = Variable<bool>(eligibleConfirmation.value);
+    }
+    if (nonInfectiousConfirmation.present) {
+      map['non_infectious_confirmation'] =
+          Variable<bool>(nonInfectiousConfirmation.value);
+    }
     if (wasPrinted.present) {
       map['was_printed'] = Variable<bool>(wasPrinted.value);
     }
@@ -985,6 +1085,8 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
           ..write('birthNumber: $birthNumber, ')
           ..write('birthDate: $birthDate, ')
           ..write('parentPhoneNumber: $parentPhoneNumber, ')
+          ..write('eligibleConfirmation: $eligibleConfirmation, ')
+          ..write('nonInfectiousConfirmation: $nonInfectiousConfirmation, ')
           ..write('wasPrinted: $wasPrinted, ')
           ..write('insuranceCompany: $insuranceCompany, ')
           ..write('zzaAction: $zzaAction')
