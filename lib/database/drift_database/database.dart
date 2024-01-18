@@ -69,35 +69,19 @@ class AppDatabase extends _$AppDatabase {
     return select(paramedics).get();
   }
 
-  /// Get zzaAction based on ID
-  /// Returns null if id is not present in database
-  Future<ZzaAction?> getZzaActionByID(int id) async {
-    List<ZzaAction> actionResult = await (select(zzaActions)
-      ..where((a) => a.id.equals(id))
-    ).get();
-
-    return actionResult.firstOrNull;
+  /// Get zzaAction based on ID, the list either contains one value or is empty
+  Future<List<ZzaAction>> getZzaActionByID(int id) async {
+    return await (select(zzaActions)..where((z) => z.id.equals(id))).get();
   }
 
   /// Get records based on participant ID
   Future<List<Record>> getRecordsByParticipantID(int id) async {
-    List<Record> recordsResult = await (select(records)
-      ..where((r) => r.participantFK.equals(id))
-    ).get();
-
-    return recordsResult;
+    return await (select(records)..where((r) => r.participantFK.equals(id))).get();
   }
 
-
-
-  /// Get insurance company by ID
-  /// Returns null if id is not present in database
-  Future<InsuranceCompany?> getInsuranceCompanyByID(int id) async {
-    List<InsuranceCompany> insCompanyResult = await (select(insuranceCompanies)
-      ..where((i) => i.id.equals(id))
-    ).get();
-
-    return insCompanyResult.firstOrNull;
+  /// Get insurance company by ID, the list either contains one value or is empty
+  Future<List<InsuranceCompany>> getInsuranceCompanyByID(int id) async {
+    return await (select(insuranceCompanies)..where((i) => i.id.equals(id))).get();
   }
 }
 
