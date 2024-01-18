@@ -12,7 +12,7 @@ import 'tables.dart';
 part 'database.g.dart';
 
 @DriftDatabase(tables: [InsuranceCompanies, ZzaActions, Participants,
-  Paramedics, Records])
+  Paramedics, Records, AllergiesLimitations, Medications])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
