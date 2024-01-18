@@ -19,6 +19,8 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 1;
 
+  //==================== INSERTS ===============================================
+
   /// Insert insuranceCompanyCompanion into database
   Future<int> addInsuranceCompany(InsuranceCompaniesCompanion c) async {
     return into(insuranceCompanies).insert(c);
@@ -53,6 +55,8 @@ class AppDatabase extends _$AppDatabase {
   Future<int> addMedication(MedicationsCompanion c) async {
     return into(medications).insert(c);
   }
+
+  //==================== GETTERS ===============================================
 
   /// Get all insurance companies
   Future<List<InsuranceCompany>> getAllInsuranceCompanies() async {
@@ -109,6 +113,9 @@ class AppDatabase extends _$AppDatabase {
   Future<List<Medication>> getMedicationsByParticipantID(int id) async {
     return await (select(medications)..where((m) => m.participantFK.equals(id))).get();
   }
+
+  //==================== UPDATES ===============================================
+  //==================== DELETES ===============================================
 }
 
 
