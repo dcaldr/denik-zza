@@ -52,3 +52,11 @@ class Records extends Table {
   IntColumn get paramedic => integer().references(Paramedics, #id)();
   IntColumn get participant => integer().references(Participants, #id)();
 }
+
+class AllergiesLimitations extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get description => text().withLength(min: 0, max: 1024)();
+
+  // Foreign keys
+  IntColumn get participant => integer().references(Participants, #id)();
+}
