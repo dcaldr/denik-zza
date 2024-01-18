@@ -78,40 +78,46 @@ class AppDatabase extends _$AppDatabase {
     return select(paramedics).get();
   }
 
-  /// Get insurance company by ID, the list either contains one value or is empty
-  Future<List<InsuranceCompany>> getInsuranceCompanyByID(int id) async {
-    return await (select(insuranceCompanies)..where((i) => i.id.equals(id))).get();
+  /// Get insurance company by ID
+  Future<InsuranceCompany?> getInsuranceCompanyByID(int id) async {
+    return await (select(insuranceCompanies)..where((i)
+    => i.id.equals(id))).getSingleOrNull();
   }
 
-  /// Get zzaAction based on ID, the list either contains one value or is empty
-  Future<List<ZzaAction>> getZzaActionByID(int id) async {
-    return await (select(zzaActions)..where((z) => z.id.equals(id))).get();
+  /// Get zzaAction based on ID
+  Future<ZzaAction?> getZzaActionByID(int id) async {
+    return await (select(zzaActions)..where((z) =>
+        z.id.equals(id))).getSingleOrNull();
   }
 
-  /// Get participant based on ID, the list either contains one value or is empty
-  Future<List<Participant>> getParticipantByID(int id) async {
-    return await (select(participants)..where((p) => p.id.equals(id))).get();
+  /// Get participant based on ID
+  Future<Participant?> getParticipantByID(int id) async {
+    return await (select(participants)..where((p) =>
+        p.id.equals(id))).getSingleOrNull();
   }
 
-  /// Get paramedic based on ID, the list either contains one value or is empty
-  Future<List<Paramedic>> getParamedicByID(int id) async {
-    return await (select(paramedics)..where((p) => p.id.equals(id))).get();
+  /// Get paramedic based on ID
+  Future<Paramedic?> getParamedicByID(int id) async {
+    return await (select(paramedics)..where((p) =>
+        p.id.equals(id))).getSingleOrNull();
   }
 
   /// Get records based on participant ID
   Future<List<Record>> getRecordsByParticipantID(int id) async {
-    return await (select(records)..where((r) => r.participantFK.equals(id))).get();
+    return await (select(records)..where((r) =>
+        r.participantFK.equals(id))).get();
   }
 
   /// Get allergies and limitations based on participant ID,
-  /// the list either contains one value or is empty
-  Future<List<AllergiesLimitation>> getAllergiesLimitationsByParticipantID(int id) async {
-    return await (select(allergiesLimitations)..where((a) => a.participantFK.equals(id))).get();
+  Future<AllergiesLimitation?> getAllergiesLimitationsByParticipantID(int id) async {
+    return await (select(allergiesLimitations)..where((a) =>
+        a.participantFK.equals(id))).getSingleOrNull();
   }
 
   /// Get medications based on participant ID
   Future<List<Medication>> getMedicationsByParticipantID(int id) async {
-    return await (select(medications)..where((m) => m.participantFK.equals(id))).get();
+    return await (select(medications)..where((m) =>
+        m.participantFK.equals(id))).get();
   }
 
   //==================== UPDATES ===============================================
