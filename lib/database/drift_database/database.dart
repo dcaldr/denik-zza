@@ -44,6 +44,16 @@ class AppDatabase extends _$AppDatabase {
     return into(records).insert(c);
   }
 
+  /// Insert allergiesLimitations companion into database
+  Future<int> addAllergiesLimitations(AllergiesLimitationsCompanion c) async {
+    return into(allergiesLimitations).insert(c);
+  }
+
+  /// Insert medicationsCompanion into database
+  Future<int> addMedication(MedicationsCompanion c) async {
+    return into(medications).insert(c);
+  }
+
   /// Get all actions
   Future<List<ZzaAction>> getAllZzaActions() async {
     return select(zzaActions).get();
