@@ -60,3 +60,13 @@ class AllergiesLimitations extends Table {
   // Foreign keys
   IntColumn get participant => integer().references(Participants, #id)();
 }
+
+class Medication extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text().withLength(min: 0, max: 128)();
+  TextColumn get dosage => text().withLength(min: 0, max: 512)();
+  TextColumn get dosageTiming => text().withLength(min: 0, max: 1024)();
+
+  // Foreign keys
+  IntColumn get participant => integer().references(Participants, #id)();
+}
