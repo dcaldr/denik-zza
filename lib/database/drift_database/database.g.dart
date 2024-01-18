@@ -1903,6 +1903,532 @@ class RecordsCompanion extends UpdateCompanion<Record> {
   }
 }
 
+class $AllergiesLimitationsTable extends AllergiesLimitations
+    with TableInfo<$AllergiesLimitationsTable, AllergiesLimitation> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AllergiesLimitationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _descriptionMeta =
+      const VerificationMeta('description');
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+      'description', aliasedName, false,
+      additionalChecks: GeneratedColumn.checkTextLength(
+          minTextLength: 0, maxTextLength: 1024),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true);
+  static const VerificationMeta _participantMeta =
+      const VerificationMeta('participant');
+  @override
+  late final GeneratedColumn<int> participant = GeneratedColumn<int>(
+      'participant', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES participants (id)'));
+  @override
+  List<GeneratedColumn> get $columns => [id, description, participant];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'allergies_limitations';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<AllergiesLimitation> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+          _descriptionMeta,
+          description.isAcceptableOrUnknown(
+              data['description']!, _descriptionMeta));
+    } else if (isInserting) {
+      context.missing(_descriptionMeta);
+    }
+    if (data.containsKey('participant')) {
+      context.handle(
+          _participantMeta,
+          participant.isAcceptableOrUnknown(
+              data['participant']!, _participantMeta));
+    } else if (isInserting) {
+      context.missing(_participantMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AllergiesLimitation map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AllergiesLimitation(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      description: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}description'])!,
+      participant: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}participant'])!,
+    );
+  }
+
+  @override
+  $AllergiesLimitationsTable createAlias(String alias) {
+    return $AllergiesLimitationsTable(attachedDatabase, alias);
+  }
+}
+
+class AllergiesLimitation extends DataClass
+    implements Insertable<AllergiesLimitation> {
+  final int id;
+  final String description;
+  final int participant;
+  const AllergiesLimitation(
+      {required this.id, required this.description, required this.participant});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['description'] = Variable<String>(description);
+    map['participant'] = Variable<int>(participant);
+    return map;
+  }
+
+  AllergiesLimitationsCompanion toCompanion(bool nullToAbsent) {
+    return AllergiesLimitationsCompanion(
+      id: Value(id),
+      description: Value(description),
+      participant: Value(participant),
+    );
+  }
+
+  factory AllergiesLimitation.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AllergiesLimitation(
+      id: serializer.fromJson<int>(json['id']),
+      description: serializer.fromJson<String>(json['description']),
+      participant: serializer.fromJson<int>(json['participant']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'description': serializer.toJson<String>(description),
+      'participant': serializer.toJson<int>(participant),
+    };
+  }
+
+  AllergiesLimitation copyWith(
+          {int? id, String? description, int? participant}) =>
+      AllergiesLimitation(
+        id: id ?? this.id,
+        description: description ?? this.description,
+        participant: participant ?? this.participant,
+      );
+  @override
+  String toString() {
+    return (StringBuffer('AllergiesLimitation(')
+          ..write('id: $id, ')
+          ..write('description: $description, ')
+          ..write('participant: $participant')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, description, participant);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AllergiesLimitation &&
+          other.id == this.id &&
+          other.description == this.description &&
+          other.participant == this.participant);
+}
+
+class AllergiesLimitationsCompanion
+    extends UpdateCompanion<AllergiesLimitation> {
+  final Value<int> id;
+  final Value<String> description;
+  final Value<int> participant;
+  const AllergiesLimitationsCompanion({
+    this.id = const Value.absent(),
+    this.description = const Value.absent(),
+    this.participant = const Value.absent(),
+  });
+  AllergiesLimitationsCompanion.insert({
+    this.id = const Value.absent(),
+    required String description,
+    required int participant,
+  })  : description = Value(description),
+        participant = Value(participant);
+  static Insertable<AllergiesLimitation> custom({
+    Expression<int>? id,
+    Expression<String>? description,
+    Expression<int>? participant,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (description != null) 'description': description,
+      if (participant != null) 'participant': participant,
+    });
+  }
+
+  AllergiesLimitationsCompanion copyWith(
+      {Value<int>? id, Value<String>? description, Value<int>? participant}) {
+    return AllergiesLimitationsCompanion(
+      id: id ?? this.id,
+      description: description ?? this.description,
+      participant: participant ?? this.participant,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (participant.present) {
+      map['participant'] = Variable<int>(participant.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AllergiesLimitationsCompanion(')
+          ..write('id: $id, ')
+          ..write('description: $description, ')
+          ..write('participant: $participant')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $MedicationsTable extends Medications
+    with TableInfo<$MedicationsTable, Medication> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MedicationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      additionalChecks:
+          GeneratedColumn.checkTextLength(minTextLength: 0, maxTextLength: 128),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true);
+  static const VerificationMeta _dosageMeta = const VerificationMeta('dosage');
+  @override
+  late final GeneratedColumn<String> dosage = GeneratedColumn<String>(
+      'dosage', aliasedName, false,
+      additionalChecks:
+          GeneratedColumn.checkTextLength(minTextLength: 0, maxTextLength: 512),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true);
+  static const VerificationMeta _dosageTimingMeta =
+      const VerificationMeta('dosageTiming');
+  @override
+  late final GeneratedColumn<String> dosageTiming = GeneratedColumn<String>(
+      'dosage_timing', aliasedName, false,
+      additionalChecks: GeneratedColumn.checkTextLength(
+          minTextLength: 0, maxTextLength: 1024),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true);
+  static const VerificationMeta _participantMeta =
+      const VerificationMeta('participant');
+  @override
+  late final GeneratedColumn<int> participant = GeneratedColumn<int>(
+      'participant', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES participants (id)'));
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, name, dosage, dosageTiming, participant];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'medications';
+  @override
+  VerificationContext validateIntegrity(Insertable<Medication> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('dosage')) {
+      context.handle(_dosageMeta,
+          dosage.isAcceptableOrUnknown(data['dosage']!, _dosageMeta));
+    } else if (isInserting) {
+      context.missing(_dosageMeta);
+    }
+    if (data.containsKey('dosage_timing')) {
+      context.handle(
+          _dosageTimingMeta,
+          dosageTiming.isAcceptableOrUnknown(
+              data['dosage_timing']!, _dosageTimingMeta));
+    } else if (isInserting) {
+      context.missing(_dosageTimingMeta);
+    }
+    if (data.containsKey('participant')) {
+      context.handle(
+          _participantMeta,
+          participant.isAcceptableOrUnknown(
+              data['participant']!, _participantMeta));
+    } else if (isInserting) {
+      context.missing(_participantMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Medication map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Medication(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      dosage: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}dosage'])!,
+      dosageTiming: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}dosage_timing'])!,
+      participant: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}participant'])!,
+    );
+  }
+
+  @override
+  $MedicationsTable createAlias(String alias) {
+    return $MedicationsTable(attachedDatabase, alias);
+  }
+}
+
+class Medication extends DataClass implements Insertable<Medication> {
+  final int id;
+  final String name;
+  final String dosage;
+  final String dosageTiming;
+  final int participant;
+  const Medication(
+      {required this.id,
+      required this.name,
+      required this.dosage,
+      required this.dosageTiming,
+      required this.participant});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['dosage'] = Variable<String>(dosage);
+    map['dosage_timing'] = Variable<String>(dosageTiming);
+    map['participant'] = Variable<int>(participant);
+    return map;
+  }
+
+  MedicationsCompanion toCompanion(bool nullToAbsent) {
+    return MedicationsCompanion(
+      id: Value(id),
+      name: Value(name),
+      dosage: Value(dosage),
+      dosageTiming: Value(dosageTiming),
+      participant: Value(participant),
+    );
+  }
+
+  factory Medication.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Medication(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      dosage: serializer.fromJson<String>(json['dosage']),
+      dosageTiming: serializer.fromJson<String>(json['dosageTiming']),
+      participant: serializer.fromJson<int>(json['participant']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'dosage': serializer.toJson<String>(dosage),
+      'dosageTiming': serializer.toJson<String>(dosageTiming),
+      'participant': serializer.toJson<int>(participant),
+    };
+  }
+
+  Medication copyWith(
+          {int? id,
+          String? name,
+          String? dosage,
+          String? dosageTiming,
+          int? participant}) =>
+      Medication(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        dosage: dosage ?? this.dosage,
+        dosageTiming: dosageTiming ?? this.dosageTiming,
+        participant: participant ?? this.participant,
+      );
+  @override
+  String toString() {
+    return (StringBuffer('Medication(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('dosage: $dosage, ')
+          ..write('dosageTiming: $dosageTiming, ')
+          ..write('participant: $participant')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, dosage, dosageTiming, participant);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Medication &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.dosage == this.dosage &&
+          other.dosageTiming == this.dosageTiming &&
+          other.participant == this.participant);
+}
+
+class MedicationsCompanion extends UpdateCompanion<Medication> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String> dosage;
+  final Value<String> dosageTiming;
+  final Value<int> participant;
+  const MedicationsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.dosage = const Value.absent(),
+    this.dosageTiming = const Value.absent(),
+    this.participant = const Value.absent(),
+  });
+  MedicationsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required String dosage,
+    required String dosageTiming,
+    required int participant,
+  })  : name = Value(name),
+        dosage = Value(dosage),
+        dosageTiming = Value(dosageTiming),
+        participant = Value(participant);
+  static Insertable<Medication> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? dosage,
+    Expression<String>? dosageTiming,
+    Expression<int>? participant,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (dosage != null) 'dosage': dosage,
+      if (dosageTiming != null) 'dosage_timing': dosageTiming,
+      if (participant != null) 'participant': participant,
+    });
+  }
+
+  MedicationsCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? name,
+      Value<String>? dosage,
+      Value<String>? dosageTiming,
+      Value<int>? participant}) {
+    return MedicationsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      dosage: dosage ?? this.dosage,
+      dosageTiming: dosageTiming ?? this.dosageTiming,
+      participant: participant ?? this.participant,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (dosage.present) {
+      map['dosage'] = Variable<String>(dosage.value);
+    }
+    if (dosageTiming.present) {
+      map['dosage_timing'] = Variable<String>(dosageTiming.value);
+    }
+    if (participant.present) {
+      map['participant'] = Variable<int>(participant.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MedicationsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('dosage: $dosage, ')
+          ..write('dosageTiming: $dosageTiming, ')
+          ..write('participant: $participant')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   late final $InsuranceCompaniesTable insuranceCompanies =
@@ -1911,10 +2437,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ParticipantsTable participants = $ParticipantsTable(this);
   late final $ParamedicsTable paramedics = $ParamedicsTable(this);
   late final $RecordsTable records = $RecordsTable(this);
+  late final $AllergiesLimitationsTable allergiesLimitations =
+      $AllergiesLimitationsTable(this);
+  late final $MedicationsTable medications = $MedicationsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [insuranceCompanies, zzaActions, participants, paramedics, records];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+        insuranceCompanies,
+        zzaActions,
+        participants,
+        paramedics,
+        records,
+        allergiesLimitations,
+        medications
+      ];
 }
