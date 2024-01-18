@@ -2,6 +2,7 @@
 // ignore_for_file: lines_longer_than_80_chars
 //@formatter:off
 import 'in_memory_structures_tmp/memory_osoba.dart';
+import 'in_memory_structures_tmp/memory_zaznam.dart';
 /// Class holding dummy data for testing purposes.
 ///
 /// This class holds testing data for development purposes.
@@ -123,4 +124,19 @@ List<MemoryOsoba> mergeAndRemoveDuplicates([List<List<MemoryOsoba>> lists = cons
     }
   }
 
+}
+class MemoryZaznamHolder{
+  List<MemoryZaznam> memoryZaznamList = [
+    MemoryZaznam.longer("popis 1"," zlomená noha", 0),
+    MemoryZaznam.longer("popis 2"," zlomená ruka", 0),
+    MemoryZaznam.longer("popis 3"," naražené žebro", 0),
+    MemoryZaznam.longer("popis 4"," vykloubené rameno", 0),
+    MemoryZaznam.longer("popis 5"," zranění hlavy", 0),
+    MemoryZaznam.longer("popis 6"," zranění zad", 0),
+    MemoryZaznam.longer("popis 7"," zlomený prst", 0),
+    MemoryZaznam.longer("popis 8"," zranění kolene", 0),
+    MemoryZaznam.longer("popis 9"," zranění kotníku", 0),
+    MemoryZaznam.longer("popis 10"," zranění lokte", 0),
+
+  ];
 }

@@ -15,6 +15,7 @@ class MemoryZaznam {
   MemoryZaznam(this.nazev, this.popis, this.poznamka, this.idZaznamu,
       this.idAuthor, this.idPacient);
   MemoryZaznam.short(this.popis, this.idPacient);
+  MemoryZaznam.longer(this.nazev, this.popis, this.idPacient);
 
   @override
   String toString() {
