@@ -21,6 +21,8 @@ class Participants extends Table {
   TextColumn get birthNumber => text().withLength(min: 0, max: 11)();
   DateTimeColumn get birthDate => dateTime()();
   TextColumn get parentPhoneNumber => text().withLength(min: 0, max: 13)();
+  BoolColumn get eligibleConfirmation => boolean().withDefault(const Constant(false))();
+  BoolColumn get nonInfectiousConfirmation => boolean().withDefault(const Constant(false))();
   BoolColumn get wasPrinted => boolean().withDefault(const Constant(false))();
 
   // Foreign keys
