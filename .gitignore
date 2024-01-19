@@ -43,3 +43,4 @@ app.*.map.json
 /android/app/release
 # custom rules
 !/dan_bez_hlavy.pdf
+#!/lib/print_ops/mainPDF.dart
