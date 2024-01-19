@@ -1,4 +1,4 @@
-import 'package:denik_zza/print_ops/pdf.dart';
+import 'package:denik_zza/print_ops/pdf_old.dart';
 import 'package:flutter/material.dart';
 
 
@@ -116,7 +116,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             ElevatedButton(
               onPressed: () async{
-                PDFGenerator pdfGenerator = PDFGenerator();
+                PDFGeneratorOLD pdfGenerator = PDFGeneratorOLD();
                 await pdfGenerator.generatePDF('dan_bez_hlavy.pdf', notes);
               },
               child: const Text('testPDF'),
