@@ -1,5 +1,7 @@
 
 
+import 'package:denik_zza/database/drift_database/database.dart';
+
 import 'database_interface.dart';
 import 'in_memory_structures_tmp/memory_database.dart';
 import 'in_memory_structures_tmp/memory_osoba.dart';
@@ -22,6 +24,7 @@ class DatabaseWrapper implements DatabaseInterface {
   DatabaseWrapper._internal();
 
   final MemoryDatabase _memoryDatabase = MemoryDatabase();
+  final driftDatabase = AppDatabase();
 
   @override
   Future<bool> addZaznam(MemoryZaznam zaznam) async => _memoryDatabase.addZaznam(zaznam);
@@ -44,5 +47,21 @@ class DatabaseWrapper implements DatabaseInterface {
   @override
   String quickPrintZaznamyOsoby(int idOsoby) {
     return _memoryDatabase.quickPrintZaznamyOsoby(idOsoby);
+  }
+
+  //========= Vojtovy přidané metody ===========================================
+
+  @override
+  Future<List<MemoryZaznam>> getRecordsByParticipantID(int id) async {
+    List<Record> records = await driftDatabase.getRecordsByParticipantID(id);
+    List<MemoryZaznam> memoryRecords = [];
+    
+    for(Record r in records) {
+      memoryRecords.add(MemoryZaznam.complete(r.id, r.dateAndTime, r.title,
+          r.description, r.treatment, r.wasPrinted,
+          r.paramedicFK, r.participantFK));
+    }
+    
+    return memoryRecords;
   }
 }
