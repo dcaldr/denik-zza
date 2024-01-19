@@ -61,9 +61,7 @@ List<pw.Widget> _generateNotes(List<MemoryZaznam> notes,) {
   PdfColor notePrimaryColor = myPrimaryColor;
   for (final note in notes) {
 
-    noteTextWidgets.add( _noteItem(note)
-
-    );
+    noteTextWidgets.add( _noteItem(note) );
     noteTextWidgets.add(pw.SizedBox(height: 10));
   }
   return noteTextWidgets;
@@ -87,32 +85,7 @@ pw.Widget _generateNotesWidget(List<pw.Widget> noteTextWidgets) {
   );
 }
 
-  generatePDFasSomething( List<String> notes,[List<int> toSkip = const [2]]) async {
-    final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
-    final pdf = pw.Document(
-      theme: pw.ThemeData.withFont(
-        base: mSafeFont,
-      ),
-    );
 
-    pw.Widget headerWidget = _generateHeader();
-
-    List<pw.Widget> noteTextWidgets = _generateNotes(MemoryZaznamHolder().memoryZaznamList);
-    pw.Widget notesWidget = _generateNotesWidget(noteTextWidgets);
-
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) => pw.Column(
-          children: [
-            headerWidget,
-            pw.SizedBox(height: 20),
-            notesWidget,
-          ],
-        ),
-      ),
-    );
-    return pdf.save();
-  }
 
 pw.Widget _noteItem(MemoryZaznam note) {
     PdfColor notePrimaryColor = myPrimaryColor;
@@ -125,7 +98,7 @@ pw.Widget _noteItem(MemoryZaznam note) {
     pw.Widget a = pw.Row(
       mainAxisAlignment: pw.MainAxisAlignment.start,
       children: [
-        pw.Flexible(
+        pw.Flexible( // dateTime
           fit: pw.FlexFit.loose,
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -142,24 +115,42 @@ pw.Widget _noteItem(MemoryZaznam note) {
           ),
         ),
         pw.SizedBox(width: 20),
-        pw.Expanded(
-          child: pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                note.nazev != null ? '${note.nazev} - ' : ' ',
-                style: pw.TextStyle(color: notePrimaryColor, fontWeight: pw.FontWeight.bold),
-              ),
-              pw.Flexible(
-                child: pw.Text(note.popis, style: pw.TextStyle(color: notePrimaryColor)),
-              ),
-            ],
-          ),
+        pw.Text(
+          note.nazev != null ? '${note.nazev} - ' : ' ',
+          style: pw.TextStyle(color: notePrimaryColor, fontWeight: pw.FontWeight.bold),
         ),
+        pw.Text(note.popis, style: pw.TextStyle(color: notePrimaryColor)),
       ],
     );
 
     return a ;
 }
+
+generatePDFasSomething( List<String> notes,[List<int> toSkip = const [2]]) async {
+    final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
+    final pdf = pw.Document(
+      theme: pw.ThemeData.withFont(
+        base: mSafeFont,
+      ),
+    );
+
+    pw.Widget headerWidget = _generateHeader();
+
+    List<pw.Widget> noteTextWidgets = _generateNotes(MemoryZaznamHolder().memoryZaznamList);
+    pw.Widget notesWidget = _generateNotesWidget(noteTextWidgets);
+
+  pdf.addPage(
+  pw.Page(
+    build: (pw.Context context) => pw.Column(
+      children: [
+        headerWidget,
+        pw.SizedBox(height: 20),
+        notesWidget,
+      ],
+    ),
+  ),
+);
+    return pdf.save();
+  }
 
 }
