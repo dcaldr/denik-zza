@@ -15,8 +15,7 @@ PdfColor myPrimaryColor = PdfColors.black;
 PdfColor mySecondaryColor = PdfColors.black;
 
 //PDFGenerator(this.osoba);
-
-  final bool _hideHeader = false;
+final bool _hideHeader = false;
 final bool _hideBorders = false;
 bool hideBody = false;
 //Colors // FIXME: to be refractored to a better place
@@ -27,11 +26,10 @@ bool hideBody = false;
 List<pw.Widget> _generateNotes(List<MemoryZaznam> notes,) {
 
   List<pw.Widget> noteTextWidgets = [];
-  PdfColor notePrimaryColor = myPrimaryColor;
   for (final note in notes) {
 
     noteTextWidgets.add( _noteItem(note) );
-    noteTextWidgets.add(pw.SizedBox(height: 10));
+    noteTextWidgets.add(pw.SizedBox(height: 5));
   }
   return noteTextWidgets;
 }
@@ -42,7 +40,7 @@ pw.Widget _generateNotesWidget(List<pw.Widget> noteTextWidgets) {
       decoration: pw.BoxDecoration(
         border: pw.Border.all(
           width: 2.0,
-          color: _hideBorders
+          color: _hideBorders || hideBody
               ? myTransparentColor
               : myPrimaryColor, // Set border color conditionally
         ),
@@ -61,8 +59,8 @@ pw.Widget _generateNotesWidget(List<pw.Widget> noteTextWidgets) {
 
 pw.Widget _noteItem(MemoryZaznam note) {
   PdfColor notePrimaryColor = myPrimaryColor;
-  if (note.isPrinted) {
-    print("skipping note $note");
+  if (note.isPrinted || hideBody) {
+    print("skipping note ${note.idZaznamu}.");
     notePrimaryColor = myTransparentColor;
   } else{
     notePrimaryColor = myPrimaryColor;
@@ -81,7 +79,7 @@ pw.Widget _noteItem(MemoryZaznam note) {
             ),
             pw.Text(
               '${note.casZaznamu?.hour.toString().padLeft(2, '0')}:${note.casZaznamu?.minute.toString().padLeft(2, '0')}',
-              style: pw.TextStyle(fontSize: 10.0, color: notePrimaryColor),
+              style: pw.TextStyle(fontSize: 9.0, color: notePrimaryColor),
             ),
           ],
         ),
@@ -180,8 +178,13 @@ generatePDFasSomething( List<String> notes,[List<int> toSkip = const [2]]) async
     );
 
     pw.Widget headerWidget = _generateHeader();
-
-    List<pw.Widget> noteTextWidgets = _generateNotes(MemoryZaznamHolder().memoryZaznamList);
+    List<MemoryZaznam> corrected =[];
+    for(int i=0; i<MemoryZaznamHolder().memoryZaznamList.length;i++ ){
+      MemoryZaznam tmp = MemoryZaznamHolder().memoryZaznamList[i];
+      tmp.idZaznamu = i;
+      corrected.add(tmp);
+    }
+    List<pw.Widget> noteTextWidgets = _generateNotes(corrected);
     pw.Widget notesWidget = _generateNotesWidget(noteTextWidgets);
 
   pdf.addPage(
