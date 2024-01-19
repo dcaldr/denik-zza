@@ -11,6 +11,7 @@ class MemoryZaznam {
   String? poznamka;
   // may use -1 means not assigned
   late int idAuthor; // may use -1 means not assigned
+  bool isPrinted = false; //preset
 
   MemoryZaznam(this.nazev, this.popis, this.poznamka, this.idZaznamu,
       this.idAuthor, this.idPacient);
