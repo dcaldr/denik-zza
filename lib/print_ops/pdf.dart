@@ -99,20 +99,23 @@ pw.Widget _noteItem(MemoryZaznam note) {
     notePrimaryColor = myPrimaryColor;
   }
   pw.Widget a = pw.Row(
-    mainAxisAlignment: pw.MainAxisAlignment.start,
+    crossAxisAlignment: pw.CrossAxisAlignment.start, // Align items to the start
     children: [
-      pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(
-            '${note.casZaznamu?.day.toString().padLeft(2, '0')}.${note.casZaznamu?.month.toString().padLeft(2, '0')}.${note.casZaznamu?.year}',
-            style: pw.TextStyle(fontSize: 8.0, color: notePrimaryColor),
-          ),
-          pw.Text(
-            '${note.casZaznamu?.hour.toString().padLeft(2, '0')}:${note.casZaznamu?.minute.toString().padLeft(2, '0')}',
-            style: pw.TextStyle(fontSize: 10.0, color: notePrimaryColor),
-          ),
-        ],
+      pw.Align(
+        alignment: pw.Alignment.topLeft, // Align to the top
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              '${note.casZaznamu?.day.toString().padLeft(2, '0')}.${note.casZaznamu?.month.toString().padLeft(2, '0')}.${note.casZaznamu?.year}',
+              style: pw.TextStyle(fontSize: 8.0, color: notePrimaryColor),
+            ),
+            pw.Text(
+              '${note.casZaznamu?.hour.toString().padLeft(2, '0')}:${note.casZaznamu?.minute.toString().padLeft(2, '0')}',
+              style: pw.TextStyle(fontSize: 10.0, color: notePrimaryColor),
+            ),
+          ],
+        ),
       ),
       pw.SizedBox(width: 20),
       pw.Text(
