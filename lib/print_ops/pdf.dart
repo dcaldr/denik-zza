@@ -70,17 +70,19 @@ List<pw.Widget> _generateNotes(List<MemoryZaznam> notes,) {
 }
 
 pw.Widget _generateNotesWidget(List<pw.Widget> noteTextWidgets) {
-  return pw.Container(
-    decoration: pw.BoxDecoration(
-      border: pw.Border.all(
-        width: 2.0,
-        color: _hideBorders
-            ? myTransparentColor
-            : myPrimaryColor, // Set border color conditionally, //TODO: add more color logic
+  return pw.Expanded(
+    child: pw.Container(
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(
+          width: 2.0,
+          color: _hideBorders
+              ? myTransparentColor
+              : myPrimaryColor, // Set border color conditionally, //TODO: add more color logic
+        ),
       ),
-    ),
-    child: pw.Column(
-      children: noteTextWidgets,
+      child: pw.Column(
+        children: noteTextWidgets,
+      ),
     ),
   );
 }
