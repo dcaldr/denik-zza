@@ -118,17 +118,33 @@ pw.Widget _noteItem(MemoryZaznam note) {
         ),
       ),
       pw.SizedBox(width: 20),
-      pw.Text(
-        note.nazev != null ? '${note.nazev} - ' : ' ',
-        style: pw.TextStyle(color: notePrimaryColor, fontWeight: pw.FontWeight.bold),
-      ),
-      pw.Flexible( // Wrap the Text widget with Flexible
-        child: pw.Text(note.popis, style: pw.TextStyle(color: notePrimaryColor)),
+      pw.Flexible( // Wrap the RichText widget with Flexible
+        child: pw.RichText(
+          text: pw.TextSpan(
+            text: note.nazev != null ? '${note.nazev} - ' : ' ',
+            style: pw.TextStyle(color: notePrimaryColor, fontWeight: pw.FontWeight.bold),
+            children: <pw.TextSpan>[
+              pw.TextSpan(
+                text: note.popis,
+                style: pw.TextStyle(color: notePrimaryColor, fontWeight: pw.FontWeight.normal),
+              ),
+            ],
+          ),
+        ),
       ),
     ],
   );
 
   return a ;
+
+        //DIFFERENT STYLE
+  // pw.Text(
+  //   note.nazev != null ? '${note.nazev} - ' : ' ',
+  //   style: pw.TextStyle(color: notePrimaryColor, fontWeight: pw.FontWeight.bold),
+  // ),
+  // pw.Flexible( // Wrap the Text widget with Flexible
+  // child: pw.Text(note.popis, style: pw.TextStyle(color: notePrimaryColor)),
+  // ),
 }
 
 generatePDFasSomething( List<String> notes,[List<int> toSkip = const [2]]) async {
