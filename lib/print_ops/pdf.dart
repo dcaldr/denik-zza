@@ -75,11 +75,14 @@ pw.Widget _generateNotesWidget(List<pw.Widget> noteTextWidgets) {
           width: 2.0,
           color: _hideBorders
               ? myTransparentColor
-              : myPrimaryColor, // Set border color conditionally, //TODO: add more color logic
+              : myPrimaryColor, // Set border color conditionally
         ),
       ),
-      child: pw.Column(
-        children: noteTextWidgets,
+      child: pw.Padding(
+        padding: const pw.EdgeInsets.all(5), // Add padding here
+        child: pw.Column(
+          children: noteTextWidgets,
+        ),
       ),
     ),
   );
@@ -88,42 +91,41 @@ pw.Widget _generateNotesWidget(List<pw.Widget> noteTextWidgets) {
 
 
 pw.Widget _noteItem(MemoryZaznam note) {
-    PdfColor notePrimaryColor = myPrimaryColor;
-    if (note.isPrinted) {
-      print("skipping note $note");
-      notePrimaryColor = myTransparentColor;
-    } else{
-      notePrimaryColor = myPrimaryColor;
-    }
-    pw.Widget a = pw.Row(
-      mainAxisAlignment: pw.MainAxisAlignment.start,
-      children: [
-        pw.Flexible( // dateTime
-          fit: pw.FlexFit.loose,
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                '${note.casZaznamu?.day.toString().padLeft(2, '0')}.${note.casZaznamu?.month.toString().padLeft(2, '0')}.${note.casZaznamu?.year}',
-                style: pw.TextStyle(fontSize: 8.0, color: notePrimaryColor),
-              ),
-              pw.Text(
-                '${note.casZaznamu?.hour.toString().padLeft(2, '0')}:${note.casZaznamu?.minute.toString().padLeft(2, '0')}',
-                style: pw.TextStyle(fontSize: 10.0, color: notePrimaryColor),
-              ),
-            ],
+  PdfColor notePrimaryColor = myPrimaryColor;
+  if (note.isPrinted) {
+    print("skipping note $note");
+    notePrimaryColor = myTransparentColor;
+  } else{
+    notePrimaryColor = myPrimaryColor;
+  }
+  pw.Widget a = pw.Row(
+    mainAxisAlignment: pw.MainAxisAlignment.start,
+    children: [
+      pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            '${note.casZaznamu?.day.toString().padLeft(2, '0')}.${note.casZaznamu?.month.toString().padLeft(2, '0')}.${note.casZaznamu?.year}',
+            style: pw.TextStyle(fontSize: 8.0, color: notePrimaryColor),
           ),
-        ),
-        pw.SizedBox(width: 20),
-        pw.Text(
-          note.nazev != null ? '${note.nazev} - ' : ' ',
-          style: pw.TextStyle(color: notePrimaryColor, fontWeight: pw.FontWeight.bold),
-        ),
-        pw.Text(note.popis, style: pw.TextStyle(color: notePrimaryColor)),
-      ],
-    );
+          pw.Text(
+            '${note.casZaznamu?.hour.toString().padLeft(2, '0')}:${note.casZaznamu?.minute.toString().padLeft(2, '0')}',
+            style: pw.TextStyle(fontSize: 10.0, color: notePrimaryColor),
+          ),
+        ],
+      ),
+      pw.SizedBox(width: 20),
+      pw.Text(
+        note.nazev != null ? '${note.nazev} - ' : ' ',
+        style: pw.TextStyle(color: notePrimaryColor, fontWeight: pw.FontWeight.bold),
+      ),
+      pw.Flexible( // Wrap the Text widget with Flexible
+        child: pw.Text(note.popis, style: pw.TextStyle(color: notePrimaryColor)),
+      ),
+    ],
+  );
 
-    return a ;
+  return a ;
 }
 
 generatePDFasSomething( List<String> notes,[List<int> toSkip = const [2]]) async {
