@@ -137,6 +137,10 @@ class MemoryZaznamHolder{
     MemoryZaznam.longer("popis 8"," zranění kolene", 0),
     MemoryZaznam.longer("popis 9"," zranění kotníku", 0),
     MemoryZaznam.longer("popis 10"," zranění lokte", 0),
+    MemoryZaznam("Velký problém",
+        "opravdu opravdu velmi dlouá stížnost, skoro by se dalo říct, že existuje jenom proto aby bylo vidět jestli si dobře sedne dále se zbytekem programu,"
+            "také by se dalo říct, že to možná bude trvat ještě hodně dlouho, než tato stížnost nebude potřeba",
+        "poznamka", 11, 0, 0)
 
   ];
 }
