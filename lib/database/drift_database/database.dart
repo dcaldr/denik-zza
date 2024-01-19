@@ -105,7 +105,8 @@ class AppDatabase extends _$AppDatabase {
   /// Get records based on participant ID
   Future<List<Record>> getRecordsByParticipantID(int id) async {
     return await (select(records)..where((r) =>
-        r.participantFK.equals(id))).get();
+        r.participantFK.equals(id))..orderBy([(r) =>
+        OrderingTerm(expression: r.dateAndTime)])).get();
   }
 
   /// Get allergies and limitations based on participant ID,
