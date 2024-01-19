@@ -22,38 +22,7 @@ bool hideBody = false;
 //Colors // FIXME: to be refractored to a better place
 
 
-pw.Widget _generateHeader() {
-  pw.Widget headerWidget;
-  PdfColor headerPrimaryColor = myPrimaryColor;
-  if (_hideHeader) {
-    //FIXME: ref
-    headerPrimaryColor = myTransparentColor;
-  }
 
-  headerWidget = pw.Container(
-    decoration: pw.BoxDecoration(
-      border: pw.Border.all(
-        width: 2.0,
-        color: _hideBorders
-            ? myTransparentColor
-            : headerPrimaryColor, // Set border color conditionally, _hideHeader has priority
-      ),
-
-    ),
-    child: pw.Center(
-      child: pw.Text(
-        "${osoba.jmeno}   ${osoba.prijmeni}",
-        style: pw.TextStyle(
-          fontSize: 24,
-          fontWeight: pw.FontWeight.bold,
-          color: headerPrimaryColor,
-        ),
-      ),
-    ),
-  );
-
-  return headerWidget;
-}
 //FIXME: temporary set
 List<pw.Widget> _generateNotes(List<MemoryZaznam> notes,) {
 
@@ -145,6 +114,61 @@ pw.Widget _noteItem(MemoryZaznam note) {
   // pw.Flexible( // Wrap the Text widget with Flexible
   // child: pw.Text(note.popis, style: pw.TextStyle(color: notePrimaryColor)),
   // ),
+}
+
+pw.Widget _generateHeader() {
+  pw.Widget headerWidget;
+  PdfColor headerPrimaryColor = myPrimaryColor;
+  if (_hideHeader) {
+    headerPrimaryColor = myTransparentColor;
+  }
+
+  headerWidget = pw.Container(
+    decoration: pw.BoxDecoration(
+      border: pw.Border.all(
+        width: 2.0,
+        color: _hideBorders
+            ? myTransparentColor
+            : headerPrimaryColor, // Set border color conditionally, _hideHeader has priority
+      ),
+    ),
+    child: pw.Padding( // Add Padding widget here
+      padding: const pw.EdgeInsets.all(10.0), // Set inner padding
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.RichText(
+                text: pw.TextSpan(
+                  text: 'Jméno: ', // Make 'Jméno:' normal
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.normal),
+                  children: <pw.TextSpan>[
+                    pw.TextSpan(
+                      text: '${osoba.jmeno} ${osoba.prijmeni}', // Make variables bold
+                      style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+              pw.Text('Datum narození: ${osoba.datumNarozeni?.day.toString().padLeft(2, '0')}.${osoba.datumNarozeni?.month.toString().padLeft(2, '0')}.${osoba.datumNarozeni?.year}'), // Format datumNarozeni
+              pw.Text('Číslo pojištění: ${osoba.cisloPojisteni}${osoba.zdravotniPojistovna != null ? ' (${osoba.zdravotniPojistovna})' : ''}'), // Add zdravotniPojistovna if not null
+            ],
+          ),
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('Adresa: ${osoba.adresa}'),
+              pw.Text('Telefonní číslo: ${osoba.telefonniCislo}'),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+
+  return headerWidget;
 }
 
 generatePDFasSomething( List<String> notes,[List<int> toSkip = const [2]]) async {
