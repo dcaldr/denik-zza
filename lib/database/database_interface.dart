@@ -35,4 +35,8 @@ Future <void> quickPrintAllOsoby();
 /// iterates over all its `MemoryZaznam` instances and prints their details.
 /// Returns a `String` containing the details of all `MemoryZaznam` instances.
 String quickPrintZaznamyOsoby(int idOsoby);
+
+//========= Vojtovy přidané metody =============================================
+
+Future<List<MemoryZaznam>> getRecordsByParticipantID(int id);
 }

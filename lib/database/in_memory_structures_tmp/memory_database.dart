@@ -88,7 +88,9 @@ class MemoryDatabase implements DatabaseInterface {
    return addZaznam(MemoryZaznam.short(popis, idPacient));
   }
 
-
-
-
+  @override
+  Future<List<MemoryZaznam>> getRecordsByParticipantID(int id) {
+    // TODO: implement getRecordsByParticipantID
+    throw UnimplementedError();
+  }
 }
