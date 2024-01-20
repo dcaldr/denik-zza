@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:denik_zza/screens/login/components/my_button.dart';
 
 class MyButton extends StatelessWidget {
   final VoidCallback onPressed;
@@ -51,6 +52,15 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
   TextEditingController insuranceCompanyController = TextEditingController();
   TextEditingController insuranceNumberController = TextEditingController();
   TextEditingController genderController = TextEditingController();
+  TextEditingController medicineController = TextEditingController();
+  TextEditingController frequencyController = TextEditingController();
+  TextEditingController notesController = TextEditingController();
+  TextEditingController nonInfectiousConfirmationController = TextEditingController();
+  TextEditingController eligibleConfirmationController = TextEditingController();
+
+  // Dropdown items for gender
+  List<String> genderOptions = ['Muž', 'Žena'];
+  String selectedGender = 'Muž';
 
   Future<void> _selectDate(BuildContext context, DateTime? selectedDate, TextEditingController controller) async {
     DateTime? pickedDate = await showDatePicker(
@@ -83,29 +93,29 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
   }
 
 @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: Text('Přidat Účastníka'),
-    ),
-    body: SingleChildScrollView(
-      child: Padding(
-        padding: EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: firstNameController,
-              decoration: InputDecoration(labelText: 'Jméno'),
-            ),
-            TextField(
-              controller: lastNameController,
-              decoration: InputDecoration(labelText: 'Příjmení'),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => _selectDate(context, selectedBirthDate, birthDateController),
-              style: ElevatedButton.styleFrom(
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Přidat Účastníka'),
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: firstNameController,
+                decoration: InputDecoration(labelText: 'Jméno'),
+              ),
+              TextField(
+                controller: lastNameController,
+                decoration: InputDecoration(labelText: 'Příjmení'),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () => _selectDate(context, selectedBirthDate, birthDateController),
+                style: ElevatedButton.styleFrom(
                 primary: const Color.fromARGB(255, 0, 0, 0), // Change this to your preferred color
                 onPrimary: Colors.white,
                 shape: RoundedRectangleBorder(
@@ -117,86 +127,161 @@ Widget build(BuildContext context) {
                 ),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Vybrat Datum Narození',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    Icon(Icons.calendar_today, color: Colors.white),
+                  ],
+                ),
+              ),
+              Text('Vybrané Datum: ${selectedBirthDate != null ? _formatDate(selectedBirthDate!) : ""}'),
+              TextField(
+                controller: locationController,
+                decoration: InputDecoration(labelText: 'Lokace'),
+              ),
+              TextField(
+                controller: phoneNumberController,
+                decoration: InputDecoration(labelText: 'Telefonní číslo'),
+                keyboardType: TextInputType.phone,
+              ),
+              TextField(
+                controller: insuranceCompanyController,
+                decoration: InputDecoration(labelText: 'Pojišťovna'),
+              ),
+              TextField(
+                controller: insuranceNumberController,
+                decoration: InputDecoration(labelText: 'Číslo pojištění'),
+                keyboardType: TextInputType.phone,
+              ),
+              // Dropdown for Gender
+              SizedBox(height: 15),
+              DropdownButtonFormField(
+                value: selectedGender,
+                onChanged: (value) {
+                  setState(() {
+                    selectedGender = value.toString();
+                  });
+                },
+                items: genderOptions.map((option) {
+                  return DropdownMenuItem(
+                    value: option,
+                    child: Text(option),
+                  );
+                }).toList(),
+                decoration: InputDecoration(labelText: 'Pohlaví'),
+              ),
+              // Additional Fields
+              SizedBox(height: 15),
+              // ... (Other fields)
+              // Medicine and Frequency
+              Row(
                 children: [
-                  Text(
-                    'Vybrat Datum Narození',
-                    style: TextStyle(color: Colors.white),
+                  Expanded(
+                    child: TextField(
+                      controller: medicineController,
+                      decoration: InputDecoration(labelText: 'Léky'),
+                    ),
                   ),
-                  Icon(Icons.calendar_today, color: Colors.white),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: frequencyController,
+                      decoration: InputDecoration(labelText: 'Frekvence užívání'),
+                    ),
+                  ),
                 ],
               ),
-            ),
-            Text('Vybrané Datum: ${selectedBirthDate != null ? _formatDate(selectedBirthDate!) : ""}'),
-            TextField(
-              controller: locationController,
-              decoration: InputDecoration(labelText: 'Lokace'),
-            ),
-            TextField(
-              controller: phoneNumberController,
-              decoration: InputDecoration(
-                labelText: 'Telefonní číslo',
+              // Notes
+              SizedBox(height: 15),
+              TextField(
+                controller: notesController,
+                decoration: InputDecoration(labelText: 'Poznámky'),
+                maxLines: 3,
               ),
-              keyboardType: TextInputType.phone,
-            ),
-            TextField(
-              controller: insuranceCompanyController,
-              decoration: InputDecoration(labelText: 'Pojišťovna'),
-            ),
-            TextField(
-              controller: insuranceNumberController,
-              decoration: InputDecoration(
-                labelText: 'Číslo pojištění',
+              // Checkboxes for Confirmations
+              SizedBox(height: 15),
+              Row(
+                children: [
+                  Checkbox(
+                    value: nonInfectiousConfirmationController.text.toLowerCase() == 'true',
+                    onChanged: (value) {
+                      setState(() {
+                        nonInfectiousConfirmationController.text = value.toString();
+                      });
+                    },
+                  ),
+                  Text('Potvrzení o bezinfekčnosti'),
+                ],
               ),
-              keyboardType: TextInputType.phone,
-            ),
-            TextField(
-              controller: genderController,
-              decoration: InputDecoration(labelText: 'Pohlaví (1 - muž, 2 - žena)'),
-            ),SizedBox(height: 15),
-            // Adjusted styling for "Přidat Účastníka" button
-            ElevatedButton(
-              onPressed: () {
-                // Get values from controllers
-                String formattedBirthDate = _formatDate(selectedBirthDate!);
-                String firstName = firstNameController.text;
-                String lastName = lastNameController.text;
-                // ... (other fields)
-
-                // Print or use the participant data
-                print('First Name: $firstName');
-                print('Last Name: $lastName');
-                print('Birth Date: $formattedBirthDate');
-                // ... (other prints)
-
-                // Reset the form if needed
-                // firstNameController.clear();
-                // lastNameController.clear();
-                // ... (clear other controllers)
-
-                // Optionally, navigate back to the previous screen
-                // Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                primary: Colors.black,
-                onPrimary: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                padding: EdgeInsets.symmetric(
-                  vertical: 20,
-                  horizontal: 100,
-                ),
+              Row(
+                children: [
+                  Checkbox(
+                    value: eligibleConfirmationController.text.toLowerCase() == 'true',
+                    onChanged: (value) {
+                      setState(() {
+                        eligibleConfirmationController.text = value.toString();
+                      });
+                    },
+                  ),
+                  Text('Potvrzení o způsobilosti'),
+                ],
               ),
-              child: Text(
-                'Přidat Účastníka',
-                style: TextStyle(fontSize: 16),
+              SizedBox(height: 15),
+              // Buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Uložit Button
+                  ElevatedButton(
+                    onPressed: () {
+                      // ... (handle save logic)
+                    },
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.black,
+                      onPrimary: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        vertical: 20,
+                        horizontal: 60,
+                      ),
+                    ),
+                    child: Text(
+                      'Uložit',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  // Zrušit Button
+                  ElevatedButton(
+                    onPressed: () {
+                      // ... (handle cancel logic)
+                    },
+                    style: ElevatedButton.styleFrom(
+                      primary: Color.fromARGB(255, 255, 251, 245),
+                      onPrimary: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        vertical: 20,
+                        horizontal: 50,
+                      ),
+                    ),
+                    child: Text(
+                      'Zrušit',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
