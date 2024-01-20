@@ -13,7 +13,7 @@ CHECK LIST
 3) logo nejde nacist ??? zmena profilovky nahrat profilovku
 4) popup neumim, je to tezsi, podivat se na to - update: něco mám tak snad v pohodě kdyžtak zkontrolovat
 5) vsechny akce logika, list akci, pridavani do listu, search bar??? to bude propojene s databazi i guess
-6) vytvorit screeny na akce, edit, detail
+6) vytvorit screeny na akce, edit, detail - upadate: snad done jen automatiké vyplňování 
 7) pridat ucastnika csv import, screeny 
 8) novy zaznam, uprava, tisk screeny
 9) vsichni ucastnici, list jmen, upravy, pridat, odebrat logika z listu
