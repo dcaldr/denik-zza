@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:denik_zza/screens/login/components/my_button.dart';
 
 class MyButton extends StatelessWidget {
   final VoidCallback onPressed;
