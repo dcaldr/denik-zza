@@ -60,22 +60,27 @@ class AppDatabase extends _$AppDatabase {
 
   /// Get all insurance companies
   Future<List<InsuranceCompany>> getAllInsuranceCompanies() async {
-    return select(insuranceCompanies).get();
+    return (select(insuranceCompanies)..orderBy([(c) =>
+        OrderingTerm(expression: c.name)])).get();
   }
 
   /// Get all actions
   Future<List<ZzaAction>> getAllZzaActions() async {
-    return select(zzaActions).get();
+    return (select(zzaActions)..orderBy([(a) =>
+        OrderingTerm(expression: a.dateFrom)])).get();
   }
 
   /// Get all participants
   Future<List<Participant>> getAllParticipants() async {
-    return select(participants).get();
+    return (select(participants)..orderBy([(p) =>
+        OrderingTerm(expression: p.firstName), (p) =>
+        OrderingTerm(expression: p.lastName)])).get();
   }
 
   /// Get all paramedics
   Future<List<Paramedic>> getAllParamedics() async {
-    return select(paramedics).get();
+    return (select(paramedics)..orderBy([(p) =>
+        OrderingTerm(expression: p.username)])).get();
   }
 
   /// Get insurance company by ID
@@ -93,7 +98,9 @@ class AppDatabase extends _$AppDatabase {
   /// Get list of participants assigned to a zza action
   Future<List<Participant>> getParticipantsByAction(int idAction) async {
     return await (select(participants)..where((p) =>
-        p.zzaActionFK.equals(idAction))).get();
+        p.zzaActionFK.equals(idAction))..orderBy([(p) =>
+        OrderingTerm(expression: p.firstName), (p) =>
+        OrderingTerm(expression: p.lastName)])).get();
   }
 
   /// Get participant based on ID
