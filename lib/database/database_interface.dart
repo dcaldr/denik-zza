@@ -39,4 +39,5 @@ String quickPrintZaznamyOsoby(int idOsoby);
 //========= Vojtovy přidané metody =============================================
 
 Future<List<MemoryZaznam>> getRecordsByParticipantID(int id);
+Future<List<MemoryOsoba>> getParticipantsByAction(int idAction);
 }

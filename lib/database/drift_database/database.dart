@@ -90,6 +90,12 @@ class AppDatabase extends _$AppDatabase {
         z.id.equals(id))).getSingleOrNull();
   }
 
+  /// Get list of participants assigned to a zza action
+  Future<List<Participant>> getParticipantsByAction(int idAction) async {
+    return await (select(participants)..where((p) =>
+        p.zzaActionFK.equals(idAction))).get();
+  }
+
   /// Get participant based on ID
   Future<Participant?> getParticipantByID(int id) async {
     return await (select(participants)..where((p) =>

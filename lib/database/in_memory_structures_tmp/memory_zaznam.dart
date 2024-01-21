@@ -18,6 +18,7 @@ class MemoryZaznam {
       this.idAuthor, this.idPacient);
   MemoryZaznam.short(this.popis, this.idPacient);
   MemoryZaznam.longer(this.nazev, this.popis, this.idPacient);
+
   MemoryZaznam.complete(this.idZaznamu, this.casZaznamu, this.nazev,
       this.popis, this.lecba, this.isPrinted, this.idAuthor, this.idPacient);
 
