@@ -93,4 +93,10 @@ class MemoryDatabase implements DatabaseInterface {
     // TODO: implement getRecordsByParticipantID
     throw UnimplementedError();
   }
+
+  @override
+  Future<List<MemoryOsoba>> getParticipantsByAction(int idAction) {
+    // TODO: implement getParticipantsByAction
+    throw UnimplementedError();
+  }
 }

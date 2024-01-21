@@ -64,4 +64,21 @@ class DatabaseWrapper implements DatabaseInterface {
     
     return memoryRecords;
   }
+
+  @override
+  Future<List<MemoryOsoba>> getParticipantsByAction(int idAction) async {
+    List<Participant> participants = await
+    driftDatabase.getParticipantsByAction(idAction);
+
+    List<MemoryOsoba> memoryParticipants = [];
+
+    for(Participant p in participants) {
+      memoryParticipants.add(MemoryOsoba.complete(p.id, p.firstName, p.lastName,
+        p.address, p.birthNumber, p.birthDate, p.parentPhoneNumber,
+        p.eligibleConfirmation, p.nonInfectiousConfirmation, p.wasPrinted,
+        p.insuranceCompanyFK, p.zzaActionFK));
+    }
+
+    return memoryParticipants;
+  }
 }
