@@ -88,27 +88,24 @@ class MemoryDatabase implements DatabaseInterface {
    return addZaznam(MemoryZaznam.short(popis, idPacient));
   }
 
-  @override
-  Future<List<MemoryZaznam>> getRecordsByParticipantID(int id) {
-    // TODO: implement getRecordsByParticipantID
-    throw UnimplementedError();
-  }
+ @override
+Future<List<MemoryZaznam>> getRecordsByParticipantID(int id) async {
+  return zaznamy.where((zaznam) => zaznam.idPacient == id).toList();
+}
 
-  @override
-  Future<List<MemoryOsoba>> getParticipantsByAction(int idAction) {
-    // TODO: implement getParticipantsByAction
-    throw UnimplementedError();
-  }
+@override
+Future<List<MemoryOsoba>> getParticipantsByAction(int idAction) async {
+  // Assuming there's a field in MemoryOsoba that links to an action
+  return osoby.where((osoba) => osoba.id == idAction).toList();
+}
 
-  @override
-  Future<int?> getPinnedActionID() {
-    // TODO: implement getPinnedActionID
-    throw UnimplementedError();
-  }
+@override
+Future<int?> getPinnedActionID() async {
+throw UnimplementedError();
+}
 
-  @override
-  Future<int> udpateCache(int? pinnedActionID) {
-    // TODO: implement udpateCache
-    throw UnimplementedError();
-  }
+@override
+Future<int> udpateCache(int? pinnedActionID) async {
+throw UnimplementedError();
+}
 }
