@@ -2,8 +2,7 @@ import 'in_memory_structures_tmp/memory_osoba.dart';
 import 'in_memory_structures_tmp/memory_zaznam.dart';
 /// interface between database and app
 ///
-/// Temporary solution while developing the app.
-/// creates standarts for databses to fulfil and one point of contact for app
+/// creates standards for databases to fulfil to be successfully used by the app
 abstract class DatabaseInterface {
 /// Adds a `MemoryZaznam` instance to the database.
 ///
@@ -16,7 +15,7 @@ Future <bool> addZaznam(MemoryZaznam zaznam);
 /// This method creates a new `MemoryZaznam` instance with the provided `popis` and `idPacient` (default is 0),
 /// and adds it to the database. Returns `true` if the operation is successful.
 /// @Warning: uses idPacient 0 as default
-Future <bool> quickAddNewZaznam(String popis, {int idPacient=0}); //FIXME: idPacient 0 as default
+Future <bool> quickAddNewZaznam(String popis, int idPacient);
 
 /// Adds a `MemoryOsoba` instance to the database.
 ///
@@ -37,9 +36,32 @@ Future <void> quickPrintAllOsoby();
 String quickPrintZaznamyOsoby(int idOsoby);
 
 //========= Vojtovy přidané metody =============================================
-
+  /// Fetches a list of [MemoryZaznam] instances associated with a specific participant.
+  ///
+  /// This method takes an [id] as a parameter, which represents the ID of a participant.
+  /// It queries the database for all [MemoryZaznam] instances that are associated with this participant.
+  /// The method returns a [Future] that resolves to a [List] of [MemoryZaznam] instances.
+  /// If no records are found for the given participant ID, the method returns an empty list.
 Future<List<MemoryZaznam>> getRecordsByParticipantID(int id);
-Future<List<MemoryOsoba>> getParticipantsByAction(int idAction);
-Future<int> udpateCache(int? pinnedActionID);
-Future<int?> getPinnedActionID();
+
+  /// Fetches a list of [MemoryOsoba] instances associated with a specific event.
+  ///
+  /// This method takes an [idAction] as a parameter, which represents the ID of an event.
+  /// It queries the database for all [MemoryOsoba] instances that are associated.
+  /// The method returns a [Future] that resolves to a [List] of [MemoryOsoba] instances.
+  /// If no participants are found for the given action ID, the method returns an empty list.
+Future<List<MemoryOsoba>> getParticipantsByEvent(int idAction);
+
+  /// Updates the "settings" cache with a new [pinnedActionID].
+  ///
+  /// This method takes an [pinnedActionID] as a parameter, which represents the ID of an action that is to be pinned.
+  /// It updates the cache with this new [pinnedActionID].
+  /// The method returns a [Future] that resolves to an [int] which represents the number of rows affected by the update operation.
+Future<int> updateCache(int? pinnedActionID);
+
+  /// This method gets the pinned event ID
+  ///
+  /// The method returns a [Future] that resolves to an [int] which represents the pinned action ID.
+  /// If no pinned action ID is found, the method returns `null`.
+Future<int?> getPinnedEventID();
 }
