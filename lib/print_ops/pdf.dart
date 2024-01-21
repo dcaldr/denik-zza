@@ -12,7 +12,7 @@ import '../database/in_memory_structures_tmp/memory_zaznam.dart';
 /// This class handles printing and reprintig of PDFs
 class PDFGenerator{
 
-  /// for developing purposes only
+  /// for developing purposes only FIXME: remove when possible
  @Deprecated("This shouldn't be used in production code, will be removed when possible")
 static final  MemoryOsoba testOsoba = DummyData().osobnostiBard[0] ;
 PdfColor myTransparentColor = PdfColor.fromHex("#FFFFFF00"); //transaprent
@@ -176,7 +176,7 @@ pw.Widget _generateHeader({required MemoryOsoba osoba }) {
 /// Development only method for generating PDFs
   ///
   /// This method was used in development and will be removed when there are no dependencies on it
-  /// along with [testOsoba]
+  /// along with [testOsoba] FIXME: remove when possible
   @Deprecated("This shouldn't be used in production code, will be removed when possible")
 devTMPgeneratePDFasSomething( List<String> notes,[List<int> toSkip = const [2]]) async {
     final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();

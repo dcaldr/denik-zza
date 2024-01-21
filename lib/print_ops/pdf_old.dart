@@ -1,7 +1,7 @@
-
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+@Deprecated("Development-Only Use PDFGenerator instead")
 class PDFGeneratorOLD {
   final bool _hideHeader = false;
   final bool _hideBorders = false;
