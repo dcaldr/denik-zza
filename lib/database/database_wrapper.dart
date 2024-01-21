@@ -25,7 +25,7 @@ class DatabaseWrapper implements DatabaseInterface {
   DatabaseWrapper._internal();
 
   final MemoryDatabase _memoryDatabase = MemoryDatabase();
-  final driftDatabase = AppDatabase();
+  final _driftDatabase = AppDatabase();
 
   @override
   Future<bool> addZaznam(MemoryZaznam zaznam) async => _memoryDatabase.addZaznam(zaznam);
@@ -54,7 +54,7 @@ class DatabaseWrapper implements DatabaseInterface {
 
   @override
   Future<List<MemoryZaznam>> getRecordsByParticipantID(int id) async {
-    List<Record> records = await driftDatabase.getRecordsByParticipantID(id);
+    List<Record> records = await _driftDatabase.getRecordsByParticipantID(id);
     List<MemoryZaznam> memoryRecords = [];
     
     for(Record r in records) {
@@ -69,7 +69,7 @@ class DatabaseWrapper implements DatabaseInterface {
   @override
   Future<List<MemoryOsoba>> getParticipantsByAction(int idAction) async {
     List<Participant> participants = await
-    driftDatabase.getParticipantsByAction(idAction);
+    _driftDatabase.getParticipantsByAction(idAction);
 
     List<MemoryOsoba> memoryParticipants = [];
 
@@ -85,7 +85,7 @@ class DatabaseWrapper implements DatabaseInterface {
 
   @override
   Future<int> udpateCache(int? pinnedActionID) async {
-    return driftDatabase.updateCache(CacheCompanion(
+    return _driftDatabase.updateCache(CacheCompanion(
       id: Value(1),
       pinnedActionID: Value(pinnedActionID)
     ));
@@ -93,6 +93,6 @@ class DatabaseWrapper implements DatabaseInterface {
 
   @override
   Future<int?> getPinnedActionID() async {
-    return driftDatabase.getPinnedActionID();
+    return _driftDatabase.getPinnedActionID();
   }
 }
