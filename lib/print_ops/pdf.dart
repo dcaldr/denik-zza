@@ -7,7 +7,7 @@ import 'package:printing/printing.dart';
 import '../database/dummy_data.dart';
 import '../database/in_memory_structures_tmp/memory_zaznam.dart';
 
-/// Class for generating  and apppending examination related PDFs
+/// Class for generating  and appending examination related PDFs
 ///
 /// This class handles printing and reprintig of PDFs
 class PDFGenerator{
@@ -207,6 +207,39 @@ devTMPgeneratePDFasSomething( List<String> notes,[List<int> toSkip = const [2]])
     ),
   ),
 );
+    return pdf.save();
+  }
+  generatePDFforPerson({required MemoryOsoba osoba}) async {
+    final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
+    final pdf = pw.Document( //TODO:add metadata
+      theme: pw.ThemeData.withFont(
+        base: mSafeFont,
+      ),
+    );
+
+    pw.Widget headerWidget = _generateHeader(osoba: osoba);
+
+    List<MemoryZaznam> corrected =[];
+    for(int i=0; i<MemoryZaznamHolder().memoryZaznamList.length;i++ ){
+      MemoryZaznam tmp = MemoryZaznamHolder().memoryZaznamList[i];
+      tmp.idZaznamu = i;
+      corrected.add(tmp);
+    }
+
+    List<pw.Widget> noteTextWidgets = _generateNotes(corrected);
+    pw.Widget notesWidget = _generateNotesWidget(noteTextWidgets);
+
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) => pw.Column(
+          children: [
+            headerWidget,
+            pw.SizedBox(height: 20),
+            notesWidget,
+          ],
+        ),
+      ),
+    );
     return pdf.save();
   }
 

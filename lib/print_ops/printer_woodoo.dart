@@ -1,4 +1,7 @@
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:printing/printing.dart';
+
+import '../database/in_memory_structures_tmp/memory_osoba.dart';
 
 // class PrinterWoodoo extends Printer {
 //   PrinterWoodoo() : super('WooDoo');
@@ -26,15 +29,15 @@ import 'package:printing/printing.dart';
 class PrinterWoodoo{
 
   printAll(){
-    print('printAll');
+  // 1) get all persons from database
+  // 2) printSelected() for each person
+  // 3) _sendToPrinter() resulting file
   }
-  printSelected(){
-    print('printSelected');
+  printSelected(List<MemoryOsoba> seznamOsob ){
+
   }
-appendPrintQueue() {
-  print('appendPrintQueue');
-}
-appendPrintOne(){
+appendPrintOne(MemoryOsoba osoba){
+List<MemoryZaznam> a;
 
 }
 }
