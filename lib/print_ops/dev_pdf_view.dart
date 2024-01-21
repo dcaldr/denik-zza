@@ -14,7 +14,7 @@ class DevPdfView extends StatelessWidget {
         title: const Text("PDF Preview"),
       ),
       body: PdfPreview(
-        build: (format) async => await PDFGenerator().generatePDFasSomething( notes)/* .save() */, // again hardcded
+        build: (format) async => await PDFGenerator().devTMPgeneratePDFasSomething( notes)/* .save() */, // again hardcded
         allowSharing: true,
         allowPrinting: true,
         initialPageFormat: PdfPageFormat.a4,
