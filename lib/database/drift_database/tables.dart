@@ -70,3 +70,8 @@ class Medications extends Table {
   // Foreign keys
   IntColumn get participantFK => integer().references(Participants, #id)();
 }
+
+class Cache extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get pinnedActionID => integer().nullable().withDefault(const Constant(null))();
+}

@@ -99,4 +99,16 @@ class MemoryDatabase implements DatabaseInterface {
     // TODO: implement getParticipantsByAction
     throw UnimplementedError();
   }
+
+  @override
+  Future<int?> getPinnedActionID() {
+    // TODO: implement getPinnedActionID
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<int> udpateCache(int? pinnedActionID) {
+    // TODO: implement udpateCache
+    throw UnimplementedError();
+  }
 }

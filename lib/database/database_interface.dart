@@ -40,4 +40,6 @@ String quickPrintZaznamyOsoby(int idOsoby);
 
 Future<List<MemoryZaznam>> getRecordsByParticipantID(int id);
 Future<List<MemoryOsoba>> getParticipantsByAction(int idAction);
+Future<int> udpateCache(int? pinnedActionID);
+Future<int?> getPinnedActionID();
 }
