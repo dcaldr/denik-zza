@@ -2437,6 +2437,187 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
   }
 }
 
+class $CacheTable extends Cache with TableInfo<$CacheTable, CacheData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CacheTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _pinnedActionIDMeta =
+      const VerificationMeta('pinnedActionID');
+  @override
+  late final GeneratedColumn<int> pinnedActionID = GeneratedColumn<int>(
+      'pinned_action_i_d', aliasedName, true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(null));
+  @override
+  List<GeneratedColumn> get $columns => [id, pinnedActionID];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cache';
+  @override
+  VerificationContext validateIntegrity(Insertable<CacheData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('pinned_action_i_d')) {
+      context.handle(
+          _pinnedActionIDMeta,
+          pinnedActionID.isAcceptableOrUnknown(
+              data['pinned_action_i_d']!, _pinnedActionIDMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CacheData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CacheData(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      pinnedActionID: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}pinned_action_i_d']),
+    );
+  }
+
+  @override
+  $CacheTable createAlias(String alias) {
+    return $CacheTable(attachedDatabase, alias);
+  }
+}
+
+class CacheData extends DataClass implements Insertable<CacheData> {
+  final int id;
+  final int? pinnedActionID;
+  const CacheData({required this.id, this.pinnedActionID});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    if (!nullToAbsent || pinnedActionID != null) {
+      map['pinned_action_i_d'] = Variable<int>(pinnedActionID);
+    }
+    return map;
+  }
+
+  CacheCompanion toCompanion(bool nullToAbsent) {
+    return CacheCompanion(
+      id: Value(id),
+      pinnedActionID: pinnedActionID == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pinnedActionID),
+    );
+  }
+
+  factory CacheData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CacheData(
+      id: serializer.fromJson<int>(json['id']),
+      pinnedActionID: serializer.fromJson<int?>(json['pinnedActionID']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'pinnedActionID': serializer.toJson<int?>(pinnedActionID),
+    };
+  }
+
+  CacheData copyWith(
+          {int? id, Value<int?> pinnedActionID = const Value.absent()}) =>
+      CacheData(
+        id: id ?? this.id,
+        pinnedActionID:
+            pinnedActionID.present ? pinnedActionID.value : this.pinnedActionID,
+      );
+  @override
+  String toString() {
+    return (StringBuffer('CacheData(')
+          ..write('id: $id, ')
+          ..write('pinnedActionID: $pinnedActionID')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, pinnedActionID);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CacheData &&
+          other.id == this.id &&
+          other.pinnedActionID == this.pinnedActionID);
+}
+
+class CacheCompanion extends UpdateCompanion<CacheData> {
+  final Value<int> id;
+  final Value<int?> pinnedActionID;
+  const CacheCompanion({
+    this.id = const Value.absent(),
+    this.pinnedActionID = const Value.absent(),
+  });
+  CacheCompanion.insert({
+    this.id = const Value.absent(),
+    this.pinnedActionID = const Value.absent(),
+  });
+  static Insertable<CacheData> custom({
+    Expression<int>? id,
+    Expression<int>? pinnedActionID,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (pinnedActionID != null) 'pinned_action_i_d': pinnedActionID,
+    });
+  }
+
+  CacheCompanion copyWith({Value<int>? id, Value<int?>? pinnedActionID}) {
+    return CacheCompanion(
+      id: id ?? this.id,
+      pinnedActionID: pinnedActionID ?? this.pinnedActionID,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (pinnedActionID.present) {
+      map['pinned_action_i_d'] = Variable<int>(pinnedActionID.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CacheCompanion(')
+          ..write('id: $id, ')
+          ..write('pinnedActionID: $pinnedActionID')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   late final $InsuranceCompaniesTable insuranceCompanies =
@@ -2448,6 +2629,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $AllergiesLimitationsTable allergiesLimitations =
       $AllergiesLimitationsTable(this);
   late final $MedicationsTable medications = $MedicationsTable(this);
+  late final $CacheTable cache = $CacheTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2459,6 +2641,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         paramedics,
         records,
         allergiesLimitations,
-        medications
+        medications,
+        cache
       ];
 }

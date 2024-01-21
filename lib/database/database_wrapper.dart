@@ -1,6 +1,7 @@
 
 
 import 'package:denik_zza/database/drift_database/database.dart';
+import 'package:drift/drift.dart';
 
 import 'database_interface.dart';
 import 'in_memory_structures_tmp/memory_database.dart';
@@ -80,5 +81,18 @@ class DatabaseWrapper implements DatabaseInterface {
     }
 
     return memoryParticipants;
+  }
+
+  @override
+  Future<int> udpateCache(int? pinnedActionID) async {
+    return driftDatabase.updateCache(CacheCompanion(
+      id: Value(1),
+      pinnedActionID: Value(pinnedActionID)
+    ));
+  }
+
+  @override
+  Future<int?> getPinnedActionID() async {
+    return driftDatabase.getPinnedActionID();
   }
 }

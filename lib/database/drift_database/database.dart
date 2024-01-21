@@ -12,7 +12,7 @@ import 'tables.dart';
 part 'database.g.dart';
 
 @DriftDatabase(tables: [InsuranceCompanies, ZzaActions, Participants,
-  Paramedics, Records, AllergiesLimitations, Medications])
+  Paramedics, Records, AllergiesLimitations, Medications, Cache])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -134,7 +134,21 @@ class AppDatabase extends _$AppDatabase {
         m.participantFK.equals(id))).get();
   }
 
+  /// Get pinned action ID, returns either int or null
+  Future<int?> getPinnedActionID() async {
+    CacheData c = await (select(cache)..where((c) =>
+        c.id.equals(1))).getSingle();
+
+    return c.pinnedActionID;
+  }
+
   //==================== UPDATES ===============================================
+
+  /// Update or insert into cache
+  Future<int> updateCache(CacheCompanion c) async {
+    return into(cache).insertOnConflictUpdate(c);
+  }
+
   //==================== DELETES ===============================================
 }
 
