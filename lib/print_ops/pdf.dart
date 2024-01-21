@@ -7,9 +7,14 @@ import 'package:printing/printing.dart';
 import '../database/dummy_data.dart';
 import '../database/in_memory_structures_tmp/memory_zaznam.dart';
 
-
+/// Class for generating  and apppending examination related PDFs
+///
+/// This class handles printing and reprintig of PDFs
 class PDFGenerator{
-MemoryOsoba osoba = DummyData().osobnostiBard[0] ;
+
+  /// for developing purposes only
+ @Deprecated("This shouldn't be used in production code, will be removed when possible")
+static final  MemoryOsoba testOsoba = DummyData().osobnostiBard[0] ;
 PdfColor myTransparentColor = PdfColor.fromHex("#FFFFFF00"); //transaprent
 PdfColor myPrimaryColor = PdfColors.black;
 PdfColor mySecondaryColor = PdfColors.black;
@@ -114,7 +119,7 @@ pw.Widget _noteItem(MemoryZaznam note) {
   // ),
 }
 
-pw.Widget _generateHeader() {
+pw.Widget _generateHeader({required MemoryOsoba osoba }) {
   pw.Widget headerWidget;
   PdfColor headerPrimaryColor = myPrimaryColor;
   if (_hideHeader) {
@@ -168,8 +173,12 @@ pw.Widget _generateHeader() {
 
   return headerWidget;
 }
-
-generatePDFasSomething( List<String> notes,[List<int> toSkip = const [2]]) async {
+/// Development only method for generating PDFs
+  ///
+  /// This method was used in development and will be removed when there are no dependencies on it
+  /// along with [testOsoba]
+  @Deprecated("This shouldn't be used in production code, will be removed when possible")
+devTMPgeneratePDFasSomething( List<String> notes,[List<int> toSkip = const [2]]) async {
     final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
     final pdf = pw.Document(
       theme: pw.ThemeData.withFont(
@@ -177,7 +186,7 @@ generatePDFasSomething( List<String> notes,[List<int> toSkip = const [2]]) async
       ),
     );
 
-    pw.Widget headerWidget = _generateHeader();
+    pw.Widget headerWidget = _generateHeader(osoba: testOsoba);
     List<MemoryZaznam> corrected =[];
     for(int i=0; i<MemoryZaznamHolder().memoryZaznamList.length;i++ ){
       MemoryZaznam tmp = MemoryZaznamHolder().memoryZaznamList[i];
