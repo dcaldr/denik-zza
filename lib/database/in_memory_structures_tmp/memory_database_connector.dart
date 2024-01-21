@@ -84,7 +84,7 @@ class MemoryDatabase implements DatabaseInterface {
   }
 
   @override
-  Future<bool> quickAddNewZaznam(String popis, {int idPacient = 0}) async {
+  Future<bool> quickAddNewZaznam(String popis,  idPacient ) async {
    return addZaznam(MemoryZaznam.short(popis, idPacient));
   }
 
@@ -94,18 +94,18 @@ Future<List<MemoryZaznam>> getRecordsByParticipantID(int id) async {
 }
 
 @override
-Future<List<MemoryOsoba>> getParticipantsByAction(int idAction) async {
+Future<List<MemoryOsoba>> getParticipantsByEvent(int idAction) async {
   // Assuming there's a field in MemoryOsoba that links to an action
   return osoby.where((osoba) => osoba.id == idAction).toList();
 }
 
 @override
-Future<int?> getPinnedActionID() async {
+Future<int?> getPinnedEventID() async {
 throw UnimplementedError();
 }
 
 @override
-Future<int> udpateCache(int? pinnedActionID) async {
+Future<int> updateCache(int? pinnedActionID) async {
 throw UnimplementedError();
 }
 }

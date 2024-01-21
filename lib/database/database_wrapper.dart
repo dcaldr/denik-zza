@@ -1,32 +1,42 @@
-
-
 import 'package:denik_zza/database/drift_database/database.dart';
-import 'package:drift/drift.dart';
-
+import 'package:denik_zza/database/drift_database_connector.dart';
 import 'database_interface.dart';
-import 'in_memory_structures_tmp/memory_database.dart';
-import 'in_memory_structures_tmp/memory_osoba.dart';
-import 'in_memory_structures_tmp/memory_zaznam.dart';
+import 'in_memory_structures_tmp/memory_database_connector.dart';
 
-/// Methods for high-level database interactions.
+
+/// Selects the correct [DatabaseInterface] instance.
 ///
 ///  **Always use as ```dart
-///   DatabaseInterface dbInterface = DatabaseWrapper();
+///   DatabaseInterface dbInterface = DatabaseWrapper().getDatabase();
 ///   ``` **
-/// Right now, this is just a empty Wrapper for database-in progress.
-/// Later on could be rewritten to point to a database.
-class DatabaseWrapper implements DatabaseInterface {
+///   or ```dart
+///   DatabaseInterface dbInterface = getDatabase();
+///   ```
+/// Right now, it's singleton by historical reasons.
+/// new databases should be easier to implement.
+class DatabaseWrapper  {
+
+
   static final DatabaseWrapper _singleton = DatabaseWrapper._internal();
 
   factory DatabaseWrapper() {
     return _singleton;
   }
-
   DatabaseWrapper._internal();
+/// Database to be used by the app.
+  ///
+  /// 1 - in memory database
+  ///
+  /// 0 - default database ( now [DriftDatabaseConnector] )
+  static int databaseID = 0;
 
+  @Deprecated("Remove when possible")
   final MemoryDatabase _memoryDatabase = MemoryDatabase();
+  @Deprecated("Remove when possible")
   final _driftDatabase = AppDatabase();
 
+  /**===================== REMOVE WHEN POSSIBLE ↓ =========================== */
+/**
   @override
   Future<bool> addZaznam(MemoryZaznam zaznam) async => _memoryDatabase.addZaznam(zaznam);
   @override
@@ -37,7 +47,7 @@ class DatabaseWrapper implements DatabaseInterface {
     return _memoryDatabase.addOsoba(osoba);
   }
 
-  Future<bool> quickAddNewZaznam( String popis, {int idPacient = 0} ) async {
+  Future<bool> quickAddNewZaznam( String popis, int idPacient  ) async {
     return _memoryDatabase.addZaznam(MemoryZaznam.short( popis,  idPacient));
   }
 
@@ -84,7 +94,7 @@ class DatabaseWrapper implements DatabaseInterface {
   }
 
   @override
-  Future<int> udpateCache(int? pinnedActionID) async {
+  Future<int> updateCache(int? pinnedActionID) async {
     return _driftDatabase.updateCache(CacheCompanion(
       id: Value(1),
       pinnedActionID: Value(pinnedActionID)
@@ -94,5 +104,18 @@ class DatabaseWrapper implements DatabaseInterface {
   @override
   Future<int?> getPinnedActionID() async {
     return _driftDatabase.getPinnedActionID();
+  }
+*/
+  /**===================== REMOVE WHEN POSSIBLE ↑ ============================*/
+
+  /// Returns the correct database instance.
+  ///
+  /// This method returns the correct database instance based on the [_databaseID] variable.
+  /// If [_databaseID] is undefinded it falls back to [DriftDatabaseConnector].
+  static DatabaseInterface getDatabase() {
+    if(databaseID == 1 ){
+      return MemoryDatabase();
+}
+    return DriftDatabaseConnector();
   }
 }
