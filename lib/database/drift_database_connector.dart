@@ -31,9 +31,9 @@ class DriftDatabaseConnector implements DatabaseInterface {
   }
 
   @override
-  Future<List<MemoryOsoba>> getParticipantsByEvent(int idAction) async {
+  Future<List<MemoryOsoba>> getParticipantsByEvent(int idEvent) async {
     List<Participant> participants = await
-    _driftDatabase.getParticipantsByAction(idAction);
+    _driftDatabase.getParticipantsByAction(idEvent);
 
     List<MemoryOsoba> memoryParticipants = [];
 
@@ -85,10 +85,10 @@ class DriftDatabaseConnector implements DatabaseInterface {
   }
 
   @override
-  void updateCache(int? pinnedActionID) async {
+  void updateCache(int? pinnedEventID) async {
     _driftDatabase.updateCache(CacheCompanion(
         id: const Value(1),
-        pinnedActionID: Value(pinnedActionID)
+        pinnedActionID: Value(pinnedEventID)
     ));
   }
 }
