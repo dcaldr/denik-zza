@@ -108,4 +108,10 @@ throw UnimplementedError();
 void updateCache(int? pinnedEventID) async {
 throw UnimplementedError();
 }
+
+  @override
+  Future<List<MemoryOsoba>> getParticipantsByPinnedEvent() {
+    // TODO: implement getParticipantsByPinnedEvent
+    throw UnimplementedError();
+  }
 }

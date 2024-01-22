@@ -91,4 +91,16 @@ class DriftDatabaseConnector implements DatabaseInterface {
         pinnedActionID: Value(pinnedEventID)
     ));
   }
+
+  @override
+  Future<List<MemoryOsoba>> getParticipantsByPinnedEvent() async {
+    int? pinnedEvent = await _driftDatabase.getPinnedActionID();
+    List<MemoryOsoba> memoryParticipants = [];
+
+    if(pinnedEvent != null) {
+      memoryParticipants = await getParticipantsByEvent(pinnedEvent);
+    }
+
+    return memoryParticipants;
+  }
 }
