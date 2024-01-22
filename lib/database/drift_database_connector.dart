@@ -85,8 +85,8 @@ class DriftDatabaseConnector implements DatabaseInterface {
   }
 
   @override
-  Future<int> updateCache(int? pinnedActionID) async {
-    return _driftDatabase.updateCache(CacheCompanion(
+  void updateCache(int? pinnedActionID) async {
+    _driftDatabase.updateCache(CacheCompanion(
         id: const Value(1),
         pinnedActionID: Value(pinnedActionID)
     ));

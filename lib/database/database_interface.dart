@@ -56,8 +56,7 @@ Future<List<MemoryOsoba>> getParticipantsByEvent(int idAction);
   ///
   /// This method takes an [pinnedActionID] as a parameter, which represents the ID of an action that is to be pinned.
   /// It updates the cache with this new [pinnedActionID].
-  /// The method returns a [Future] that resolves to an [int] which represents the number of rows affected by the update operation.
-Future<int> updateCache(int? pinnedActionID);
+void updateCache(int? pinnedActionID);
 
   /// This method gets the pinned event ID
   ///
