@@ -57,7 +57,26 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
   TextEditingController nonInfectiousConfirmationController = TextEditingController();
   TextEditingController eligibleConfirmationController = TextEditingController();
 
-  // Dropdown items for gender
+  void _handleCsvImport() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('CSV Import'),
+          content: Text('Zatím dávám místo logiky CSV'),
+          actions: <Widget>[
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   List<String> genderOptions = ['Muž', 'Žena'];
   String selectedGender = 'Muž';
 
@@ -91,7 +110,7 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
     return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
   }
 
-@override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -115,17 +134,17 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
               ElevatedButton(
                 onPressed: () => _selectDate(context, selectedBirthDate, birthDateController),
                 style: ElevatedButton.styleFrom(
-                primary: const Color.fromARGB(255, 0, 0, 0), // Change this to your preferred color
-                onPrimary: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+                  primary: const Color.fromARGB(255, 0, 0, 0), // Change this to your preferred color
+                  onPrimary: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    vertical: 16.0,
+                    horizontal: 24.0,
+                  ),
                 ),
-                padding: EdgeInsets.symmetric(
-                  vertical: 16.0,
-                  horizontal: 24.0,
-                ),
-              ),
-              child: Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
@@ -155,7 +174,6 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
                 decoration: InputDecoration(labelText: 'Číslo pojištění'),
                 keyboardType: TextInputType.phone,
               ),
-              // Dropdown for Gender
               SizedBox(height: 15),
               DropdownButtonFormField(
                 value: selectedGender,
@@ -172,10 +190,7 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
                 }).toList(),
                 decoration: InputDecoration(labelText: 'Pohlaví'),
               ),
-              // Additional Fields
               SizedBox(height: 15),
-              // ... (Other fields)
-              // Medicine and Frequency
               Row(
                 children: [
                   Expanded(
@@ -227,6 +242,32 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
                   ),
                   Text('Potvrzení o způsobilosti'),
                 ],
+              ),
+              SizedBox(height: 5),
+              ElevatedButton(
+                onPressed: _handleCsvImport,
+                style: ElevatedButton.styleFrom(
+                  primary: Color.fromARGB(255, 0, 0, 0),
+                  onPrimary: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 24,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.file_upload),
+                    SizedBox(width: 10),
+                    Text(
+                      'CSV Import',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
               ),
               SizedBox(height: 15),
               // Buttons
