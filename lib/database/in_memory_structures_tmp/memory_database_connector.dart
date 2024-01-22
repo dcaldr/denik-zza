@@ -94,9 +94,9 @@ Future<List<MemoryZaznam>> getRecordsByParticipantID(int id) async {
 }
 
 @override
-Future<List<MemoryOsoba>> getParticipantsByEvent(int idAction) async {
+Future<List<MemoryOsoba>> getParticipantsByEvent(int idEvent) async {
   // Assuming there's a field in MemoryOsoba that links to an action
-  return osoby.where((osoba) => osoba.id == idAction).toList();
+  return osoby.where((osoba) => osoba.id == idEvent).toList();
 }
 
 @override
@@ -105,7 +105,7 @@ throw UnimplementedError();
 }
 
 @override
-void updateCache(int? pinnedActionID) async {
+void updateCache(int? pinnedEventID) async {
 throw UnimplementedError();
 }
 }
