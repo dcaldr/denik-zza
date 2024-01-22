@@ -2,6 +2,7 @@ import 'package:denik_zza/screens/actions/change_profile.dart';
 import 'package:denik_zza/screens/editing_actions/edit_action_page.dart';
 import 'package:denik_zza/screens/login/components/my_button.dart';
 import 'package:denik_zza/screens/participants/add_participantt_page_page.dart';
+import 'package:denik_zza/screens/participants/paticipant_detail_page.dart';
 import 'package:flutter/material.dart';
 
 class ActionDetail extends StatelessWidget {
@@ -132,7 +133,7 @@ Widget build(BuildContext context) {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => ActionDetail()),
+                MaterialPageRoute(builder: (context) => ParticipantDetailPage()),
               );
             },
             child: Text('Detail'),
