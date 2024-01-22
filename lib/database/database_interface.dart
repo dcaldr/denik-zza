@@ -52,6 +52,14 @@ Future<List<MemoryZaznam>> getRecordsByParticipantID(int id);
   /// If no participants are found for the given action ID, the method returns an empty list.
 Future<List<MemoryOsoba>> getParticipantsByEvent(int idEvent);
 
+
+  /// Fetches a list of [MemoryOsoba] instances associated with a pinned event.
+  ///
+  /// It queries the database for all [MemoryOsoba] instances that are associated.
+  /// The method returns a [Future] that resolves to a [List] of [MemoryOsoba] instances.
+  /// If no event is pinned, the method returns an empty list.
+  Future<List<MemoryOsoba>> getParticipantsByPinnedEvent();
+
   /// Updates the "settings" cache with a new [pinnedEventID].
   ///
   /// This method takes an [pinnedEventID] as a parameter, which represents the ID of an action that is to be pinned.
