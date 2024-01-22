@@ -105,13 +105,24 @@ throw UnimplementedError();
 }
 
 @override
-void updateCache(int? pinnedEventID) async {
-throw UnimplementedError();
+Future<List<MemoryOsoba>> getParticipantsByPinnedEvent() {
+  // TODO: implement getParticipantsByPinnedEvent
+  throw UnimplementedError();
 }
 
-  @override
-  Future<List<MemoryOsoba>> getParticipantsByPinnedEvent() {
-    // TODO: implement getParticipantsByPinnedEvent
-    throw UnimplementedError();
-  }
+@override
+void updateCurrentEvent(int? currentEventID) {
+  // TODO: implement updateCurrentEvent
+}
+
+@override
+void updatePinnedEvent(int? pinnedEventID) {
+  // TODO: implement updatePinnedEvent
+}
+
+@override
+Future<int?> getCurrentEventID() {
+  // TODO: implement getCurrentEventID
+  throw UnimplementedError();
+}
 }

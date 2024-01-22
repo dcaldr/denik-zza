@@ -19,9 +19,22 @@ class DriftDatabaseConnector implements DatabaseInterface {
 
 
   @override
-  Future<bool> addOsoba(MemoryOsoba osoba) {
-    // TODO: implement addOsoba
-    throw UnimplementedError();
+  Future<bool> addOsoba(MemoryOsoba osoba) async {
+    ParticipantsCompanion c = ParticipantsCompanion(
+      firstName: Value(osoba.jmeno),
+      lastName: Value(osoba.prijmeni),
+      gender: Value(osoba.pohlavi),
+      address: Value(osoba.adresa),
+      birthNumber: Value(osoba.cisloPojisteni),
+      birthDate: Value(osoba.datumNarozeni),
+      parentPhoneNumber: Value(osoba.telefonniCislo),
+      insuranceCompanyFK: Value(await _driftDatabase.getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna)),
+      zzaActionFK: Value((await _driftDatabase.getCurrentActionID())!)
+    );
+
+    _driftDatabase.addParticipant(c);
+
+    return true;
   }
 
   @override
@@ -38,10 +51,22 @@ class DriftDatabaseConnector implements DatabaseInterface {
     List<MemoryOsoba> memoryParticipants = [];
 
     for(Participant p in participants) {
-      memoryParticipants.add(MemoryOsoba.complete(p.id, p.firstName, p.lastName,
-          p.address, p.birthNumber, p.birthDate, p.parentPhoneNumber,
-          p.eligibleConfirmation, p.nonInfectiousConfirmation, p.wasPrinted,
-          p.insuranceCompanyFK, p.zzaActionFK));
+      int? insCompFK = p.insuranceCompanyFK;
+      InsuranceCompany? ic;
+      String? insCompName;
+
+      if(insCompFK != null) {
+        ic = await _driftDatabase.getInsuranceCompanyByID(insCompFK);
+        insCompName = ic?.name;
+      }
+
+      memoryParticipants.add(
+        MemoryOsoba.named(id: p.id, jmeno: p.firstName, prijmeni: p.lastName,
+        pohlavi: p.gender, adresa: p.address, cisloPojisteni: p.birthNumber,
+        datumNarozeni: p.birthDate, telefonniCislo: p.parentPhoneNumber,
+        zpusobilost: p.eligibleConfirmation, bezinfekcnost: p.nonInfectiousConfirmation,
+        wasPrinted: p.wasPrinted, zdravotniPojistovna: insCompName)
+      );
     }
 
     return memoryParticipants;
@@ -50,6 +75,11 @@ class DriftDatabaseConnector implements DatabaseInterface {
   @override
   Future<int?> getPinnedEventID() async {
     return _driftDatabase.getPinnedActionID();
+  }
+
+  @override
+  Future<int?> getCurrentEventID() async {
+    return _driftDatabase.getCurrentActionID();
   }
 
   @override
@@ -85,10 +115,18 @@ class DriftDatabaseConnector implements DatabaseInterface {
   }
 
   @override
-  void updateCache(int? pinnedEventID) async {
+  void updatePinnedEvent(int? pinnedEventID) async {
     _driftDatabase.updateCache(CacheCompanion(
         id: const Value(1),
         pinnedActionID: Value(pinnedEventID)
+    ));
+  }
+
+  @override
+  void updateCurrentEvent(int? currentEventID) async {
+    _driftDatabase.updateCache(CacheCompanion(
+        id: const Value(1),
+        currentActionID: Value(currentEventID)
     ));
   }
 

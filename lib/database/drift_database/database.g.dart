@@ -516,39 +516,44 @@ class $ParticipantsTable extends Participants
           GeneratedColumn.checkTextLength(minTextLength: 0, maxTextLength: 64),
       type: DriftSqlType.string,
       requiredDuringInsert: true);
+  static const VerificationMeta _genderMeta = const VerificationMeta('gender');
+  @override
+  late final GeneratedColumn<int> gender = GeneratedColumn<int>(
+      'gender', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _addressMeta =
       const VerificationMeta('address');
   @override
   late final GeneratedColumn<String> address = GeneratedColumn<String>(
-      'address', aliasedName, false,
+      'address', aliasedName, true,
       additionalChecks:
           GeneratedColumn.checkTextLength(minTextLength: 0, maxTextLength: 128),
       type: DriftSqlType.string,
-      requiredDuringInsert: true);
+      requiredDuringInsert: false);
   static const VerificationMeta _birthNumberMeta =
       const VerificationMeta('birthNumber');
   @override
   late final GeneratedColumn<String> birthNumber = GeneratedColumn<String>(
-      'birth_number', aliasedName, false,
+      'birth_number', aliasedName, true,
       additionalChecks:
           GeneratedColumn.checkTextLength(minTextLength: 0, maxTextLength: 11),
       type: DriftSqlType.string,
-      requiredDuringInsert: true);
+      requiredDuringInsert: false);
   static const VerificationMeta _birthDateMeta =
       const VerificationMeta('birthDate');
   @override
   late final GeneratedColumn<DateTime> birthDate = GeneratedColumn<DateTime>(
-      'birth_date', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+      'birth_date', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _parentPhoneNumberMeta =
       const VerificationMeta('parentPhoneNumber');
   @override
   late final GeneratedColumn<String> parentPhoneNumber =
-      GeneratedColumn<String>('parent_phone_number', aliasedName, false,
+      GeneratedColumn<String>('parent_phone_number', aliasedName, true,
           additionalChecks: GeneratedColumn.checkTextLength(
               minTextLength: 0, maxTextLength: 13),
           type: DriftSqlType.string,
-          requiredDuringInsert: true);
+          requiredDuringInsert: false);
   static const VerificationMeta _eligibleConfirmationMeta =
       const VerificationMeta('eligibleConfirmation');
   @override
@@ -583,9 +588,9 @@ class $ParticipantsTable extends Participants
       const VerificationMeta('insuranceCompanyFK');
   @override
   late final GeneratedColumn<int> insuranceCompanyFK = GeneratedColumn<int>(
-      'insurance_company_f_k', aliasedName, false,
+      'insurance_company_f_k', aliasedName, true,
       type: DriftSqlType.int,
-      requiredDuringInsert: true,
+      requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'REFERENCES insurance_companies (id)'));
   static const VerificationMeta _zzaActionFKMeta =
@@ -602,6 +607,7 @@ class $ParticipantsTable extends Participants
         id,
         firstName,
         lastName,
+        gender,
         address,
         birthNumber,
         birthDate,
@@ -637,33 +643,29 @@ class $ParticipantsTable extends Participants
     } else if (isInserting) {
       context.missing(_lastNameMeta);
     }
+    if (data.containsKey('gender')) {
+      context.handle(_genderMeta,
+          gender.isAcceptableOrUnknown(data['gender']!, _genderMeta));
+    }
     if (data.containsKey('address')) {
       context.handle(_addressMeta,
           address.isAcceptableOrUnknown(data['address']!, _addressMeta));
-    } else if (isInserting) {
-      context.missing(_addressMeta);
     }
     if (data.containsKey('birth_number')) {
       context.handle(
           _birthNumberMeta,
           birthNumber.isAcceptableOrUnknown(
               data['birth_number']!, _birthNumberMeta));
-    } else if (isInserting) {
-      context.missing(_birthNumberMeta);
     }
     if (data.containsKey('birth_date')) {
       context.handle(_birthDateMeta,
           birthDate.isAcceptableOrUnknown(data['birth_date']!, _birthDateMeta));
-    } else if (isInserting) {
-      context.missing(_birthDateMeta);
     }
     if (data.containsKey('parent_phone_number')) {
       context.handle(
           _parentPhoneNumberMeta,
           parentPhoneNumber.isAcceptableOrUnknown(
               data['parent_phone_number']!, _parentPhoneNumberMeta));
-    } else if (isInserting) {
-      context.missing(_parentPhoneNumberMeta);
     }
     if (data.containsKey('eligible_confirmation')) {
       context.handle(
@@ -689,8 +691,6 @@ class $ParticipantsTable extends Participants
           _insuranceCompanyFKMeta,
           insuranceCompanyFK.isAcceptableOrUnknown(
               data['insurance_company_f_k']!, _insuranceCompanyFKMeta));
-    } else if (isInserting) {
-      context.missing(_insuranceCompanyFKMeta);
     }
     if (data.containsKey('zza_action_f_k')) {
       context.handle(
@@ -715,14 +715,16 @@ class $ParticipantsTable extends Participants
           .read(DriftSqlType.string, data['${effectivePrefix}first_name'])!,
       lastName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}last_name'])!,
+      gender: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}gender']),
       address: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}address'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}address']),
       birthNumber: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}birth_number'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}birth_number']),
       birthDate: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}birth_date'])!,
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}birth_date']),
       parentPhoneNumber: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}parent_phone_number'])!,
+          DriftSqlType.string, data['${effectivePrefix}parent_phone_number']),
       eligibleConfirmation: attachedDatabase.typeMapping.read(
           DriftSqlType.bool, data['${effectivePrefix}eligible_confirmation'])!,
       nonInfectiousConfirmation: attachedDatabase.typeMapping.read(
@@ -731,7 +733,7 @@ class $ParticipantsTable extends Participants
       wasPrinted: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}was_printed'])!,
       insuranceCompanyFK: attachedDatabase.typeMapping.read(
-          DriftSqlType.int, data['${effectivePrefix}insurance_company_f_k'])!,
+          DriftSqlType.int, data['${effectivePrefix}insurance_company_f_k']),
       zzaActionFK: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}zza_action_f_k'])!,
     );
@@ -747,27 +749,29 @@ class Participant extends DataClass implements Insertable<Participant> {
   final int id;
   final String firstName;
   final String lastName;
-  final String address;
-  final String birthNumber;
-  final DateTime birthDate;
-  final String parentPhoneNumber;
+  final int? gender;
+  final String? address;
+  final String? birthNumber;
+  final DateTime? birthDate;
+  final String? parentPhoneNumber;
   final bool eligibleConfirmation;
   final bool nonInfectiousConfirmation;
   final bool wasPrinted;
-  final int insuranceCompanyFK;
+  final int? insuranceCompanyFK;
   final int zzaActionFK;
   const Participant(
       {required this.id,
       required this.firstName,
       required this.lastName,
-      required this.address,
-      required this.birthNumber,
-      required this.birthDate,
-      required this.parentPhoneNumber,
+      this.gender,
+      this.address,
+      this.birthNumber,
+      this.birthDate,
+      this.parentPhoneNumber,
       required this.eligibleConfirmation,
       required this.nonInfectiousConfirmation,
       required this.wasPrinted,
-      required this.insuranceCompanyFK,
+      this.insuranceCompanyFK,
       required this.zzaActionFK});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -775,15 +779,28 @@ class Participant extends DataClass implements Insertable<Participant> {
     map['id'] = Variable<int>(id);
     map['first_name'] = Variable<String>(firstName);
     map['last_name'] = Variable<String>(lastName);
-    map['address'] = Variable<String>(address);
-    map['birth_number'] = Variable<String>(birthNumber);
-    map['birth_date'] = Variable<DateTime>(birthDate);
-    map['parent_phone_number'] = Variable<String>(parentPhoneNumber);
+    if (!nullToAbsent || gender != null) {
+      map['gender'] = Variable<int>(gender);
+    }
+    if (!nullToAbsent || address != null) {
+      map['address'] = Variable<String>(address);
+    }
+    if (!nullToAbsent || birthNumber != null) {
+      map['birth_number'] = Variable<String>(birthNumber);
+    }
+    if (!nullToAbsent || birthDate != null) {
+      map['birth_date'] = Variable<DateTime>(birthDate);
+    }
+    if (!nullToAbsent || parentPhoneNumber != null) {
+      map['parent_phone_number'] = Variable<String>(parentPhoneNumber);
+    }
     map['eligible_confirmation'] = Variable<bool>(eligibleConfirmation);
     map['non_infectious_confirmation'] =
         Variable<bool>(nonInfectiousConfirmation);
     map['was_printed'] = Variable<bool>(wasPrinted);
-    map['insurance_company_f_k'] = Variable<int>(insuranceCompanyFK);
+    if (!nullToAbsent || insuranceCompanyFK != null) {
+      map['insurance_company_f_k'] = Variable<int>(insuranceCompanyFK);
+    }
     map['zza_action_f_k'] = Variable<int>(zzaActionFK);
     return map;
   }
@@ -793,14 +810,26 @@ class Participant extends DataClass implements Insertable<Participant> {
       id: Value(id),
       firstName: Value(firstName),
       lastName: Value(lastName),
-      address: Value(address),
-      birthNumber: Value(birthNumber),
-      birthDate: Value(birthDate),
-      parentPhoneNumber: Value(parentPhoneNumber),
+      gender:
+          gender == null && nullToAbsent ? const Value.absent() : Value(gender),
+      address: address == null && nullToAbsent
+          ? const Value.absent()
+          : Value(address),
+      birthNumber: birthNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(birthNumber),
+      birthDate: birthDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(birthDate),
+      parentPhoneNumber: parentPhoneNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(parentPhoneNumber),
       eligibleConfirmation: Value(eligibleConfirmation),
       nonInfectiousConfirmation: Value(nonInfectiousConfirmation),
       wasPrinted: Value(wasPrinted),
-      insuranceCompanyFK: Value(insuranceCompanyFK),
+      insuranceCompanyFK: insuranceCompanyFK == null && nullToAbsent
+          ? const Value.absent()
+          : Value(insuranceCompanyFK),
       zzaActionFK: Value(zzaActionFK),
     );
   }
@@ -812,16 +841,18 @@ class Participant extends DataClass implements Insertable<Participant> {
       id: serializer.fromJson<int>(json['id']),
       firstName: serializer.fromJson<String>(json['firstName']),
       lastName: serializer.fromJson<String>(json['lastName']),
-      address: serializer.fromJson<String>(json['address']),
-      birthNumber: serializer.fromJson<String>(json['birthNumber']),
-      birthDate: serializer.fromJson<DateTime>(json['birthDate']),
-      parentPhoneNumber: serializer.fromJson<String>(json['parentPhoneNumber']),
+      gender: serializer.fromJson<int?>(json['gender']),
+      address: serializer.fromJson<String?>(json['address']),
+      birthNumber: serializer.fromJson<String?>(json['birthNumber']),
+      birthDate: serializer.fromJson<DateTime?>(json['birthDate']),
+      parentPhoneNumber:
+          serializer.fromJson<String?>(json['parentPhoneNumber']),
       eligibleConfirmation:
           serializer.fromJson<bool>(json['eligibleConfirmation']),
       nonInfectiousConfirmation:
           serializer.fromJson<bool>(json['nonInfectiousConfirmation']),
       wasPrinted: serializer.fromJson<bool>(json['wasPrinted']),
-      insuranceCompanyFK: serializer.fromJson<int>(json['insuranceCompanyFK']),
+      insuranceCompanyFK: serializer.fromJson<int?>(json['insuranceCompanyFK']),
       zzaActionFK: serializer.fromJson<int>(json['zzaActionFK']),
     );
   }
@@ -832,15 +863,16 @@ class Participant extends DataClass implements Insertable<Participant> {
       'id': serializer.toJson<int>(id),
       'firstName': serializer.toJson<String>(firstName),
       'lastName': serializer.toJson<String>(lastName),
-      'address': serializer.toJson<String>(address),
-      'birthNumber': serializer.toJson<String>(birthNumber),
-      'birthDate': serializer.toJson<DateTime>(birthDate),
-      'parentPhoneNumber': serializer.toJson<String>(parentPhoneNumber),
+      'gender': serializer.toJson<int?>(gender),
+      'address': serializer.toJson<String?>(address),
+      'birthNumber': serializer.toJson<String?>(birthNumber),
+      'birthDate': serializer.toJson<DateTime?>(birthDate),
+      'parentPhoneNumber': serializer.toJson<String?>(parentPhoneNumber),
       'eligibleConfirmation': serializer.toJson<bool>(eligibleConfirmation),
       'nonInfectiousConfirmation':
           serializer.toJson<bool>(nonInfectiousConfirmation),
       'wasPrinted': serializer.toJson<bool>(wasPrinted),
-      'insuranceCompanyFK': serializer.toJson<int>(insuranceCompanyFK),
+      'insuranceCompanyFK': serializer.toJson<int?>(insuranceCompanyFK),
       'zzaActionFK': serializer.toJson<int>(zzaActionFK),
     };
   }
@@ -849,28 +881,34 @@ class Participant extends DataClass implements Insertable<Participant> {
           {int? id,
           String? firstName,
           String? lastName,
-          String? address,
-          String? birthNumber,
-          DateTime? birthDate,
-          String? parentPhoneNumber,
+          Value<int?> gender = const Value.absent(),
+          Value<String?> address = const Value.absent(),
+          Value<String?> birthNumber = const Value.absent(),
+          Value<DateTime?> birthDate = const Value.absent(),
+          Value<String?> parentPhoneNumber = const Value.absent(),
           bool? eligibleConfirmation,
           bool? nonInfectiousConfirmation,
           bool? wasPrinted,
-          int? insuranceCompanyFK,
+          Value<int?> insuranceCompanyFK = const Value.absent(),
           int? zzaActionFK}) =>
       Participant(
         id: id ?? this.id,
         firstName: firstName ?? this.firstName,
         lastName: lastName ?? this.lastName,
-        address: address ?? this.address,
-        birthNumber: birthNumber ?? this.birthNumber,
-        birthDate: birthDate ?? this.birthDate,
-        parentPhoneNumber: parentPhoneNumber ?? this.parentPhoneNumber,
+        gender: gender.present ? gender.value : this.gender,
+        address: address.present ? address.value : this.address,
+        birthNumber: birthNumber.present ? birthNumber.value : this.birthNumber,
+        birthDate: birthDate.present ? birthDate.value : this.birthDate,
+        parentPhoneNumber: parentPhoneNumber.present
+            ? parentPhoneNumber.value
+            : this.parentPhoneNumber,
         eligibleConfirmation: eligibleConfirmation ?? this.eligibleConfirmation,
         nonInfectiousConfirmation:
             nonInfectiousConfirmation ?? this.nonInfectiousConfirmation,
         wasPrinted: wasPrinted ?? this.wasPrinted,
-        insuranceCompanyFK: insuranceCompanyFK ?? this.insuranceCompanyFK,
+        insuranceCompanyFK: insuranceCompanyFK.present
+            ? insuranceCompanyFK.value
+            : this.insuranceCompanyFK,
         zzaActionFK: zzaActionFK ?? this.zzaActionFK,
       );
   @override
@@ -879,6 +917,7 @@ class Participant extends DataClass implements Insertable<Participant> {
           ..write('id: $id, ')
           ..write('firstName: $firstName, ')
           ..write('lastName: $lastName, ')
+          ..write('gender: $gender, ')
           ..write('address: $address, ')
           ..write('birthNumber: $birthNumber, ')
           ..write('birthDate: $birthDate, ')
@@ -897,6 +936,7 @@ class Participant extends DataClass implements Insertable<Participant> {
       id,
       firstName,
       lastName,
+      gender,
       address,
       birthNumber,
       birthDate,
@@ -913,6 +953,7 @@ class Participant extends DataClass implements Insertable<Participant> {
           other.id == this.id &&
           other.firstName == this.firstName &&
           other.lastName == this.lastName &&
+          other.gender == this.gender &&
           other.address == this.address &&
           other.birthNumber == this.birthNumber &&
           other.birthDate == this.birthDate &&
@@ -928,19 +969,21 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
   final Value<int> id;
   final Value<String> firstName;
   final Value<String> lastName;
-  final Value<String> address;
-  final Value<String> birthNumber;
-  final Value<DateTime> birthDate;
-  final Value<String> parentPhoneNumber;
+  final Value<int?> gender;
+  final Value<String?> address;
+  final Value<String?> birthNumber;
+  final Value<DateTime?> birthDate;
+  final Value<String?> parentPhoneNumber;
   final Value<bool> eligibleConfirmation;
   final Value<bool> nonInfectiousConfirmation;
   final Value<bool> wasPrinted;
-  final Value<int> insuranceCompanyFK;
+  final Value<int?> insuranceCompanyFK;
   final Value<int> zzaActionFK;
   const ParticipantsCompanion({
     this.id = const Value.absent(),
     this.firstName = const Value.absent(),
     this.lastName = const Value.absent(),
+    this.gender = const Value.absent(),
     this.address = const Value.absent(),
     this.birthNumber = const Value.absent(),
     this.birthDate = const Value.absent(),
@@ -955,27 +998,24 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
     this.id = const Value.absent(),
     required String firstName,
     required String lastName,
-    required String address,
-    required String birthNumber,
-    required DateTime birthDate,
-    required String parentPhoneNumber,
+    this.gender = const Value.absent(),
+    this.address = const Value.absent(),
+    this.birthNumber = const Value.absent(),
+    this.birthDate = const Value.absent(),
+    this.parentPhoneNumber = const Value.absent(),
     this.eligibleConfirmation = const Value.absent(),
     this.nonInfectiousConfirmation = const Value.absent(),
     this.wasPrinted = const Value.absent(),
-    required int insuranceCompanyFK,
+    this.insuranceCompanyFK = const Value.absent(),
     required int zzaActionFK,
   })  : firstName = Value(firstName),
         lastName = Value(lastName),
-        address = Value(address),
-        birthNumber = Value(birthNumber),
-        birthDate = Value(birthDate),
-        parentPhoneNumber = Value(parentPhoneNumber),
-        insuranceCompanyFK = Value(insuranceCompanyFK),
         zzaActionFK = Value(zzaActionFK);
   static Insertable<Participant> custom({
     Expression<int>? id,
     Expression<String>? firstName,
     Expression<String>? lastName,
+    Expression<int>? gender,
     Expression<String>? address,
     Expression<String>? birthNumber,
     Expression<DateTime>? birthDate,
@@ -990,6 +1030,7 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
       if (id != null) 'id': id,
       if (firstName != null) 'first_name': firstName,
       if (lastName != null) 'last_name': lastName,
+      if (gender != null) 'gender': gender,
       if (address != null) 'address': address,
       if (birthNumber != null) 'birth_number': birthNumber,
       if (birthDate != null) 'birth_date': birthDate,
@@ -1009,19 +1050,21 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
       {Value<int>? id,
       Value<String>? firstName,
       Value<String>? lastName,
-      Value<String>? address,
-      Value<String>? birthNumber,
-      Value<DateTime>? birthDate,
-      Value<String>? parentPhoneNumber,
+      Value<int?>? gender,
+      Value<String?>? address,
+      Value<String?>? birthNumber,
+      Value<DateTime?>? birthDate,
+      Value<String?>? parentPhoneNumber,
       Value<bool>? eligibleConfirmation,
       Value<bool>? nonInfectiousConfirmation,
       Value<bool>? wasPrinted,
-      Value<int>? insuranceCompanyFK,
+      Value<int?>? insuranceCompanyFK,
       Value<int>? zzaActionFK}) {
     return ParticipantsCompanion(
       id: id ?? this.id,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
+      gender: gender ?? this.gender,
       address: address ?? this.address,
       birthNumber: birthNumber ?? this.birthNumber,
       birthDate: birthDate ?? this.birthDate,
@@ -1046,6 +1089,9 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
     }
     if (lastName.present) {
       map['last_name'] = Variable<String>(lastName.value);
+    }
+    if (gender.present) {
+      map['gender'] = Variable<int>(gender.value);
     }
     if (address.present) {
       map['address'] = Variable<String>(address.value);
@@ -1084,6 +1130,7 @@ class ParticipantsCompanion extends UpdateCompanion<Participant> {
           ..write('id: $id, ')
           ..write('firstName: $firstName, ')
           ..write('lastName: $lastName, ')
+          ..write('gender: $gender, ')
           ..write('address: $address, ')
           ..write('birthNumber: $birthNumber, ')
           ..write('birthDate: $birthDate, ')
@@ -2459,8 +2506,16 @@ class $CacheTable extends Cache with TableInfo<$CacheTable, CacheData> {
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(null));
+  static const VerificationMeta _currentActionIDMeta =
+      const VerificationMeta('currentActionID');
   @override
-  List<GeneratedColumn> get $columns => [id, pinnedActionID];
+  late final GeneratedColumn<int> currentActionID = GeneratedColumn<int>(
+      'current_action_i_d', aliasedName, true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(null));
+  @override
+  List<GeneratedColumn> get $columns => [id, pinnedActionID, currentActionID];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2480,6 +2535,12 @@ class $CacheTable extends Cache with TableInfo<$CacheTable, CacheData> {
           pinnedActionID.isAcceptableOrUnknown(
               data['pinned_action_i_d']!, _pinnedActionIDMeta));
     }
+    if (data.containsKey('current_action_i_d')) {
+      context.handle(
+          _currentActionIDMeta,
+          currentActionID.isAcceptableOrUnknown(
+              data['current_action_i_d']!, _currentActionIDMeta));
+    }
     return context;
   }
 
@@ -2493,6 +2554,8 @@ class $CacheTable extends Cache with TableInfo<$CacheTable, CacheData> {
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       pinnedActionID: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}pinned_action_i_d']),
+      currentActionID: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}current_action_i_d']),
     );
   }
 
@@ -2505,13 +2568,18 @@ class $CacheTable extends Cache with TableInfo<$CacheTable, CacheData> {
 class CacheData extends DataClass implements Insertable<CacheData> {
   final int id;
   final int? pinnedActionID;
-  const CacheData({required this.id, this.pinnedActionID});
+  final int? currentActionID;
+  const CacheData(
+      {required this.id, this.pinnedActionID, this.currentActionID});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     if (!nullToAbsent || pinnedActionID != null) {
       map['pinned_action_i_d'] = Variable<int>(pinnedActionID);
+    }
+    if (!nullToAbsent || currentActionID != null) {
+      map['current_action_i_d'] = Variable<int>(currentActionID);
     }
     return map;
   }
@@ -2522,6 +2590,9 @@ class CacheData extends DataClass implements Insertable<CacheData> {
       pinnedActionID: pinnedActionID == null && nullToAbsent
           ? const Value.absent()
           : Value(pinnedActionID),
+      currentActionID: currentActionID == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currentActionID),
     );
   }
 
@@ -2531,6 +2602,7 @@ class CacheData extends DataClass implements Insertable<CacheData> {
     return CacheData(
       id: serializer.fromJson<int>(json['id']),
       pinnedActionID: serializer.fromJson<int?>(json['pinnedActionID']),
+      currentActionID: serializer.fromJson<int?>(json['currentActionID']),
     );
   }
   @override
@@ -2539,60 +2611,77 @@ class CacheData extends DataClass implements Insertable<CacheData> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'pinnedActionID': serializer.toJson<int?>(pinnedActionID),
+      'currentActionID': serializer.toJson<int?>(currentActionID),
     };
   }
 
   CacheData copyWith(
-          {int? id, Value<int?> pinnedActionID = const Value.absent()}) =>
+          {int? id,
+          Value<int?> pinnedActionID = const Value.absent(),
+          Value<int?> currentActionID = const Value.absent()}) =>
       CacheData(
         id: id ?? this.id,
         pinnedActionID:
             pinnedActionID.present ? pinnedActionID.value : this.pinnedActionID,
+        currentActionID: currentActionID.present
+            ? currentActionID.value
+            : this.currentActionID,
       );
   @override
   String toString() {
     return (StringBuffer('CacheData(')
           ..write('id: $id, ')
-          ..write('pinnedActionID: $pinnedActionID')
+          ..write('pinnedActionID: $pinnedActionID, ')
+          ..write('currentActionID: $currentActionID')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, pinnedActionID);
+  int get hashCode => Object.hash(id, pinnedActionID, currentActionID);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CacheData &&
           other.id == this.id &&
-          other.pinnedActionID == this.pinnedActionID);
+          other.pinnedActionID == this.pinnedActionID &&
+          other.currentActionID == this.currentActionID);
 }
 
 class CacheCompanion extends UpdateCompanion<CacheData> {
   final Value<int> id;
   final Value<int?> pinnedActionID;
+  final Value<int?> currentActionID;
   const CacheCompanion({
     this.id = const Value.absent(),
     this.pinnedActionID = const Value.absent(),
+    this.currentActionID = const Value.absent(),
   });
   CacheCompanion.insert({
     this.id = const Value.absent(),
     this.pinnedActionID = const Value.absent(),
+    this.currentActionID = const Value.absent(),
   });
   static Insertable<CacheData> custom({
     Expression<int>? id,
     Expression<int>? pinnedActionID,
+    Expression<int>? currentActionID,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (pinnedActionID != null) 'pinned_action_i_d': pinnedActionID,
+      if (currentActionID != null) 'current_action_i_d': currentActionID,
     });
   }
 
-  CacheCompanion copyWith({Value<int>? id, Value<int?>? pinnedActionID}) {
+  CacheCompanion copyWith(
+      {Value<int>? id,
+      Value<int?>? pinnedActionID,
+      Value<int?>? currentActionID}) {
     return CacheCompanion(
       id: id ?? this.id,
       pinnedActionID: pinnedActionID ?? this.pinnedActionID,
+      currentActionID: currentActionID ?? this.currentActionID,
     );
   }
 
@@ -2605,6 +2694,9 @@ class CacheCompanion extends UpdateCompanion<CacheData> {
     if (pinnedActionID.present) {
       map['pinned_action_i_d'] = Variable<int>(pinnedActionID.value);
     }
+    if (currentActionID.present) {
+      map['current_action_i_d'] = Variable<int>(currentActionID.value);
+    }
     return map;
   }
 
@@ -2612,7 +2704,8 @@ class CacheCompanion extends UpdateCompanion<CacheData> {
   String toString() {
     return (StringBuffer('CacheCompanion(')
           ..write('id: $id, ')
-          ..write('pinnedActionID: $pinnedActionID')
+          ..write('pinnedActionID: $pinnedActionID, ')
+          ..write('currentActionID: $currentActionID')
           ..write(')'))
         .toString();
   }
