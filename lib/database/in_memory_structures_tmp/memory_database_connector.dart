@@ -105,7 +105,7 @@ throw UnimplementedError();
 }
 
 @override
-Future<int> updateCache(int? pinnedActionID) async {
+void updateCache(int? pinnedActionID) async {
 throw UnimplementedError();
 }
 }
