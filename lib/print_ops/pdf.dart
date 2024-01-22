@@ -80,6 +80,7 @@ class PDFGenerator {
   }
 
   pw.Widget _noteItem(MemoryZaznam note) {
+    print("printing note.");
     PdfColor notePrimaryColor = myPrimaryColor;
     if ((note.isPrinted && _append) || _hideBody) {
       print("skipping note ${note.idZaznamu}.");
@@ -247,13 +248,13 @@ class PDFGenerator {
     List<MemoryZaznam>? zaznamy,
     bool forceIn = false,
   }) async {
-    // final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
-    // final pdf = pw.Document(
-    //   //TODO:add metadata
-    //   theme: pw.ThemeData.withFont(
-    //     base: mSafeFont,
-    //   ),
-    // );
+    final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
+    final pdf = pw.Document(
+      //TODO:add metadata
+      theme: pw.ThemeData.withFont(
+        base: mSafeFont,
+      ),
+    );
 
     pw.Widget headerWidget = _generateHeader(osoba: osoba);
     zaznamy ??= <MemoryZaznam>[]; // if null set to empty list
@@ -273,12 +274,14 @@ class PDFGenerator {
 
 
    // Stupid workaround for not being able to merge two pdfs together
-    return      pw.MultiPage(
-      build: (pw.Context context) => [
-        headerWidget,
-        pw.SizedBox(height: 20),
-        notesWidget,
-      ],
-    ); //Maybe don't use save() here - might speedup later ??
+    return pw.Page(
+  build: (pw.Context context) => pw.Column(
+    children: [
+      headerWidget,
+      pw.SizedBox(height: 20),
+      notesWidget,
+    ],
+  ),
+); //Maybe don't use save() here - might speedup later ??
   }
 }

@@ -16,15 +16,15 @@ DatabaseInterface db = DatabaseWrapper.getDatabase();
 
 
 
-  printAll() async {
+  Future<PrintPack> printAll() async {
 
   // 1) get all persons from database
     List<MemoryOsoba> seznamOsob = await db.getParticipantsByPinnedEvent();
   // 2) printSelected() for each person
-    printSelected(seznamOsob);
+  return  printSelected(seznamOsob);
   // 3) _sendToPrinter() resulting file
   }
-  printSelected(List<MemoryOsoba> seznamOsob ) async {
+Future<PrintPack> printSelected(List<MemoryOsoba> seznamOsob ) async {
     selectedGenerator = _pdfGeneratorAll;
     // change all [wasPrinted] to false -> so all are printed
     // no need to copy the list, if fails it won't be updated
@@ -33,28 +33,30 @@ return _convertor(seznamOsob);
 
   }
 
-appendPrintOne(MemoryOsoba osoba) async {
+Future<PrintPack> appendPrintOne(MemoryOsoba osoba) async {
 selectedGenerator = _pdfGeneratorAppend;
 return _convertor([osoba]);
 
 }
-_convertor (List<MemoryOsoba> seznamOsob) async {
+Future<PrintPack> _convertor (List<MemoryOsoba> seznamOsob) async {
   final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
+
   final pdf = pw.Document(
     //TODO:add metadata
     theme: pw.ThemeData.withFont(
       base: mSafeFont,
-    ),
+      fontFallback: [mSafeFont],
+  )
   );
 
-    List <pw.MultiPage> skelets = [];
+    List <pw.Page> skelets = [];
     for (MemoryOsoba osoba in seznamOsob) {
       List<MemoryZaznam> zaznamy = await db.getRecordsByParticipantID(osoba.id);
       skelets.add( await selectedGenerator.generatePDFSkeleton(osoba : osoba, zaznamy: zaznamy));
     }
    // merge all documents to one
 
-    for (pw.MultiPage skelet in skelets) {
+    for (pw.Page skelet in skelets) {
       pdf.addPage(skelet);
     }
     return  PrintPack(finishedDocument: pdf, osoby: seznamOsob);
@@ -68,8 +70,8 @@ _convertor (List<MemoryOsoba> seznamOsob) async {
 
 }
 class PrintPack{
-  pw.Document? finishedDocument;
+  pw.Document finishedDocument;
    List<MemoryOsoba> osoby;
 
-  PrintPack({this.finishedDocument, required this.osoby});
+  PrintPack({required this.finishedDocument, required this.osoby});
 }
