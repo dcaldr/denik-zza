@@ -10,7 +10,6 @@ class PageUI extends StatelessWidget {
   PageUI({super.key});
   final PrinterWoodoo printer = PrinterWoodoo();
 
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -35,12 +34,19 @@ class PageUI extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) =>
-                                PdfPreview(build: (format) async => value,
-                                  allowSharing: true,
-                                  allowPrinting: true,
-                                  initialPageFormat: PdfPageFormat.a4,
-                                  maxPageWidth: MediaQuery.of(context).size.height / 1.6, // hard coded -by hand
-                                  pdfFileName: "sample.pdf",)),
+                                Scaffold(
+                                  appBar: AppBar(
+                                    title: const Text("PDF Preview"),
+                                  ),
+                                  body: PdfPreview(build: (format) async => value,
+                                    allowSharing: true,
+                                    allowPrinting: true,
+                                    initialPageFormat: PdfPageFormat.a4,
+                                    maxPageWidth: MediaQuery.of(context).size.height / 1.6, // hard coded -by hand
+                                    pdfFileName: "sample.pdf",
+                                  ),
+                                ),
+                            ),
                           );
                         });
                       },
