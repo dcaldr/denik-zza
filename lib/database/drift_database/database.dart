@@ -142,6 +142,26 @@ class AppDatabase extends _$AppDatabase {
     return c.pinnedActionID;
   }
 
+  /// Get pinned action ID, returns either int or null
+  Future<int?> getCurrentActionID() async {
+    CacheData c = await (select(cache)..where((c) =>
+        c.id.equals(1))).getSingle();
+
+    return c.currentActionID;
+  }
+
+  /// Get insurance company ID by name
+  Future<int?> getInsuranceCompanyIDbyName(String? name) async {
+    if(name == null) {
+      return null;
+    }
+
+    InsuranceCompany i = await (select(insuranceCompanies)..where((i) =>
+    i.name.equals(name))).getSingle();
+
+    return i.id;
+  }
+
   //==================== UPDATES ===============================================
 
   /// Update or insert into cache

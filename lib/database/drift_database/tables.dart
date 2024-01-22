@@ -17,16 +17,17 @@ class Participants extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get firstName => text().withLength(min: 0, max: 64)();
   TextColumn get lastName => text().withLength(min: 0, max: 64)();
-  TextColumn get address => text().withLength(min: 0, max: 128)();
-  TextColumn get birthNumber => text().withLength(min: 0, max: 11)();
-  DateTimeColumn get birthDate => dateTime()();
-  TextColumn get parentPhoneNumber => text().withLength(min: 0, max: 13)();
+  IntColumn get gender => integer().nullable().nullable()();
+  TextColumn get address => text().withLength(min: 0, max: 128).nullable()();
+  TextColumn get birthNumber => text().withLength(min: 0, max: 11).nullable()();
+  DateTimeColumn get birthDate => dateTime().nullable()();
+  TextColumn get parentPhoneNumber => text().withLength(min: 0, max: 13).nullable()();
   BoolColumn get eligibleConfirmation => boolean().withDefault(const Constant(false))();
   BoolColumn get nonInfectiousConfirmation => boolean().withDefault(const Constant(false))();
   BoolColumn get wasPrinted => boolean().withDefault(const Constant(false))();
 
   // Foreign keys
-  IntColumn get insuranceCompanyFK => integer().references(InsuranceCompanies, #id)();
+  IntColumn get insuranceCompanyFK => integer().references(InsuranceCompanies, #id).nullable()();
   IntColumn get zzaActionFK => integer().references(ZzaActions, #id)();
 }
 
@@ -74,4 +75,5 @@ class Medications extends Table {
 class Cache extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get pinnedActionID => integer().nullable().withDefault(const Constant(null))();
+  IntColumn get currentActionID => integer().nullable().withDefault(const Constant(null))();
 }
