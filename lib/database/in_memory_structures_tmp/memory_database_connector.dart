@@ -1,3 +1,5 @@
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_action.dart';
+
 import '../database_interface.dart';
 import 'memory_osoba.dart';
 import 'memory_zaznam.dart';
@@ -125,4 +127,10 @@ Future<int?> getCurrentEventID() {
   // TODO: implement getCurrentEventID
   throw UnimplementedError();
 }
+
+  @override
+  Future<List<MemoryAction>> getAllZzaActions() {
+    // TODO: implement getAllZzaActions
+    throw UnimplementedError();
+  }
 }
