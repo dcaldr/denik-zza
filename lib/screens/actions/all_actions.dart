@@ -14,7 +14,7 @@ class AllActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    List<MemoryAction> allActions = await database.getAllZzaActions();
+   //List<MemoryAction> allActions = await database.getAllZzaActions();
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -95,33 +95,23 @@ class AllActions extends StatelessWidget {
           ],
         ),
       ),
-      body: ListView(
-        children: [
-          // Search bar and add action button
-
-          // Table headers
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Nazev akce'),
-                Text('Datum konani'),
-                Row(
-                  children: [
-                    Text('Pocet ucastniku'),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const Divider(),
-          // List of actions
-          ActionItem(title: 'Akce 1', date: '2022-01-01', participants: 20),
-          ActionItem(title: 'Akce 2', date: '2022-02-15', participants: 15),
-          ActionItem(title: 'Akce 3', date: '2022-03-20', participants: 30),
-          // Add more ActionItem widgets as needed
-        ],
+      body: FutureBuilder<List<MemoryAction>>(
+        future: database.getAllZzaActions(),
+        builder: (BuildContext context, AsyncSnapshot<List<MemoryAction>> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const CircularProgressIndicator();
+          } else if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          } else {
+            return ListView(
+              children: snapshot.data!.map((action) => ActionItem(
+                title: action.nadpis,
+                date: action.odkdy.toString(),
+                participants:-15, //FIXME hardcoded
+              )).toList(),
+            );
+          }
+        },
       ),
     );
   }
