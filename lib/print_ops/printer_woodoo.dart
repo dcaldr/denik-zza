@@ -22,7 +22,7 @@ DatabaseInterface db = DatabaseWrapper.getDatabase();
     List<MemoryOsoba> seznamOsob = await db.getParticipantsByPinnedEvent();
   // 2) printSelected() for each person
   return  printSelected(seznamOsob);
-  // 3) _sendToPrinter() resulting file
+  // 3) _sendToPrinter() resulting file // doing outside of this class
   }
 Future<PrintPack> printSelected(List<MemoryOsoba> seznamOsob ) async {
     selectedGenerator = _pdfGeneratorAll;
@@ -62,6 +62,9 @@ Future<PrintPack> _convertor (List<MemoryOsoba> seznamOsob) async {
     return  PrintPack(finishedDocument: pdf, osoby: seznamOsob);
     // send to printer
 
+}
+Future<List<MemoryOsoba>> getOsobyForPrint(){
+    return  db.getParticipantsByPinnedEvent();
 }
 
 

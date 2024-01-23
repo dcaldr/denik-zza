@@ -1,8 +1,10 @@
 import 'package:denik_zza/print_ops/printer_woodoo.dart';
+import 'package:denik_zza/print_ops/select_person_to_print.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+
 
 import 'dev_pdf_view.dart';
 
@@ -21,11 +23,13 @@ class PageUI extends StatelessWidget {
             children: <Widget>[
               FutureBuilder<PrintPack>(
                 future: printer.printAll(),
-                builder: (BuildContext context, AsyncSnapshot<PrintPack> snapshot) {
+                builder:
+                    (BuildContext context, AsyncSnapshot<PrintPack> snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const CircularProgressIndicator(); // Show a loading spinner while waiting
                   } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}'); // Show error if something went wrong
+                    return Text(
+                        'Error: ${snapshot.error}'); // Show error if something went wrong
                   } else {
                     var myPDF = snapshot.data!.finishedDocument.save();
                     return ElevatedButton(
@@ -33,19 +37,22 @@ class PageUI extends StatelessWidget {
                         myPDF.then((value) {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) =>
-                                Scaffold(
-                                  appBar: AppBar(
-                                    title: const Text("PDF náhled"),
-                                  ),
-                                  body: PdfPreview(build: (format) async => value,
-                                    allowSharing: true,
-                                    allowPrinting: true,
-                                    initialPageFormat: PdfPageFormat.a4,
-                                    maxPageWidth: MediaQuery.of(context).size.height / 1.6, // hard coded -by hand
-                                    pdfFileName: "sample.pdf",
-                                  ),
+                            MaterialPageRoute(
+                              builder: (context) => Scaffold(
+                                appBar: AppBar(
+                                  title: const Text("PDF náhled"),
                                 ),
+                                body: PdfPreview(
+                                  build: (format) async => value,
+                                  allowSharing: true,
+                                  allowPrinting: true,
+                                  initialPageFormat: PdfPageFormat.a4,
+                                  maxPageWidth:
+                                      MediaQuery.of(context).size.height /
+                                          1.6, // hard coded -by hand
+                                  pdfFileName: "sample.pdf",
+                                ),
+                              ),
                             ),
                           );
                         });
@@ -57,8 +64,10 @@ class PageUI extends StatelessWidget {
               ),
               SizedBox(height: 10), // Add space between buttons
               ElevatedButton(
-                onPressed: () {},
-                child: Text('dotisk'),
+                onPressed: () {
+                  showOsobyDialog(context);
+                },
+                child: Text('dotisk chybějících/vybraných osob'),
               ),
               SizedBox(height: 10), // Add space between buttons
               ElevatedButton(
