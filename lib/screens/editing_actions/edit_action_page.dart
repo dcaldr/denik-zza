@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/login/components/my_button.dart';
 
 class EditActionPage extends StatefulWidget {
+  const EditActionPage({super.key});
+
   @override
   _EditActionPageState createState() => _EditActionPageState();
 }
