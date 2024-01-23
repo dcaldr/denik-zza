@@ -1,3 +1,4 @@
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_action.dart';
 import 'package:denik_zza/screens/actions/all_actions.dart';
 import 'package:denik_zza/screens/actions/profile.dart';
 import 'package:denik_zza/screens/editing_actions/action_detail.dart';
@@ -37,6 +38,10 @@ class _AddActionPageState extends State<AddActionPage> {
 
   @override
   Widget build(BuildContext context) {
+    var a = DateTime.parse('10.5.2000');
+    var b =DateTime.parse('11.5.2000');
+    @Deprecated("Remove as soon as possible")
+    MemoryAction dummy = MemoryAction(nadpis: "Dummy", popis: "popis", odkdy: a, dokdy: b);
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -54,9 +59,10 @@ class _AddActionPageState extends State<AddActionPage> {
           IconButton(
             icon: Icon(Icons.info),
             onPressed: () {
+
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => ActionDetail()), // Navigate to ActionDetail page
+                MaterialPageRoute(builder: (context) => ActionDetail( action: dummy,)), // Navigate to ActionDetail page
               );
             },
           ),
