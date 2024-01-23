@@ -7,10 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/login/components/my_button.dart';
 
 class AddActionPage extends StatefulWidget {
+  const AddActionPage({super.key});
+
   @override
   _AddActionPageState createState() => _AddActionPageState();
 }
-
+ //TODO: simplify using Forms and FormFields (https://flutter.dev/docs/cookbook/forms/validation)
 class _AddActionPageState extends State<AddActionPage> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
@@ -177,11 +179,12 @@ Widget buildTextFieldWithCounter(TextEditingController controller, String labelT
               buildTextFieldWithCounter(descriptionController, 'Popis', 130, null),
               const SizedBox(height: 20),
               // Add more content here as needed
+              //FIXME: this button name shadows the material one
               Button(
                 onPressed: () {
                   // add action
                 },
-                buttonText: "Pridat",
+                buttonText: "Přidat",
                 verticalPadding: 10,
                 horizontalPadding: 10,
               ),
