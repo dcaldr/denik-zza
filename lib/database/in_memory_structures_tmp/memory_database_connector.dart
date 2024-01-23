@@ -107,7 +107,7 @@ throw UnimplementedError();
 }
 
 @override
-Future<List<MemoryOsoba>> getParticipantsByPinnedEvent() {
+Future<List<MemoryOsoba>> getParticipantsByCurrentEvent() {
   // TODO: implement getParticipantsByPinnedEvent
   throw UnimplementedError();
 }

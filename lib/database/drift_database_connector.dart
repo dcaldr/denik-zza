@@ -52,8 +52,7 @@ class DriftDatabaseConnector implements DatabaseInterface {
 
     return true;
   }
-
-  @override
+  
   Future<List<MemoryOsoba>> getParticipantsByEvent(int idEvent) async {
     List<Participant> participants = await
     _driftDatabase.getParticipantsByAction(idEvent);
@@ -118,24 +117,6 @@ class DriftDatabaseConnector implements DatabaseInterface {
   }
 
   @override
-  Future<bool> quickAddNewZaznam(String popis, int idPacient ) {
-    // TODO: implement quickAddNewZaznam
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> quickPrintAllOsoby() {
-    // TODO: implement quickPrintAllOsoby
-    throw UnimplementedError();
-  }
-
-  @override
-  String quickPrintZaznamyOsoby(int idOsoby) {
-    // TODO: implement quickPrintZaznamyOsoby
-    throw UnimplementedError();
-  }
-
-  @override
   void updatePinnedEvent(int? pinnedEventID) async {
     _driftDatabase.updateCache(CacheCompanion(
         id: const Value(1),
@@ -152,12 +133,12 @@ class DriftDatabaseConnector implements DatabaseInterface {
   }
 
   @override
-  Future<List<MemoryOsoba>> getParticipantsByPinnedEvent() async {
-    int? pinnedEvent = await _driftDatabase.getPinnedActionID();
+  Future<List<MemoryOsoba>> getParticipantsByCurrentEvent() async {
+    int? currentEvent = await _driftDatabase.getCurrentActionID();
     List<MemoryOsoba> memoryParticipants = [];
 
-    if(pinnedEvent != null) {
-      memoryParticipants = await getParticipantsByEvent(pinnedEvent);
+    if(currentEvent != null) {
+      memoryParticipants = await getParticipantsByEvent(currentEvent);
     }
 
     return memoryParticipants;
@@ -179,5 +160,23 @@ class DriftDatabaseConnector implements DatabaseInterface {
     }
 
     return memoryActions;
+  }
+
+  @override
+  Future<bool> quickAddNewZaznam(String popis, int idPacient) {
+    // TODO: implement quickAddNewZaznam
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> quickPrintAllOsoby() {
+    // TODO: implement quickPrintAllOsoby
+    throw UnimplementedError();
+  }
+
+  @override
+  String quickPrintZaznamyOsoby(int idOsoby) {
+    // TODO: implement quickPrintZaznamyOsoby
+    throw UnimplementedError();
   }
 }

@@ -16,6 +16,7 @@ Future <bool> addZaznam(MemoryZaznam zaznam);
 /// This method creates a new `MemoryZaznam` instance with the provided `popis` and `idPacient` (default is 0),
 /// and adds it to the database. Returns `true` if the operation is successful.
 /// @Warning: uses idPacient 0 as default
+@Deprecated("Remove when possible")
 Future <bool> quickAddNewZaznam(String popis, int idPacient);
 
 /// Adds a `MemoryOsoba` instance to the database.
@@ -27,6 +28,7 @@ Future <bool> addOsoba(MemoryOsoba osoba);
 /// Prints all `MemoryOsoba` instances in the database. (for testing purposes)
 ///
 /// This method iterates over all `MemoryOsoba` instances in the database and prints their details.
+@Deprecated("Remove when possible")
 Future <void> quickPrintAllOsoby();
 
 /// Prints all `MemoryZaznam` instances of a specific `MemoryOsoba` in the database.
@@ -34,6 +36,7 @@ Future <void> quickPrintAllOsoby();
 /// This method takes an `idOsoby` as a parameter, finds the corresponding `MemoryOsoba` in the database,
 /// iterates over all its `MemoryZaznam` instances and prints their details.
 /// Returns a `String` containing the details of all `MemoryZaznam` instances.
+@Deprecated("Remove when possible")
 String quickPrintZaznamyOsoby(int idOsoby);
 
 //========= Vojtovy přidané metody =============================================
@@ -45,26 +48,18 @@ String quickPrintZaznamyOsoby(int idOsoby);
   /// If no records are found for the given participant ID, the method returns an empty list.
 Future<List<MemoryZaznam>> getRecordsByParticipantID(int id);
 
-  /// Fetches a list of [MemoryOsoba] instances associated with a specific event.
-  ///
-  /// This method takes an [idEvent] as a parameter, which represents the ID of an event.
-  /// It queries the database for all [MemoryOsoba] instances that are associated.
-  /// The method returns a [Future] that resolves to a [List] of [MemoryOsoba] instances.
-  /// If no participants are found for the given action ID, the method returns an empty list.
-Future<List<MemoryOsoba>> getParticipantsByEvent(int idEvent);
-
-
-  /// Fetches a list of [MemoryOsoba] instances associated with a pinned event.
+  /// Fetches a list of [MemoryOsoba] instances associated with a current event.
   ///
   /// It queries the database for all [MemoryOsoba] instances that are associated.
   /// The method returns a [Future] that resolves to a [List] of [MemoryOsoba] instances.
-  /// If no event is pinned, the method returns an empty list.
-  Future<List<MemoryOsoba>> getParticipantsByPinnedEvent();
+  /// If no participants are in the event, the method returns an empty list.
+Future<List<MemoryOsoba>> getParticipantsByCurrentEvent();
 
   /// Updates the "settings" cache with a new [pinnedEventID].
   ///
   /// This method takes an [pinnedEventID] as a parameter, which represents the ID of an action that is to be pinned.
   /// It updates the cache with this new [pinnedEventID].
+@Deprecated("Remove when possible")
 void updatePinnedEvent(int? pinnedEventID);
 
   /// Updates the "settings" cache with a new [currentEventID].
@@ -77,6 +72,7 @@ void updateCurrentEvent(int? currentEventID);
   ///
   /// The method returns a [Future] that resolves to an [int] which represents the pinned action ID.
   /// If no pinned action ID is found, the method returns `null`.
+@Deprecated("Remove when possible")
 Future<int?> getPinnedEventID();
 
   /// This method gets the current event ID
