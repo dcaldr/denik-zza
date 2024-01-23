@@ -52,7 +52,8 @@ class DriftDatabaseConnector implements DatabaseInterface {
 
     return true;
   }
-  
+
+  @override
   Future<List<MemoryOsoba>> getParticipantsByEvent(int idEvent) async {
     List<Participant> participants = await
     _driftDatabase.getParticipantsByAction(idEvent);

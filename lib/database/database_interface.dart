@@ -48,6 +48,14 @@ String quickPrintZaznamyOsoby(int idOsoby);
   /// If no records are found for the given participant ID, the method returns an empty list.
 Future<List<MemoryZaznam>> getRecordsByParticipantID(int id);
 
+  /// Fetches a list of [MemoryOsoba] instances associated with a specific event.
+  ///
+  /// This method takes an [idEvent] as a parameter, which represents the ID of an event.
+  /// It queries the database for all [MemoryOsoba] instances that are associated.
+  /// The method returns a [Future] that resolves to a [List] of [MemoryOsoba] instances.
+  /// If no participants are found for the given action ID, the method returns an empty list.
+  Future<List<MemoryOsoba>> getParticipantsByEvent(int idEvent);
+
   /// Fetches a list of [MemoryOsoba] instances associated with a current event.
   ///
   /// It queries the database for all [MemoryOsoba] instances that are associated.
