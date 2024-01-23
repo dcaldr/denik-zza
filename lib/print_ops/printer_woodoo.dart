@@ -26,8 +26,8 @@ DatabaseInterface db = DatabaseWrapper.getDatabase();
   }
 Future<PrintPack> printSelected(List<MemoryOsoba> seznamOsob ) async {
     selectedGenerator = _pdfGeneratorAll;
-    // change all [wasPrinted] to false -> so all are printed
-    // no need to copy the list, if fails it won't be updated
+    // filter only Osoby that wasn't printed
+    seznamOsob = seznamOsob.where((element) => !(element.wasPrinted ?? false)).toList();
 return _convertor(seznamOsob);
 
 

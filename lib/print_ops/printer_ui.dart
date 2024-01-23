@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:denik_zza/print_ops/printer_woodoo.dart';
 import 'package:denik_zza/print_ops/select_person_to_print.dart';
 import 'package:flutter/material.dart';
@@ -5,12 +7,35 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
-
+import '../database/in_memory_structures_tmp/memory_osoba.dart';
 import 'dev_pdf_view.dart';
 
 class PageUI extends StatelessWidget {
   PageUI({super.key});
   final PrinterWoodoo printer = PrinterWoodoo();
+
+  void navigateToPdfPreview(BuildContext context, Future<Uint8List> myPDF) {
+    myPDF.then((value) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+            appBar: AppBar(
+              title: const Text("PDF náhled"),
+            ),
+            body: PdfPreview(
+              build: (format) async => value,
+              allowSharing: true,
+              allowPrinting: true,
+              initialPageFormat: PdfPageFormat.a4,
+              maxPageWidth: MediaQuery.of(context).size.height / 1.6,
+              pdfFileName: "sample.pdf",
+            ),
+          ),
+        ),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,52 +51,33 @@ class PageUI extends StatelessWidget {
                 builder:
                     (BuildContext context, AsyncSnapshot<PrintPack> snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator(); // Show a loading spinner while waiting
+                    return const CircularProgressIndicator();
                   } else if (snapshot.hasError) {
-                    return Text(
-                        'Error: ${snapshot.error}'); // Show error if something went wrong
+                    return Text('Error: ${snapshot.error}');
                   } else {
                     var myPDF = snapshot.data!.finishedDocument.save();
                     return ElevatedButton(
-                      onPressed: () {
-                        myPDF.then((value) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => Scaffold(
-                                appBar: AppBar(
-                                  title: const Text("PDF náhled"),
-                                ),
-                                body: PdfPreview(
-                                  build: (format) async => value,
-                                  allowSharing: true,
-                                  allowPrinting: true,
-                                  initialPageFormat: PdfPageFormat.a4,
-                                  maxPageWidth:
-                                      MediaQuery.of(context).size.height /
-                                          1.6, // hard coded -by hand
-                                  pdfFileName: "sample.pdf",
-                                ),
-                              ),
-                            ),
-                          );
-                        });
-                      },
-                      child: Text('tisk všecho'),
+                      onPressed: () => navigateToPdfPreview(context, myPDF),
+                      child: const Text('tisk všecho'),
                     );
                   }
                 },
               ),
-              SizedBox(height: 10), // Add space between buttons
+              const SizedBox(height: 10),
               ElevatedButton(
-                onPressed: () {
-                  showOsobyDialog(context, printer.getOsobyForPrint());
+                onPressed: () async {
+                  List<MemoryOsoba> selectedOsoby = await showOsobyDialog(
+                      context, printer.getOsobyForPrint());
+                  if (selectedOsoby.isNotEmpty) {
+                    PrintPack packedPDF = await printer.printSelected(selectedOsoby);
+                    navigateToPdfPreview(context, packedPDF.finishedDocument.save());
+                  }
                 },
-                child: Text('dotisk chybějících/vybraných osob'),
+                child: const Text('dotisk chybějících/vybraných osob'),
               ),
-              SizedBox(height: 10), // Add space between buttons
-              ElevatedButton(
-                onPressed: null, // Make this button non-clickable
+              const SizedBox(height: 10),
+              const ElevatedButton(
+                onPressed: null,
                 child: Text('neimplementováno'),
               ),
             ],
