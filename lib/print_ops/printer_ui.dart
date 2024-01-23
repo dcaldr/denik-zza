@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:denik_zza/print_ops/printer_woodoo.dart';
+import 'package:denik_zza/print_ops/select_person_to_append.dart';
 import 'package:denik_zza/print_ops/select_person_to_print.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
@@ -41,7 +42,8 @@ class PageUI extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Tisknutí',
-      home: Builder( // Add Builder here
+      home: Builder(
+        // Add Builder here
         builder: (BuildContext context) => Scaffold(
           body: Center(
             child: Column(
@@ -49,8 +51,8 @@ class PageUI extends StatelessWidget {
               children: <Widget>[
                 FutureBuilder<PrintPack>(
                   future: printer.printAll(),
-                  builder:
-                      (BuildContext context, AsyncSnapshot<PrintPack> snapshot) {
+                  builder: (BuildContext context,
+                      AsyncSnapshot<PrintPack> snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const CircularProgressIndicator();
                     } else if (snapshot.hasError) {
@@ -86,9 +88,27 @@ class PageUI extends StatelessWidget {
                   child: const Text('dotisk chybějících/vybraných osob'),
                 ),
                 const SizedBox(height: 10),
-                const ElevatedButton(
-                  onPressed: null,
-                  child: Text('neimplementováno'),
+                ElevatedButton(
+                  onPressed: () async {
+                    MemoryOsoba? selectedOsoba = await showSingleOsobaDialog(
+                        context, printer.getOsobyForAppend());
+                    if (selectedOsoba != null) {
+                      PrintPack packedPDFOne = await printer.appendPrintOne(selectedOsoba);
+                      final pdfData = packedPDFOne.finishedDocument.save();
+                      await Printing.layoutPdf(
+                        onLayout: (PdfPageFormat format) async => pdfData,
+                      );
+
+
+
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Nebyla vybrána žádná osoba')),
+                      );
+                    }
+                  },
+                  child: const Text('Přidat osobu'),
                 ),
               ],
             ),

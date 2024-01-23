@@ -67,6 +67,20 @@ Future<List<MemoryOsoba>> getOsobyForPrint(){
     return  db.getParticipantsByPinnedEvent();
 }
 
+Future<List<MemoryOsoba>> getOsobyForAppend() async {
+    List<MemoryOsoba> vsi = await db.getParticipantsByPinnedEvent();
+    List<MemoryOsoba> result = []; //init-hopefully empty and not null
+    // filter only those who have unprinted records
+    //TODO: add feature to database
+  for (MemoryOsoba osoba in vsi) {
+    List<MemoryZaznam> zaznamy = await db.getRecordsByParticipantID(osoba.id);
+    if (zaznamy.any((element) => !(element.isPrinted ?? false))) {
+      result.add(osoba);
+    }
+  }
+  return result;
+}
+
 
 
 
