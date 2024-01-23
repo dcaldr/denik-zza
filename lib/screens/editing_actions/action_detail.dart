@@ -33,7 +33,7 @@ class ActionDetail extends StatelessWidget {
         ],
       ),
       body: FutureBuilder<List<MemoryOsoba>>(
-        future: database.getParticipantsByPinnedEvent(),
+        future: database.getParticipantsByCurrentEvent(),
         builder: (BuildContext context, AsyncSnapshot<List<MemoryOsoba>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const CircularProgressIndicator();

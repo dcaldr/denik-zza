@@ -19,7 +19,7 @@ DatabaseInterface db = DatabaseWrapper.getDatabase();
   Future<PrintPack> printAll() async {
 
   // 1) get all persons from database
-    List<MemoryOsoba> seznamOsob = await db.getParticipantsByPinnedEvent();
+    List<MemoryOsoba> seznamOsob = await db.getParticipantsByCurrentEvent();
   // 2) printSelected() for each person
   return  printSelected(seznamOsob);
   // 3) _sendToPrinter() resulting file // doing outside of this class
@@ -64,11 +64,11 @@ Future<PrintPack> _convertor (List<MemoryOsoba> seznamOsob) async {
 
 }
 Future<List<MemoryOsoba>> getOsobyForPrint(){
-    return  db.getParticipantsByPinnedEvent();
+    return  db.getParticipantsByCurrentEvent();
 }
 
 Future<List<MemoryOsoba>> getOsobyForAppend() async {
-    List<MemoryOsoba> vsi = await db.getParticipantsByPinnedEvent();
+    List<MemoryOsoba> vsi = await db.getParticipantsByCurrentEvent();
     List<MemoryOsoba> result = []; //init-hopefully empty and not null
     // filter only those who have unprinted records
     //TODO: add feature to database
