@@ -19,9 +19,9 @@ class AllActions extends StatelessWidget {
             icon: Icon(Icons.add),
             onPressed: () {
               Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AddActionPage()),
-                );
+                context,
+                MaterialPageRoute(builder: (context) => AddActionPage()),
+              );
             },
           ),
           IconButton(
@@ -33,33 +33,56 @@ class AllActions extends StatelessWidget {
         ],
       ),
       drawer: Drawer(
-        child: ListView(
+        child: Column(
           children: [
+            Expanded(
+              child: ListView(
+                children: [
+                  ListTile(
+                    title: Text(
+                      'Profil',
+                      style:
+                          TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Profile()),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    title: Text(
+                      'Akce',
+                      style:
+                          TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => AllActions()),
+                      );
+                    },
+                  ),
+                  // Add more menu items as needed
+                ],
+              ),
+            ),
+            Divider(), // Divider to separate the main items from logout
             ListTile(
               title: Text(
-                'Profil',
-                style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                'Odhlásit se',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red, // Customize the color as needed
+                ),
               ),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Profile()),
-                );
+                // Implement logout logic
+                // You can navigate to the login screen or perform any other logout actions
               },
             ),
-            ListTile(
-              title: Text(
-                'Akce',
-                style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AllActions()),
-                );
-              },
-            ),
-            // Add more menu items as needed
           ],
         ),
       ),
