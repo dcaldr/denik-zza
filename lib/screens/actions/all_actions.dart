@@ -145,7 +145,8 @@ class ActionItem extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: ()  {
-              db.updateCurrentEvent(action.idAkce);
+              //FIXME
+              db.updateCurrentEvent(/*action.idAkce*/1);
               Navigator.push(
                 context,
                 MaterialPageRoute(
