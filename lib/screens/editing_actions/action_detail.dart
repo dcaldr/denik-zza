@@ -1,3 +1,4 @@
+import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/screens/actions/change_profile.dart';
 import 'package:denik_zza/screens/editing_actions/edit_action_page.dart';
 import 'package:denik_zza/screens/login/components/my_button.dart';
@@ -5,10 +6,12 @@ import 'package:denik_zza/screens/participants/add_participantt_page_page.dart';
 import 'package:denik_zza/screens/participants/paticipant_detail_page.dart';
 import 'package:flutter/material.dart';
 
+import '../../database/database_wrapper.dart';
 import '../../database/in_memory_structures_tmp/memory_action.dart';
 
 class ActionDetail extends StatelessWidget {
   final MemoryAction action;
+  // DatabaseInterface db = DatabaseWrapper.getDatabase();
 
   const ActionDetail({super.key, required this.action});
 
@@ -24,7 +27,7 @@ class ActionDetail extends StatelessWidget {
               // Navigate to another screen for editing the profile
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => EditActionPage(action: action)),
+                MaterialPageRoute(builder: (context) => const EditActionPage()),
               );
             },
           ),
@@ -45,13 +48,13 @@ class ActionDetail extends StatelessWidget {
               const Row(
                 children: [
                   Icon(Icons.people, size: 50),
-                  Text('-150'), // You might want to replace this with the actual number of participants
+                  Text('Počet účastníků: -150'),
                 ],
               ),
               Row(
                 children: [
                   const Icon(Icons.calendar_month, size: 50),
-                  Text('Datum: ${action.odkdy} - ${action.dokdy}'),
+                  Text('Datum: ''${action.odkdy?.day.toString().padLeft(2, '0')}.${action.odkdy?.month.toString().padLeft(2, '0')}.${action.odkdy?.year}'),
                 ],
               ),
               const Divider(),

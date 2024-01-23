@@ -7,14 +7,14 @@ import 'package:denik_zza/screens/login/login_page.dart';
 import '../../database/database_interface.dart';
 import '../../database/database_wrapper.dart';
 import '../../database/in_memory_structures_tmp/memory_action.dart';
+
 class AllActions extends StatelessWidget {
   AllActions({super.key});
   final DatabaseInterface database = DatabaseWrapper.getDatabase();
 
-
   @override
   Widget build(BuildContext context) {
-   //List<MemoryAction> allActions = await database.getAllZzaActions();
+    //List<MemoryAction> allActions = await database.getAllZzaActions();
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -87,9 +87,10 @@ class AllActions extends StatelessWidget {
               ),
               onTap: () {
                 Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => Login()), // Navigate to Login page
-          ); // Replace '/login' with your login page route
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => Login()), // Navigate to Login page
+                ); // Replace '/login' with your login page route
               },
             ),
           ],
@@ -97,7 +98,8 @@ class AllActions extends StatelessWidget {
       ),
       body: FutureBuilder<List<MemoryAction>>(
         future: database.getAllZzaActions(),
-        builder: (BuildContext context, AsyncSnapshot<List<MemoryAction>> snapshot) {
+        builder:
+            (BuildContext context, AsyncSnapshot<List<MemoryAction>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const CircularProgressIndicator();
           } else if (snapshot.hasError) {
@@ -105,10 +107,10 @@ class AllActions extends StatelessWidget {
           } else {
             return ListView(
               children: snapshot.data!.map((action) => ActionItem(
-                title: action.nadpis,
-                date: action.odkdy.toString(),
-                participants:-15, //FIXME hardcoded
-              )).toList(),
+                        action: action,
+                        participants: -15, //FIXME hardcoded
+                      ))
+                  .toList(),
             );
           }
         },
@@ -123,31 +125,38 @@ class ActionItem extends StatelessWidget {
   final int participants;
   final MemoryAction action;
 
-  ActionItem({required this.action,  required this.participants});
+  const ActionItem({super.key, required this.action, required this.participants});
 
   @override
   Widget build(BuildContext context) {
+    DatabaseInterface db = DatabaseWrapper.getDatabase();
     return ListTile(
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(action.nadpis), //title
-          Text('${action.odkdy?.day.toString().padLeft(2, '0')}.${action.odkdy?.month.toString().padLeft(2, '0')}.${action.odkdy?.year}'), // date //TODO: improve as mentioned in pdf.dart //DT1
+          Text(
+              '${action.odkdy?.day.toString().padLeft(2, '0')}.${action.odkdy?.month.toString().padLeft(2, '0')}.${action.odkdy?.year}'), // date //TODO: improve as mentioned in pdf.dart //DT1
           Row(
             children: [
               Text(participants.toString()),
               const Icon(Icons.people),
             ],
           ),
-           ElevatedButton(
-            onPressed: () {
+          ElevatedButton(
+            onPressed: ()  {
+              db.updateCurrentEvent(action.idAkce);
               Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ActionDetail(action: action,)),
-                );
+                context,
+                MaterialPageRoute(
+                    builder: (context) => ActionDetail(
+                          action: action,
+                        )),
+              );
+              print('Here');
             },
-        //    onPressed: null,
-            child: Text('Detail'),
+            //    onPressed: null,
+            child: const Text('Detail'),
           ),
         ],
       ),
