@@ -1,4 +1,7 @@
+import 'package:denik_zza/screens/records/record_detail_page.dart';
 import 'package:flutter/material.dart';
+
+import '../participants/paticipant_detail_page.dart';
 
 class NewRecordPage extends StatefulWidget {
   @override
@@ -88,52 +91,52 @@ class _NewRecordPageState extends State<NewRecordPage> {
               ),
               SizedBox(height: 20),
               // Date TextField
-              TextField(
-                controller: dateController,
-                decoration: const InputDecoration(
-                  labelText: 'Datum',
-                  labelStyle: TextStyle(color: Colors.black),
-                ),
-                readOnly: true,
-                onTap: _selectDate,
-              ),
-              SizedBox(height: 10),
+              //TextField(
+              //  controller: dateController,
+              //  decoration: const InputDecoration(
+              //   labelText: 'Datum',
+              //    labelStyle: TextStyle(color: Colors.black),
+              //  ),
+              //  readOnly: true,
+              //  onTap: _selectDate,
+              //),
+              //SizedBox(height: 10),
               // Time TextField
-              TextField(
-                controller: timeController,
-                decoration: const InputDecoration(
-                  labelText: 'Čas',
-                  labelStyle: TextStyle(color: Colors.black),
-                ),
-                readOnly: true,
-                onTap: _selectTime,
-              ),
+              //TextField(
+              //  controller: timeController,
+              //  decoration: const InputDecoration(
+              //    labelText: 'Čas',
+              //    labelStyle: TextStyle(color: Colors.black),
+              //  ),
+              //  readOnly: true,
+              //  onTap: _selectTime,
+              //),
               SizedBox(height: 10),
               // Description TextField
               TextField(
                 controller: descriptionController,
                 maxLines: 5,
-                maxLength: 130,
+                maxLength: 1024,
                 decoration: InputDecoration(
                   labelText: 'Popis',
-                  hintText: 'Maximálně 130 znaků',
+                  hintText: 'Maximálně 1024 znaků',
                   border: OutlineInputBorder(),
                   labelStyle: TextStyle(color: Colors.black),
                 ),
               ),
               SizedBox(height: 10),
               // Treatment TextField
-              TextField(
-                controller: treatmentController,
-                maxLines: 5,
-                maxLength: 130,
-                decoration: InputDecoration(
-                  labelText: 'Ošetření',
-                  hintText: 'Maximálně 130 znaků',
-                  border: OutlineInputBorder(),
-                  labelStyle: TextStyle(color: Colors.black),
-                ),
-              ),
+              //TextField(
+              // controller: treatmentController,
+              //  maxLines: 5,
+              //  maxLength: 130,
+              //  decoration: InputDecoration(
+              //    labelText: 'Ošetření',
+              //    hintText: 'Maximálně 130 znaků',
+              //    border: OutlineInputBorder(),
+              //    labelStyle: TextStyle(color: Colors.black),
+              //  ),
+              //),
               SizedBox(height: 15),
               // Buttons
               Row(
@@ -163,7 +166,10 @@ class _NewRecordPageState extends State<NewRecordPage> {
                   // Zrušit Button
                   ElevatedButton(
                     onPressed: () {
-                      // ... (handle cancel logic)
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ParticipantDetailPage())
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       primary: Color.fromARGB(255, 255, 251, 245),
