@@ -21,7 +21,7 @@ class PageUI extends StatelessWidget {
         MaterialPageRoute(
           builder: (context) => Scaffold(
             appBar: AppBar(
-              title: const Text("PDF náhled"),
+              title: const Text("Náhled PDF prosím zvolte tisk z menu"),
             ),
             body: PdfPreview(
               build: (format) async => value,
@@ -74,8 +74,8 @@ class PageUI extends StatelessWidget {
                       PrintPack packedPDF =
                           await printer.printSelected(selectedOsoby);
 
-                      // navigateToPdfPreview(
-                      //     context, packedPDF.finishedDocument.save());
+                      navigateToPdfPreview(
+                          context, packedPDF.finishedDocument.save());
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
