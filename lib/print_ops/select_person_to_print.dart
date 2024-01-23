@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:denik_zza/print_ops/printer_woodoo.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 
-class OsobyListView extends StatelessWidget {
-  final PrinterWoodoo printer = PrinterWoodoo();
+class OsobyListView extends StatefulWidget {
 
-  OsobyListView({super.key});
+  const OsobyListView({super.key});
+
+  @override
+  State<OsobyListView> createState() => _OsobyListViewState();
+}
+
+class _OsobyListViewState extends State<OsobyListView> {
+  final PrinterWoodoo printer = PrinterWoodoo();
 
   @override
   Widget build(BuildContext context) {
@@ -22,10 +28,17 @@ class OsobyListView extends StatelessWidget {
           return ListView.builder(
             itemCount: snapshot.data!.length,
             itemBuilder: (context, index) {
-              return ListTile(
-                title: Text(snapshot.data![index].jmeno),
-                subtitle: Text(
-                    '${snapshot.data![index].prijmeni}, ${snapshot.data![index].datumNarozeni?.day.toString().padLeft(2, '0')}.${snapshot.data![index].datumNarozeni?.month.toString().padLeft(2, '0')}.${snapshot.data![index].datumNarozeni?.year}'),
+              return CheckboxListTile(
+                value: snapshot
+                    .data![index].wasPrinted, // Replace with actual property
+                onChanged: (bool? value) {
+                  setState(() {
+                    snapshot.data![index].wasPrinted =
+                        value; // Replace with actual property
+                  });
+                },
+                title: Text(
+                    '${snapshot.data![index].jmeno} ${snapshot.data![index].prijmeni}, ${snapshot.data![index].datumNarozeni?.day.toString().padLeft(2, '0')}.${snapshot.data![index].datumNarozeni?.month.toString().padLeft(2, '0')}.${snapshot.data![index].datumNarozeni?.year}'),
               );
               // Add more properties of MemoryOsoba as needed
             },
@@ -40,7 +53,7 @@ void showOsobyDialog(BuildContext context) async {
   showDialog(
     context: context,
     builder: (BuildContext context) {
-      return AlertDialog(
+      return const AlertDialog(
         content: SizedBox(
           width: double.maxFinite,
           child: OsobyListView(),
