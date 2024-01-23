@@ -80,10 +80,10 @@ class PDFGenerator {
   }
 
   pw.Widget _noteItem(MemoryZaznam note) {
-    print("printing note.");
+   // print("printing note.");
     PdfColor notePrimaryColor = myPrimaryColor;
     if ((note.isPrinted && _append) || _hideBody) {
-      print("skipping note ${note.idZaznamu}.");
+     // print("skipping note ${note.idZaznamu}.");
       notePrimaryColor = myTransparentColor;
     } else {
       notePrimaryColor = myPrimaryColor;

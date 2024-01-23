@@ -41,46 +41,57 @@ class PageUI extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Tisknutí',
-      home: Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              FutureBuilder<PrintPack>(
-                future: printer.printAll(),
-                builder:
-                    (BuildContext context, AsyncSnapshot<PrintPack> snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator();
-                  } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  } else {
-                    var myPDF = snapshot.data!.finishedDocument.save();
-                    return ElevatedButton(
-                      onPressed: () => navigateToPdfPreview(context, myPDF),
-                      child: const Text('tisk všecho'),
-                    );
-                  }
-                },
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () async {
-                  List<MemoryOsoba> selectedOsoby = await showOsobyDialog(
-                      context, printer.getOsobyForPrint());
-                  if (selectedOsoby.isNotEmpty) {
-                    PrintPack packedPDF = await printer.printSelected(selectedOsoby);
-                    navigateToPdfPreview(context, packedPDF.finishedDocument.save());
-                  }
-                },
-                child: const Text('dotisk chybějících/vybraných osob'),
-              ),
-              const SizedBox(height: 10),
-              const ElevatedButton(
-                onPressed: null,
-                child: Text('neimplementováno'),
-              ),
-            ],
+      home: Builder( // Add Builder here
+        builder: (BuildContext context) => Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                FutureBuilder<PrintPack>(
+                  future: printer.printAll(),
+                  builder:
+                      (BuildContext context, AsyncSnapshot<PrintPack> snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    } else if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    } else {
+                      var myPDF = snapshot.data!.finishedDocument.save();
+                      return ElevatedButton(
+                        onPressed: () => navigateToPdfPreview(context, myPDF),
+                        child: const Text('tisk všecho'),
+                      );
+                    }
+                  },
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () async {
+                    List<MemoryOsoba> selectedOsoby = await showOsobyDialog(
+                        context, printer.getOsobyForPrint());
+                    print("počet je ${selectedOsoby.length}");
+                    if (selectedOsoby.isNotEmpty) {
+                      PrintPack packedPDF =
+                          await printer.printSelected(selectedOsoby);
+
+                      // navigateToPdfPreview(
+                      //     context, packedPDF.finishedDocument.save());
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Nebyly vybrány žádné osoby')),
+                      );
+                    }
+                  },
+                  child: const Text('dotisk chybějících/vybraných osob'),
+                ),
+                const SizedBox(height: 10),
+                const ElevatedButton(
+                  onPressed: null,
+                  child: Text('neimplementováno'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
