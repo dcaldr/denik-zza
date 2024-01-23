@@ -102,18 +102,18 @@ class RecordDetailPage extends StatelessWidget {
             ),
             SizedBox(height: 20),
             // Divider to separate description and treatment
-            Divider(),
+            //Divider(),
             // Treatment section
-            Text(
-              'Léčba',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 10),
+            //Text(
+            //  'Léčba',
+            //  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            //),
+            //SizedBox(height: 10),
             // Text with record treatment
-            Text(
-              recordTreatment,
-              style: TextStyle(fontSize: 14, color: Colors.black),
-            ),
+            //Text(
+            //  recordTreatment,
+            //  style: TextStyle(fontSize: 14, color: Colors.black),
+            //),
           ],
         ),
       ),
