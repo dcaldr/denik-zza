@@ -138,14 +138,15 @@ class ActionItem extends StatelessWidget {
               const Icon(Icons.people),
             ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ActionDetail()),
-                );
-            },
-            child: const Text('Detail'),
+           ElevatedButton(
+            // onPressed: () {
+            //   Navigator.push(
+            //       context,
+            //       MaterialPageRoute(builder: (context) => ActionDetail()),
+            //     );
+            // },
+            onPressed: null,
+            child: Text('Detail'),
           ),
         ],
       ),
