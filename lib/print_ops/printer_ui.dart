@@ -59,7 +59,7 @@ class PageUI extends StatelessWidget {
                       var myPDF = snapshot.data!.finishedDocument.save();
                       return ElevatedButton(
                         onPressed: () => navigateToPdfPreview(context, myPDF),
-                        child: const Text('tisk všecho'),
+                        child: const Text('tisk všech osob'),
                       );
                     }
                   },
