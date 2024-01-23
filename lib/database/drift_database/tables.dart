@@ -46,7 +46,7 @@ class Records extends Table {
   DateTimeColumn get dateAndTime => dateTime()();
   TextColumn get title => text().withLength(min: 0, max: 64)();
   TextColumn get description => text().withLength(min: 0, max: 512)();
-  TextColumn get treatment => text().withLength(min: 0, max: 512)();
+  TextColumn get treatment => text().withLength(min: 0, max: 512).nullable()();
   BoolColumn get wasPrinted => boolean().withDefault(const Constant(false))();
 
   // Foreign keys

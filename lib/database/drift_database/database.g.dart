@@ -1566,11 +1566,11 @@ class $RecordsTable extends Records with TableInfo<$RecordsTable, Record> {
       const VerificationMeta('treatment');
   @override
   late final GeneratedColumn<String> treatment = GeneratedColumn<String>(
-      'treatment', aliasedName, false,
+      'treatment', aliasedName, true,
       additionalChecks:
           GeneratedColumn.checkTextLength(minTextLength: 0, maxTextLength: 512),
       type: DriftSqlType.string,
-      requiredDuringInsert: true);
+      requiredDuringInsert: false);
   static const VerificationMeta _wasPrintedMeta =
       const VerificationMeta('wasPrinted');
   @override
@@ -1648,8 +1648,6 @@ class $RecordsTable extends Records with TableInfo<$RecordsTable, Record> {
     if (data.containsKey('treatment')) {
       context.handle(_treatmentMeta,
           treatment.isAcceptableOrUnknown(data['treatment']!, _treatmentMeta));
-    } else if (isInserting) {
-      context.missing(_treatmentMeta);
     }
     if (data.containsKey('was_printed')) {
       context.handle(
@@ -1691,7 +1689,7 @@ class $RecordsTable extends Records with TableInfo<$RecordsTable, Record> {
       description: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}description'])!,
       treatment: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}treatment'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}treatment']),
       wasPrinted: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}was_printed'])!,
       paramedicFK: attachedDatabase.typeMapping
@@ -1712,7 +1710,7 @@ class Record extends DataClass implements Insertable<Record> {
   final DateTime dateAndTime;
   final String title;
   final String description;
-  final String treatment;
+  final String? treatment;
   final bool wasPrinted;
   final int paramedicFK;
   final int participantFK;
@@ -1721,7 +1719,7 @@ class Record extends DataClass implements Insertable<Record> {
       required this.dateAndTime,
       required this.title,
       required this.description,
-      required this.treatment,
+      this.treatment,
       required this.wasPrinted,
       required this.paramedicFK,
       required this.participantFK});
@@ -1732,7 +1730,9 @@ class Record extends DataClass implements Insertable<Record> {
     map['date_and_time'] = Variable<DateTime>(dateAndTime);
     map['title'] = Variable<String>(title);
     map['description'] = Variable<String>(description);
-    map['treatment'] = Variable<String>(treatment);
+    if (!nullToAbsent || treatment != null) {
+      map['treatment'] = Variable<String>(treatment);
+    }
     map['was_printed'] = Variable<bool>(wasPrinted);
     map['paramedic_f_k'] = Variable<int>(paramedicFK);
     map['participant_f_k'] = Variable<int>(participantFK);
@@ -1745,7 +1745,9 @@ class Record extends DataClass implements Insertable<Record> {
       dateAndTime: Value(dateAndTime),
       title: Value(title),
       description: Value(description),
-      treatment: Value(treatment),
+      treatment: treatment == null && nullToAbsent
+          ? const Value.absent()
+          : Value(treatment),
       wasPrinted: Value(wasPrinted),
       paramedicFK: Value(paramedicFK),
       participantFK: Value(participantFK),
@@ -1760,7 +1762,7 @@ class Record extends DataClass implements Insertable<Record> {
       dateAndTime: serializer.fromJson<DateTime>(json['dateAndTime']),
       title: serializer.fromJson<String>(json['title']),
       description: serializer.fromJson<String>(json['description']),
-      treatment: serializer.fromJson<String>(json['treatment']),
+      treatment: serializer.fromJson<String?>(json['treatment']),
       wasPrinted: serializer.fromJson<bool>(json['wasPrinted']),
       paramedicFK: serializer.fromJson<int>(json['paramedicFK']),
       participantFK: serializer.fromJson<int>(json['participantFK']),
@@ -1774,7 +1776,7 @@ class Record extends DataClass implements Insertable<Record> {
       'dateAndTime': serializer.toJson<DateTime>(dateAndTime),
       'title': serializer.toJson<String>(title),
       'description': serializer.toJson<String>(description),
-      'treatment': serializer.toJson<String>(treatment),
+      'treatment': serializer.toJson<String?>(treatment),
       'wasPrinted': serializer.toJson<bool>(wasPrinted),
       'paramedicFK': serializer.toJson<int>(paramedicFK),
       'participantFK': serializer.toJson<int>(participantFK),
@@ -1786,7 +1788,7 @@ class Record extends DataClass implements Insertable<Record> {
           DateTime? dateAndTime,
           String? title,
           String? description,
-          String? treatment,
+          Value<String?> treatment = const Value.absent(),
           bool? wasPrinted,
           int? paramedicFK,
           int? participantFK}) =>
@@ -1795,7 +1797,7 @@ class Record extends DataClass implements Insertable<Record> {
         dateAndTime: dateAndTime ?? this.dateAndTime,
         title: title ?? this.title,
         description: description ?? this.description,
-        treatment: treatment ?? this.treatment,
+        treatment: treatment.present ? treatment.value : this.treatment,
         wasPrinted: wasPrinted ?? this.wasPrinted,
         paramedicFK: paramedicFK ?? this.paramedicFK,
         participantFK: participantFK ?? this.participantFK,
@@ -1837,7 +1839,7 @@ class RecordsCompanion extends UpdateCompanion<Record> {
   final Value<DateTime> dateAndTime;
   final Value<String> title;
   final Value<String> description;
-  final Value<String> treatment;
+  final Value<String?> treatment;
   final Value<bool> wasPrinted;
   final Value<int> paramedicFK;
   final Value<int> participantFK;
@@ -1856,14 +1858,13 @@ class RecordsCompanion extends UpdateCompanion<Record> {
     required DateTime dateAndTime,
     required String title,
     required String description,
-    required String treatment,
+    this.treatment = const Value.absent(),
     this.wasPrinted = const Value.absent(),
     required int paramedicFK,
     required int participantFK,
   })  : dateAndTime = Value(dateAndTime),
         title = Value(title),
         description = Value(description),
-        treatment = Value(treatment),
         paramedicFK = Value(paramedicFK),
         participantFK = Value(participantFK);
   static Insertable<Record> custom({
@@ -1893,7 +1894,7 @@ class RecordsCompanion extends UpdateCompanion<Record> {
       Value<DateTime>? dateAndTime,
       Value<String>? title,
       Value<String>? description,
-      Value<String>? treatment,
+      Value<String?>? treatment,
       Value<bool>? wasPrinted,
       Value<int>? paramedicFK,
       Value<int>? participantFK}) {
