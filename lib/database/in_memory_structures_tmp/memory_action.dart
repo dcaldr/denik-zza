@@ -4,5 +4,5 @@ class MemoryAction{
   String? popis;
   DateTime odkdy;
   DateTime dokdy;
-MemoryAction({ int? idAkce ,required this.nadpis, required this.popis, required this.odkdy,required this.dokdy});
+MemoryAction({ required this.idAkce ,required this.nadpis, required this.popis, required this.odkdy,required this.dokdy});
 }
