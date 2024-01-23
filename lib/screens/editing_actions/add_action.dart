@@ -41,7 +41,7 @@ class _AddActionPageState extends State<AddActionPage> {
     var a = DateTime.parse('10.5.2000');
     var b =DateTime.parse('11.5.2000');
     @Deprecated("Remove as soon as possible")
-    MemoryAction dummy = MemoryAction(nadpis: "Dummy", popis: "popis", odkdy: a, dokdy: b);
+    MemoryAction dummy = MemoryAction(idAkce: 1, nadpis: "Dummy", popis: "popis", odkdy: a, dokdy: b);
     return Scaffold(
       appBar: AppBar(
         title: Text(
