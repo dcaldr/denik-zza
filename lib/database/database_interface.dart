@@ -1,3 +1,4 @@
+import 'in_memory_structures_tmp/memory_action.dart';
 import 'in_memory_structures_tmp/memory_osoba.dart';
 import 'in_memory_structures_tmp/memory_zaznam.dart';
 /// interface between database and app
@@ -82,5 +83,10 @@ Future<int?> getPinnedEventID();
   ///
   /// The method returns a [Future] that resolves to an [int] which represents the current action ID.
   /// If no current action ID is found, the method returns `null`.
-  Future<int?> getCurrentEventID();
+Future<int?> getCurrentEventID();
+
+/// This method returns all [MemoryAction]
+  ///
+  ///  if none present empty list will be returned
+Future<List<MemoryAction>> getAllZzaActions();
 }

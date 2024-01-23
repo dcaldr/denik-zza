@@ -3,20 +3,27 @@ import 'package:denik_zza/screens/editing_actions/action_detail.dart';
 import 'package:denik_zza/screens/editing_actions/add_action.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/login/login_page.dart';
+
+import '../../database/database_interface.dart';
+import '../../database/database_wrapper.dart';
+import '../../database/in_memory_structures_tmp/memory_action.dart';
 class AllActions extends StatelessWidget {
   AllActions({super.key});
+  final DatabaseInterface database = DatabaseWrapper.getDatabase();
+
 
   @override
   Widget build(BuildContext context) {
+    List<MemoryAction> allActions = await database.getAllZzaActions();
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Všechny akce',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.add),
+            icon: const Icon(Icons.add),
             onPressed: () {
               Navigator.push(
                 context,
@@ -25,7 +32,7 @@ class AllActions extends StatelessWidget {
             },
           ),
           IconButton(
-            icon: Icon(Icons.search),
+            icon: const Icon(Icons.search),
             onPressed: () {
               showSearch(context: context, delegate: CustomSearchDelegate());
             },
@@ -39,7 +46,7 @@ class AllActions extends StatelessWidget {
               child: ListView(
                 children: [
                   ListTile(
-                    title: Text(
+                    title: const Text(
                       'Profil',
                       style:
                           TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
@@ -52,7 +59,7 @@ class AllActions extends StatelessWidget {
                     },
                   ),
                   ListTile(
-                    title: Text(
+                    title: const Text(
                       'Akce',
                       style:
                           TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
@@ -68,9 +75,9 @@ class AllActions extends StatelessWidget {
                 ],
               ),
             ),
-            Divider(), // Divider to separate the main items from logout
+            const Divider(), // Divider to separate the main items from logout
             ListTile(
-              title: Text(
+              title: const Text(
                 'Odhlásit se',
                 style: TextStyle(
                   fontSize: 20,
@@ -93,8 +100,8 @@ class AllActions extends StatelessWidget {
           // Search bar and add action button
 
           // Table headers
-          Padding(
-            padding: const EdgeInsets.all(8.0),
+          const Padding(
+            padding: EdgeInsets.all(8.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -108,7 +115,7 @@ class AllActions extends StatelessWidget {
               ],
             ),
           ),
-          Divider(),
+          const Divider(),
           // List of actions
           ActionItem(title: 'Akce 1', date: '2022-01-01', participants: 20),
           ActionItem(title: 'Akce 2', date: '2022-02-15', participants: 15),
@@ -138,7 +145,7 @@ class ActionItem extends StatelessWidget {
           Row(
             children: [
               Text(participants.toString()),
-              Icon(Icons.people),
+              const Icon(Icons.people),
             ],
           ),
           ElevatedButton(
@@ -148,7 +155,7 @@ class ActionItem extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => ActionDetail()),
                 );
             },
-            child: Text('Detail'),
+            child: const Text('Detail'),
           ),
         ],
       ),
@@ -162,7 +169,7 @@ class CustomSearchDelegate extends SearchDelegate {
   List<Widget> buildActions(BuildContext context) {
     return [
       IconButton(
-        icon: Icon(Icons.close),
+        icon: const Icon(Icons.close),
         onPressed: () {
           query = '';
         },
@@ -173,7 +180,7 @@ class CustomSearchDelegate extends SearchDelegate {
   @override
   Widget buildLeading(BuildContext context) {
     return IconButton(
-      icon: Icon(Icons.arrow_back),
+      icon: const Icon(Icons.arrow_back),
       onPressed: () {
         close(context, '');
       },
