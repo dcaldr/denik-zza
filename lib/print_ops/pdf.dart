@@ -97,8 +97,8 @@ class PDFGenerator {
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text(
-                '${note.casZaznamu?.day.toString().padLeft(2, '0')}.${note.casZaznamu?.month.toString().padLeft(2, '0')}.${note.casZaznamu?.year}',
+              pw.Text( // Todo: make a method (it's used accross app)
+                '${note.casZaznamu?.day.toString().padLeft(2, '0')}.${note.casZaznamu?.month.toString().padLeft(2, '0')}.${note.casZaznamu?.year}', //DT1
                 style: pw.TextStyle(fontSize: 8.0, color: notePrimaryColor),
               ),
               pw.Text(
