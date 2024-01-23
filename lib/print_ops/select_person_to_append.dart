@@ -41,7 +41,7 @@ class _SingleOsobaSelectorState extends State<SingleOsobaSelector> {
                   widget.onOsobaSelected(selectedOsoba);
                 },
                 title: Text(
-                    '${snapshot.data![index].jmeno} ${snapshot.data![index].prijmeni}, ${snapshot.data![index].datumNarozeni?.day.toString().padLeft(2, '0')}.${snapshot.data![index].datumNarozeni?.month.toString().padLeft(2, '0')}.${snapshot.data![index].datumNarozeni?.year}'
+                    '${snapshot.data![index].jmeno} ${snapshot.data![index].prijmeni}, ${snapshot.data![index].datumNarozeni?.day.toString().padLeft(2, '0')}.${snapshot.data![index].datumNarozeni?.month.toString().padLeft(2, '0')}.${snapshot.data![index].datumNarozeni?.year}' //TODO: improve as mentioned in pdf.dart //DT1
                 ),
               );
             },
