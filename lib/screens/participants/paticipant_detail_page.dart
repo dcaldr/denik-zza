@@ -1,4 +1,5 @@
 import 'package:denik_zza/screens/records/new_record_page.dart';
+import 'package:denik_zza/screens/records/record_detail_page.dart';
 import 'package:flutter/material.dart';
 
 class ParticipantDetailPage extends StatelessWidget {
@@ -39,8 +40,9 @@ class ParticipantDetailPage extends StatelessWidget {
             SizedBox(height: 0),
             Text(
               participantName,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
+            Divider(),
             // Bubbles with participant information
             Expanded(
               child: ListView(
@@ -182,7 +184,10 @@ class PreviousZaznam extends StatelessWidget {
             Text(date),
             ElevatedButton(
               onPressed: () {
-                // Implement logic for navigating to záznam detail
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => RecordDetailPage()),
+              );
               },
               child: Text('Detail'),
             ),

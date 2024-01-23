@@ -33,8 +33,9 @@ class ActionDetail extends StatelessWidget {
               SizedBox(height: 0),
               Text(
                 'Tábor Jurský Park',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
+              Divider(),
               Row(
                 children: [
                   Icon(Icons.people, size: 50),
@@ -53,11 +54,13 @@ class ActionDetail extends StatelessWidget {
                   Text('Velká Chmelistná'),
                 ],
               ),
+              Divider(),
               SizedBox(height: 20),
               Text(
                 'Popis Akce\nZde vložte textový popis akce...',
                 style: TextStyle(fontSize: 16),
               ),
+              Divider(),
               SizedBox(height: 20),
               Text(
                 'Účastníci',

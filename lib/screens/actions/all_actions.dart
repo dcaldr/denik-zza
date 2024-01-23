@@ -83,6 +83,7 @@ class AllActions extends StatelessWidget {
               ],
             ),
           ),
+          Divider(),
           // List of actions
           ActionItem(title: 'Akce 1', date: '2022-01-01', participants: 20),
           ActionItem(title: 'Akce 2', date: '2022-02-15', participants: 15),
