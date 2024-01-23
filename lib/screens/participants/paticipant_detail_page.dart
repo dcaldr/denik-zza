@@ -1,3 +1,4 @@
+import 'package:denik_zza/screens/records/new_record_page.dart';
 import 'package:flutter/material.dart';
 
 class ParticipantDetailPage extends StatelessWidget {
@@ -6,8 +7,10 @@ class ParticipantDetailPage extends StatelessWidget {
   final String birthDate = "1990-01-01";
   final String gender = "Muž";
   final String insuranceCompany = "Pojišťovna XYZ";
-  final String insuranceNumber = "123456789";
+  final String phoneNumber = "123456789";
   final String location = "Praha";
+  final String nonInfectiousConfirmation = "Ano";
+  final String eligibleConfirmation = "Ano";
 
   @override
   Widget build(BuildContext context) {
@@ -45,8 +48,10 @@ class ParticipantDetailPage extends StatelessWidget {
                   InfoBubble(label: 'Datum Narození', value: birthDate),
                   InfoBubble(label: 'Pohlaví', value: gender),
                   InfoBubble(label: 'Pojišťovna', value: insuranceCompany),
-                  InfoBubble(label: 'Číslo pojištění', value: insuranceNumber),
+                  InfoBubble(label: 'Číslo pojištění', value: phoneNumber),
                   InfoBubble(label: 'Lokace', value: location),
+                  InfoBubble(label: 'Bezinfekčnost', value: nonInfectiousConfirmation),
+                  InfoBubble(label: 'Způsobilost', value: eligibleConfirmation),
                 ],
               ),
             ),
@@ -61,7 +66,10 @@ class ParticipantDetailPage extends StatelessWidget {
                 // Buttons for new záznam and printing
                 ElevatedButton(
                   onPressed: () {
-                    // Implement logic for creating a new záznam
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => NewRecordPage()),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     primary: Colors.black,
@@ -104,8 +112,8 @@ class ParticipantDetailPage extends StatelessWidget {
             SizedBox(height: 10),
             // List of previous záznamy
             // Replace `PreviousZaznam` with your actual záznam widget
-            PreviousZaznam(title: 'Záznam 1', date: '2022-01-01'),
-            PreviousZaznam(title: 'Záznam 2', date: '2022-02-01'),
+            PreviousZaznam(title: 'Zranění 1', date: '2022-01-01'),
+            PreviousZaznam(title: 'Zranění 2', date: '2022-02-01'),
             // Add more PreviousZaznam widgets as needed
           ],
         ),
