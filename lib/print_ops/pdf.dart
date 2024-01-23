@@ -248,13 +248,13 @@ class PDFGenerator {
     List<MemoryZaznam>? zaznamy,
     bool forceIn = false,
   }) async {
-    final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
-    final pdf = pw.Document(
-      //TODO:add metadata
-      theme: pw.ThemeData.withFont(
-        base: mSafeFont,
-      ),
-    );
+    // final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
+    // // final pdf = pw.Document(
+    // //   //TODO:add metadata
+    // //   theme: pw.ThemeData.withFont(
+    // //     base: mSafeFont,
+    // //   ),
+    // // );
 
     pw.Widget headerWidget = _generateHeader(osoba: osoba);
     zaznamy ??= <MemoryZaznam>[]; // if null set to empty list
