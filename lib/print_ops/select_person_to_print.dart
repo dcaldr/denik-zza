@@ -49,7 +49,7 @@ Future<List<MemoryOsoba>> showOsobyDialog(
     BuildContext context, Future<List<MemoryOsoba>> futureOsobyList) async {
   List<MemoryOsoba> emptyList = [];
 
-  await showDialog(
+  final result = await showDialog<List<MemoryOsoba>>(
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
@@ -67,8 +67,8 @@ Future<List<MemoryOsoba>> showOsobyDialog(
           ),
           TextButton(
             child: const Text('Confirm'),
-            onPressed: () {
-              Navigator.of(context).pop(futureOsobyList);
+            onPressed: () async {
+              Navigator.of(context).pop(await futureOsobyList);
             },
           ),
         ],
@@ -76,5 +76,5 @@ Future<List<MemoryOsoba>> showOsobyDialog(
     },
   );
 
-  return futureOsobyList;
+  return result ?? emptyList;
 }
