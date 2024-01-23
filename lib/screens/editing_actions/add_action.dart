@@ -29,37 +29,65 @@ class _AddActionPageState extends State<AddActionPage> {
       lastDate: DateTime(2101),
     );
 
-    if (pickedDate != null && pickedDate != controller.text) {
+    if (pickedDate != null) {
       setState(() {
-        controller.text = pickedDate.toLocal().toString().split(' ')[0];
+        controller.text = '${pickedDate.day.toString().padLeft(2, '0')}.${pickedDate.month.toString().padLeft(2, '0')}.${pickedDate.year}';
       });
     }
   }
 
+  Widget buildTextField(TextEditingController controller, String labelText, Future<void> Function(TextEditingController)? onTap) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: labelText,
+        labelStyle: const TextStyle(color: Colors.black),
+      ),
+      readOnly: onTap != null,
+      onTap: onTap != null ? () => onTap(controller) : null,
+    );
+  }
+Widget buildTextFieldWithCounter(TextEditingController controller, String labelText, int maxLength, Future<void> Function(TextEditingController)? onTap) {
+  return TextField(
+    controller: controller,
+    maxLines: 3,
+    maxLength: maxLength,
+    decoration: InputDecoration(
+      labelText: labelText,
+      hintText: 'Maximálně 130 znaků',
+      // ignore: prefer_const_constructors
+      border:  OutlineInputBorder(), //cannot be const or the numbers wont move when you type
+      //labelStyle: const TextStyle(color: Colors.black),
+    ),
+    readOnly: onTap != null,
+    onTap: onTap != null ? () => onTap(controller) : null,
+  );
+}
+
+
   @override
   Widget build(BuildContext context) {
-    var a = DateTime.parse('10.5.2000');
-    var b =DateTime.parse('11.5.2000');
+    var a = DateTime(2020,7,15);
+    var b =DateTime(2020,7,16);
     @Deprecated("Remove as soon as possible")
     MemoryAction dummy = MemoryAction(idAkce: 1, nadpis: "Dummy", popis: "popis", odkdy: a, dokdy: b);
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Přidat akci',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.edit),
+            icon: const Icon(Icons.edit),
             onPressed: () {
               // Add navigation to the edit action page
               // Navigator.push(context, MaterialPageRoute(builder: (context) => EditActionPage()));
             },
           ),
           IconButton(
-            icon: Icon(Icons.info),
+            icon: const Icon(Icons.info),
             onPressed: () {
-
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => ActionDetail( action: dummy,)), // Navigate to ActionDetail page
@@ -75,7 +103,7 @@ class _AddActionPageState extends State<AddActionPage> {
               child: ListView(
                 children: [
                   ListTile(
-                    title: Text(
+                    title: const Text(
                       'Profil',
                       style:
                           TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
@@ -88,7 +116,7 @@ class _AddActionPageState extends State<AddActionPage> {
                     },
                   ),
                   ListTile(
-                    title: Text(
+                    title: const Text(
                       'Akce',
                       style:
                           TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
@@ -104,9 +132,9 @@ class _AddActionPageState extends State<AddActionPage> {
                 ],
               ),
             ),
-            Divider(), // Divider to separate the main items from logout
+            const Divider(), // Divider to separate the main items from logout
             ListTile(
-              title: Text(
+              title: const Text(
                 'Odhlásit se',
                 style: TextStyle(
                   fontSize: 20,
@@ -130,78 +158,32 @@ class _AddActionPageState extends State<AddActionPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  labelText: 'Název akce',
-                  labelStyle: TextStyle(color: Colors.black),
-                ),
-              ),
-              SizedBox(height: 10),
-              TextField(
-                controller: addressController,
-                decoration: InputDecoration(
-                  labelText: 'Adresa',
-                  labelStyle: TextStyle(color: Colors.black),
-                ),
-              ),
-              SizedBox(height: 10),
+              buildTextField(nameController, 'Název akce', null),
+              const SizedBox(height: 10),
+              buildTextField(addressController, 'Adresa', null),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
-                    child: TextField(
-                      controller: startDateController,
-                      decoration: const InputDecoration(
-                        labelText: 'Datum začátku',
-                        labelStyle: TextStyle(color: Colors.black),
-                      ),
-                      readOnly: true,
-                      onTap: () => _selectDate(startDateController),
-                    ),
+                    child: buildTextField(startDateController, 'Datum začátku', _selectDate),
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Expanded(
-                    child: TextField(
-                      controller: endDateController,
-                      decoration: const InputDecoration(
-                        labelText: 'Datum ukončení',
-                        labelStyle: TextStyle(color: Colors.black),
-                      ),
-                      readOnly: true,
-                      onTap: () => _selectDate(endDateController),
-                    ),
+                    child: buildTextField(endDateController, 'Datum ukončení', _selectDate),
                   ),
                 ],
               ),
-              SizedBox(height: 10),
-              TextField(
-                controller: descriptionController,
-                maxLines: 5,
-                maxLength: 130,
-                decoration: InputDecoration(
-                  labelText: 'Popis',
-                  hintText: 'Maximálně 130 znaků',
-                  border: OutlineInputBorder(),
-                  labelStyle: TextStyle(color: Colors.black),
-                ),
-              ),
-              SizedBox(height: 20),
-              Row(
-                children: [
-                  Icon(Icons.person),
-                  SizedBox(width: 8),
-                  Text('Osob: 150', style: TextStyle(fontSize: 16)),
-                ],
-              ),
-              SizedBox(height: 20),
+              const SizedBox(height: 10),
+              buildTextFieldWithCounter(descriptionController, 'Popis', 130, null),
+              const SizedBox(height: 20),
               // Add more content here as needed
               Button(
                 onPressed: () {
                   // add action
                 },
                 buttonText: "Pridat",
-                verticalPadding: 20,
-                horizontalPadding: 130,
+                verticalPadding: 10,
+                horizontalPadding: 10,
               ),
             ],
           ),

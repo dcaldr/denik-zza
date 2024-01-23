@@ -37,7 +37,7 @@ class _EditActionPageState extends State<EditActionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Upravit akci',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
@@ -50,20 +50,20 @@ class _EditActionPageState extends State<EditActionPage> {
             children: [
               TextField(
                 controller: nameController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Název akce',
                   labelStyle: TextStyle(color: Colors.black),
                 ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               TextField(
                 controller: addressController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Adresa',
                   labelStyle: TextStyle(color: Colors.black),
                 ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
@@ -77,7 +77,7 @@ class _EditActionPageState extends State<EditActionPage> {
                       onTap: () => _selectDate(startDateController),
                     ),
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: TextField(
                       controller: endDateController,
@@ -91,27 +91,27 @@ class _EditActionPageState extends State<EditActionPage> {
                   ),
                 ],
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               TextField(
                 controller: descriptionController,
                 maxLines: 5,
                 maxLength: 130,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Popis',
                   hintText: 'Maximálně 130 znaků',
                   border: OutlineInputBorder(),
                   labelStyle: TextStyle(color: Colors.black),
                 ),
               ),
-              SizedBox(height: 20),
-              Row(
+              const SizedBox(height: 20),
+              const Row(
                 children: [
                   Icon(Icons.person),
                   SizedBox(width: 8),
                   Text('Osob: 150', style: TextStyle(fontSize: 16)),
                 ],
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               // Add more content here as needed
               Button(
                 onPressed: () {
