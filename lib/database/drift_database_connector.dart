@@ -1,3 +1,4 @@
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_action.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:drift/drift.dart';
@@ -140,5 +141,23 @@ class DriftDatabaseConnector implements DatabaseInterface {
     }
 
     return memoryParticipants;
+  }
+
+  @override
+  Future<List<MemoryAction>> getAllZzaActions() async {
+    List<ZzaAction> actions = await _driftDatabase.getAllZzaActions();
+    List<MemoryAction> memoryActions = [];
+
+    for(ZzaAction a in actions) {
+      memoryActions.add(MemoryAction(
+          idAkce: a.id,
+          nadpis: a.actionTitle,
+          popis: a.actionDescription,
+          odkdy: a.dateFrom,
+          dokdy: a.dateTo
+      ));
+    }
+
+    return memoryActions;
   }
 }
