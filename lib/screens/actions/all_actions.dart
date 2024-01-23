@@ -2,7 +2,7 @@ import 'package:denik_zza/screens/actions/profile.dart';
 import 'package:denik_zza/screens/editing_actions/action_detail.dart';
 import 'package:denik_zza/screens/editing_actions/add_action.dart';
 import 'package:flutter/material.dart';
-
+import 'package:denik_zza/screens/login/login_page.dart';
 class AllActions extends StatelessWidget {
   AllActions({super.key});
 
@@ -79,8 +79,10 @@ class AllActions extends StatelessWidget {
                 ),
               ),
               onTap: () {
-                // Implement logout logic
-                // You can navigate to the login screen or perform any other logout actions
+                Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => Login()), // Navigate to Login page
+          ); // Replace '/login' with your login page route
               },
             ),
           ],

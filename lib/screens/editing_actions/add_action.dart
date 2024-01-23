@@ -1,6 +1,7 @@
 import 'package:denik_zza/screens/actions/all_actions.dart';
 import 'package:denik_zza/screens/actions/profile.dart';
 import 'package:denik_zza/screens/editing_actions/action_detail.dart';
+import 'package:denik_zza/screens/login/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/login/components/my_button.dart';
 
@@ -62,33 +63,58 @@ class _AddActionPageState extends State<AddActionPage> {
         ],
       ),
       drawer: Drawer(
-        child: ListView(
+        child: Column(
           children: [
+            Expanded(
+              child: ListView(
+                children: [
+                  ListTile(
+                    title: Text(
+                      'Profil',
+                      style:
+                          TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Profile()),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    title: Text(
+                      'Akce',
+                      style:
+                          TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => AllActions()),
+                      );
+                    },
+                  ),
+                  // Add more menu items as needed
+                ],
+              ),
+            ),
+            Divider(), // Divider to separate the main items from logout
             ListTile(
               title: Text(
-                'Profil',
-                style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                'Odhlásit se',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red, // Customize the color as needed
+                ),
               ),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Profile()),
-                );
+                Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => Login()), // Navigate to Login page
+          ); // Replace '/login' with your login page route
               },
             ),
-            ListTile(
-              title: Text(
-                'Akce',
-                style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AllActions()),
-                );
-              },
-            ),
-            // Add more menu items as needed
           ],
         ),
       ),
