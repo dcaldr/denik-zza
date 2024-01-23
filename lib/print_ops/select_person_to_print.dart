@@ -33,8 +33,7 @@ class _OsobyListViewState extends State<OsobyListView> {
                     .data![index].wasPrinted, // Replace with actual property
                 onChanged: (bool? value) {
                   setState(() {
-                    snapshot.data![index].wasPrinted =
-                        value; // Replace with actual property
+
                   });
                 },
                 title: Text(
@@ -50,14 +49,32 @@ class _OsobyListViewState extends State<OsobyListView> {
 }
 
 void showOsobyDialog(BuildContext context) async {
-  showDialog(
+  List<MemoryOsoba> selectedOsoby = [];
+
+  await showDialog(
     context: context,
     builder: (BuildContext context) {
-      return const AlertDialog(
+      return AlertDialog(
         content: SizedBox(
           width: double.maxFinite,
-          child: OsobyListView(),
+          child: OsobyListView(
+            onOsobaSelected: (osoba, isSelected) {
+              if (isSelected) {
+                selectedOsoby.add(osoba);
+              } else {
+                selectedOsoby.remove(osoba);
+              }
+            },
+          ),
         ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('Return'),
+            onPressed: () {
+              Navigator.of(context).pop(selectedOsoby);
+            },
+          ),
+        ],
       );
     },
   );
