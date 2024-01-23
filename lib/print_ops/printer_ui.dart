@@ -65,7 +65,7 @@ class PageUI extends StatelessWidget {
               SizedBox(height: 10), // Add space between buttons
               ElevatedButton(
                 onPressed: () {
-                  showOsobyDialog(context);
+                  showOsobyDialog(context, printer.getOsobyForPrint());
                 },
                 child: Text('dotisk chybějících/vybraných osob'),
               ),
