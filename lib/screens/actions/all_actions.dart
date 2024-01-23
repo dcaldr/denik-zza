@@ -118,11 +118,12 @@ class AllActions extends StatelessWidget {
 }
 
 class ActionItem extends StatelessWidget {
-  final String title;
-  final String date;
+  // final String title;
+  // final String date;
   final int participants;
+  final MemoryAction action;
 
-  ActionItem({required this.title, required this.date, required this.participants});
+  ActionItem({required this.action,  required this.participants});
 
   @override
   Widget build(BuildContext context) {
@@ -130,8 +131,8 @@ class ActionItem extends StatelessWidget {
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title),
-          Text(date),
+          Text(action.nadpis), //title
+          Text('${action.odkdy?.day.toString().padLeft(2, '0')}.${action.odkdy?.month.toString().padLeft(2, '0')}.${action.odkdy?.year}'), // date //TODO: improve as mentioned in pdf.dart //DT1
           Row(
             children: [
               Text(participants.toString()),
@@ -139,13 +140,13 @@ class ActionItem extends StatelessWidget {
             ],
           ),
            ElevatedButton(
-            // onPressed: () {
-            //   Navigator.push(
-            //       context,
-            //       MaterialPageRoute(builder: (context) => ActionDetail()),
-            //     );
-            // },
-            onPressed: null,
+            onPressed: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ActionDetail(action: action,)),
+                );
+            },
+        //    onPressed: null,
             child: Text('Detail'),
           ),
         ],
