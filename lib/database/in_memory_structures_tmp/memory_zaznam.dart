@@ -19,8 +19,15 @@ class MemoryZaznam {
   MemoryZaznam.short(this.popis, this.idPacient);
   MemoryZaznam.longer(this.nazev, this.popis, this.idPacient);
 
-  MemoryZaznam.complete(this.idZaznamu, this.casZaznamu, this.nazev,
-      this.popis, this.lecba, this.isPrinted, this.idAuthor, this.idPacient);
+  MemoryZaznam.named({
+    required this.idZaznamu,
+    required this.casZaznamu,
+    required this.nazev,
+    required this.popis,
+    this.lecba,
+    required this.isPrinted,
+    required this.idAuthor
+  });
 
   @override
   String toString() {

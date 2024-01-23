@@ -39,9 +39,18 @@ class DriftDatabaseConnector implements DatabaseInterface {
   }
 
   @override
-  Future<bool> addZaznam(MemoryZaznam zaznam) {
-    // TODO: implement addZaznam
-    throw UnimplementedError();
+  Future<bool> addZaznam(MemoryZaznam zaznam) async {
+    RecordsCompanion c = RecordsCompanion(
+      dateAndTime: Value(DateTime.now()),
+      title: Value(zaznam.nazev!),
+      description: Value(zaznam.popis),
+      paramedicFK: Value(zaznam.idAuthor),
+      participantFK: Value(zaznam.idPacient)
+    );
+
+    _driftDatabase.addRecord(c);
+
+    return true;
   }
 
   @override
@@ -88,10 +97,21 @@ class DriftDatabaseConnector implements DatabaseInterface {
     List<Record> records = await _driftDatabase.getRecordsByParticipantID(id);
     List<MemoryZaznam> memoryRecords = [];
 
+    String description = "";
+
     for(Record r in records) {
-      memoryRecords.add(MemoryZaznam.complete(r.id, r.dateAndTime, r.title,
-          r.description, r.treatment, r.wasPrinted,
-          r.paramedicFK, r.participantFK));
+      if(r.treatment != null) {
+        description = '${r.description}\n${r.treatment}';
+      }
+
+      memoryRecords.add(MemoryZaznam.named(
+          idZaznamu: r.id,
+          casZaznamu: r.dateAndTime,
+          nazev: r.title,
+          popis: description,
+          isPrinted: r.wasPrinted,
+          idAuthor: r.paramedicFK
+      ));
     }
 
     return memoryRecords;
