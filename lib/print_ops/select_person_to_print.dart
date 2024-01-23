@@ -60,13 +60,13 @@ Future<List<MemoryOsoba>> showOsobyDialog(
         ),
         actions: <Widget>[
           TextButton(
-            child: const Text('Return'),
+            child: const Text('Vrátit se'),
             onPressed: () {
               Navigator.of(context).pop(emptyList);
             },
           ),
           TextButton(
-            child: const Text('Confirm'),
+            child: const Text('Potvrdit'),
             onPressed: () async {
               Navigator.of(context).pop(await futureOsobyList);
             },
