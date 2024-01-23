@@ -36,7 +36,7 @@ class PageUI extends StatelessWidget {
                             MaterialPageRoute(builder: (context) =>
                                 Scaffold(
                                   appBar: AppBar(
-                                    title: const Text("PDF Preview"),
+                                    title: const Text("PDF náhled"),
                                   ),
                                   body: PdfPreview(build: (format) async => value,
                                     allowSharing: true,
