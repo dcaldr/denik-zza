@@ -1,26 +1,25 @@
+import 'package:denik_zza/database/database_interface.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/screens/records/new_record_page.dart';
 import 'package:denik_zza/screens/records/record_detail_page.dart';
 import 'package:flutter/material.dart';
 
+import '../../database/in_memory_structures_tmp/memory_osoba.dart';
+
 class ParticipantDetailPage extends StatelessWidget {
-  // Placeholder participant data
-  final String participantName = "Jan Novotný";
-  final String birthDate = "1990-01-01";
-  final String gender = "Muž";
-  final String insuranceCompany = "Pojišťovna XYZ";
-  final String phoneNumber = "123456789";
-  final String location = "Praha";
-  final String nonInfectiousConfirmation = "Ano";
-  final String eligibleConfirmation = "Ano";
+  final MemoryOsoba ucastnik;
+
+  const ParticipantDetailPage({required this.ucastnik, super.key});
 
   @override
   Widget build(BuildContext context) {
+    DatabaseInterface db = DatabaseWrapper.getDatabase();
     return Scaffold(
       appBar: AppBar(
-        title: Text('Detail Účastníka'),
+        title: const Text('Detail Účastníka'),
         actions: [
           IconButton(
-            icon: Icon(Icons.edit),
+            icon: const Icon(Icons.edit),
             onPressed: () {
               // Navigate to another screen for editing participant details
               // Replace `EditParticipantPage` with your actual edit page
@@ -33,33 +32,33 @@ class ParticipantDetailPage extends StatelessWidget {
         ],
       ),
       body: Padding(
-        padding: EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 0),
+            const SizedBox(height: 0),
             Text(
-              participantName,
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              '${ucastnik.jmeno} ${ucastnik.prijmeni}',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            Divider(),
+            const Divider(),
             // Bubbles with participant information
             Expanded(
               child: ListView(
                 children: [
-                  InfoBubble(label: 'Datum Narození', value: birthDate),
-                  InfoBubble(label: 'Pohlaví', value: gender),
-                  InfoBubble(label: 'Pojišťovna', value: insuranceCompany),
-                  InfoBubble(label: 'Číslo pojištění', value: phoneNumber),
-                  InfoBubble(label: 'Lokace', value: location),
-                  InfoBubble(label: 'Bezinfekčnost', value: nonInfectiousConfirmation),
-                  InfoBubble(label: 'Způsobilost', value: eligibleConfirmation),
+                  InfoBubble(label: 'Datum Narození', value: ucastnik.datumNarozeni?.toIso8601String() ?? 'N/A'),
+                  InfoBubble(label: 'Pohlaví', value: ucastnik.pohlavi == 1 ? 'Muž' : 'Žena'),
+                  InfoBubble(label: 'Pojišťovna', value: ucastnik.zdravotniPojistovna ?? 'N/A'),
+                  InfoBubble(label: 'Číslo pojištění', value: ucastnik.cisloPojisteni ?? 'N/A'),
+                  InfoBubble(label: 'Lokace', value: ucastnik.adresa ?? 'N/A'),
+                  InfoBubble(label: 'Bezinfekčnost', value: ucastnik.bezinfekcnost == true ? 'Ano' : 'Ne'),
+                  InfoBubble(label: 'Způsobilost', value: ucastnik.zpusobilost == true ? 'Ano' : 'Ne'),
                 ],
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             // Záznam o nemoci section
-            Text(
+            const Text(
               'Záznam o Nemoci/Ošetření',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
@@ -79,12 +78,12 @@ class ParticipantDetailPage extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
-                    padding: EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                       vertical: 15,
                       horizontal: 25,
                     ),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Nový Záznam',
                     style: TextStyle(fontSize: 13),
                   ),
@@ -94,24 +93,24 @@ class ParticipantDetailPage extends StatelessWidget {
                     // Implement logic for printing the záznam
                   },
                   style: ElevatedButton.styleFrom(
-                    primary: Color.fromARGB(255, 255, 251, 245),
+                    primary: const Color.fromARGB(255, 255, 251, 245),
                     onPrimary: Colors.black,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
-                    padding: EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                       vertical: 15,
                       horizontal: 25,
                     ),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Tisk Záznamu',
                     style: TextStyle(fontSize: 13),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             // List of previous záznamy
             // Replace `PreviousZaznam` with your actual záznam widget
             PreviousZaznam(title: 'Zranění 1', date: '2022-01-01'),
@@ -136,21 +135,21 @@ class InfoBubble extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Color.fromARGB(255, 226, 226, 226),
+        color: const Color.fromARGB(255, 226, 226, 226),
         borderRadius: BorderRadius.circular(8.0),
       ),
-      padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-      margin: EdgeInsets.only(bottom: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      margin: const EdgeInsets.only(bottom: 8.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 10, color: Colors.black),
+            style: const TextStyle(fontSize: 10, color: Colors.black),
           ),
           Text(
             value,
-            style: TextStyle(fontSize: 14, color: Colors.black),
+            style: const TextStyle(fontSize: 14, color: Colors.black),
           ),
         ],
       ),
@@ -170,13 +169,13 @@ class PreviousZaznam extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Color.fromARGB(255, 226, 226, 226),
+        color: const Color.fromARGB(255, 226, 226, 226),
         borderRadius: BorderRadius.circular(8.0),
       ),
-      padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-      margin: EdgeInsets.only(bottom: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      margin: const EdgeInsets.only(bottom: 8.0),
       child: ListTile(
-        contentPadding: EdgeInsets.symmetric(horizontal: 1.0),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 1.0),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -189,7 +188,7 @@ class PreviousZaznam extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => RecordDetailPage()),
               );
               },
-              child: Text('Detail'),
+              child: const Text('Detail'),
             ),
           ],
         ),
@@ -204,9 +203,9 @@ class EditParticipantPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Upravit'),
+        title: const Text('Upravit'),
       ),
-      body: Center(
+      body: const Center(
         child: Text('Prostě to musím dodělat chcípám z toho'),
       ),
     );
