@@ -72,7 +72,7 @@ class ParticipantDetailPage extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => NewRecordPage()),
+                      MaterialPageRoute(builder: (context) => NewRecordPage( osoba: ucastnik,)),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -117,34 +117,52 @@ class ParticipantDetailPage extends StatelessWidget {
             // List of previous záznamy
             // Replace `PreviousZaznam` with your actual záznam widget
             Expanded(
-              child: FutureBuilder<List<MemoryZaznam>>(
-                future: db.getRecordsByParticipantID(ucastnik.id),
-                builder: (BuildContext context, AsyncSnapshot<List<MemoryZaznam>> snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator();
-                  } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  } else {
-                    return ListView.builder(
-                      itemCount: snapshot.data!.length,
-                      itemBuilder: (context, index) {
-                        return Container(
-                          width: double.infinity,
-                          //TODO color somewhere else
-                          color: index % 2 == 0 ? Colors.white : Colors.grey[200], // Alternating colors for now
-                          margin: const EdgeInsets.all(8.0),
-                          child: ZraneniListItem(snapshot.data![index]),
-
-                        );
-                      },
-                    );
-                  }
-                },
-              ),
+              child: FullZraneniList(databaze: db, osoba: ucastnik),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+/// List all zraneni
+///
+/// TODO: ref somwhere else
+class FullZraneniList extends StatelessWidget {
+  const FullZraneniList({
+    super.key,
+    required this.databaze,
+    required this.osoba,
+  });
+
+  final DatabaseInterface databaze;
+  final MemoryOsoba osoba;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<MemoryZaznam>>(
+      future: databaze.getRecordsByParticipantID(osoba.id),
+      builder: (BuildContext context, AsyncSnapshot<List<MemoryZaznam>> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const CircularProgressIndicator();
+        } else if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        } else {
+          return ListView.builder(
+            itemCount: snapshot.data!.length,
+            itemBuilder: (context, index) {
+              return Container(
+                width: double.infinity,
+                //TODO color somewhere else
+                color: index % 2 == 0 ? Colors.white : Colors.grey[200], // Alternating colors for now
+                margin: const EdgeInsets.all(8.0),
+                child: ZraneniListItem(snapshot.data![index]),
+
+              );
+            },
+          );
+        }
+      },
     );
   }
 }
