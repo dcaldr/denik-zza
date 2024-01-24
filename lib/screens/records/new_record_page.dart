@@ -1,7 +1,7 @@
 import 'package:denik_zza/screens/records/record_detail_page.dart';
 import 'package:flutter/material.dart';
 
-import '../participants/paticipant_detail_page.dart';
+import '../participants/participant_detail_page.dart';
 
 class NewRecordPage extends StatefulWidget {
   const NewRecordPage({super.key});
