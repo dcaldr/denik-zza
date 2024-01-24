@@ -54,6 +54,20 @@ class DriftDatabaseConnector implements DatabaseInterface {
   }
 
   @override
+  bool addEvent(MemoryAction action) {
+    ZzaActionsCompanion c = ZzaActionsCompanion(
+      actionTitle: Value(action.nadpis),
+      actionDescription: Value(action.popis),
+      dateFrom: Value(action.odkdy),
+      dateTo: Value(action.dokdy)
+    );
+
+    _driftDatabase.addZzaAction(c);
+    
+    return true;
+  }
+
+  @override
   Future<List<MemoryOsoba>> getParticipantsByEvent(int idEvent) async {
     List<Participant> participants = await
     _driftDatabase.getParticipantsByAction(idEvent);
@@ -180,12 +194,5 @@ class DriftDatabaseConnector implements DatabaseInterface {
   String quickPrintZaznamyOsoby(int idOsoby) {
     // TODO: implement quickPrintZaznamyOsoby
     throw UnimplementedError();
-  }
-
-  @override
-
-  bool addEvent(MemoryAction action) {
-    // TODO: implement addEvent
-    return false;
   }
 }
