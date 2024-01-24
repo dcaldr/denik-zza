@@ -27,7 +27,7 @@ class AllActions extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => AddActionPage()),
+                MaterialPageRoute(builder: (context) =>  AddActionPage()),
               );
             },
           ),
