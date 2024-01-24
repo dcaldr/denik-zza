@@ -11,10 +11,13 @@ import 'package:printing/printing.dart';
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
 import 'dev_pdf_view.dart';
 
+/// UI for the printing page.
 class PageUI extends StatelessWidget {
   PageUI({super.key});
+
   final PrinterWoodoo printer = PrinterWoodoo();
 
+  /// Navigates to the PDF preview page.
   void navigateToPdfPreview(BuildContext context, Future<Uint8List> myPDF) {
     myPDF.then((value) {
       Navigator.push(
@@ -43,7 +46,6 @@ class PageUI extends StatelessWidget {
     return MaterialApp(
       title: 'Tisknutí',
       home: Builder(
-        // Add Builder here
         builder: (BuildContext context) => Scaffold(
           body: Center(
             child: Column(
@@ -60,7 +62,8 @@ class PageUI extends StatelessWidget {
                     } else {
                       var myPDF = snapshot.data!.finishedDocument.save();
                       return ElevatedButton(
-                        onPressed: () => navigateToPdfPreview(context, myPDF),
+                        onPressed: () =>
+                            navigateToPdfPreview(context, myPDF),
                         child: const Text('tisk všech osob'),
                       );
                     }
@@ -93,14 +96,12 @@ class PageUI extends StatelessWidget {
                     MemoryOsoba? selectedOsoba = await showSingleOsobaDialog(
                         context, printer.getOsobyForAppend());
                     if (selectedOsoba != null) {
-                      PrintPack packedPDFOne = await printer.appendPrintOne(selectedOsoba);
+                      PrintPack packedPDFOne =
+                          await printer.appendPrintOne(selectedOsoba);
                       final pdfData = packedPDFOne.finishedDocument.save();
                       await Printing.layoutPdf(
                         onLayout: (PdfPageFormat format) async => pdfData,
                       );
-
-
-
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(

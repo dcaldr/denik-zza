@@ -88,7 +88,7 @@ Future<List<MemoryOsoba>> getOsobyForAppend() async {
 }
 class PrintPack{
   pw.Document finishedDocument;
-   List<MemoryOsoba> osoby;
+List<MemoryOsoba> osoby;
 
   PrintPack({required this.finishedDocument, required this.osoby});
 }

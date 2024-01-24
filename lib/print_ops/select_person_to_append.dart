@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 
+/// Widget for selecting a single person from a list.
 class SingleOsobaSelector extends StatefulWidget {
   final Future<List<MemoryOsoba>> futureOsobyList;
   final ValueChanged<MemoryOsoba?> onOsobaSelected;
 
-  const SingleOsobaSelector({required this.futureOsobyList, required this.onOsobaSelected, super.key});
+  const SingleOsobaSelector({
+    required this.futureOsobyList,
+    required this.onOsobaSelected,
+    super.key,
+  });
 
   @override
   State<SingleOsobaSelector> createState() => _SingleOsobaSelectorState();
@@ -41,7 +46,7 @@ class _SingleOsobaSelectorState extends State<SingleOsobaSelector> {
                   widget.onOsobaSelected(selectedOsoba);
                 },
                 title: Text(
-                    '${snapshot.data![index].jmeno} ${snapshot.data![index].prijmeni}, ${snapshot.data![index].datumNarozeni?.day.toString().padLeft(2, '0')}.${snapshot.data![index].datumNarozeni?.month.toString().padLeft(2, '0')}.${snapshot.data![index].datumNarozeni?.year}' //TODO: improve as mentioned in pdf.dart //DT1
+                  '${snapshot.data![index].jmeno} ${snapshot.data![index].prijmeni}, ${snapshot.data![index].datumNarozeni?.day.toString().padLeft(2, '0')}.${snapshot.data![index].datumNarozeni?.month.toString().padLeft(2, '0')}.${snapshot.data![index].datumNarozeni?.year}', //TODO: improve as mentioned in pdf.dart //DT1
                 ),
               );
             },
@@ -52,6 +57,7 @@ class _SingleOsobaSelectorState extends State<SingleOsobaSelector> {
   }
 }
 
+/// Shows a dialog for selecting a single person.
 Future<MemoryOsoba?> showSingleOsobaDialog(
     BuildContext context, Future<List<MemoryOsoba>> futureOsobyList) async {
   MemoryOsoba? selectedOsoba;
