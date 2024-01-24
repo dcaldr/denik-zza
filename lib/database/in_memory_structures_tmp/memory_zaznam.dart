@@ -26,7 +26,8 @@ class MemoryZaznam {
     required this.popis,
     this.lecba,
     required this.isPrinted,
-    required this.idAuthor
+    required this.idAuthor,
+    required this.idPacient
   });
 
   @override

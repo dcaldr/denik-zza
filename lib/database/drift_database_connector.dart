@@ -110,7 +110,8 @@ class DriftDatabaseConnector implements DatabaseInterface {
           nazev: r.title,
           popis: description,
           isPrinted: r.wasPrinted,
-          idAuthor: r.paramedicFK
+          idAuthor: r.paramedicFK,
+          idPacient: r.participantFK
       ));
     }
 
