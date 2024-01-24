@@ -7,9 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
-import 'dev_pdf_view.dart';
 
 /// UI for the printing page.
 class PageUI extends StatelessWidget {

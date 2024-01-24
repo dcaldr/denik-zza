@@ -1,25 +1,18 @@
-
-
-
-
 import '../database/dummy_data.dart';
-import '../database/dummy_data.dart';
-import '../database/in_memory_structures_tmp/memory_osoba.dart';
 import '../database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'dev_pdf_view.dart';
 //import 'package:my_pdf/memory_zaznam.dart';
-import 'pdf.dart';
 
-
-
-import 'package:pdf/widgets.dart' as pw;
+//import 'package:pdf/widgets.dart' as pw;
 
 import 'package:flutter/material.dart';
+
 
 void main() {
   runApp(const MyApp());
 }
 
+// Main class of PDF with actions and patients 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
