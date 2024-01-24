@@ -61,7 +61,7 @@ class ActionDetail extends StatelessWidget {
                     Row(
                       children: [
                         const Icon(Icons.calendar_month, size: 50),
-                        Text('Datum: ''${action.odkdy?.day.toString().padLeft(2, '0')}.${action.odkdy?.month.toString().padLeft(2, '0')}.${action.odkdy?.year}'),
+                        Text('Datum: ${action.odkdy?.day.toString().padLeft(2, '0')}.${action.odkdy?.month.toString().padLeft(2, '0')}.${action.odkdy?.year} - ${action.dokdy?.day.toString().padLeft(2, '0')}.${action.dokdy?.month.toString().padLeft(2, '0')}.${action.dokdy?.year}'), //TODO: improve as mentioned in pdf.dart //DT1
                       ],
                     ),
                     const Divider(),
