@@ -5,11 +5,13 @@ import 'package:denik_zza/screens/records/record_detail_page.dart';
 import 'package:flutter/material.dart';
 
 import '../../database/in_memory_structures_tmp/memory_osoba.dart';
+import '../../database/in_memory_structures_tmp/memory_zaznam.dart';
+import '../../print_ops/dev_zraneni_list_view.dart';
 
 class ParticipantDetailPage extends StatelessWidget {
   final MemoryOsoba ucastnik;
 
-  const ParticipantDetailPage({required this.ucastnik, super.key});
+  ParticipantDetailPage({required this.ucastnik, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -17,17 +19,18 @@ class ParticipantDetailPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detail Účastníka'),
-        actions: [
+        actions: const [
           IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              // Navigate to another screen for editing participant details
-              // Replace `EditParticipantPage` with your actual edit page
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => EditParticipantPage()),
-              );
-            },
+            icon: Icon(Icons.edit),
+            onPressed: null,
+            // onPressed: () {
+            //   // Navigate to another screen for editing participant details
+            //   // Replace `EditParticipantPage` with your actual edit page
+            //   Navigator.push(
+            //     context,
+            //     MaterialPageRoute(builder: (context) => EditParticipantPage()),
+            //   );
+            // },
           ),
         ],
       ),
@@ -43,14 +46,14 @@ class ParticipantDetailPage extends StatelessWidget {
             ),
             const Divider(),
             // Bubbles with participant information
-            Expanded(
+            Expanded( // todo: partially scrolls - why ??
               child: ListView(
                 children: [
-                  InfoBubble(label: 'Datum Narození', value: ucastnik.datumNarozeni?.toIso8601String() ?? 'N/A'),
+                  InfoBubble(label: 'Datum Narození', value: '${ucastnik.datumNarozeni?.day.toString().padLeft(2, '0')}.${ucastnik.datumNarozeni?.month.toString().padLeft(2, '0')}.${ucastnik.datumNarozeni?.year}' ?? 'N/A'), // date //TODO: improve as mentioned in pdf.dart //DT1)
                   InfoBubble(label: 'Pohlaví', value: ucastnik.pohlavi == 1 ? 'Muž' : 'Žena'),
                   InfoBubble(label: 'Pojišťovna', value: ucastnik.zdravotniPojistovna ?? 'N/A'),
-                  InfoBubble(label: 'Číslo pojištění', value: ucastnik.cisloPojisteni ?? 'N/A'),
-                  InfoBubble(label: 'Lokace', value: ucastnik.adresa ?? 'N/A'),
+                  InfoBubble(label: 'Rodné číslo', value: ucastnik.cisloPojisteni ?? 'N/A'),
+                  InfoBubble(label: 'Adresa', value: ucastnik.adresa ?? 'N/A'),
                   InfoBubble(label: 'Bezinfekčnost', value: ucastnik.bezinfekcnost == true ? 'Ano' : 'Ne'),
                   InfoBubble(label: 'Způsobilost', value: ucastnik.zpusobilost == true ? 'Ano' : 'Ne'),
                 ],
@@ -113,9 +116,32 @@ class ParticipantDetailPage extends StatelessWidget {
             const SizedBox(height: 10),
             // List of previous záznamy
             // Replace `PreviousZaznam` with your actual záznam widget
-            PreviousZaznam(title: 'Zranění 1', date: '2022-01-01'),
-            PreviousZaznam(title: 'Zranění 2', date: '2022-02-01'),
-            // Add more PreviousZaznam widgets as needed
+            Expanded(
+              child: FutureBuilder<List<MemoryZaznam>>(
+                future: db.getRecordsByParticipantID(ucastnik.id),
+                builder: (BuildContext context, AsyncSnapshot<List<MemoryZaznam>> snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircularProgressIndicator();
+                  } else if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  } else {
+                    return ListView.builder(
+                      itemCount: snapshot.data!.length,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          width: double.infinity,
+                          //TODO color somewhere else
+                          color: index % 2 == 0 ? Colors.white : Colors.grey[200], // Alternating colors for now
+                          margin: const EdgeInsets.all(8.0),
+                          child: ZraneniListItem(snapshot.data![index]),
+
+                        );
+                      },
+                    );
+                  }
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -183,10 +209,10 @@ class PreviousZaznam extends StatelessWidget {
             Text(date),
             ElevatedButton(
               onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => RecordDetailPage()),
-              );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => RecordDetailPage()),
+                );
               },
               child: const Text('Detail'),
             ),
