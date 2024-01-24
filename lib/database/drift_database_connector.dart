@@ -63,7 +63,7 @@ class DriftDatabaseConnector implements DatabaseInterface {
     );
 
     _driftDatabase.addZzaAction(c);
-    
+
     return true;
   }
 
@@ -176,6 +176,13 @@ class DriftDatabaseConnector implements DatabaseInterface {
     }
 
     return memoryActions;
+  }
+
+  @override
+  Future<int> getParticipantCountInAction(int idAction) async {
+    List<Participant> p = await _driftDatabase.getParticipantsByAction(idAction);
+
+    return p.length;
   }
 
   @override

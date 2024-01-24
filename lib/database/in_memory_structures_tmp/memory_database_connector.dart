@@ -139,4 +139,10 @@ Future<int?> getCurrentEventID() {
     // TODO: implement addEvent
     throw UnimplementedError();
   }
+
+  @override
+  Future<int> getParticipantCountInAction(int idAction) {
+    // TODO: implement getParticipantCountInAction
+    throw UnimplementedError();
+  }
 }

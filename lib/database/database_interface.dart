@@ -98,4 +98,10 @@ Future<List<MemoryAction>> getAllZzaActions();
 ///
 ///  returns true if successful
 bool addEvent(MemoryAction action);
+
+/// Returns a [Future] that resolves to an [int], which represents count
+/// of event participants.
+///
+/// The method takes [idAction] as a parameter for the queried event.
+Future<int> getParticipantCountInAction(int idAction);
 }
