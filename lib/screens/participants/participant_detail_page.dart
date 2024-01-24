@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../database/in_memory_structures_tmp/memory_osoba.dart';
 import '../../database/in_memory_structures_tmp/memory_zaznam.dart';
-import '../../print_ops/dev_zraneni_list_view.dart';
+import '../../print_ops/zraneni_list_view.dart';
 
 class ParticipantDetailPage extends StatelessWidget {
   final MemoryOsoba ucastnik;
