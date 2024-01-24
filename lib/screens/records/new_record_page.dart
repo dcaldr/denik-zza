@@ -7,27 +7,30 @@ import 'package:flutter/material.dart';
 
 import '../participants/participant_detail_page.dart';
 
+/// Widget for creating a new record associated with a participant.
 class NewRecordPage extends StatefulWidget {
   final MemoryOsoba osoba;
 
-
-   NewRecordPage({super.key, required this.osoba});
+  /// Constructor for [NewRecordPage].
+  NewRecordPage({super.key, required this.osoba});
 
   @override
   NewRecordPageState createState() => NewRecordPageState();
 }
 
+/// State class for handling the state of [NewRecordPage].
 class NewRecordPageState extends State<NewRecordPage> {
   final TextEditingController dateController = TextEditingController();
   final TextEditingController timeController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController treatmentController = TextEditingController();
-  final TextEditingController titleController =   TextEditingController();
+  final TextEditingController titleController = TextEditingController();
 
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
   DatabaseInterface db = DatabaseWrapper.getDatabase();
 
+  /// Function to show the date picker and update the selected date.
   Future<void> _selectDate() async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -44,6 +47,7 @@ class NewRecordPageState extends State<NewRecordPage> {
     }
   }
 
+  /// Function to show the time picker and update the selected time.
   Future<void> _selectTime() async {
     TimeOfDay? pickedTime = await showTimePicker(
       context: context,
@@ -89,47 +93,24 @@ class NewRecordPageState extends State<NewRecordPage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(  //TODO : try adding flex instead of fixed numbers
-        //TODO Fix resizing hides widgets instead of moves (might be related to ↑)
+      body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Header with participant name
-               Text(
+              Text(
                 '${widget.osoba.jmeno} ${widget.osoba.prijmeni}',
                 style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
-            SizedBox(
+              SizedBox(
                 height: 350,
-                child: FullZraneniList( databaze: db, osoba: widget.osoba)
-            ),
-
-
+                child: FullZraneniList(databaze: db, osoba: widget.osoba),
+              ),
 
               // Date TextField
-              //TextField(
-              //  controller: dateController,
-              //  decoration: const InputDecoration(
-              //   labelText: 'Datum',
-              //    labelStyle: TextStyle(color: Colors.black),
-              //  ),
-              //  readOnly: true,
-              //  onTap: _selectDate,
-              //),
-              //SizedBox(height: 10),
-              // Time TextField
-              //TextField(
-              //  controller: timeController,
-              //  decoration: const InputDecoration(
-              //    labelText: 'Čas',
-              //    labelStyle: TextStyle(color: Colors.black),
-              //  ),
-              //  readOnly: true,
-              //  onTap: _selectTime,
-              //),
               const SizedBox(height: 10),
               TextField(
                 controller: titleController,
@@ -140,7 +121,6 @@ class NewRecordPageState extends State<NewRecordPage> {
                   border: OutlineInputBorder(),
                   labelStyle: TextStyle(color: Colors.black),
                 ),
-
               ),
               const SizedBox(height: 10,),
               // Description TextField
@@ -157,17 +137,6 @@ class NewRecordPageState extends State<NewRecordPage> {
               ),
               const SizedBox(height: 10),
               // Treatment TextField
-              //TextField(
-              // controller: treatmentController,
-              //  maxLines: 5,
-              //  maxLength: 130,
-              //  decoration: InputDecoration(
-              //    labelText: 'Ošetření',
-              //    hintText: 'Maximálně 130 znaků',
-              //    border: OutlineInputBorder(),
-              //    labelStyle: TextStyle(color: Colors.black),
-              //  ),
-              //),
               const SizedBox(height: 15),
               // Buttons
               Row(
@@ -180,15 +149,15 @@ class NewRecordPageState extends State<NewRecordPage> {
                       String mPopis = descriptionController.text;
                       if (mTitle.isNotEmpty || mPopis.isNotEmpty) {
                         MemoryZaznam zaznamIn = MemoryZaznam.named(
-                            nazev: mTitle,
-                            popis: mPopis,
-                            idPacient: widget.osoba.id,
-                            idZaznamu: -1, // nejde dovnitr db,
-                            casZaznamu: DateTime(1), // nejde dovnitr db
-                            isPrinted: false, // nejde dovnitr db, defaul false
-                            idAuthor: 1, // jde dovnitr db, nemame implementovane profily
+                          nazev: mTitle,
+                          popis: mPopis,
+                          idPacient: widget.osoba.id,
+                          idZaznamu: -1,
+                          casZaznamu: DateTime(1),
+                          isPrinted: false,
+                          idAuthor: 1,
                         );
-                        db.addZaznam(zaznamIn);  // w/o await will hopefully work
+                        db.addZaznam(zaznamIn);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Uloženo'),
@@ -201,7 +170,6 @@ class NewRecordPageState extends State<NewRecordPage> {
                           ),
                         );
                       }
-
                     },
                     style: ElevatedButton.styleFrom(
                       primary: Colors.black,
@@ -220,14 +188,8 @@ class NewRecordPageState extends State<NewRecordPage> {
                     ),
                   ),
                   // Zrušit Button
-                  ElevatedButton( //TODO Fix
+                  ElevatedButton(
                     onPressed: null,
-                    // onPressed: () {
-                    //   Navigator.push(
-                    //     context,
-                    //     MaterialPageRoute(builder: (context) => const ParticipantDetailPage(ucastnik: null,))
-                    //   );
-                    // },
                     style: ElevatedButton.styleFrom(
                       primary: const Color.fromARGB(255, 255, 251, 245),
                       onPrimary: Colors.black,
