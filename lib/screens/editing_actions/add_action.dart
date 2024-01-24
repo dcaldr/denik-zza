@@ -1,13 +1,16 @@
+/// Importing necessary packages and modules for the 'AddActionPage' Dart file.
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_action.dart';
 import 'package:denik_zza/screens/actions/all_actions.dart';
 import 'package:denik_zza/screens/actions/profile.dart';
-import 'package:denik_zza/screens/editing_actions/action_detail.dart';
 import 'package:denik_zza/screens/login/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/login/components/my_button.dart';
-/// Edit action page component
+
+
+/// StatefulWidget for the 'AddActionPage', used for creating new actions
+/// TODO: Edit action page component
 ///
 /// needs hevy cleaning in the future
 class AddActionPage extends StatefulWidget {
@@ -25,6 +28,7 @@ class AddActionPageState extends State<AddActionPage> {
   late TextEditingController endDateController;
   late TextEditingController descriptionController;
 
+/// Initializes the state of the 'AddActionPage'.
   @override
   void initState() {
     super.initState();
@@ -35,6 +39,7 @@ class AddActionPageState extends State<AddActionPage> {
     descriptionController = TextEditingController();
   }
 
+ /// Disposes of resources when the 'AddActionPage' is no longer needed.
   @override
   void dispose() {
     nameController.dispose();
@@ -48,6 +53,7 @@ class AddActionPageState extends State<AddActionPage> {
   DateTime? selectedStartDate;
   DateTime? selectedEndDate;
 
+ /// Displays a date picker dialog and updates the selected date.
   Future<void> _selectDate(TextEditingController controller) async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -64,6 +70,7 @@ class AddActionPageState extends State<AddActionPage> {
     }
   }
 
+  /// Builds a standard text field.
   Widget buildTextField(TextEditingController controller, String labelText,
       Future<void> Function(TextEditingController)? onTap) {
     return TextField(
@@ -77,6 +84,7 @@ class AddActionPageState extends State<AddActionPage> {
     );
   }
 
+/// Builds a text field with a character counter.
   Widget buildTextFieldWithCounter(
       TextEditingController controller,
       String labelText,
@@ -99,9 +107,11 @@ class AddActionPageState extends State<AddActionPage> {
     );
   }
 
+
+/// Builds the UI for the 'AddActionPage'.
   @override
   Widget build(BuildContext context) {
-    // todo remove
+    // TODO: remove
     // var a = DateTime(2020,7,15);
     // var b =DateTime(2020,7,16);
     // @Deprecated("Remove as soon as possible")
@@ -118,7 +128,7 @@ class AddActionPageState extends State<AddActionPage> {
             onPressed: null,
             // onPressed: () { // TODO: consult existence  of edit action reference in create action
             //
-            //   // Add navigation to the edit action page
+            //   // TODO: Add navigation to the edit action page
             //   // Navigator.push(context, MaterialPageRoute(builder: (context) => EditActionPage()));
             // },
           ),
@@ -166,26 +176,26 @@ class AddActionPageState extends State<AddActionPage> {
                       );
                     },
                   ),
-                  // Add more menu items as needed
+                  // TODO: Add more menu items as needed
                 ],
               ),
             ),
-            const Divider(), // Divider to separate the main items from logout
+            const Divider(), 
             ListTile(
               title: const Text(
                 'Odhlásit se',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.red, // Customize the color as needed
+                  color: Colors.red,
                 ),
               ),
               onTap: () {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => Login()), // Navigate to Login page
-                ); // Replace '/login' with your login page route
+                      builder: (context) => Login()), 
+                ); 
               },
             ),
           ],
@@ -218,7 +228,7 @@ class AddActionPageState extends State<AddActionPage> {
               buildTextFieldWithCounter(
                   descriptionController, 'Popis', 130, null),
               const SizedBox(height: 20),
-              // Add more content here as needed
+              // TODO: Add more content here as needed
               //FIXME: this button name shadows the material one
               Button(
                 // TODO:  improve no error handeling -> do with forms + user input handler
