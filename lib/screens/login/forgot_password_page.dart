@@ -3,6 +3,8 @@ import 'package:denik_zza/screens/login/login_page.dart';
 import 'package:denik_zza/screens/login/components/my_button.dart';
 import 'package:denik_zza/screens/login/components/my_textfield.dart';
 
+
+/// Screen for handling the forgot password functionality.
 class ForgotPasswordScreen extends StatelessWidget {
   ForgotPasswordScreen ({super.key});
 
