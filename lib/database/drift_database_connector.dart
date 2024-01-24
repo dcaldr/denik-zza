@@ -44,6 +44,7 @@ class DriftDatabaseConnector implements DatabaseInterface {
       dateAndTime: Value(DateTime.now()),
       title: Value(zaznam.nazev!),
       description: Value(zaznam.popis),
+      treatment: Value(""),
       paramedicFK: Value(zaznam.idAuthor),
       participantFK: Value(zaznam.idPacient)
     );

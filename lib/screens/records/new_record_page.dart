@@ -179,7 +179,15 @@ class NewRecordPageState extends State<NewRecordPage> {
                       String mTitle = titleController.text;
                       String mPopis = descriptionController.text;
                       if (mTitle.isNotEmpty || mPopis.isNotEmpty) {
-                        MemoryZaznam zaznamIn = MemoryZaznam.longer(mTitle,mPopis, widget.osoba.id);
+                        MemoryZaznam zaznamIn = MemoryZaznam.named(
+                            nazev: mTitle,
+                            popis: mPopis,
+                            idPacient: widget.osoba.id,
+                            idZaznamu: -1, // nejde dovnitr db,
+                            casZaznamu: DateTime(1), // nejde dovnitr db
+                            isPrinted: false, // nejde dovnitr db, defaul false
+                            idAuthor: 1, // jde dovnitr db, nemame implementovane profily
+                        );
                         db.addZaznam(zaznamIn);  // w/o await will hopefully work
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
