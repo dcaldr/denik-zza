@@ -30,18 +30,20 @@ class MyButton extends StatelessWidget {
       ),
       child: Text(
         buttonText,
-        style: TextStyle(fontSize: 10),
+        style: const TextStyle(fontSize: 10),
       ),
     );
   }
 }
 
 class AddParticipantPage extends StatefulWidget {
+  const AddParticipantPage({super.key});
+
   @override
-  _AddParticipantPageState createState() => _AddParticipantPageState();
+  AddParticipantPageState createState() => AddParticipantPageState();
 }
 
-class _AddParticipantPageState extends State<AddParticipantPage> {
+class AddParticipantPageState extends State<AddParticipantPage> {
   TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
   TextEditingController birthDateController = TextEditingController();
@@ -62,14 +64,14 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('CSV Import'),
-          content: Text('Zatím dávám místo logiky CSV'),
+          title: const Text('CSV Import'),
+          content: const Text('Zatím dávám místo logiky CSV'),
           actions: <Widget>[
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('OK'),
+              child: const Text('OK'),
             ),
           ],
         );
@@ -90,8 +92,8 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
         return Theme(
           data: ThemeData.light().copyWith(
             primaryColor: const Color.fromARGB(255, 0, 0, 0), // Change this to your preferred color
-            colorScheme: ColorScheme.light(primary: Colors.blue),
-            buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary),
+            colorScheme: const ColorScheme.light(primary: Colors.blue),
+            buttonTheme: const ButtonThemeData(textTheme: ButtonTextTheme.primary),
           ),
           child: child!,
         );
@@ -114,23 +116,23 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Přidat Účastníka'),
+        title: const Text('Přidat Účastníka'),
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextField(
                 controller: firstNameController,
-                decoration: InputDecoration(labelText: 'Jméno'),
+                decoration: const InputDecoration(labelText: 'Jméno'),
               ),
               TextField(
                 controller: lastNameController,
-                decoration: InputDecoration(labelText: 'Příjmení'),
+                decoration: const InputDecoration(labelText: 'Příjmení'),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () => _selectDate(context, selectedBirthDate, birthDateController),
                 style: ElevatedButton.styleFrom(
@@ -139,12 +141,12 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),
                   ),
-                  padding: EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                     vertical: 16.0,
                     horizontal: 24.0,
                   ),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
@@ -158,23 +160,23 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
               Text('Vybrané Datum: ${selectedBirthDate != null ? _formatDate(selectedBirthDate!) : ""}'),
               TextField(
                 controller: locationController,
-                decoration: InputDecoration(labelText: 'Lokace'),
+                decoration: const InputDecoration(labelText: 'Lokace'),
               ),
               TextField(
                 controller: phoneNumberController,
-                decoration: InputDecoration(labelText: 'Telefonní číslo'),
+                decoration: const InputDecoration(labelText: 'Telefonní číslo'),
                 keyboardType: TextInputType.phone,
               ),
               TextField(
                 controller: insuranceCompanyController,
-                decoration: InputDecoration(labelText: 'Pojišťovna'),
+                decoration: const InputDecoration(labelText: 'Pojišťovna'),
               ),
               TextField(
                 controller: insuranceNumberController,
-                decoration: InputDecoration(labelText: 'Číslo pojištění'),
+                decoration: const InputDecoration(labelText: 'Číslo pojištění'),
                 keyboardType: TextInputType.phone,
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               DropdownButtonFormField(
                 value: selectedGender,
                 onChanged: (value) {
@@ -188,35 +190,35 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
                     child: Text(option),
                   );
                 }).toList(),
-                decoration: InputDecoration(labelText: 'Pohlaví'),
+                decoration: const InputDecoration(labelText: 'Pohlaví'),
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: medicineController,
-                      decoration: InputDecoration(labelText: 'Léky'),
+                      decoration: const InputDecoration(labelText: 'Léky'),
                     ),
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: TextField(
                       controller: frequencyController,
-                      decoration: InputDecoration(labelText: 'Frekvence užívání'),
+                      decoration: const InputDecoration(labelText: 'Frekvence užívání'),
                     ),
                   ),
                 ],
               ),
               // Notes
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               TextField(
                 controller: notesController,
-                decoration: InputDecoration(labelText: 'Poznámky'),
+                decoration: const InputDecoration(labelText: 'Poznámky'),
                 maxLines: 3,
               ),
               // Checkboxes for Confirmations
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               Row(
                 children: [
                   Checkbox(
@@ -227,7 +229,7 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
                       });
                     },
                   ),
-                  Text('Potvrzení o bezinfekčnosti'),
+                  const Text('Potvrzení o bezinfekčnosti'),
                 ],
               ),
               Row(
@@ -240,24 +242,24 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
                       });
                     },
                   ),
-                  Text('Potvrzení o způsobilosti'),
+                  const Text('Potvrzení o způsobilosti'),
                 ],
               ),
-              SizedBox(height: 5),
+              const SizedBox(height: 5),
               ElevatedButton(
                 onPressed: _handleCsvImport,
                 style: ElevatedButton.styleFrom(
-                  primary: Color.fromARGB(255, 0, 0, 0),
+                  primary: const Color.fromARGB(255, 0, 0, 0),
                   onPrimary: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),
                   ),
-                  padding: EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                     vertical: 16,
                     horizontal: 24,
                   ),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.file_upload),
@@ -269,7 +271,7 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
                   ],
                 ),
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               // Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -285,12 +287,12 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
-                      padding: EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                         vertical: 20,
                         horizontal: 60,
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Uložit',
                       style: TextStyle(fontSize: 16),
                     ),
@@ -301,17 +303,17 @@ class _AddParticipantPageState extends State<AddParticipantPage> {
                       // ... (handle cancel logic)
                     },
                     style: ElevatedButton.styleFrom(
-                      primary: Color.fromARGB(255, 255, 251, 245),
+                      primary: const Color.fromARGB(255, 255, 251, 245),
                       onPrimary: Colors.black,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
-                      padding: EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                         vertical: 20,
                         horizontal: 50,
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Zrušit',
                       style: TextStyle(fontSize: 16),
                     ),
