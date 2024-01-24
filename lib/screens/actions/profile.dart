@@ -82,24 +82,12 @@ class Profile extends StatelessWidget {
 
             const SizedBox(height: 10),
             // change avatar
-            const CircleAvatar(
+             CircleAvatar(
               radius: 50,
-              //child: Image.asset('doctor.jpg'), // check
+              backgroundImage: AssetImage('assets/doc.jpg'), // Set your image asset path
             ),
             const SizedBox(height: 10),
-            ElevatedButton.icon(
-              onPressed: () {
-                // For example, show a dialog or navigate to a screen for image selection/upload
-              },
-              icon: const Icon(
-                Icons.camera_alt,
-                color: Colors.black,
-              ),
-              label: const Text(
-                'Změnit profilový obrázek',
-                style: TextStyle(color: Colors.black),
-              ),
-            ),
+           
 
             // username
             const SizedBox(height: 10),
