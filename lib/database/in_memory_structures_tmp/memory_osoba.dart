@@ -16,10 +16,14 @@ class MemoryOsoba {
   bool? wasPrinted;
   String? zdravotniPojistovna;
 
+ /// Constructs a [MemoryOsoba] instance with essential parameters.
   MemoryOsoba( this.jmeno,  this.prijmeni, this.datumNarozeni, this.adresa,
       this.telefonniCislo, this.zdravotniPojistovna, this.cisloPojisteni, this.pohlavi,);
+
+      /// Constructs a basic [MemoryOsoba] instance with only name and surname.
   MemoryOsoba.basic(this.jmeno, this.prijmeni);
 
+/// Constructs a [MemoryOsoba] instance with named parameters.
   MemoryOsoba.named({
     required this.id,
     required this.jmeno,
@@ -34,6 +38,8 @@ class MemoryOsoba {
     this.wasPrinted,
     this.zdravotniPojistovna,
   });
+
+  /// Constructs a [MemoryOsoba] instance with dummy data.
   MemoryOsoba.dummyData( this.jmeno,  this.prijmeni, this.datumNarozeni, this.adresa,
       this.telefonniCislo, this.zdravotniPojistovna, this.cisloPojisteni, this.pohlavi,);
 }

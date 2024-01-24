@@ -1,3 +1,4 @@
+/// Represents a class for modeling a memory action.
 class MemoryAction{
   late int? idAkce ;
   String nadpis;

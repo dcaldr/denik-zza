@@ -1,10 +1,12 @@
 import 'package:drift/drift.dart';
 
+// Represents a table for storing information about insurance companies.
 class InsuranceCompanies extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text().withLength(min: 0, max: 64).unique()();
 }
 
+// Represents a table for storing information about ZZa actions.
 class ZzaActions extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get actionTitle => text().withLength(min: 0, max: 128)();
@@ -13,6 +15,7 @@ class ZzaActions extends Table {
   DateTimeColumn get dateTo => dateTime()();
 }
 
+// Represents a table for storing information about participants.
 class Participants extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get firstName => text().withLength(min: 0, max: 64)();
@@ -31,6 +34,7 @@ class Participants extends Table {
   IntColumn get zzaActionFK => integer().references(ZzaActions, #id)();
 }
 
+// Represents a table for storing information about Paramedics.
 class Paramedics extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get firstName => text().withLength(min: 0, max: 64)();
@@ -41,6 +45,7 @@ class Paramedics extends Table {
   TextColumn get username => text().withLength(min: 0, max: 64).unique()();
 }
 
+// Represents a table for storing information about Records.
 class Records extends Table {
   IntColumn get id => integer().autoIncrement()();
   DateTimeColumn get dateAndTime => dateTime()();
@@ -54,6 +59,7 @@ class Records extends Table {
   IntColumn get participantFK => integer().references(Participants, #id)();
 }
 
+// Represents a table for storing information about Allergies.
 class AllergiesLimitations extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get description => text().withLength(min: 0, max: 1024)();
@@ -62,6 +68,7 @@ class AllergiesLimitations extends Table {
   IntColumn get participantFK => integer().references(Participants, #id)();
 }
 
+// Represents a table for storing information about Medications.
 class Medications extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text().withLength(min: 0, max: 128)();
@@ -72,6 +79,7 @@ class Medications extends Table {
   IntColumn get participantFK => integer().references(Participants, #id)();
 }
 
+// Represents a table for storing information about Cache.
 class Cache extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get pinnedActionID => integer().nullable().withDefault(const Constant(null))();

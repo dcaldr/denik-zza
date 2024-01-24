@@ -15,6 +15,7 @@ class MemoryDatabase implements DatabaseInterface {
     return _singleton;
   }
 
+ // Initialize with a default participant for development purposes.
   MemoryDatabase._internal() {
     addOsoba(notNull);
   }
@@ -27,6 +28,7 @@ class MemoryDatabase implements DatabaseInterface {
   /// for development to always have someone to work with
   MemoryOsoba notNull = MemoryOsoba.basic("Not", "Null");
 
+// Adds a record, assign an ID, and increment the counter.
   @override
   Future<bool> addZaznam(MemoryZaznam zaznam) async {
     zaznam.idZaznamu = idZaznamu;
@@ -35,6 +37,7 @@ class MemoryDatabase implements DatabaseInterface {
     return true;
   }
 
+ // Adds a participant, assigns an ID, and increments the counter.
   @override
   Future<bool> addOsoba(MemoryOsoba osoba) async {
     osoba.id = idOsoby;
@@ -43,6 +46,7 @@ class MemoryDatabase implements DatabaseInterface {
     return true;
   }
 
+// Prints participant information and associated records.
   @override
   String quickPrintZaznamyOsoby(int idOsoby) {
     String result = "";
@@ -77,7 +81,7 @@ class MemoryDatabase implements DatabaseInterface {
   }
 
 
-
+// Prints information for all participants.
   @override
   Future<void> quickPrintAllOsoby() async {
     for (var element in osoby) {
@@ -85,26 +89,32 @@ class MemoryDatabase implements DatabaseInterface {
     }
   }
 
+// Quickly adds a new record.
   @override
   Future<bool> quickAddNewZaznam(String popis,  idPacient ) async {
    return addZaznam(MemoryZaznam.short(popis, idPacient));
   }
+
 
  @override
 Future<List<MemoryZaznam>> getRecordsByParticipantID(int id) async {
   return zaznamy.where((zaznam) => zaznam.idPacient == id).toList();
 }
 
+// Gets records associated with a participant ID.
 @override
 Future<List<MemoryOsoba>> getParticipantsByEvent(int idEvent) async {
   // Assuming there's a field in MemoryOsoba that links to an action
   return osoby.where((osoba) => osoba.id == idEvent).toList();
 }
 
+ // Gets participants associated with an event (assumes a field in MemoryOsoba linking to an action).
 @override
 Future<int?> getPinnedEventID() async {
 throw UnimplementedError();
 }
+
+
 
 @override
 Future<List<MemoryOsoba>> getParticipantsByCurrentEvent() {
