@@ -29,8 +29,8 @@ class MemoryOsoba {
     this.cisloPojisteni,
     this.datumNarozeni,
     this.telefonniCislo,
-    this.zpusobilost,
-    this.bezinfekcnost,
+    required this.zpusobilost,
+    required this.bezinfekcnost,
     this.wasPrinted,
     this.zdravotniPojistovna,
   });

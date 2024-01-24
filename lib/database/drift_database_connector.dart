@@ -29,6 +29,8 @@ class DriftDatabaseConnector implements DatabaseInterface {
       birthNumber: Value(osoba.cisloPojisteni),
       birthDate: Value(osoba.datumNarozeni),
       parentPhoneNumber: Value(osoba.telefonniCislo),
+      eligibleConfirmation: Value(osoba.zpusobilost!),
+      nonInfectiousConfirmation: Value(osoba.bezinfekcnost!),
       insuranceCompanyFK: Value(await _driftDatabase.getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna)),
       zzaActionFK: Value((await _driftDatabase.getCurrentActionID())!)
     );
