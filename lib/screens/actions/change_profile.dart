@@ -1,13 +1,15 @@
-
 import 'package:denik_zza/screens/actions/all_actions.dart';
 import 'package:denik_zza/screens/actions/profile.dart';
 import 'package:denik_zza/screens/login/components/my_button.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/login/components/my_textfield.dart';
 
+/// Widget for changing user profile information.
 class ChangeProfile extends StatelessWidget {
+  /// Constructor for initializing the ChangeProfile widget.
   ChangeProfile({Key? key});
 
+  // Controllers for various text fields.
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController lastnameController = TextEditingController();
   final TextEditingController loginNameController = TextEditingController();
@@ -24,9 +26,8 @@ class ChangeProfile extends StatelessWidget {
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
-
+      // Drawer widget for displaying navigation options.
       drawer: Drawer(
-        // Your drawer content here
         child: ListView(
           children: [
             ListTile(
@@ -47,13 +48,9 @@ class ChangeProfile extends StatelessWidget {
                 );
               },
             ),
-            // Add more menu items as needed
           ],
         ),
       ),
-
-
-
       body: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -102,7 +99,7 @@ class ChangeProfile extends StatelessWidget {
             ),
             SizedBox(height: 10),
 
-            // button - temporarily navigates to the profile screen
+            // Button - temporarily navigates to the profile screen.
             Button(
               onPressed: () {
                 Navigator.push(
