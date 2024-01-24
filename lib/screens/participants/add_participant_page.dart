@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+
 /// Widget representing a custom button.
 class MyButton extends StatelessWidget {
   final VoidCallback onPressed;
@@ -14,6 +16,7 @@ class MyButton extends StatelessWidget {
     required this.horizontalPadding,
   });
 
+//Designing the button
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(

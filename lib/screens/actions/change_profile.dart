@@ -51,6 +51,8 @@ class ChangeProfile extends StatelessWidget {
           ],
         ),
       ),
+
+      //Adding textfields of needed information
       body: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

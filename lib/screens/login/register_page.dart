@@ -5,8 +5,7 @@ import 'package:denik_zza/screens/login/components/my_button.dart';
 import 'package:denik_zza/screens/login/components/my_textfield.dart';
 import 'package:flutter/material.dart';
 
-// popup bude docela hard
-
+//Class for creating new account with needed textfields 
 class RegisterScreen extends StatelessWidget {
   RegisterScreen({super.key});
 
@@ -21,7 +20,8 @@ class RegisterScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          // Your current AppBar code
+          // Current AppBar code
+          //Adding needed textfields
           ),
       body: SingleChildScrollView(
         child: Column(
