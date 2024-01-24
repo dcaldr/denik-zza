@@ -77,7 +77,6 @@ class AllActions extends StatelessWidget {
                       );
                     },
                   )
-                  // Add more menu items as needed
                 ],
               ),
             ),
@@ -90,7 +89,7 @@ class AllActions extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.red, // Customize the color as needed
+                  color: Colors.red,
                 ),
               ),
               onTap: () {
@@ -98,13 +97,12 @@ class AllActions extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                       builder: (context) => Login()), // Navigate to Login page
-                ); // Replace '/login' with your login page route
+                );
               },
             ),
           ],
         ),
       ),
-      // ... (rest of the build method)
     );
   }
 }
