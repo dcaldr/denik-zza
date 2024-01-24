@@ -21,6 +21,16 @@ class DriftDatabaseConnector implements DatabaseInterface {
 
   @override
   Future<bool> addOsoba(MemoryOsoba osoba) async {
+    int? insCompId = await _driftDatabase.getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna);
+
+    if(insCompId == null) {
+      _driftDatabase.addInsuranceCompany(
+        InsuranceCompaniesCompanion(
+          name: Value(osoba.zdravotniPojistovna!)
+        )
+      );
+    }
+
     ParticipantsCompanion c = ParticipantsCompanion(
       firstName: Value(osoba.jmeno),
       lastName: Value(osoba.prijmeni),
