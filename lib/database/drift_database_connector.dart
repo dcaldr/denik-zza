@@ -68,6 +68,10 @@ class DriftDatabaseConnector implements DatabaseInterface {
 
   @override
   bool addEvent(MemoryAction action) {
+    if(action.nadpis.isEmpty) {
+      return false;
+    }
+
     ZzaActionsCompanion c = ZzaActionsCompanion(
       actionTitle: Value(action.nadpis),
       actionDescription: Value(action.popis),
