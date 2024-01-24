@@ -3,7 +3,9 @@ import 'package:denik_zza/screens/login/components/my_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/actions/all_actions.dart';
 
+/// Widget for displaying user profile information.
 class Profile extends StatelessWidget {
+  /// Constructor for initializing the Profile widget.
   Profile({Key? key});
 
   final usernameController = TextEditingController();
@@ -14,27 +16,28 @@ class Profile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // bar
+      // App bar for the profile screen.
       appBar: AppBar(
         title: Text(
           'Profil',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
+        // Action button for navigating to the ChangeProfile screen.
         actions: [
           IconButton(
             icon: Icon(Icons.edit),
             onPressed: () {
               // Navigate to another screen for editing the profile
               Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ChangeProfile()),
-                );
-
+                context,
+                MaterialPageRoute(builder: (context) => ChangeProfile()),
+              );
             },
           ),
         ],
       ),
 
+      // Drawer widget for displaying navigation options.
       drawer: Drawer(
         child: ListView(
           children: [
@@ -65,31 +68,29 @@ class Profile extends StatelessWidget {
           ],
         ),
       ),
-      body: SingleChildScrollView(
 
+      // Body of the profile screen wrapped in a SingleChildScrollView.
+      body: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            const SizedBox(height: 40),
 
-        const SizedBox(height: 40),
-
-            // profile message
-
+            // Profile welcome message.
             const Text(
               'Vítejte na svém profilu!',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 10),
-            // change avatar
-             CircleAvatar(
+            // Change avatar section.
+            CircleAvatar(
               radius: 50,
               backgroundImage: AssetImage('assets/doc.jpg'), // Set your image asset path
             ),
             const SizedBox(height: 10),
-           
 
-            // username
+            // Username text field.
             const SizedBox(height: 10),
             MyTextField(
               controller: usernameController,
@@ -97,7 +98,7 @@ class Profile extends StatelessWidget {
               obscureText: false,
             ),
 
-            // last name
+            // Last name text field.
             const SizedBox(height: 10),
             MyTextField(
               controller: lastnameController,
@@ -105,21 +106,21 @@ class Profile extends StatelessWidget {
               obscureText: false,
             ),
 
-            // login name
+            // Login name text field.
             const SizedBox(height: 10),
-                  MyTextField(
-                    controller: loginName,
-                    hintText: 'Prihlasovaci jmeno',
-                    obscureText: false,
-                  ),
+            MyTextField(
+              controller: loginName,
+              hintText: 'Prihlasovaci jmeno',
+              obscureText: false,
+            ),
 
-            //phone number
+            // Phone number text field.
             const SizedBox(height: 10),
-                  MyTextField(
-                    controller: phoneNumber,
-                    hintText: 'Telefonni cislo',
-                    obscureText: false,
-                  ),
+            MyTextField(
+              controller: phoneNumber,
+              hintText: 'Telefonni cislo',
+              obscureText: false,
+            ),
           ],
         ),
       ),
