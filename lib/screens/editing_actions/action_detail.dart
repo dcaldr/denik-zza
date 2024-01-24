@@ -20,15 +20,16 @@ class ActionDetail extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Detail Akce: ${action.nadpis}'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const EditActionPage()),
-              );
-            },
+        actions: const [
+          IconButton(   //TODO: could  be rewritten to prefill new action
+            icon: Icon(Icons.edit),
+            onPressed: null,
+            // onPressed: () {
+            //   Navigator.push(
+            //     context,
+            //     MaterialPageRoute(builder: (context) => const EditActionPage()),
+            //   );
+            // },
           ),
         ],
       ),
