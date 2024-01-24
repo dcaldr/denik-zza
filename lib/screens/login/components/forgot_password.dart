@@ -1,14 +1,17 @@
 import 'package:denik_zza/screens/login/forgot_password_page.dart';
 import 'package:flutter/material.dart';
 
+/// Widget representing a "Forgot Password" link.
 class ForgotPassword extends StatelessWidget {
+  /// Constructor for the ForgotPassword widget.
   const ForgotPassword({Key? key});
 
+  /// Builds the UI for the ForgotPassword widget.
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Přesměrování na jinou obrazovku
+        // Redirect to another screen (ForgotPasswordScreen)
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => ForgotPasswordScreen()), 
