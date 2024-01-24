@@ -94,6 +94,7 @@ Future<List<MemoryOsoba>> getOsobyForAppend() async {
 
 
 }
+/// Holds (un?)finished document and [MemoryOsoba] list of people with it
 class PrintPack{
   pw.Document finishedDocument;
 List<MemoryOsoba> osoby;
