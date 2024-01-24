@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'new_record_page.dart';
-/// Temporary holding place until everything resolves
+
+/// State class for handling the state of the [NewRecordPage].
 class NewRecordPageState extends State<NewRecordPage> {
   final TextEditingController dateController = TextEditingController();
   final TextEditingController timeController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController treatmentController = TextEditingController();
-  final TextEditingController titleController =   TextEditingController();
+  final TextEditingController titleController = TextEditingController();
 
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
 
+  /// Function to show the date picker and update the selected date.
   Future<void> _selectDate() async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -27,6 +29,7 @@ class NewRecordPageState extends State<NewRecordPage> {
     }
   }
 
+  /// Function to show the time picker and update the selected time.
   Future<void> _selectTime() async {
     TimeOfDay? pickedTime = await showTimePicker(
       context: context,
