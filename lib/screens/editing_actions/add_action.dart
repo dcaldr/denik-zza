@@ -65,7 +65,7 @@ class AddActionPageState extends State<AddActionPage> {
     if (pickedDate != null) {
       setState(() {
         controller.text =
-            '${pickedDate.day.toString().padLeft(2, '0')}.${pickedDate.month.toString().padLeft(2, '0')}.${pickedDate.year}';
+            '${pickedDate.day.toString().padLeft(2, '0')}.${pickedDate.month.toString().padLeft(2, '0')}.${pickedDate.year}'; //todo: ref //DT1
       });
     }
   }
@@ -97,8 +97,8 @@ class AddActionPageState extends State<AddActionPage> {
       decoration: InputDecoration(
         labelText: labelText,
         hintText: 'Maximálně 130 znaků',
-        // ignore: prefer_const_constructors
         border:
+        // ignore: prefer_const_constructors
             OutlineInputBorder(), //cannot be const or the numbers wont move when you type
         //labelStyle: const TextStyle(color: Colors.black),
       ),
@@ -252,28 +252,28 @@ class AddActionPageState extends State<AddActionPage> {
                       context,
                       MaterialPageRoute(builder: (context) => AllActions()),
                     );
+                  } else {
+                    // Convert the date strings to DateTime objects
+                    DateTime? odkdy = convertToDate(startDateString);
+                    DateTime? dokdy = convertToDate(endDateString);
+                   // print('Odkdy: $odkdy');
+                   // print('Dokdy: $dokdy');
+
+                    // Create a new MemoryAction object
+                    MemoryAction newAction = MemoryAction(
+                        idAkce: null,
+                        nadpis: nadpis,
+                        popis: "$adresa $popis",
+                        odkdy: odkdy,
+                        dokdy: dokdy
+                    );
+
+                    // Get the database interface
+                    DatabaseInterface db = DatabaseWrapper.getDatabase();
+
+                    // Add the new action to the database
+                    db.addEvent(newAction);
                   }
-
-                  // Convert the date strings to DateTime objects
-                  DateTime? odkdy = convertToDate(startDateString);
-                  DateTime? dokdy = convertToDate(endDateString);
-                  print('Odkdy: $odkdy' );
-                  print('Dokdy: $dokdy');
-
-                  // Create a new MemoryAction object
-                  MemoryAction newAction = MemoryAction(
-                      idAkce: null,
-                      nadpis: nadpis,
-                      popis: "$adresa $popis",
-                      odkdy: odkdy,
-                      dokdy: dokdy
-                  );
-
-                  // Get the database interface
-                  DatabaseInterface db = DatabaseWrapper.getDatabase();
-
-                  // Add the new action to the database
-                  db.addEvent(newAction);
                   // Navigate to the AllActions page
                   Navigator.push(
                     context,
