@@ -93,4 +93,9 @@ Future<int?> getCurrentEventID();
   ///
   ///  if none present empty list will be returned
 Future<List<MemoryAction>> getAllZzaActions();
+
+/// Adds new [MemoryAction] event to database
+///
+///  returns true if successful
+bool addEvent(MemoryAction action);
 }

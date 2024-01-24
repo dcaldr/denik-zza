@@ -133,4 +133,10 @@ Future<int?> getCurrentEventID() {
     // TODO: implement getAllZzaActions
     throw UnimplementedError();
   }
+
+  @override
+  bool addEvent(MemoryAction action) {
+    // TODO: implement addEvent
+    throw UnimplementedError();
+  }
 }
