@@ -14,7 +14,7 @@ class ForgotPasswordScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          // Your current AppBar code
+          // Current AppBar code
           ),
       body: SingleChildScrollView(
         child: Column(

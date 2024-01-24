@@ -8,6 +8,8 @@ import 'package:denik_zza/screens/login/components/my_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/actions/all_actions.dart';
 
+
+//Class for login page and handling users information
 class Login extends StatelessWidget {
   Login({super.key});
 

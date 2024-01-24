@@ -1,4 +1,3 @@
-import 'package:denik_zza/database/dummy_data.dart';
 import 'package:denik_zza/print_ops/pdf.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
@@ -6,6 +5,7 @@ import 'package:printing/printing.dart';
 
 import '../main.dart';
 
+/// Widget that displays a PDF preview using the PdfPreview widget.
 class DevPdfView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

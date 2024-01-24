@@ -36,6 +36,8 @@ class ActionDetail extends StatelessWidget {
           ),
         ],
       ),
+
+      // Using FutureBuilder to asynchronously fetch and display a list of participants
       body: FutureBuilder<List<MemoryOsoba>>(
         future: database.getParticipantsByCurrentEvent(),
         builder: (BuildContext context, AsyncSnapshot<List<MemoryOsoba>> snapshot) {
