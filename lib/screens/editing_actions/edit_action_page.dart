@@ -1,13 +1,17 @@
+/// Adding imports
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/login/components/my_button.dart';
 
+/// Widget for editing an existing action.
 class EditActionPage extends StatefulWidget {
+  /// Constructor for the EditActionPage widget.
   const EditActionPage({super.key});
 
   @override
   _EditActionPageState createState() => _EditActionPageState();
 }
 
+/// State class for the 'EditActionPage' widget.
 class _EditActionPageState extends State<EditActionPage> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
@@ -18,6 +22,7 @@ class _EditActionPageState extends State<EditActionPage> {
   DateTime? selectedStartDate;
   DateTime? selectedEndDate;
 
+  /// Displays a date picker dialog and updates the selected start or end date.
   Future<void> _selectDate(TextEditingController controller) async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -33,6 +38,7 @@ class _EditActionPageState extends State<EditActionPage> {
     }
   }
 
+  /// Builds the UI for the 'EditActionPage'.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -112,10 +118,9 @@ class _EditActionPageState extends State<EditActionPage> {
                 ],
               ),
               const SizedBox(height: 20),
-              // Add more content here as needed
               Button(
                 onPressed: () {
-                  // update action logic
+                  // TODO: Update action logic
                 },
                 buttonText: "Upravit",
                 verticalPadding: 20,
