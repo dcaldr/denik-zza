@@ -153,7 +153,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                           popis: mPopis,
                           idPacient: widget.osoba.id,
                           idZaznamu: -1,
-                          casZaznamu: DateTime(1),
+                          casZaznamu: DateTime.now(),
                           isPrinted: false,
                           idAuthor: 1,
                         );
