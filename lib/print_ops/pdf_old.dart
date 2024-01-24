@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -86,11 +87,11 @@ class PDFGeneratorOLD {
   }
 
   Future<pw.Document> generatePDF(String fileName, List<String> notes, [List<int> toSkip = const [2]]) async {
-    final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
+   // final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
     final pdf = pw.Document(
-      theme: pw.ThemeData.withFont(
-        base: mSafeFont,
-      ),
+      // theme: pw.ThemeData.withFont(
+      //  // base: mSafeFont,
+      // ),
     );
 
     pw.Widget headerWidget = _generateHeader();
@@ -119,10 +120,13 @@ class PDFGeneratorOLD {
   }
 
   generatePDFasSomething( List<String> notes,[List<int> toSkip = const [2]]) async {
-    final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
+  //  final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
     final pdf = pw.Document(
       theme: pw.ThemeData.withFont(
-        base: mSafeFont,
+        base: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Regular.ttf')),
+        bold: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Bold.ttf')),
+        italic: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Italic.ttf')),
+        boldItalic: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-BoldItalic.ttf')),
       ),
     );
 

@@ -1,5 +1,6 @@
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/print_ops/pdf.dart';
+import 'package:flutter/services.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
@@ -43,9 +44,16 @@ Future<PrintPack> _convertor (List<MemoryOsoba> seznamOsob) async {
 
   final pdf = pw.Document(
     //TODO:add metadata
+    //TODO: refactor to PDF-style class
     theme: pw.ThemeData.withFont(
-      base: mSafeFont,
-      fontFallback: [mSafeFont],
+      // base: mSafeFont,
+      // fontFallback: [mSafeFont],
+      base: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Regular.ttf')),
+      bold: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Bold.ttf')),
+      italic: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Italic.ttf')),
+      boldItalic: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-BoldItalic.ttf')),
+
+
   )
   );
 
