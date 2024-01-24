@@ -181,4 +181,11 @@ class DriftDatabaseConnector implements DatabaseInterface {
     // TODO: implement quickPrintZaznamyOsoby
     throw UnimplementedError();
   }
+
+  @override
+
+  bool addEvent(MemoryAction action) {
+    // TODO: implement addEvent
+    return false;
+  }
 }
