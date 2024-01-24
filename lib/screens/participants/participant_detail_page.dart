@@ -1,5 +1,6 @@
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/print_ops/printer_woodoo.dart';
 import 'package:denik_zza/screens/records/new_record_page.dart';
 import 'package:denik_zza/screens/records/record_detail_page.dart';
 import 'package:flutter/material.dart';
@@ -86,8 +87,14 @@ class ParticipantDetailPage extends StatelessWidget {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    // Implement logic for printing the record
+                  onPressed: () { //todo check efficiency
+                    PrinterWoodoo woodoo = PrinterWoodoo();
+                    if(ucastnik.wasPrinted!){
+                      woodoo.appendPrintOne(ucastnik);
+                    }else{
+                      woodoo.printSelected([ucastnik]);
+                      }
+
                   },
                   style: ElevatedButton.styleFrom(
                     primary: const Color.fromARGB(255, 255, 251, 245),
