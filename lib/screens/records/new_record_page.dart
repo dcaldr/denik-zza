@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../participants/paticipant_detail_page.dart';
 
 class NewRecordPage extends StatefulWidget {
+  const NewRecordPage({super.key});
+
   @override
   _NewRecordPageState createState() => _NewRecordPageState();
 }
@@ -51,26 +53,26 @@ class _NewRecordPageState extends State<NewRecordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Nový záznam',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.edit),
+            icon: const Icon(Icons.edit),
             onPressed: () {
               // Add navigation to the edit action page
               // Navigator.push(context, MaterialPageRoute(builder: (context) => EditActionPage()));
             },
           ),
           IconButton(
-            icon: Icon(Icons.info),
+            icon: const Icon(Icons.info),
             onPressed: () {
               // Navigate to ActionDetail page
               // Navigator.push(context, MaterialPageRoute(builder: (context) => ActionDetail()));
@@ -85,11 +87,11 @@ class _NewRecordPageState extends State<NewRecordPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Header with participant name
-              Text(
+              const Text(
                 'Jan Novotný',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               // Date TextField
               //TextField(
               //  controller: dateController,
@@ -111,20 +113,20 @@ class _NewRecordPageState extends State<NewRecordPage> {
               //  readOnly: true,
               //  onTap: _selectTime,
               //),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               // Description TextField
               TextField(
                 controller: descriptionController,
                 maxLines: 5,
                 maxLength: 1024,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Popis',
                   hintText: 'Maximálně 1024 znaků',
                   border: OutlineInputBorder(),
                   labelStyle: TextStyle(color: Colors.black),
                 ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               // Treatment TextField
               //TextField(
               // controller: treatmentController,
@@ -137,7 +139,7 @@ class _NewRecordPageState extends State<NewRecordPage> {
               //    labelStyle: TextStyle(color: Colors.black),
               //  ),
               //),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               // Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -153,36 +155,37 @@ class _NewRecordPageState extends State<NewRecordPage> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
-                      padding: EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                         vertical: 20,
                         horizontal: 60,
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Uložit',
                       style: TextStyle(fontSize: 16),
                     ),
                   ),
                   // Zrušit Button
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => ParticipantDetailPage())
-                      );
-                    },
+                  ElevatedButton( //TODO Fix
+                    onPressed: null,
+                    // onPressed: () {
+                    //   Navigator.push(
+                    //     context,
+                    //     MaterialPageRoute(builder: (context) => const ParticipantDetailPage(ucastnik: null,))
+                    //   );
+                    // },
                     style: ElevatedButton.styleFrom(
-                      primary: Color.fromARGB(255, 255, 251, 245),
+                      primary: const Color.fromARGB(255, 255, 251, 245),
                       onPrimary: Colors.black,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
-                      padding: EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                         vertical: 20,
                         horizontal: 50,
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Zrušit',
                       style: TextStyle(fontSize: 16),
                     ),

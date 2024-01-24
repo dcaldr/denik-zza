@@ -143,7 +143,7 @@ class ParticipantItem extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ParticipantDetailPage()),
+                  MaterialPageRoute(builder: (context) => ParticipantDetailPage( ucastnik: osoba,)),
                 );
               },
               child: const Text('Detail'),
