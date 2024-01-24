@@ -1,4 +1,5 @@
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
+import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -209,10 +210,13 @@ class PDFGenerator {
       "This shouldn't be used in production code, will be removed when possible")
   devTMPgeneratePDFasSomething(List<String> notes,
       [List<int> toSkip = const [2]]) async {
-    final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
+   // final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
     final pdf = pw.Document(
       theme: pw.ThemeData.withFont(
-        base: mSafeFont,
+          base: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Regular.ttf')),
+          bold: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Bold.ttf')),
+          italic: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Italic.ttf')),
+          boldItalic: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-BoldItalic.ttf')),
       ),
     );
 
