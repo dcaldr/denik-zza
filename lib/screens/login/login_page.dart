@@ -83,7 +83,7 @@ class Login extends StatelessWidget {
                   print('Invalid username or password');
                 }
               },
-                buttonText: "Prihlasit se",
+                buttonText: "Přihlásit se",
                 verticalPadding: 20,
                 horizontalPadding: 130,
               ),

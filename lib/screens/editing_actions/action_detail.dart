@@ -1,7 +1,5 @@
+/// Importing necessary packages and modules for the 'ActionDetail' Dart file.
 import 'package:denik_zza/database/database_interface.dart';
-import 'package:denik_zza/screens/actions/change_profile.dart';
-import 'package:denik_zza/screens/editing_actions/edit_action_page.dart';
-import 'package:denik_zza/screens/login/components/my_button.dart';
 import 'package:denik_zza/screens/participants/add_participant_page.dart';
 import 'package:denik_zza/screens/participants/participant_detail_page.dart';
 import 'package:flutter/material.dart';
@@ -9,12 +7,17 @@ import 'package:flutter/material.dart';
 import '../../database/database_wrapper.dart';
 import '../../database/in_memory_structures_tmp/memory_action.dart';
 import '../../database/in_memory_structures_tmp/memory_osoba.dart';
+
+/// Widget of class ActionDetail.
 class ActionDetail extends StatelessWidget {
   final MemoryAction action;
+
+   /// Database instance for interacting with the data.
   final DatabaseInterface database = DatabaseWrapper.getDatabase();
 
   ActionDetail({super.key, required this.action});
 
+/// Constructor for the ActionDetail widget.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,11 +118,16 @@ class ActionDetail extends StatelessWidget {
   }
 }
 
+/// Widget representing an individual participant item in the list.
+
 class ParticipantItem extends StatelessWidget {
   final MemoryOsoba osoba;
 
+/// Constructor for the ParticipantItem widget.
   ParticipantItem({super.key,required this.osoba});
 
+
+  /// Build method for rendering the UI of a ParticipantItem.
   @override
   Widget build(BuildContext context) {
     return Container(
