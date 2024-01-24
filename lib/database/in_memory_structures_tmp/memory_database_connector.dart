@@ -145,4 +145,16 @@ Future<int?> getCurrentEventID() {
     // TODO: implement getParticipantCountInAction
     throw UnimplementedError();
   }
+
+  @override
+  bool setParticipantPrintedValue(int id, bool value) {
+    // TODO: implement setParticipantPrintedValue
+    throw UnimplementedError();
+  }
+
+  @override
+  bool setRecordPrintedValue(int id, bool value) {
+    // TODO: implement setRecordPrintedValue
+    throw UnimplementedError();
+  }
 }

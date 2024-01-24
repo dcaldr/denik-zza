@@ -104,4 +104,8 @@ bool addEvent(MemoryAction action);
 ///
 /// The method takes [idAction] as a parameter for the queried event.
 Future<int> getParticipantCountInAction(int idAction);
+
+bool setRecordPrintedValue(int id, bool value);
+
+bool setParticipantPrintedValue(int id, bool value);
 }
