@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 
+/// Custom button widget with customizable text, padding, and onPressed callback.
 class Button extends StatelessWidget {
   final String buttonText;
   final double verticalPadding;
   final double horizontalPadding;
   final VoidCallback onPressed;
 
+/// Constructor for the Button widget.
   Button({
     Key? key,
     required this.buttonText,
@@ -15,6 +17,7 @@ class Button extends StatelessWidget {
     required this.onPressed,
   }) : super(key: key);
 
+/// Builds the UI for the Button widget.
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(

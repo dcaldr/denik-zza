@@ -2,11 +2,14 @@
 
 import 'package:flutter/material.dart';
 
+
+/// Custom text field widget with customizable controller, hintText, and obscureText.
 class MyTextField extends StatelessWidget {
   final controller;
   final String hintText;
   final bool obscureText;
 
+/// Constructor for the MyTextField widget.
    MyTextField(
       {super.key,
       required this.controller,
@@ -14,13 +17,14 @@ class MyTextField extends StatelessWidget {
       required this.obscureText,
       });
 
+/// Builds the UI for the MyTextField widget.
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding:  EdgeInsets.symmetric(horizontal: 25.0),
       child: TextField(
-        controller: controller,// to acces input
-         obscureText: obscureText, // hides the text
+        controller: controller,
+         obscureText: obscureText,
         decoration: InputDecoration(
           enabledBorder:  OutlineInputBorder(
             borderSide: BorderSide(color: Colors.black),

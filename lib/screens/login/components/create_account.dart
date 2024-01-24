@@ -1,14 +1,17 @@
 import 'package:denik_zza/screens/login/register_page.dart';
 import 'package:flutter/material.dart';
 
+/// Widget representing a "Create Account" link.
 class CreateAccount extends StatelessWidget {
   const CreateAccount({Key? key});
 
+
+/// Builds the UI for the CreateAccount widget.
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Přesměrování na jinou obrazovku
+         // Redirect to another screen (RegisterScreen)
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => RegisterScreen()), 
