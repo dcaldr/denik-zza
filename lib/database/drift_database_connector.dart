@@ -199,6 +199,18 @@ class DriftDatabaseConnector implements DatabaseInterface {
   }
 
   @override
+  bool setRecordPrintedValue(int id, bool value) {
+    _driftDatabase.setRecordPrintedValue(id, value);
+    return true;
+  }
+
+  @override
+  bool setParticipantPrintedValue(int id, bool value) {
+    _driftDatabase.setParticipantPrintedValue(id, value);
+    return true;
+  }
+
+  @override
   Future<bool> quickAddNewZaznam(String popis, int idPacient) {
     // TODO: implement quickAddNewZaznam
     throw UnimplementedError();

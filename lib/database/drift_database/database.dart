@@ -169,6 +169,18 @@ class AppDatabase extends _$AppDatabase {
     return into(cache).insertOnConflictUpdate(c);
   }
 
+  /// Update record wasPrinted value
+  Future<int> setRecordPrintedValue(int id, bool value) async {
+    return (update(records)..where((r) =>
+        r.id.equals(id))).write(RecordsCompanion(wasPrinted: Value(value)));
+  }
+
+  /// Update participant wasPrinted value
+  Future<int> setParticipantPrintedValue(int id, bool value) async {
+    return (update(participants)..where((r) =>
+        r.id.equals(id))).write(ParticipantsCompanion(wasPrinted: Value(value)));
+  }
+
   //==================== DELETES ===============================================
 }
 
