@@ -10,7 +10,7 @@ void main() {
   runApp(MyApp());
 }
 
-/// The root widget of the application.
+/// The root widget of the application handling the printer logic
 class MyApp extends StatelessWidget {
   MyApp({Key? key}) : super(key: key);
 

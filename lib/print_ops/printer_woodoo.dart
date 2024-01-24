@@ -9,6 +9,8 @@ import '../database/database_wrapper.dart';
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
 
 
+
+/// A class representing a PDF printer with Woodoo capabilities.
 class PrinterWoodoo{
 final PDFGenerator _pdfGeneratorAll = PDFGenerator();
 final PDFGenerator _pdfGeneratorAppend = PDFGenerator(append: true);
