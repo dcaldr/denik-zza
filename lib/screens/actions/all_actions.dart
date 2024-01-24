@@ -12,111 +12,124 @@ class AllActions extends StatelessWidget {
   AllActions({super.key});
   final DatabaseInterface database = DatabaseWrapper.getDatabase();
 
-  @override
-  Widget build(BuildContext context) {
-    //List<MemoryAction> allActions = await database.getAllZzaActions();
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Všechny akce',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text(
+        'Všechny akce',
+        style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.add),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) =>  AddActionPage()),
+            );
+          },
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) =>  AddActionPage()),
-              );
-            },
+        const IconButton(
+          icon: Icon(Icons.search),
+          onPressed: null,
+          // onPressed: () {
+          //   showSearch(context: context, delegate: CustomSearchDelegate());
+          // },
+        ),
+      ],
+    ),
+    drawer: Drawer(
+      child: Column(
+        children: [
+          Expanded(
+            child: ListView(
+              children: [
+                ListTile(
+                  title: const Text(
+                    'Profil',
+                    style:
+                        TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => Profile()),
+                    );
+                  },
+                ),
+                ListTile(
+                  title: const Text(
+                    'Akce',
+                    style:
+                        TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => AllActions()),
+                    );
+                  },
+                ),
+                // Add more menu items as needed
+              ],
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              showSearch(context: context, delegate: CustomSearchDelegate());
+          const Divider(), // Divider to separate the main items from logout
+          ListTile(
+            title: const Text(
+              'Odhlásit se',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.red, // Customize the color as needed
+              ),
+            ),
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => Login()), // Navigate to Login page
+              ); // Replace '/login' with your login page route
             },
           ),
         ],
       ),
-      drawer: Drawer(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                children: [
-                  ListTile(
-                    title: const Text(
-                      'Profil',
-                      style:
-                          TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => Profile()),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    title: const Text(
-                      'Akce',
-                      style:
-                          TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => AllActions()),
-                      );
-                    },
-                  ),
-                  // Add more menu items as needed
-                ],
-              ),
-            ),
-            const Divider(), // Divider to separate the main items from logout
-            ListTile(
-              title: const Text(
-                'Odhlásit se',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red, // Customize the color as needed
-                ),
-              ),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => Login()), // Navigate to Login page
-                ); // Replace '/login' with your login page route
-              },
-            ),
-          ],
-        ),
-      ),
-      body: FutureBuilder<List<MemoryAction>>(
-        future: database.getAllZzaActions(),
-        builder:
-            (BuildContext context, AsyncSnapshot<List<MemoryAction>> snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const CircularProgressIndicator();
-          } else if (snapshot.hasError) {
-            return Text('Error: ${snapshot.error}');
-          } else {
-            return ListView(
-              children: snapshot.data!.map((action) => ActionItem(
-                        action: action,
-                        participants: -15, //FIXME hardcoded
-                      ))
-                  .toList(),
-            );
-          }
+    ),
+    body: FutureBuilder<List<MemoryAction>>(
+  future: database.getAllZzaActions(),
+  builder: (BuildContext context, AsyncSnapshot<List<MemoryAction>> snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const CircularProgressIndicator();
+    } else if (snapshot.hasError) {
+      return Text('Error: ${snapshot.error}');
+    } else {
+      return ListView.builder(
+        itemCount: snapshot.data!.length,
+        itemBuilder: (context, index) {
+          MemoryAction action = snapshot.data![index];
+          return FutureBuilder<int>(
+            future: database.getParticipantCountInAction(action.idAkce ?? -1),
+            builder: (BuildContext context, AsyncSnapshot<int> participantSnapshot) {
+              if (participantSnapshot.connectionState == ConnectionState.waiting) {
+                return const CircularProgressIndicator();
+              } else if (participantSnapshot.hasError) {
+                return Text('Error: ${participantSnapshot.error}');
+              } else {
+                return ActionItem(
+                  action: action,
+                  participants: participantSnapshot.data!,
+                );
+              }
+            },
+          );
         },
-      ),
-    );
-  }
+      );
+    }
+  },
+),
+  );
+}
 }
 
 class ActionItem extends StatelessWidget {
@@ -131,38 +144,46 @@ class ActionItem extends StatelessWidget {
   Widget build(BuildContext context) {
     DatabaseInterface db = DatabaseWrapper.getDatabase();
     return ListTile(
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(action.nadpis), //title
-          Text(
-              '${action.odkdy?.day.toString().padLeft(2, '0')}.${action.odkdy?.month.toString().padLeft(2, '0')}.${action.odkdy?.year}'), // date //TODO: improve as mentioned in pdf.dart //DT1
-          Row(
-            children: [
-              Text(participants.toString()),
-              const Icon(Icons.people),
-            ],
-          ),
-          ElevatedButton(
-            onPressed: ()  {
-              //FIXME
-              db.updateCurrentEvent(/*action.idAkce*/1);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => ActionDetail(
-                          action: action,
-                        )),
-              );
-              print('Here');
-            },
-            //    onPressed: null,
-            child: const Text('Detail'),
-          ),
-        ],
+  title: Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Expanded(
+        child: Text(action.nadpis), //title
       ),
-      // Customize the ListTile as needed
-    );
+      Expanded(
+        child: Text(
+
+          '${action.odkdy?.day.toString().padLeft(2, '0')}.${action.odkdy?.month.toString().padLeft(2, '0')}.${action.odkdy?.year} - ${action.dokdy?.day.toString().padLeft(2, '0')}.${action.dokdy?.month.toString().padLeft(2, '0')}.${action.dokdy?.year}'), // date //TODO: improve as mentioned in pdf.dart //DT1 //DT2
+      ),
+      Expanded(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(participants.toString().padLeft(3, ' ')),
+            const Icon(Icons.people),
+          ],
+        ),
+      ),
+      ElevatedButton(
+        onPressed: ()  {
+          //FIXME
+          db.updateCurrentEvent(action.idAkce);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => ActionDetail(
+                      action: action,
+                    )),
+          );
+          print('Here');
+        },
+        //    onPressed: null,
+        child: const Text('Detail'),
+      ),
+    ],
+  ),
+  // Customize the ListTile as needed
+);
   }
 }
 
