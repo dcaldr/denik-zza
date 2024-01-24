@@ -5,10 +5,12 @@ import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
+/// The main entry point for the Flutter application.
 void main() {
   runApp(MyApp());
 }
 
+/// The root widget of the application.
 class MyApp extends StatelessWidget {
   MyApp({Key? key}) : super(key: key);
 
