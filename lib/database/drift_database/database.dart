@@ -11,6 +11,8 @@ import 'tables.dart';
 
 part 'database.g.dart';
 
+/// The main [AppDatabase] class representing the Drift database for the Zza app.
+/// It extends from the generated [_$AppDatabase] class.
 @DriftDatabase(tables: [InsuranceCompanies, ZzaActions, Participants,
   Paramedics, Records, AllergiesLimitations, Medications, Cache])
 class AppDatabase extends _$AppDatabase {
