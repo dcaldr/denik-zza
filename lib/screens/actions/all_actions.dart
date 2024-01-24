@@ -1,3 +1,4 @@
+
 import 'package:denik_zza/screens/actions/profile.dart';
 import 'package:denik_zza/screens/editing_actions/action_detail.dart';
 import 'package:denik_zza/screens/editing_actions/add_action.dart';
@@ -7,6 +8,8 @@ import 'package:denik_zza/screens/login/login_page.dart';
 import '../../database/database_interface.dart';
 import '../../database/database_wrapper.dart';
 import '../../database/in_memory_structures_tmp/memory_action.dart';
+
+
 
 class AllActions extends StatelessWidget {
   AllActions({super.key});
@@ -182,7 +185,6 @@ class ActionItem extends StatelessWidget {
       ),
     ],
   ),
-  // Customize the ListTile as needed
 );
   }
 }
@@ -212,13 +214,13 @@ class CustomSearchDelegate extends SearchDelegate {
 
   @override
   Widget buildResults(BuildContext context) {
-    // Implement your search results UI here
+    // TODO: Implement your search results UI here
     return Container();
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    // Implement your search suggestions UI here
+    // TODO: Implement your search suggestions UI here
     return Container();
   }
 }

@@ -37,8 +37,9 @@ void main() {
   var responseWarning = Response.warning('Varování: Něco se nezdařilo.');
   var responseError = Response.error('Chyba: Nelze dokončit operaci.');
 
-  print(responseOk);
+ /* print(responseOk);
   print(responseInfo);
   print(responseWarning);
   print(responseError);
+  */
 }
