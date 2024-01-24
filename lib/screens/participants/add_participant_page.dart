@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-
+/// Widget representing a custom button.
 class MyButton extends StatelessWidget {
   final VoidCallback onPressed;
   final String buttonText;
   final double verticalPadding;
   final double horizontalPadding;
 
+ /// Constructor for initializing the MyButton widget.
   MyButton({
     required this.onPressed,
     required this.buttonText,
@@ -36,7 +37,9 @@ class MyButton extends StatelessWidget {
   }
 }
 
+/// Stateful widget for the 'Add Participant' page.
 class AddParticipantPage extends StatefulWidget {
+  /// Constructor for initializing the AddParticipantPage widget.
   const AddParticipantPage({super.key});
 
   @override
@@ -59,6 +62,7 @@ class AddParticipantPageState extends State<AddParticipantPage> {
   TextEditingController nonInfectiousConfirmationController = TextEditingController();
   TextEditingController eligibleConfirmationController = TextEditingController();
 
+  /// Handles the logic for CSV import action.
   void _handleCsvImport() {
     showDialog(
       context: context,
@@ -82,6 +86,7 @@ class AddParticipantPageState extends State<AddParticipantPage> {
   List<String> genderOptions = ['Muž', 'Žena'];
   String selectedGender = 'Muž';
 
+/// Displays a date picker and updates the selected date.
   Future<void> _selectDate(BuildContext context, DateTime? selectedDate, TextEditingController controller) async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -108,6 +113,7 @@ class AddParticipantPageState extends State<AddParticipantPage> {
     }
   }
 
+/// Formats a date into a string with the format 'yyyy-MM-dd'.
   String _formatDate(DateTime date) {
     return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
   }
