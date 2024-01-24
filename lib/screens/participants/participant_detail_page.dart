@@ -8,9 +8,11 @@ import '../../database/in_memory_structures_tmp/memory_osoba.dart';
 import '../../database/in_memory_structures_tmp/memory_zaznam.dart';
 import '../../print_ops/zraneni_list_view.dart';
 
+/// Displays detailed information about a participant including personal details and health records.
 class ParticipantDetailPage extends StatelessWidget {
   final MemoryOsoba ucastnik;
 
+  /// Constructor for the ParticipantDetailPage class.
   ParticipantDetailPage({required this.ucastnik, super.key});
 
   @override
@@ -23,14 +25,6 @@ class ParticipantDetailPage extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.edit),
             onPressed: null,
-            // onPressed: () {
-            //   // Navigate to another screen for editing participant details
-            //   // Replace `EditParticipantPage` with your actual edit page
-            //   Navigator.push(
-            //     context,
-            //     MaterialPageRoute(builder: (context) => EditParticipantPage()),
-            //   );
-            // },
           ),
         ],
       ),
@@ -46,10 +40,10 @@ class ParticipantDetailPage extends StatelessWidget {
             ),
             const Divider(),
             // Bubbles with participant information
-            Expanded( // todo: partially scrolls - why ??
+            Expanded(
               child: ListView(
                 children: [
-                  InfoBubble(label: 'Datum Narození', value: '${ucastnik.datumNarozeni?.day.toString().padLeft(2, '0')}.${ucastnik.datumNarozeni?.month.toString().padLeft(2, '0')}.${ucastnik.datumNarozeni?.year}' ?? 'N/A'), // date //TODO: improve as mentioned in pdf.dart //DT1)
+                  InfoBubble(label: 'Datum Narození', value: '${ucastnik.datumNarozeni?.day.toString().padLeft(2, '0')}.${ucastnik.datumNarozeni?.month.toString().padLeft(2, '0')}.${ucastnik.datumNarozeni?.year}' ?? 'N/A'),
                   InfoBubble(label: 'Pohlaví', value: ucastnik.pohlavi == 1 ? 'Muž' : 'Žena'),
                   InfoBubble(label: 'Pojišťovna', value: ucastnik.zdravotniPojistovna ?? 'N/A'),
                   InfoBubble(label: 'Rodné číslo', value: ucastnik.cisloPojisteni ?? 'N/A'),
@@ -67,7 +61,7 @@ class ParticipantDetailPage extends StatelessWidget {
             ),
             Row(
               children: [
-                // Buttons for new záznam and printing
+                // Buttons for new record and printing
                 ElevatedButton(
                   onPressed: () {
                     Navigator.push(
@@ -93,7 +87,7 @@ class ParticipantDetailPage extends StatelessWidget {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    // Implement logic for printing the záznam
+                    // Implement logic for printing the record
                   },
                   style: ElevatedButton.styleFrom(
                     primary: const Color.fromARGB(255, 255, 251, 245),
@@ -114,8 +108,7 @@ class ParticipantDetailPage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            // List of previous záznamy
-            // Replace `PreviousZaznam` with your actual záznam widget
+            // List of previous records
             Expanded(
               child: FullZraneniList(databaze: db, osoba: ucastnik),
             ),
@@ -125,9 +118,10 @@ class ParticipantDetailPage extends StatelessWidget {
     );
   }
 }
-/// List all zraneni
+
+/// List of all ijuries.
 ///
-/// TODO: ref somwhere else
+/// TODO: ref somewhere else.
 class FullZraneniList extends StatelessWidget {
   const FullZraneniList({
     super.key,
@@ -153,11 +147,9 @@ class FullZraneniList extends StatelessWidget {
             itemBuilder: (context, index) {
               return Container(
                 width: double.infinity,
-                //TODO color somewhere else
-                color: index % 2 == 0 ? Colors.white : Colors.grey[200], // Alternating colors for now
+                color: index % 2 == 0 ? Colors.white : Colors.grey[200],
                 margin: const EdgeInsets.all(8.0),
                 child: ZraneniListItem(snapshot.data![index]),
-
               );
             },
           );
@@ -167,7 +159,7 @@ class FullZraneniList extends StatelessWidget {
   }
 }
 
-// Placeholder widget for the bubbles
+/// Placeholder widget for the bubbles.
 class InfoBubble extends StatelessWidget {
   final String label;
   final String value;
@@ -201,7 +193,7 @@ class InfoBubble extends StatelessWidget {
   }
 }
 
-// Placeholder widget for previous záznamy
+/// Placeholder widget for previous záznamy.
 class PreviousZaznam extends StatelessWidget {
   final String title;
   final String date;
