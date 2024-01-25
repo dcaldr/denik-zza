@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 
 /// Widget representing a custom button.
-class MyButton extends StatelessWidget {
+class MyButton extends StatelessWidget { //todo why?
   final VoidCallback onPressed;
   final String buttonText;
   final double verticalPadding;
@@ -48,7 +48,7 @@ class AddParticipantPage extends StatefulWidget {
   @override
   AddParticipantPageState createState() => AddParticipantPageState();
 }
-
+//todo: use forms in future
 class AddParticipantPageState extends State<AddParticipantPage> {
   TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
@@ -169,7 +169,7 @@ class AddParticipantPageState extends State<AddParticipantPage> {
               Text('Vybrané Datum: ${selectedBirthDate != null ? _formatDate(selectedBirthDate!) : ""}'),
               TextField(
                 controller: locationController,
-                decoration: const InputDecoration(labelText: 'Lokace'),
+                decoration: const InputDecoration(labelText: 'Adresa'),
               ),
               TextField(
                 controller: phoneNumberController,
@@ -182,7 +182,7 @@ class AddParticipantPageState extends State<AddParticipantPage> {
               ),
               TextField(
                 controller: insuranceNumberController,
-                decoration: const InputDecoration(labelText: 'Číslo pojištění'),
+                decoration: const InputDecoration(labelText: 'rodné číslo (Číslo pojištění)'),
                 keyboardType: TextInputType.phone,
               ),
               const SizedBox(height: 15),
@@ -206,6 +206,7 @@ class AddParticipantPageState extends State<AddParticipantPage> {
                 children: [
                   Expanded(
                     child: TextField(
+                      enabled: false, //notime
                       controller: medicineController,
                       decoration: const InputDecoration(labelText: 'Léky'),
                     ),
@@ -213,6 +214,7 @@ class AddParticipantPageState extends State<AddParticipantPage> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: TextField(
+                      enabled: false, //notime
                       controller: frequencyController,
                       decoration: const InputDecoration(labelText: 'Frekvence užívání'),
                     ),
@@ -222,6 +224,7 @@ class AddParticipantPageState extends State<AddParticipantPage> {
               // Notes
               const SizedBox(height: 15),
               TextField(
+                enabled: false,
                 controller: notesController,
                 decoration: const InputDecoration(labelText: 'Poznámky'),
                 maxLines: 3,
@@ -256,7 +259,8 @@ class AddParticipantPageState extends State<AddParticipantPage> {
               ),
               const SizedBox(height: 5),
               ElevatedButton(
-                onPressed: _handleCsvImport,
+
+                onPressed: null /*_handleCsvImport*/,
                 style: ElevatedButton.styleFrom(
                   primary: const Color.fromARGB(255, 0, 0, 0),
                   onPrimary: Colors.white,
