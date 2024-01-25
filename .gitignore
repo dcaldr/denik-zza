@@ -44,3 +44,4 @@ app.*.map.json
 # custom rules
 !/dan_bez_hlavy.pdf
 #!/lib/print_ops/mainPDF.dart
+!/db.sqlite
