@@ -60,6 +60,9 @@ class PDFGenerator {
   }
 
   pw.Widget _generateNotesWidget(List<pw.Widget> noteTextWidgets) {
+    if (noteTextWidgets.isEmpty) { // prevents collapse of the border
+      noteTextWidgets.add(pw.Container(width: double.infinity));
+    }
     return pw.Expanded(
       child: pw.Container(
         decoration: pw.BoxDecoration(
