@@ -1,0 +1,69 @@
+import 'dart:typed_data';
+
+import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/print_ops/printer_woodoo.dart';
+import 'package:denik_zza/print_ops/select_person_to_append.dart';
+import 'package:denik_zza/print_ops/select_person_to_print.dart';
+import 'package:flutter/material.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+
+import '../database/database_interface.dart';
+import '../database/in_memory_structures_tmp/memory_osoba.dart';
+import 'dev_pdf_view.dart';
+/// Should ask user how the printing went
+///
+/// realy this brings a lot of dilemma return widget or what
+class ConfirmPrint {
+  DatabaseInterface db = DatabaseWrapper.getDatabase();
+  Future<void> showPrintDialog(BuildContext context, PrintPack printPack) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Stav Tisknutí'),
+          content: const SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Jak dopadlo Tisknutí?'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Vše v pořádku'),
+              onPressed: () {
+
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Zrušeno'),
+              onPressed: () {
+                //print('User reported that printing did not go well');
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Chci zopakovat tisk'),
+              onPressed: () {
+                //print('User wants to redo the printing');
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+  /// marks [MemoryOsoby] as printed-notPrinted
+  Future<bool> forAllSendResult(List<MemoryOsoba> osoby, bool isPrinted) async {
+    for (var item in osoby) {
+      db.setParticipantPrintedValue(item.id, isPrinted);
+    }
+    return true;
+  }
+
+}
