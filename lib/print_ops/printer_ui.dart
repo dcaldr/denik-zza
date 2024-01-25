@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:denik_zza/print_ops/confirm_print.dart';
 import 'package:denik_zza/print_ops/printer_woodoo.dart';
 import 'package:denik_zza/print_ops/select_person_to_append.dart';
 import 'package:denik_zza/print_ops/select_person_to_print.dart';
@@ -41,79 +42,80 @@ class PageUI extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Tisknutí',
-      home: Builder(
-        builder: (BuildContext context) => Scaffold(
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                FutureBuilder<PrintPack>(
-                  future: printer.printAll(),
-                  builder: (BuildContext context,
-                      AsyncSnapshot<PrintPack> snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const CircularProgressIndicator();
-                    } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    } else {
-                      var myPDF = snapshot.data!.finishedDocument.save();
-                      return ElevatedButton(
-                        onPressed: () =>
-                            navigateToPdfPreview(context, myPDF),
-                        child: const Text('tisk všech osob'),
-                      );
-                    }
-                  },
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () async {
-                    List<MemoryOsoba> selectedOsoby = await showOsobyDialog(
-                        context, printer.getOsobyForPrint());
-                    print("počet je ${selectedOsoby.length}");
-                    if (selectedOsoby.isNotEmpty) {
-                      PrintPack packedPDF =
-                          await printer.printSelected(selectedOsoby);
+ return Scaffold(
+  body: Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        FutureBuilder<PrintPack>(
+          future: printer.printAll(),
+          builder: (BuildContext context,
+              AsyncSnapshot<PrintPack> snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const CircularProgressIndicator();
+            } else if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}');
+            } else {
+              var myPDF = snapshot.data!.finishedDocument.save();
+              return ElevatedButton(
+                onPressed: () {
+                  navigateToPdfPreview(context, myPDF);
+                  //ShowConfirmPrintDialog();
+                  ConfirmPrint().showConfirmPrintDialog(context, snapshot.requireData);
+                },
 
-                      navigateToPdfPreview(
-                          context, packedPDF.finishedDocument.save());
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Nebyly vybrány žádné osoby')),
-                      );
-                    }
-                  },
-                  child: const Text('dotisk chybějících/vybraných osob'),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () async {
-                    MemoryOsoba? selectedOsoba = await showSingleOsobaDialog(
-                        context, printer.getOsobyForAppend());
-                    if (selectedOsoba != null) {
-                      PrintPack packedPDFOne =
-                          await printer.appendPrintOne(selectedOsoba);
-                      final pdfData = packedPDFOne.finishedDocument.save();
-                      await Printing.layoutPdf(
-                        onLayout: (PdfPageFormat format) async => pdfData,
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Nebyla vybrána žádná osoba')),
-                      );
-                    }
-                  },
-                  child: const Text('Přidat osobu'),
-                ),
-              ],
-            ),
-          ),
+                child: const Text('tisk všech osob'),
+              );
+            }
+          },
         ),
-      ),
-    );
+        const SizedBox(height: 10),
+        ElevatedButton(
+          onPressed: () async {
+            List<MemoryOsoba> selectedOsoby = await showOsobyDialog(
+                context, printer.getOsobyForPrint());
+            print("počet je ${selectedOsoby.length}");
+            if (selectedOsoby.isNotEmpty) {
+              PrintPack packedPDF =
+                  await printer.printSelected(selectedOsoby);
+
+              navigateToPdfPreview(
+                  context, packedPDF.finishedDocument.save());
+              ConfirmPrint().showConfirmPrintDialog(context,packedPDF);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text('Nebyly vybrány žádné osoby')),
+              );
+            }
+          },
+          child: const Text('dotisk chybějících/vybraných osob'),
+        ),
+        const SizedBox(height: 10),
+        ElevatedButton(
+          onPressed: () async {
+            MemoryOsoba? selectedOsoba = await showSingleOsobaDialog(
+                context, printer.getOsobyForAppend());
+            if (selectedOsoba != null) {
+              PrintPack packedPDFOne =
+                  await printer.appendPrintOne(selectedOsoba);
+              final pdfData = packedPDFOne.finishedDocument.save();
+              await Printing.layoutPdf(
+                onLayout: (PdfPageFormat format) async => pdfData,
+              );
+              ConfirmPrint().showConfirmPrintDialog(context,packedPDFOne);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text('Nebyla vybrána žádná osoba')),
+              );
+            }
+          },
+          child: const Text('Vybrat osobu k dostisknutí jejích záznamů'),
+        ),
+      ],
+    ),
+  ),
+);
   }
 }
