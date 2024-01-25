@@ -17,7 +17,7 @@ import 'dev_pdf_view.dart';
 /// realy this brings a lot of dilemma return widget or what
 class ConfirmPrint {
   DatabaseInterface db = DatabaseWrapper.getDatabase();
-  Future<void> showPrintDialog(BuildContext context, PrintPack printPack) async {
+  Future<void> showConfirmPrintDialog(BuildContext context, PrintPack printPack) async {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
@@ -35,14 +35,7 @@ class ConfirmPrint {
             TextButton(
               child: const Text('Vše v pořádku'),
               onPressed: () {
-
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Zrušeno'),
-              onPressed: () {
-                //print('User reported that printing did not go well');
+                    forAllSendResult(printPack.osoby, true);
                 Navigator.of(context).pop();
               },
             ),
@@ -50,6 +43,28 @@ class ConfirmPrint {
               child: const Text('Chci zopakovat tisk'),
               onPressed: () {
                 //print('User wants to redo the printing');
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Nechci tisknout'),
+              onPressed: () { //TODO: add confirm?
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Pokud si to rozmyslíte, můžete zadat tisk znovu'),
+                  ),
+                );
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Tisk se nepovedl'),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Osoby jsou označené jako netištěné '),
+                  ),
+                );
                 Navigator.of(context).pop();
               },
             ),
