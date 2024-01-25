@@ -5,6 +5,7 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_action.dart';
 import 'package:denik_zza/screens/actions/all_actions.dart';
 import 'package:denik_zza/screens/actions/profile.dart';
 import 'package:denik_zza/screens/login/login_page.dart';
+import 'package:denik_zza/screens/our_widgets/our_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/login/components/my_button.dart';
 
@@ -144,63 +145,7 @@ class AddActionPageState extends State<AddActionPage> {
           ),
         ],
       ),
-      drawer: Drawer(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                children: [
-                  ListTile(
-                    title: const Text(
-                      'Profil',
-                      style:
-                          TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => Profile()),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    title: const Text(
-                      'Akce',
-                      style:
-                          TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => AllActions()),
-                      );
-                    },
-                  ),
-                  // TODO: Add more menu items as needed
-                ],
-              ),
-            ),
-            const Divider(), 
-            ListTile(
-              title: const Text(
-                'Odhlásit se',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red,
-                ),
-              ),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => Login()), 
-                ); 
-              },
-            ),
-          ],
-        ),
-      ),
+      drawer: const OurDrawer(),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
