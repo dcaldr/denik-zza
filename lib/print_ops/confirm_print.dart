@@ -11,6 +11,7 @@ import 'package:printing/printing.dart';
 
 import '../database/database_interface.dart';
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
+import '../database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'dev_pdf_view.dart';
 /// Should ask user how the printing went
 ///
@@ -60,6 +61,7 @@ class ConfirmPrint {
             TextButton(
               child: const Text('Tisk se nepovedl'),
               onPressed: () {
+                forAllSendResult(printPack.osoby, false);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Osoby jsou označené jako netištěné '),
@@ -76,7 +78,12 @@ class ConfirmPrint {
   /// marks [MemoryOsoby] as printed-notPrinted
   Future<bool> forAllSendResult(List<MemoryOsoba> osoby, bool isPrinted) async {
     for (var item in osoby) {
+      List<MemoryZaznam> zaznamy = await db.getRecordsByParticipantID(item.id);
       db.setParticipantPrintedValue(item.id, isPrinted);
+      /// for [isPrinted] this is overkill but i cannot be bothered now //Todo: maybe optimize
+      for(var zaznam in zaznamy){
+        db.setRecordPrintedValue(zaznam.idZaznamu, isPrinted);
+      }
     }
     return true;
   }
