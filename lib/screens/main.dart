@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false, 
+     // debugShowCheckedModeBanner: false, //BAD IDEA
       home: Login(),
       routes: {
         '/register_screen':(context) => RegisterScreen(),
