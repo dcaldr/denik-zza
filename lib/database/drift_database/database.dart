@@ -158,8 +158,12 @@ class AppDatabase extends _$AppDatabase {
       return null;
     }
 
-    InsuranceCompany i = await (select(insuranceCompanies)..where((i) =>
-    i.name.equals(name))).getSingle();
+    InsuranceCompany? i = await (select(insuranceCompanies)..where((i) =>
+    i.name.equals(name))).getSingleOrNull();
+
+    if(i == null) {
+      return null;
+    }
 
     return i.id;
   }
