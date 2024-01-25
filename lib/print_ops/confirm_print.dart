@@ -43,8 +43,11 @@ class ConfirmPrint {
             TextButton(
               child: const Text('Chci zopakovat tisk'),
               onPressed: () {
+                /*await*/ Printing.layoutPdf(
+                  onLayout: (PdfPageFormat format) async => printPack.finishedDocument.save(),
+                );
                 //print('User wants to redo the printing');
-                Navigator.of(context).pop();
+              //  Navigator.of(context).pop();
               },
             ),
             TextButton(
