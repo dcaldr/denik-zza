@@ -2,6 +2,7 @@
 import 'package:denik_zza/screens/actions/profile.dart';
 import 'package:denik_zza/screens/editing_actions/action_detail.dart';
 import 'package:denik_zza/screens/editing_actions/add_action.dart';
+import 'package:denik_zza/screens/our_widgets/our_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/login/login_page.dart';
 
@@ -42,63 +43,7 @@ Widget build(BuildContext context) {
         ),
       ],
     ),
-    drawer: Drawer(
-      child: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              children: [
-                ListTile(
-                  title: const Text(
-                    'Profil',
-                    style:
-                        TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => Profile()),
-                    );
-                  },
-                ),
-                ListTile(
-                  title: const Text(
-                    'Akce',
-                    style:
-                        TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => AllActions()),
-                    );
-                  },
-                ),
-                // Add more menu items as needed
-              ],
-            ),
-          ),
-          const Divider(), // Divider to separate the main items from logout
-          ListTile(
-            title: const Text(
-              'Odhlásit se',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.red, // Customize the color as needed
-              ),
-            ),
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => Login()), // Navigate to Login page
-              ); // Replace '/login' with your login page route
-            },
-          ),
-        ],
-      ),
-    ),
+    drawer: const OurDrawer(),
     body: FutureBuilder<List<MemoryAction>>(
   future: database.getAllZzaActions(),
   builder: (BuildContext context, AsyncSnapshot<List<MemoryAction>> snapshot) {
