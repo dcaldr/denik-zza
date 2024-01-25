@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../database/in_memory_structures_tmp/memory_osoba.dart';
 import '../../database/in_memory_structures_tmp/memory_zaznam.dart';
+import '../../print_ops/confirm_print.dart';
 import '../../print_ops/zraneni_list_view.dart';
 
 /// Displays detailed information about a participant including personal details and health records.
@@ -87,14 +88,15 @@ class ParticipantDetailPage extends StatelessWidget {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: () { //todo check efficiency
+                  onPressed: () async { //todo check efficiency
                     PrinterWoodoo woodoo = PrinterWoodoo();
+                    PrintPack packedPdf;
                     if(ucastnik.wasPrinted!){
-                      woodoo.appendPrintOne(ucastnik);
+                    packedPdf = await woodoo.appendPrintOne(ucastnik);
                     }else{
-                      woodoo.printSelected([ucastnik]);
+                    packedPdf= await woodoo.printSelected([ucastnik]);
                       }
-
+                    ConfirmPrint().showConfirmPrintDialog(context,packedPdf);
                   },
                   style: ElevatedButton.styleFrom(
                     primary: const Color.fromARGB(255, 255, 251, 245),
