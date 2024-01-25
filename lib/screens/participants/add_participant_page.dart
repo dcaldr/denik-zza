@@ -3,6 +3,8 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:flutter/material.dart';
 
+import '../actions/all_actions.dart';
+
 
 /// Widget representing a custom button.
 class MyButton extends StatelessWidget { //todo why?
@@ -316,7 +318,9 @@ class AddParticipantPageState extends State<AddParticipantPage> {
                           content: Text('Osoba ${inOsoba.jmeno} ${inOsoba.prijmeni} přidána'),
                         ),
                       );
-                      Navigator.of(context).pop();
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => AllActions()));
                       // ... (handle save logic)
                     },
                     style: ElevatedButton.styleFrom(
