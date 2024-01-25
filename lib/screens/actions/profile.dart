@@ -3,6 +3,8 @@ import 'package:denik_zza/screens/login/components/my_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/actions/all_actions.dart';
 
+import '../our_widgets/our_drawer.dart';
+
 /// Widget for displaying user profile information.
 class Profile extends StatelessWidget {
   /// Constructor for initializing the Profile widget.
@@ -18,14 +20,14 @@ class Profile extends StatelessWidget {
     return Scaffold(
       // App bar for the profile screen.
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Profil',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         // Action button for navigating to the ChangeProfile screen.
         actions: [
           IconButton(
-            icon: Icon(Icons.edit),
+            icon: const Icon(Icons.edit),
             onPressed: () {
               // Navigate to another screen for editing the profile
               Navigator.push(
@@ -38,36 +40,7 @@ class Profile extends StatelessWidget {
       ),
 
       // Drawer widget for displaying navigation options.
-      drawer: Drawer(
-        child: ListView(
-          children: [
-            ListTile(
-              title: Text(
-                'Profil',
-                style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Profile()),
-                );
-              },
-            ),
-            ListTile(
-              title: Text(
-                'Akce',
-                style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AllActions()),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
+      drawer: const OurDrawer(),
 
       // Body of the profile screen wrapped in a SingleChildScrollView.
       body: SingleChildScrollView(
@@ -84,7 +57,7 @@ class Profile extends StatelessWidget {
 
             const SizedBox(height: 10),
             // Change avatar section.
-            CircleAvatar(
+            const CircleAvatar(
               radius: 50,
               backgroundImage: AssetImage('assets/doc.jpg'), // Set your image asset path
             ),
@@ -127,3 +100,5 @@ class Profile extends StatelessWidget {
     );
   }
 }
+
+
