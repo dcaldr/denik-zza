@@ -8,8 +8,6 @@ import 'package:denik_zza/screens/login/components/my_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/actions/all_actions.dart';
 
-
-//Class for login page and handling users information
 class Login extends StatelessWidget {
   Login({super.key});
 
@@ -63,26 +61,25 @@ class Login extends StatelessWidget {
               SizedBox(height: 10),
 
               // password textfield
-              MyTextField(
-                controller: passwordController,
-                hintText: 'Heslo',
-                obscureText: true,
-              ),
+             //MyTextField(
+                //controller: passwordController,
+                //hintText: 'Heslo',
+                //obscureText: true,
+             // ),
 
               SizedBox(height: 10),
 
               // login button
               Button(
                 onPressed: () {
-                  if (usernameController.text == 'ester' &&
-                    passwordController.text == 'ester') {
+                  if (usernameController.text == 'ester') {
                   // If the username and password are valid, navigate to the AllActions page
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => AllActions()),
                   );
                 } else {
-                  print('Invalid username or password');
+                  print('Invalid username');
                 }
               },
                 buttonText: "Přihlásit se",
@@ -90,25 +87,25 @@ class Login extends StatelessWidget {
                 horizontalPadding: 130,
               ),
 
-              const SizedBox(
-                height: 10,
-              ),
+              //const SizedBox(
+                //height: 10,
+              //),
 
               // Row for "Create Account" and "Forgot Password"
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Adjust as needed
-              children: [
+            //Row(
+              //mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Adjust as needed
+             // children: [
                 // forgot password
-                ForgotPassword(),
+                //ForgotPassword(),
 
                 // create new account
                 CreateAccount(),
               ],
             ),
-          ],
+         // ],
         ),
       ),
-    ),
+   // ),
   );
 }
 }
