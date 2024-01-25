@@ -1,3 +1,6 @@
+import 'package:denik_zza/database/database_interface.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:flutter/material.dart';
 
 
@@ -233,7 +236,7 @@ class AddParticipantPageState extends State<AddParticipantPage> {
               const SizedBox(height: 15),
               Row(
                 children: [
-                  Checkbox(
+                  Checkbox(//todo: do as in select_person_to_print
                     value: nonInfectiousConfirmationController.text.toLowerCase() == 'true',
                     onChanged: (value) {
                       setState(() {
@@ -246,7 +249,7 @@ class AddParticipantPageState extends State<AddParticipantPage> {
               ),
               Row(
                 children: [
-                  Checkbox(
+                  Checkbox( //todo: do as in select_person_to_print
                     value: eligibleConfirmationController.text.toLowerCase() == 'true',
                     onChanged: (value) {
                       setState(() {
@@ -292,6 +295,28 @@ class AddParticipantPageState extends State<AddParticipantPage> {
                   // Uložit Button
                   ElevatedButton(
                     onPressed: () {
+                      MemoryOsoba inOsoba = MemoryOsoba.named(
+                        id: -13, // will be provided by database
+                        jmeno: firstNameController.text,
+                        prijmeni: lastNameController.text,
+                        pohlavi: selectedGender == 'Muž' ? 1 : 2, //No time to (future) proof
+                        adresa: locationController.text,
+                        cisloPojisteni: insuranceNumberController.text,
+                        datumNarozeni: selectedBirthDate,
+                        telefonniCislo: phoneNumberController.text,
+                        zpusobilost: eligibleConfirmationController.text.toLowerCase() == 'true',
+                        bezinfekcnost: nonInfectiousConfirmationController.text.toLowerCase() == 'true',
+                        wasPrinted: false, // Implicit-outOfContext
+                        zdravotniPojistovna: insuranceCompanyController.text,
+                      );
+                      DatabaseInterface db = DatabaseWrapper.getDatabase();
+                      db.addOsoba(inOsoba);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Osoba ${inOsoba.jmeno} ${inOsoba.prijmeni} přidána'),
+                        ),
+                      );
+                      Navigator.of(context).pop();
                       // ... (handle save logic)
                     },
                     style: ElevatedButton.styleFrom(
@@ -313,7 +338,12 @@ class AddParticipantPageState extends State<AddParticipantPage> {
                   // Zrušit Button
                   ElevatedButton(
                     onPressed: () {
-                      // ... (handle cancel logic)
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Osoba nebyla přidána'), //todo:reserch "bad" themed snack bar
+                        ),
+                      );
+                      Navigator.of(context).pop();
                     },
                     style: ElevatedButton.styleFrom(
                       primary: const Color.fromARGB(255, 255, 251, 245),
