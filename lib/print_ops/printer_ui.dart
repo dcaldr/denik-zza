@@ -30,9 +30,12 @@ class PageUI extends StatelessWidget {
               build: (format) async => value,
               allowSharing: true,
               allowPrinting: true,
+              canChangePageFormat: false,
+              canChangeOrientation: false,
               initialPageFormat: PdfPageFormat.a4,
               maxPageWidth: MediaQuery.of(context).size.height / 1.6,
               pdfFileName: "sample.pdf",
+
             ),
           ),
         ),
@@ -43,6 +46,14 @@ class PageUI extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
  return Scaffold(
+   appBar: AppBar(
+     leading: IconButton(
+       icon: const Icon(Icons.arrow_back),
+       //good check prevent returning out of app
+       onPressed: Navigator.canPop(context) ? () => Navigator.pop(context) : null,
+     ),
+     title: const Text('Tisk Centrum'),
+   ),
   body: Center(
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -74,7 +85,7 @@ class PageUI extends StatelessWidget {
           onPressed: () async {
             List<MemoryOsoba> selectedOsoby = await showOsobyDialog(
                 context, printer.getOsobyForPrint());
-            print("počet je ${selectedOsoby.length}");
+            //print("počet je ${selectedOsoby.length}");
             if (selectedOsoby.isNotEmpty) {
               PrintPack packedPDF =
                   await printer.printSelected(selectedOsoby);
