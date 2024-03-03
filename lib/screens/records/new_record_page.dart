@@ -2,7 +2,6 @@ import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
-import 'package:denik_zza/screens/records/record_detail_page.dart';
 import 'package:flutter/material.dart';
 
 import '../participants/participant_detail_page.dart';
@@ -12,7 +11,7 @@ class NewRecordPage extends StatefulWidget {
   final MemoryOsoba osoba;
 
   /// Constructor for [NewRecordPage].
-  NewRecordPage({super.key, required this.osoba});
+  const NewRecordPage({super.key, required this.osoba});
 
   @override
   NewRecordPageState createState() => NewRecordPageState();
@@ -172,8 +171,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      primary: Colors.black,
-                      onPrimary: Colors.white,
+                      foregroundColor: Colors.white, backgroundColor: Colors.black,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
@@ -191,8 +189,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                   ElevatedButton(
                     onPressed: null,
                     style: ElevatedButton.styleFrom(
-                      primary: const Color.fromARGB(255, 255, 251, 245),
-                      onPrimary: Colors.black,
+                      foregroundColor: Colors.black, backgroundColor: const Color.fromARGB(255, 255, 251, 245),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),

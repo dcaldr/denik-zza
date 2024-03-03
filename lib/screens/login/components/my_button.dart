@@ -9,13 +9,13 @@ class Button extends StatelessWidget {
   final VoidCallback onPressed;
 
 /// Constructor for the Button widget.
-  Button({
-    Key? key,
+  const Button({
+    super.key,
     required this.buttonText,
     required this.verticalPadding,
     required this.horizontalPadding,
     required this.onPressed,
-  }) : super(key: key);
+  });
 
 /// Builds the UI for the Button widget.
   @override
@@ -23,8 +23,8 @@ class Button extends StatelessWidget {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        primary: Colors.black,
-        onPrimary: Colors.white,
+        foregroundColor: Colors.white,
+        backgroundColor: Colors.black,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8.0),
         ),
@@ -35,7 +35,7 @@ class Button extends StatelessWidget {
       ),
       child: Text(
         buttonText,
-        style: TextStyle(fontSize: 16),
+        style: const TextStyle(fontSize: 16),
       ),
     );
   }

@@ -15,7 +15,7 @@ class ParticipantDetailPage extends StatelessWidget {
   final MemoryOsoba ucastnik;
 
   /// Constructor for the ParticipantDetailPage class.
-  ParticipantDetailPage({required this.ucastnik, super.key});
+  const ParticipantDetailPage({required this.ucastnik, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -72,8 +72,7 @@ class ParticipantDetailPage extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    primary: Colors.black,
-                    onPrimary: Colors.white,
+                    foregroundColor: Colors.white, backgroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
@@ -99,8 +98,7 @@ class ParticipantDetailPage extends StatelessWidget {
                     ConfirmPrint().showConfirmPrintDialog(context,packedPdf);
                   },
                   style: ElevatedButton.styleFrom(
-                    primary: const Color.fromARGB(255, 255, 251, 245),
-                    onPrimary: Colors.black,
+                    foregroundColor: Colors.black, backgroundColor: const Color.fromARGB(255, 255, 251, 245),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
@@ -173,7 +171,7 @@ class InfoBubble extends StatelessWidget {
   final String label;
   final String value;
 
-  InfoBubble({required this.label, required this.value});
+  const InfoBubble({super.key, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -207,7 +205,7 @@ class PreviousZaznam extends StatelessWidget {
   final String title;
   final String date;
 
-  PreviousZaznam({required this.title, required this.date});
+  const PreviousZaznam({super.key, required this.title, required this.date});
 
   @override
   Widget build(BuildContext context) {
@@ -230,7 +228,7 @@ class PreviousZaznam extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => RecordDetailPage()),
+                  MaterialPageRoute(builder: (context) => const RecordDetailPage()),
                 );
               },
               child: const Text('Detail'),
@@ -243,6 +241,8 @@ class PreviousZaznam extends StatelessWidget {
 }
 
 class EditParticipantPage extends StatelessWidget {
+  const EditParticipantPage({super.key});
+
   // Placeholder widget for editing participant details
   @override
   Widget build(BuildContext context) {

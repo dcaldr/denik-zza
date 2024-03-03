@@ -2,7 +2,6 @@
 
 import 'package:denik_zza/screens/actions/profile.dart';
 import 'package:denik_zza/screens/login/components/create_account.dart';
-import 'package:denik_zza/screens/login/components/forgot_password.dart';
 import 'package:denik_zza/screens/login/components/my_button.dart';
 import 'package:denik_zza/screens/login/components/my_textfield.dart';
 import 'package:flutter/material.dart';

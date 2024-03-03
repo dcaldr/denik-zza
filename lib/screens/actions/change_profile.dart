@@ -1,4 +1,3 @@
-import 'package:denik_zza/screens/actions/all_actions.dart';
 import 'package:denik_zza/screens/actions/profile.dart';
 import 'package:denik_zza/screens/login/components/my_button.dart';
 import 'package:denik_zza/screens/our_widgets/our_drawer.dart';
@@ -8,7 +7,7 @@ import 'package:denik_zza/screens/login/components/my_textfield.dart';
 /// Widget for changing user profile information.
 class ChangeProfile extends StatelessWidget {
   /// Constructor for initializing the ChangeProfile widget.
-  ChangeProfile({Key? key});
+  ChangeProfile({super.key, Key? key});
 
   // Controllers for various text fields.
   final TextEditingController usernameController = TextEditingController();

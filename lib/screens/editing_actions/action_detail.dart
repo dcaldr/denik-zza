@@ -1,4 +1,5 @@
 /// Importing necessary packages and modules for the 'ActionDetail' Dart file.
+library;
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/screens/participants/add_participant_page.dart';
 import 'package:denik_zza/screens/participants/participant_detail_page.dart';
@@ -67,7 +68,7 @@ class ActionDetail extends StatelessWidget {
                     Row(
                       children: [
                         const Icon(Icons.calendar_month, size: 50),
-                        Text('Datum: ${action.odkdy?.day.toString().padLeft(2, '0')}.${action.odkdy?.month.toString().padLeft(2, '0')}.${action.odkdy?.year} - ${action.dokdy?.day.toString().padLeft(2, '0')}.${action.dokdy?.month.toString().padLeft(2, '0')}.${action.dokdy?.year}'), //TODO: improve as mentioned in pdf.dart //DT1 //DT2
+                        Text('Datum: ${action.odkdy.day.toString().padLeft(2, '0')}.${action.odkdy.month.toString().padLeft(2, '0')}.${action.odkdy.year} - ${action.dokdy.day.toString().padLeft(2, '0')}.${action.dokdy.month.toString().padLeft(2, '0')}.${action.dokdy.year}'), //TODO: improve as mentioned in pdf.dart //DT1 //DT2
                       ],
                     ),
                     const Divider(),
@@ -98,7 +99,7 @@ class ActionDetail extends StatelessWidget {
                             // and handle the logic for adding participants.
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => AddParticipantPage()),
+                              MaterialPageRoute(builder: (context) => const AddParticipantPage()),
                             );
                           },
                         ),
@@ -126,7 +127,7 @@ class ParticipantItem extends StatelessWidget {
   final MemoryOsoba osoba;
 
 /// Constructor for the ParticipantItem widget.
-  ParticipantItem({super.key,required this.osoba});
+  const ParticipantItem({super.key,required this.osoba});
 
 
   /// Build method for rendering the UI of a ParticipantItem.

@@ -148,8 +148,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                       // ... (handle save logic)
                     },
                     style: ElevatedButton.styleFrom(
-                      primary: Colors.black,
-                      onPrimary: Colors.white,
+                      foregroundColor: Colors.white, backgroundColor: Colors.black,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
@@ -173,8 +172,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                     //   );
                     // },
                     style: ElevatedButton.styleFrom(
-                      primary: const Color.fromARGB(255, 255, 251, 245),
-                      onPrimary: Colors.black,
+                      foregroundColor: Colors.black, backgroundColor: const Color.fromARGB(255, 255, 251, 245),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),

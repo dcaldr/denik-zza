@@ -1,18 +1,13 @@
-import 'dart:typed_data';
 
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/print_ops/printer_woodoo.dart';
-import 'package:denik_zza/print_ops/select_person_to_append.dart';
-import 'package:denik_zza/print_ops/select_person_to_print.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../database/database_interface.dart';
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
 import '../database/in_memory_structures_tmp/memory_zaznam.dart';
-import 'dev_pdf_view.dart';
 /// Should ask user how the printing went
 ///
 /// realy this brings a lot of dilemma return widget or what

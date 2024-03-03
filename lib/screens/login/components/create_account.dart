@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 /// Widget representing a "Create Account" link.
 class CreateAccount extends StatelessWidget {
-  const CreateAccount({Key? key});
+  const CreateAccount({super.key, Key? key});
 
 
 /// Builds the UI for the CreateAccount widget.
@@ -17,7 +17,7 @@ class CreateAccount extends StatelessWidget {
           MaterialPageRoute(builder: (context) => RegisterScreen()), 
         );
       },
-      child: Text(
+      child: const Text(
         'Vytvořit účet',
         style: TextStyle(
           color: Colors.black,

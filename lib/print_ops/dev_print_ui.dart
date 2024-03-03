@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 
 /// The main method of class.
 void main() {
-  runApp(Tempik());
+  runApp(const Tempik());
 }
 
 /// The root widget of the application, responsible for setting up the MaterialApp.
 class Tempik extends StatelessWidget {
+  const Tempik({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
