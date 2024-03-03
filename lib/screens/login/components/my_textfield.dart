@@ -10,7 +10,7 @@ class MyTextField extends StatelessWidget {
   final bool obscureText;
 
 /// Constructor for the MyTextField widget.
-   MyTextField(
+   const MyTextField(
       {super.key,
       required this.controller,
       required this.hintText,

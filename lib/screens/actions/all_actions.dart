@@ -1,10 +1,8 @@
 
-import 'package:denik_zza/screens/actions/profile.dart';
 import 'package:denik_zza/screens/editing_actions/action_detail.dart';
 import 'package:denik_zza/screens/editing_actions/add_action.dart';
 import 'package:denik_zza/screens/our_widgets/our_drawer.dart';
 import 'package:flutter/material.dart';
-import 'package:denik_zza/screens/login/login_page.dart';
 
 import '../../database/database_interface.dart';
 import '../../database/database_wrapper.dart';
@@ -30,7 +28,7 @@ Widget build(BuildContext context) {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) =>  AddActionPage()),
+              MaterialPageRoute(builder: (context) =>  const AddActionPage()),
             );
           },
         ),
@@ -101,7 +99,7 @@ class ActionItem extends StatelessWidget {
       Expanded(
         child: Text(
 
-          '${action.odkdy?.day.toString().padLeft(2, '0')}.${action.odkdy?.month.toString().padLeft(2, '0')}.${action.odkdy?.year} - ${action.dokdy?.day.toString().padLeft(2, '0')}.${action.dokdy?.month.toString().padLeft(2, '0')}.${action.dokdy?.year}'), // date //TODO: improve as mentioned in pdf.dart //DT1 //DT2
+          '${action.odkdy.day.toString().padLeft(2, '0')}.${action.odkdy.month.toString().padLeft(2, '0')}.${action.odkdy.year} - ${action.dokdy.day.toString().padLeft(2, '0')}.${action.dokdy.month.toString().padLeft(2, '0')}.${action.dokdy.year}'), // date //TODO: improve as mentioned in pdf.dart //DT1 //DT2
       ),
       Expanded(
         child: Row(

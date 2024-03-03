@@ -14,7 +14,7 @@ class MyButton extends StatelessWidget { //todo why?
   final double horizontalPadding;
 
  /// Constructor for initializing the MyButton widget.
-  MyButton({
+  const MyButton({super.key, 
     required this.onPressed,
     required this.buttonText,
     required this.verticalPadding,
@@ -27,8 +27,7 @@ class MyButton extends StatelessWidget { //todo why?
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        primary: Colors.black,
-        onPrimary: Colors.white,
+        foregroundColor: Colors.white, backgroundColor: Colors.black,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8.0),
         ),
@@ -150,8 +149,7 @@ class AddParticipantPageState extends State<AddParticipantPage> {
               ElevatedButton(
                 onPressed: () => _selectDate(context, selectedBirthDate, birthDateController),
                 style: ElevatedButton.styleFrom(
-                  primary: const Color.fromARGB(255, 0, 0, 0), // Change this to your preferred color
-                  onPrimary: Colors.white,
+                  foregroundColor: Colors.white, backgroundColor: const Color.fromARGB(255, 0, 0, 0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),
                   ),
@@ -267,8 +265,7 @@ class AddParticipantPageState extends State<AddParticipantPage> {
 
                 onPressed: null /*_handleCsvImport*/,
                 style: ElevatedButton.styleFrom(
-                  primary: const Color.fromARGB(255, 0, 0, 0),
-                  onPrimary: Colors.white,
+                  foregroundColor: Colors.white, backgroundColor: const Color.fromARGB(255, 0, 0, 0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),
                   ),
@@ -324,8 +321,7 @@ class AddParticipantPageState extends State<AddParticipantPage> {
                       // ... (handle save logic)
                     },
                     style: ElevatedButton.styleFrom(
-                      primary: Colors.black,
-                      onPrimary: Colors.white,
+                      foregroundColor: Colors.white, backgroundColor: Colors.black,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
@@ -350,8 +346,7 @@ class AddParticipantPageState extends State<AddParticipantPage> {
                       Navigator.of(context).pop();
                     },
                     style: ElevatedButton.styleFrom(
-                      primary: const Color.fromARGB(255, 255, 251, 245),
-                      onPrimary: Colors.black,
+                      foregroundColor: Colors.black, backgroundColor: const Color.fromARGB(255, 255, 251, 245),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),

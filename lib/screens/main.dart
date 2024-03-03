@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 // Main method of application
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 // The root widget of the application

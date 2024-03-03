@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:denik_zza/print_ops/printer_woodoo.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 
 /// Widget for displaying a list of people with checkboxes.

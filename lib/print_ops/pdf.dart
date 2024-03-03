@@ -2,7 +2,6 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 
 import '../database/dummy_data.dart';
 import '../database/in_memory_structures_tmp/memory_zaznam.dart';
