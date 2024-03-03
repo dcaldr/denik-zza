@@ -7,7 +7,7 @@ import 'package:denik_zza/screens/login/components/my_textfield.dart';
 /// Widget for changing user profile information.
 class ChangeProfile extends StatelessWidget {
   /// Constructor for initializing the ChangeProfile widget.
-  ChangeProfile({super.key, Key? key});
+ // ChangeProfile({super.key, Key? key});
 
   // Controllers for various text fields.
   final TextEditingController usernameController = TextEditingController();
@@ -16,6 +16,8 @@ class ChangeProfile extends StatelessWidget {
   final TextEditingController phoneNumberController = TextEditingController();
   final TextEditingController newPasswordController = TextEditingController();
   final TextEditingController newPasswordAgainController = TextEditingController();
+
+  ChangeProfile({super.key});
 
   @override
   Widget build(BuildContext context) {

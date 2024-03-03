@@ -7,12 +7,14 @@ import '../our_widgets/our_drawer.dart';
 /// Widget for displaying user profile information.
 class Profile extends StatelessWidget {
   /// Constructor for initializing the Profile widget.
-  Profile({super.key, Key? key});
+  //Profile({super.key, Key? key});
 
   final usernameController = TextEditingController();
   final lastnameController = TextEditingController();
   final loginName = TextEditingController();
   final phoneNumber = TextEditingController();
+
+  Profile({super.key});
 
   @override
   Widget build(BuildContext context) {
