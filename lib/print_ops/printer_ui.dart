@@ -6,7 +6,6 @@ import 'package:denik_zza/print_ops/select_person_to_append.dart';
 import 'package:denik_zza/print_ops/select_person_to_print.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
 

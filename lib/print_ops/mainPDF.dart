@@ -50,7 +50,7 @@ class MyHomePage extends StatelessWidget {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => DevPdfView()),
+            MaterialPageRoute(builder: (context) => const DevPdfView()),
           );
         },
         child: const Icon(Icons.add), // Use const to improve performance
@@ -87,7 +87,7 @@ class ZraneniListItem extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(width: 20), // No space between the two columns
+          const SizedBox(width: 20), // No space between the two columns
           Flexible(
             fit: FlexFit.tight, // Make the column only take up as much space as it needs
             child: Column(

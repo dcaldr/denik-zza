@@ -1,14 +1,13 @@
 import 'package:denik_zza/screens/actions/change_profile.dart';
 import 'package:denik_zza/screens/login/components/my_textfield.dart';
 import 'package:flutter/material.dart';
-import 'package:denik_zza/screens/actions/all_actions.dart';
 
 import '../our_widgets/our_drawer.dart';
 
 /// Widget for displaying user profile information.
 class Profile extends StatelessWidget {
   /// Constructor for initializing the Profile widget.
-  Profile({Key? key});
+  Profile({super.key, Key? key});
 
   final usernameController = TextEditingController();
   final lastnameController = TextEditingController();

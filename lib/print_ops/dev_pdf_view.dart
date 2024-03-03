@@ -7,6 +7,8 @@ import '../main.dart';
 
 /// Widget that displays a PDF preview using the PdfPreview widget.
 class DevPdfView extends StatelessWidget {
+  const DevPdfView({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
