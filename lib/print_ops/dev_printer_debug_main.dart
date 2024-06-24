@@ -5,7 +5,7 @@ import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
-/// The main entry point for the Flutter application.
+/// Just for debugging printing ops 24.06.- keep
 void main() {
   runApp(MyApp());
 }

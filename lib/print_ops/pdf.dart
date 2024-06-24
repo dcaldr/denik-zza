@@ -29,7 +29,7 @@ class PDFGenerator {
     _hideBody = hideBody ;
     _append = append;
   }
-
+// TODO: refactor
   PdfColor myTransparentColor = PdfColor.fromHex("#FFFFFF00"); //transparent
   PdfColor myPrimaryColor = PdfColors.black;
   PdfColor mySecondaryColor = PdfColors.black;

@@ -7,12 +7,13 @@ import 'dev_pdf_view.dart';
 
 import 'package:flutter/material.dart';
 
-
+/// List zraněnení 24.06.- asi lze odebrat netestováno
 void main() {
   runApp(const MyApp());
 }
 
-// Main class of PDF with actions and patients 
+// Main class of PDF with actions and patients
+@Deprecated('vypadá to, že už nehraje žádnou roli')
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 

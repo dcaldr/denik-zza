@@ -1,6 +1,6 @@
 import 'package:denik_zza/print_ops/printer_ui.dart';
 import 'package:flutter/material.dart';
-
+/// GOES to Tisk centrum
 /// The main method of class.
 void main() {
   runApp(const Tempik());

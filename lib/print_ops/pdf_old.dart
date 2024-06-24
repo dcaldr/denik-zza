@@ -3,7 +3,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 
-
+// TODO: 24.06. - zkusit odebrat
  // Class representing an older PDF generator (deprecated for development-only use)
 @Deprecated("Development-Only Use PDFGenerator instead")
 class PDFGeneratorOLD {
