@@ -7,9 +7,11 @@ class MemoryZaznam {
   late int idPacient;
   late int idZaznamu;
   String? nazev;
-  String popis;
-  String? lecba;
+  String? popis;
+  @Deprecated('navíc')
+  String? lecba; //TODO:Remove
   String? poznamka;
+  double? teplota;  //FIXME: zařadit do aplikace
   // may use -1 means not assigned
   late int idAuthor; // may use -1 means not assigned
   bool isPrinted = false; //preset
@@ -29,7 +31,7 @@ class MemoryZaznam {
     required this.idZaznamu,
     required this.casZaznamu,
     required this.nazev,
-    required this.popis,
+    this.popis,
     this.lecba,
     required this.isPrinted,
     required this.idAuthor,

@@ -10,7 +10,9 @@ class MemoryOsoba {
   String? adresa;
   String? cisloPojisteni;
   DateTime? datumNarozeni;
-  String? telefonniCislo; // rodiče
+  String? jmenoRodice; //FIXME: zařadit do aplikace
+  String? telefonniCislo; // rodiče //TODO: rename telefoniCisloRodice
+  String? emailRodice; //FIXME: zařadit do aplikace
   bool? zpusobilost;
   bool? bezinfekcnost;
   bool? wasPrinted;

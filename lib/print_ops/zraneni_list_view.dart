@@ -36,8 +36,8 @@ class ZraneniListItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(zraneni.nazev ?? 'No title'),
-                Text(zraneni.popis),
+                Text(zraneni.nazev ?? 'Bez nadpisu'),
+                Text(zraneni.popis!),
               ],
             ),
           ),

@@ -94,7 +94,7 @@ class ZraneniListItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(zraneni.nazev ?? 'No title'),
-                Text(zraneni.popis),
+                Text(zraneni.popis ?? '--'),
               ],
             ),
           ),

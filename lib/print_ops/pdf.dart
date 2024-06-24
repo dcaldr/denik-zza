@@ -8,7 +8,7 @@ import '../database/in_memory_structures_tmp/memory_zaznam.dart';
 
 /// Class for generating  and appending examination related PDFs
 ///
-/// This class handles printing and reprintig of PDFs
+/// This class handles printing and reprinting of PDFs
 class PDFGenerator {
   /// for developing purposes only FIXME: remove when possible
   @Deprecated(
@@ -30,7 +30,7 @@ class PDFGenerator {
     _append = append;
   }
 
-  PdfColor myTransparentColor = PdfColor.fromHex("#FFFFFF00"); //transaprent
+  PdfColor myTransparentColor = PdfColor.fromHex("#FFFFFF00"); //transparent
   PdfColor myPrimaryColor = PdfColors.black;
   PdfColor mySecondaryColor = PdfColors.black;
 
@@ -44,7 +44,7 @@ class PDFGenerator {
   late final bool _hideBody;
   /// maks if should append or print all
   late final bool _append;
-//Colors // FIXME: to be refractored to a better place
+//Colors // FIXME: to be refactored to a better place
 
 //FIXME: temporary set
   List<pw.Widget> _generateNotes(
