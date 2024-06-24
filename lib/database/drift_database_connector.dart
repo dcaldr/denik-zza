@@ -55,7 +55,7 @@ class DriftDatabaseConnector implements DatabaseInterface {
     RecordsCompanion c = RecordsCompanion(
       dateAndTime: Value(DateTime.now()),
       title: Value(zaznam.nazev!),
-      description: Value(zaznam.popis),
+      description: Value(zaznam.popis!),
       treatment: const Value(""),
       paramedicFK: Value(zaznam.idAuthor),
       participantFK: Value(zaznam.idPacient)
