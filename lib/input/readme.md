@@ -26,5 +26,9 @@ Prakticky jsem jenom prokrastivnoval učení se na účetnictví :/
    4) Vrátit upravený záznam spolu s informací jak to dopadlo
 4) methoda řádku vygeneruje objekt co se dá použít v aplikaci/ databázi (teď to je MemoryOsoba)
 
- ** v podstatě lze na začátku pro tu pipeline použít jenom prázdné funkce co si to předají a později až dodat logiku 
+ ** v podstatě lze na začátku pro tu pipeline použít jenom prázdné funkce co si to předají a později až dodat logiku
+## další položky:
+- TODO: add fix/workaround/catch for bad db state -- ie records pointing to non-existent participant
+  - stalo se že v průběhu testování existoval záznam odkazující na osobu s id 1, ale osoba s id 1 neexistovala. V okamžiku přidání došlo ke spojení osamocených starých záznamů s tím novým.
+
 
