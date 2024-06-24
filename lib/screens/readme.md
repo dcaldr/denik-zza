@@ -18,15 +18,17 @@ Zde bude prakticky grafická stránka aplikace
 ### příjem 
 - vyhledá se už existující člověk + možnost vytvořit nového 
 - umožní změnu základních polí (?možná po speciálním kliknutí- předejít náhodnému přepsání?)
-- zaškrtnutí lékařského potvrzení, bezinfekčnosti
+- zaškrtnutí lékařského potvrzení (možná optional datum vydání? v budoucnu), bezinfekčnosti
 - dopsání léků, omezení/alergií
 - checkbox pro "přišel" <- může být auto true po zaškrtnutí bezinfekčnosti
 - "statistika přišlých" 15 / 148 (později může na hover/klik zobrazit jména) 
+- v budoucnu přidat nahrání/zobrazení potvrzení 
 
 ### vyšetření 
 - v podstatě funguje dobře 
 - přidat možnost teploty 
 - přidat (?na rozklik?) zobrazení základního infa 
+- v budoucnu zobrazení potvrzení 
 
 ### boční menu 
 - přidat search pole -> rovnou vedoucí na vyšetření s daným člověkem
