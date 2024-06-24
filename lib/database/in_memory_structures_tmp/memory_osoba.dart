@@ -17,6 +17,7 @@ class MemoryOsoba {
   bool? bezinfekcnost;
   bool? wasPrinted;
   String? zdravotniPojistovna;
+  String? oddil; //FIXME: zařadit do aplikace - lze změnit typ, jde o návrh
 
  /// Constructs a [MemoryOsoba] instance with essential parameters.
   MemoryOsoba( this.jmeno,  this.prijmeni, this.datumNarozeni, this.adresa,
