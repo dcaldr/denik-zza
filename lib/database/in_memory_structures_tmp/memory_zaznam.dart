@@ -11,10 +11,11 @@ class MemoryZaznam {
   @Deprecated('navíc')
   String? lecba; //TODO:Remove
   String? poznamka;
-  double? teplota;  //FIXME: zařadit do aplikace
+  double? teplota;  //FIXME: zařadit do aplikace, optional kolonka
   // may use -1 means not assigned
   late int idAuthor; // may use -1 means not assigned
   bool isPrinted = false; //preset
+  //TODO: add comparator for safety when possible
 
  /// Constructs a [MemoryZaznam] instance with essential parameters.
   MemoryZaznam(this.nazev, this.popis, this.poznamka, this.idZaznamu,

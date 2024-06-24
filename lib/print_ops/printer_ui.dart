@@ -8,7 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
-
+//TODO: redo completely - print status seems now working, make it less confusing, print all- calculate after press of button
+//
 /// UI for the printing page.
 class PageUI extends StatelessWidget {
   PageUI({super.key});
