@@ -20,8 +20,14 @@ void main() {
 
   });
   group('advanced text manipulation',(){
-    test('diacritics remove',(){
-      expect('ěščřžýáíéúůďť','escrzyaieuudt');
+    test('my normalizer remove',(){
+      expect(TextTools.normText('ěščřžýáíéúůďť'),'escrzyaieuudt');
+      expect(TextTools.normText('ĚŠČŘŽÝÁÍÉÚŮĎŤ'),'escrzyaieuudt');
+    });
+    test('my normalizer with spaces', (){
+      expect(TextTools.normText(' ěščřžýáíéúůďť '),'escrzyaieuudt');
+      expect(TextTools.normText(' ĚŠČŘŽÝÁÍÉÚŮĎŤ '),'escrzyaieuudt');
+      expect(TextTools.normText(' ĚŠČŘžýáíéÚŮĎŤ '),'escrzyaieuudt');
     });
   });
   }
