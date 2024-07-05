@@ -49,6 +49,7 @@ dependencies:
 
   sqlite3: any
   csv: ^6.0.0
+  diacritic: ^0.1.5
 dev_dependencies:
   flutter_test:
     sdk: flutter
