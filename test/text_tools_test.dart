@@ -1,4 +1,5 @@
 
+import 'package:denik_zza/input/input_parser.dart';
 import 'package:denik_zza/input/text_tools.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -28,6 +29,28 @@ void main() {
       expect(TextTools.normText(' ěščřžýáíéúůďť '),'escrzyaieuudt');
       expect(TextTools.normText(' ĚŠČŘŽÝÁÍÉÚŮĎŤ '),'escrzyaieuudt');
       expect(TextTools.normText(' ĚŠČŘžýáíéÚŮĎŤ '),'escrzyaieuudt');
+    });
+  });
+  /// TODO: Need to move elsewhere
+  group('comparing statuses', (){
+    ParseStatus ok = ParseStatus.ok;
+    ParseStatus format = ParseStatus.format;
+    ParseStatus warn = ParseStatus.warn;
+    ParseStatus bad = ParseStatus.bad;
+
+    test('basic ordering', (){
+      expect(ok.index, lessThan(warn.index));
+      expect(ok.compareTo(warn), lessThan(0));
+    });
+    test('overridden operators', (){
+      expect(format < bad, true);
+      expect(ok > warn, false);
+      expect(ok <= warn, true);
+      expect(ok >= warn, false);
+    });
+    test('Implicit operators', (){
+      expect(format == format, true);
+      expect(format != bad, true);
     });
   });
   }
