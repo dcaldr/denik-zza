@@ -1,0 +1,30 @@
+class RodneCisloData{
+//TODO: convert notes to lists of rč
+
+}
+//generováno z https://www.daytl.com/cs/birthnumber/
+//dekodování https://www.martik.cz/validace-rodneho-cisla/#formular
+/* muži do 18 let
+1404145039
+2303275117
+1910209884
+0906303816
+1101090584
+1601210699
+1502200414
+1701216341
+1108072504
+1109195373
+ */
+/* ženy do 18 let
+1454147013
+1454141568
+1454140798
+1454146991
+1454141480
+1454141095
+1454141854
+1454143141
+1454146716
+1454147684
+ */
