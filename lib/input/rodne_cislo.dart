@@ -1,17 +1,17 @@
 class RodneCislo {
-  String rc;
-  bool valid = false;
+  String _rc;
+  bool hasValidFormat = false;
+  bool hasValidSum = false;
 
-  RodneCislo(this.rc) {
-    rc = formatRc(rc);
-    if (!_isValidFormat(rc)) {
-      valid = false;
+  RodneCislo(this._rc) {
+    _rc = formatRc(_rc);
+    if (!_isValidFormat(_rc)) {
+      hasValidFormat = false;
     } else {
-      valid = true;
+      hasValidFormat = true;
     }
-    if (!rc.contains('/')) {
-      rc = '${rc.substring(0, 6)}/${rc.substring(6, 10)}';
-    }
+    hasValidSum = isValidSum();
+
   }
 
   String formatRc(String rcCandidate) {
@@ -22,15 +22,23 @@ class RodneCislo {
   bool _isValidFormat(String rc) {
     // Kontrola délky a toho, zda obsahuje pouze číslice (kromě případného lomítka)
     if (rc.length == 10 || (rc.length == 11 && rc[6] == '/')) {
-      String digits = rc.replaceAll('/', '');
-      return RegExp(r'^\d{9,10}$').hasMatch(digits);
+     // String digits = rc.replaceAll('/', '');
+      return RegExp(r'^\d{9,10}$').hasMatch(rc);
     }
     return false;
   }
+  /// modus 11 - check
+  bool isValidSum(){
+
+    int sum = int.parse(_rc);
+    int modulo = sum % 11;
+
+    return (modulo == 0) || (modulo == 1 && _rc.endsWith('0'));
+  }
 
   int getPohlavi() {
-    int mesic = getHrubyMesic();
-    if (mesic < 50) {
+    //int mesic = getHrubyMesic();
+    if (getHrubyMesic() < 50) {
       return 1;
     } else {
       return 2;
@@ -60,17 +68,25 @@ class RodneCislo {
   }
 
   int getDen() {
-    int den = int.parse(rc.substring(4, 6));
+    int den = int.parse(_rc.substring(4, 6));
     return den;
   }
 
   int getHrubyMesic() {
-    int mesic = int.parse(rc.substring(2, 4));
+    int mesic = int.parse(_rc.substring(2, 4));
     return mesic;
   }
 
   int getRok() {
-    int rok = int.parse(rc.substring(0, 2));
+    int rok = int.parse(_rc.substring(0, 2));
     return rok;
   }
+
+  String getRc() {
+  String outRc = _rc;
+  if (!_rc.contains('/')) {
+    outRc = '${_rc.substring(0, 6)}/${_rc.substring(6)}';
+  };
+  return outRc;
+}
 }
