@@ -1,5 +1,6 @@
 /// Tools for manipulating strings mainly for matching purposes
 /// should extend existing options
+library;
 import 'package:diacritic/diacritic.dart';
 class TextTools{
 /// creates "normalized" version of text
@@ -17,6 +18,18 @@ class TextTools{
      b = normText(b);
      return a == b;
   }
+   static bool looseCmpWithList(String a, List<String> bList) {
+     a = normText(a);
+     for (String b in bList) {
+       b = normText(b);
+       if (a == b) {
+         return true;
+       }
+     }
+     return false;
+   }
+
+
 
 
 }
