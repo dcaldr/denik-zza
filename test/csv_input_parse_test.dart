@@ -32,7 +32,7 @@ void main(){
     test('basic read csv file',() async {
      // final file = File('test/data/first.csv');
       final contents = await file.readAsString();
-      List<List<dynamic>>? csvTable =  CsvParserSettings().converter.convert(contents);
+      List<List<String>>? csvTable =  CsvParserSettings().converter.convert(contents);
     //  print(csvTable);
       expect(csvTable, isNotNull);
     });
@@ -50,7 +50,7 @@ void main(){
       inputParser.filePath = 'test/data/first.csv';
 
        await inputParser.getFile();
-      List<List<dynamic>>? testus = await inputParser.loadedData;
+      List<List<String>>? testus = await inputParser.loadedData;
        logger.i(testus.toString());
       PersonResult? result = inputParser.result;
       //loggerNoStack.i(inputParser.loadedData.toString());
