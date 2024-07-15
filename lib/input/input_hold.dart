@@ -5,14 +5,21 @@ import 'text_tools.dart';
 
 /// This class parses one data item
 abstract class InputHold{
-  dynamic pureInput;
+  late dynamic  pureInput;
   String input ="";
   dynamic output;
   ParseStatus? status;
   String columnName;
 
+  InputHold(this.columnName);
 
-  InputHold(this.pureInput, this.columnName) {
+/// Constructor, takes [pureInput] and [columnName] as arguments
+   InputHold.full(this.pureInput, this.columnName) {
+    if(pureInput == null){
+      status = ParseStatus.empty;
+      output = null;
+    }
+
     if(pureInput is int || pureInput is double){
       input = pureInput.toString();
     } else {
@@ -23,14 +30,23 @@ abstract class InputHold{
       status = ParseStatus.bad;
       output = null;
     } else {
-      output = converter();
+      output = _converter();
     }
     // Some converter didn't assign status
     status ??= ParseStatus.empty;
 
   }
+  InputHold.empty(this.columnName){
+    columnName = columnName;
+    status = ParseStatus.empty;
 
-  dynamic  converter();
+  }
+
+  dynamic  _converter();
+  dynamic addInput(dynamic intake){
+    pureInput = intake;
+    _converter();
+  }
 
   bool isEmpty(){
     if(input.isEmpty ){
@@ -42,9 +58,10 @@ abstract class InputHold{
 }
 /// for parsing Jméno and Příjmení
 class JmenoHold extends InputHold{
-  JmenoHold(super.input, super.columnName);
+  JmenoHold({String columnName = "jméno"}) : super(columnName);
+  JmenoHold.full(dynamic pureInput, {String columnName = "jméno"}) : super.full(pureInput, columnName);
   @override
-  dynamic converter() {
+  dynamic _converter() {
     status = ParseStatus.ok;
     return input;
   }
@@ -54,9 +71,11 @@ class PohlaviHold extends InputHold{
   List<String> possibleMuz=["m", "1", "muž", "chlapec", "kluk",];
   List<String> possibleZena=["ž", "2", "žena", "dívka", "holka",];
 
-PohlaviHold(dynamic pureInput, {String columnName = "pohlaví"}) : super(pureInput, columnName);
+  PohlaviHold({String columnName = "pohlaví"}) : super(columnName);
+  PohlaviHold.full(dynamic pureInput, {String columnName = "pohlaví"}) : super.full(pureInput, columnName);
+
   @override
-  converter() {
+  _converter() {
     if(TextTools.looseCmpWithList(input, possibleMuz)){
       status = ParseStatus.ok;
       return 1;
@@ -72,17 +91,21 @@ PohlaviHold(dynamic pureInput, {String columnName = "pohlaví"}) : super(pureInp
 }
 
 class AdresaHold extends InputHold{
-  AdresaHold(dynamic pureInput, {String columnName = "adresa"}) : super(pureInput, columnName);
+  AdresaHold({String columnName = "adresa"}) : super(columnName);
+  AdresaHold.full(dynamic pureInput, {String columnName = "adresa"}) : super.full(pureInput, columnName);
+
   @override
-  converter() {
+  _converter() {
     status = ParseStatus.ok;
     return input;
   }
 }
 class CisloPojisteniHold extends InputHold{
-  CisloPojisteniHold(dynamic pureInput, {String columnName = "rodné číslo"}) : super(pureInput, columnName);
+  CisloPojisteniHold({String columnName = "rodné číslo"}) : super(columnName);
+  CisloPojisteniHold.full(dynamic pureInput, {String columnName = "rodné číslo"}) : super.full(pureInput, columnName);
+
   @override
-  converter() {
+  _converter() {
   RodneCislo rc = RodneCislo(input);
   if(!rc.hasValidFormat){
     status = ParseStatus.bad;
@@ -97,9 +120,11 @@ class CisloPojisteniHold extends InputHold{
   }
 }
 class DatumNarozeniHold extends InputHold{
-  DatumNarozeniHold(dynamic pureInput, {String columnName = "datum narození"}) : super(pureInput, columnName);
+  DatumNarozeniHold({String columnName = "datum narození"}) : super(columnName);
+  DatumNarozeniHold.full(dynamic pureInput, {String columnName = "datum narození"}) : super.full(pureInput, columnName);
+
   @override
-  converter() {
+  _converter() {
     DateTime? date = TextTools.parseDate(input);
     if(date == null){
       status = ParseStatus.bad;
@@ -110,17 +135,22 @@ class DatumNarozeniHold extends InputHold{
   }
 }
 class TelefonHold extends InputHold{
-  TelefonHold(dynamic pureInput, {String columnName = "telefon rodič"}) : super(pureInput, columnName);
+  TelefonHold({String columnName = "telefon rodič"}) : super(columnName);
+
+  TelefonHold.full(dynamic pureInput, {String columnName = "telefon rodič"}) : super.full(pureInput, columnName);
+
   @override
-  converter() {
+  _converter() {
     status = ParseStatus.ok;
     return input;
   }
 }
 class EmailHold extends InputHold{
-  EmailHold(dynamic pureInput, {String columnName = "email rodič"}) : super(pureInput, columnName);
+  EmailHold({String columnName = "email rodič"}) : super(columnName);
+  EmailHold.full(dynamic pureInput, {String columnName = "email rodič"}) : super.full(pureInput, columnName);
+
   @override
-  converter() {
+  _converter() {
     if(input.contains("@")){
       status = ParseStatus.ok;
       return input;
@@ -130,13 +160,14 @@ class EmailHold extends InputHold{
   }
 }
 class PotvrzeniHold extends InputHold{
-  PotvrzeniHold(super.pureInput, super.columnName);
+  PotvrzeniHold({String columnName = "potvrzení"}) : super(columnName);
+PotvrzeniHold.full(dynamic pureInput, {String columnName = "potvrzení"}) : super.full(pureInput, columnName);
   List<String> possibleYes = ["ano", "yes", "y", "1","true",];
   List<String> possibleNo = ["ne", "no", "n", "0", "false", ];
 
 
   @override
-  converter() {
+  _converter() {
     if(TextTools.looseCmpWithList(input, possibleYes)){
       status = ParseStatus.ok;
       return true;
@@ -149,10 +180,23 @@ class PotvrzeniHold extends InputHold{
     return null;
   }
 }
-class TextHold extends InputHold{
-  TextHold(super.pureInput, super.columnName);
+///TODO: implement logic
+class PojistovnaHold extends InputHold{
+  PojistovnaHold({String columnName = "pojišťovna"}) : super(columnName);
+PojistovnaHold.full(dynamic pureInput, {String columnName = "pojišťovna"}) : super.full(pureInput, columnName);
   @override
-  converter() {
+  _converter() {
+    status = ParseStatus.ok;
+    return input;
+  }
+}
+
+
+class TextHold extends InputHold{
+  TextHold({String columnName = "poznámka"}) : super(columnName);
+  TextHold.full(dynamic pureInput, {String columnName = "poznámka"}) : super.full(pureInput, columnName);
+  @override
+  _converter() {
     status = ParseStatus.ok;
     return input;
   }
