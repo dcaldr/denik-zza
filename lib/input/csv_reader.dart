@@ -103,7 +103,7 @@ class CsvParserSettings {
     eols: ['\n', '\r\n', '\r'],
   );
 
-  final CsvToListConverter converter = const CsvToListConverter(csvSettingsDetector: detector);
+  final CsvToListConverter converter = const CsvToListConverter(csvSettingsDetector: detector, shouldParseNumbers: false);
 
   // Private constructor
   CsvParserSettings._internal();
