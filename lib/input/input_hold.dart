@@ -93,7 +93,67 @@ class CisloPojisteniHold extends InputHold{
   }else{
     status = ParseStatus.ok;
   }
+  return rc;
+  }
+}
+class DatumNarozeniHold extends InputHold{
+  DatumNarozeniHold(dynamic pureInput, {String columnName = "datum narození"}) : super(pureInput, columnName);
+  @override
+  converter() {
+    DateTime? date = TextTools.parseDate(input);
+    if(date == null){
+      status = ParseStatus.bad;
+      return null;
+    }
+    status = ParseStatus.ok;
+    return date;
+  }
+}
+class TelefonHold extends InputHold{
+  TelefonHold(dynamic pureInput, {String columnName = "telefon rodič"}) : super(pureInput, columnName);
+  @override
+  converter() {
+    status = ParseStatus.ok;
+    return input;
+  }
+}
+class EmailHold extends InputHold{
+  EmailHold(dynamic pureInput, {String columnName = "email rodič"}) : super(pureInput, columnName);
+  @override
+  converter() {
+    if(input.contains("@")){
+      status = ParseStatus.ok;
+      return input;
+    }
+    status = ParseStatus.bad;
+    return input;
+  }
+}
+class PotvrzeniHold extends InputHold{
+  PotvrzeniHold(super.pureInput, super.columnName);
+  List<String> possibleYes = ["ano", "yes", "y", "1","true",];
+  List<String> possibleNo = ["ne", "no", "n", "0", "false", ];
 
-  return rc.getRc();
+
+  @override
+  converter() {
+    if(TextTools.looseCmpWithList(input, possibleYes)){
+      status = ParseStatus.ok;
+      return true;
+    }
+    if(TextTools.looseCmpWithList(input, possibleNo)){
+      status = ParseStatus.ok;
+      return false;
+    }
+    status = ParseStatus.bad;
+    return null;
+  }
+}
+class TextHold extends InputHold{
+  TextHold(super.pureInput, super.columnName);
+  @override
+  converter() {
+    status = ParseStatus.ok;
+    return input;
   }
 }

@@ -89,4 +89,9 @@ class RodneCislo {
   };
   return outRc;
 }
+
+  @override
+  String toString() {
+    return getRc();
+  }
 }
