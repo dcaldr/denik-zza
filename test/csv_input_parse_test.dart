@@ -2,6 +2,7 @@
 
 import 'dart:io';
 
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/input/csv_definitions.dart';
 import 'package:denik_zza/input/csv_reader.dart';
 import 'package:denik_zza/input/input_parser.dart';
@@ -56,6 +57,8 @@ void main(){
       PersonResult? result = inputParser.result;
       //loggerNoStack.i(inputParser.loadedData.toString());
       expect(result, isNotNull);
+      MemoryOsoba? person = result?.goodPersons[0];
+
      // loggerNoStack.i(result?.persons.toString());
     });
   });
