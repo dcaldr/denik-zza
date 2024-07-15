@@ -92,8 +92,12 @@ logger.e("An error occurred: $e", stackTrace:  stackTrace);
 }
 
 class PersonResult{
-
-  List<MemoryOsoba> persons = [];
+/// persons that were ok during parsing
+  List<MemoryOsoba> goodPersons = [];
+  /// persons with warnining during parsing
+  ///
+  /// mostly where something was guessed, in future this could be separeted into format and warn
+  /// key is person, value is error
   Map<MemoryOsoba,ErrorLine> warnPersons = {};
   List<ErrorLine> errors = [];
   List<Answer> answers =[];
@@ -111,7 +115,7 @@ class PersonResult{
       continue;
      }
      if(answer.lineStatus == ParseStatus.ok){
-       persons.add(answer.toPerson());
+       goodPersons.add(answer.toPerson());
        continue;
      }
      loggerNoStack.w("Person result unexpected value");
@@ -135,98 +139,103 @@ class InputResult{
 
 }
 /// holds one line of processed data, with its outcome
-class Answer{
+class Answer {
   // String errorMsg = '';
   // String line = '';
   ErrorLine error = ErrorLine();
   List<InputHold> _data = [];
+
   /// how was the line marked during parsing (ok, warn, bad) should be expected
   ParseStatus lineStatus = ParseStatus.empty;
   bool cleanState = false;
 
   List<InputHold> get data {
     calculateStatus();
-    cleanState =true;
+    cleanState = true;
     return _data;
   }
 
   set data(List<InputHold> value) {
-    cleanState =false;
+    cleanState = false;
     _data = value;
   }
 
 
-
-///TODO: fix hardcoded indexes
+  ///TODO: fix hardcoded indexes
   /// Calculates status of the line before reading from it
   void calculateStatus() {
-    if(cleanState){
+    if (cleanState) {
       return;
     }
 
-    if(_data.isEmpty){
+    if (_data.isEmpty) {
       return;
     }
-    if(_data.length < 3){
+    if (_data.length < 3) {
       lineStatus = ParseStatus.warn;
     }
     //IF name or surname missing
-    if(data[0].status != ParseStatus.ok || data[1].status != ParseStatus.ok){
+    if (data[0].status != ParseStatus.ok || data[1].status != ParseStatus.ok) {
       error.errorMsg += 'Jméno nebo příjmení chybí,\n';
       lineStatus = ParseStatus.bad;
       return;
     }
     //IF rodneCislo missing - warn only
-    if(data[2].status == ParseStatus.bad){
+    if (data[2].status == ParseStatus.bad) {
       error.errorMsg += 'Rodné číslo chybí,\n';
-      if(lineStatus < ParseStatus.warn){
+      if (lineStatus < ParseStatus.warn) {
         lineStatus = ParseStatus.warn;
       }
-      if(data[2].status == ParseStatus.ok){
-        if(data[3].output ==null){
+      if (data[2].status == ParseStatus.ok) {
+        if (data[3].output == null) {
           lineStatus = ParseStatus.warn;
           error.errorMsg += "odhad pohlaví,\n";
         }
-        if(data[4].output== null){
+        if (data[4].output == null) {
           lineStatus = ParseStatus.warn;
           error.errorMsg += "odhad data narození";
         }
       }
-
     }
-    if(lineStatus == ParseStatus.empty){
+    if (lineStatus == ParseStatus.empty) {
       lineStatus = ParseStatus.ok;
     }
   }
-  MemoryOsoba toPerson(){
+
+  MemoryOsoba toPerson() {
     calculateStatus();
-    MemoryOsoba osoba = MemoryOsoba.csvNamed(jmeno: data[0].toString(),
-        prijmeni: data[1].toString(),
-        cisloPojisteni: data[2].toString(),
-        pohlavi: data[3].output,
-      adresa: data[4].output,
-      datumNarozeni: data[5].output,
-        telefonniCislo: data[6].output,
-      emailRodice: data[7].output,
-      zpusobilost: data[8].output,
-      zdravotniPojistovna: data[9].output,
-      poznamka: data[10].output
 
-    );
-    // if rč
-    if(data[2].status == ParseStatus.ok){
-      // if rč in good format for guessing
-      if(data[2].output is RodneCislo){
-        RodneCislo rc = data[2].output;
-        osoba.pohlavi ??= rc.getPohlavi();
-        osoba.datumNarozeni ??= rc.getDatumNarozeni();
+      CisloPojisteniHold rcHold = data[2] as CisloPojisteniHold;
+      RodneCislo rc = rcHold.getOutput();
 
+      //FIXME refactor to someting better
+      MemoryOsoba osoba = MemoryOsoba.csvNamed(
+          jmeno: data[0].getOutput(),
+          prijmeni: data[1].getOutput(),
+          cisloPojisteni: rc.getRc(),
+          pohlavi: data[3].getOutput(),
+          adresa: data[4].getOutput(),
+          datumNarozeni: data[5].getOutput(),
+          telefonniCislo: data[6].getOutput(),
+          emailRodice: data[7].getOutput(),
+          zpusobilost: data[8].getOutput(),
+          zdravotniPojistovna: data[9].getOutput(),
+          poznamka: data[10].getOutput()
+
+      );
+      // if rč
+      if (data[2].status == ParseStatus.ok) {
+        // if rč in good format for guessing
+        if (data[2].output is RodneCislo) {
+          RodneCislo rc = data[2].output;
+          osoba.pohlavi ??= rc.getPohlavi();
+          osoba.datumNarozeni ??= rc.getDatumNarozeni();
+        }
       }
+      return osoba;
     }
-    return osoba;
   }
 
-}
 
 enum ParseStatus{ ok, format, warn, bad, empty }
 extension ParseStatusCmp on ParseStatus {

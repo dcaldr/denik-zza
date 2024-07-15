@@ -1,5 +1,5 @@
 class RodneCislo {
-
+/// tested rc
   String _rc;
   bool hasValidFormat = false;
   bool hasValidSum = false;
@@ -85,12 +85,14 @@ class RodneCislo {
     int rok = int.parse(_rc.substring(0, 2));
     return rok;
   }
-
+/// returns [_rc] in format 123456/7890
+  ///
+  /// returns in human readable format
   String getRc() {
   String outRc = _rc;
   if (!_rc.contains('/')) {
     outRc = '${_rc.substring(0, 6)}/${_rc.substring(6)}';
-  };
+  }
   return outRc;
 }
 

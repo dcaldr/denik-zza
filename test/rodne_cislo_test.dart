@@ -35,6 +35,10 @@ void main() {
     test("output rč s lomítkem",(){
       expect(rodneCisloGood.getRc(), "140414/5039");
     });
+    test("rč s lomítkem 2 ",(){
+      expect(RodneCislo('130610/2567').getRc(), "130610/2567");
+      expect(RodneCislo('1306102567').getRc(), "130610/2567");
+    });
   });
 
 }
