@@ -47,4 +47,18 @@ class MemoryOsoba {
   /// Constructs a [MemoryOsoba] instance with dummy data.
   MemoryOsoba.dummyData( this.jmeno,  this.prijmeni, this.datumNarozeni, this.adresa,
       this.telefonniCislo, this.zdravotniPojistovna, this.cisloPojisteni, this.pohlavi,);
+
+  MemoryOsoba.csvNamed({
+  required this.jmeno,
+    required this.prijmeni,
+    this.cisloPojisteni,
+    this.pohlavi,
+    this.adresa,
+    this.datumNarozeni,
+    this.telefonniCislo,
+    this.emailRodice,
+    this.zpusobilost,
+    this.zdravotniPojistovna,
+    this.poznamka
+  });
 }
