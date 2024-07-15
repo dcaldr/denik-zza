@@ -23,14 +23,14 @@ var loggerNoStack = Logger(
 /// Controlling class (?)
 class InputParser {
   late Future<List<
-      List<dynamic>>?> loadedData; // note: this is like pointer magic in c++
+      List<String>>?> loadedData; // note: this is like pointer magic in c++
   String filePath = '';
   List<InputHold> definition = CsvDefinitions().mainCsv;
   List<Answer> parsedData = [];
    PersonResult? result;
 
   /// Parses one line of data and returns the result
-  Future<Answer> parseLine(List<dynamic> line) async {
+  Future<Answer> parseLine(List<String> line) async {
     Answer answer = Answer();
     //basic check if both are same lengths
     if (line.length != definition.length) {
@@ -63,7 +63,7 @@ class InputParser {
   /// parse based on parser
   Future<void> parseData() async {
     loggerNoStack.i("Parsing data");
-    List<List<dynamic>>? data = await loadedData;
+    List<List<String>>? data = await loadedData;
     if (data == null) {
       //TODO: better handling of this
       loggerNoStack.i("No data loaded.");
