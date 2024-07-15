@@ -6,9 +6,9 @@ class CsvDefinitions{
   List<InputHold> mainCsv = [
   JmenoHold(columnName: "jméno"),
   JmenoHold(columnName: "příjmení"),
+  CisloPojisteniHold(columnName: "rodné číslo"),
   PohlaviHold(columnName: "pohlaví"),
   AdresaHold(columnName: "adresa"),
-  CisloPojisteniHold(columnName: "rodné číslo"),
   DatumNarozeniHold(columnName: "datum narození"),
   TelefonHold(columnName: "telefon rodič"),
   EmailHold(columnName: "email rodič"),

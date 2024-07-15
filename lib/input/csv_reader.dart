@@ -25,7 +25,7 @@ CsvReader(this._path){
   }
   /// pull data from file into memory
 /// returns null if file was not processed
-  Future<List<dynamic>?> readData() async{
+  Future<List<List<dynamic>>?> readData() async{
     if(!canLoadFile()){
       return null;
     }
@@ -33,7 +33,8 @@ CsvReader(this._path){
     String data = await file.readAsString(); // note: learn "asynchronous prefetching" or "fire and forget"
     // TODO: do tests on settings
     // parsing csv
-    List<List<dynamic>> csvTable = CsvParserSettings().converter.convert(data);
+    List<List<dynamic>>? csvTable =  CsvParserSettings().converter.convert(data);
+   // return CsvParserSettings().converter.convert(data);
     return csvTable;
   }
   /// when file is found not ok this gets called,
