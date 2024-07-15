@@ -17,7 +17,7 @@ CsvReader(this._path){
   canLoadFile();
 }
 /// removes first line from csv table (column names)
-Future<List<List>?> removeFirstLine(List<List<dynamic>>? csvTable) async{
+Future<List<List<String>>?> removeFirstLine(List<List<String>>? csvTable) async{
   if(csvTable == null){
     return null;
   }
@@ -34,7 +34,7 @@ Future<List<List>?> removeFirstLine(List<List<dynamic>>? csvTable) async{
   /// pulls data from file into memory
 /// returns null if file was not processed
 /// Also removes first line (column names) so it is not processed
-  Future<List<List<dynamic>>?> readData() async{
+  Future<List<List<String>>?> readData() async{
     if(!canLoadFile()){
       return null;
     }
@@ -42,7 +42,7 @@ Future<List<List>?> removeFirstLine(List<List<dynamic>>? csvTable) async{
     String data = await file.readAsString(); // note: learn "asynchronous prefetching" or "fire and forget"
     // TODO: do tests on settings
     // parsing csv
-    List<List<dynamic>>? csvTable =  CsvParserSettings().converter.convert(data);
+    List<List<String>>? csvTable =  CsvParserSettings().converter.convert(data);
     csvTable = await removeFirstLine(csvTable);
 
 
