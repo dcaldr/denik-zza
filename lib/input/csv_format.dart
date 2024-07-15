@@ -1,16 +1,20 @@
+import 'input_hold.dart';
+
 /// defines format of input csv files
 /// RIGHT NOW DOES NOTHING
- abstract class CsvFormat{
-  /// returns list of coulumn names
-List<String> getColumnNames();
+  class CsvFormat{
+    CsvFormat(this.columns);
+
+ List<InputHold> columns;
+
+ List<String> getColumnsNames(){
+   return columns.map((e) => e.columnName).toList();
+
+ }
+ List<InputHold> getColumnsDefinitions(){
+   return columns;
+ }
+
+
 }
 
-
-class PeopleImport implements CsvFormat {
-  @override
-  List<String> getColumnNames() {
-    // TODO: implement getColumnNames
-    throw UnimplementedError();
-  }
-
-}
