@@ -41,6 +41,9 @@ abstract class InputHold{
     status = ParseStatus.empty;
 
   }
+  dynamic getOutput(){
+    return output;
+  }
 
   dynamic  _converter();
   dynamic addInput(dynamic intake){
@@ -132,11 +135,14 @@ class CisloPojisteniHold extends InputHold{
   }
   if(!rc.hasValidSum){
     status = ParseStatus.warn;
+    output = rc.getRc();
   }else{
     status = ParseStatus.ok;
+    output = rc.getRc();
   }
   return rc;
   }
+
 }
 class DatumNarozeniHold extends InputHold{
   DatumNarozeniHold({String columnName = "datum narození"}) : super(columnName);
