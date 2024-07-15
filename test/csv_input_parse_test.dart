@@ -35,6 +35,7 @@ void main(){
       List<List<String>>? csvTable =  CsvParserSettings().converter.convert(contents);
     //  print(csvTable);
       expect(csvTable, isNotNull);
+      expect(csvTable[0][0], 'jméno');
     });
     test('my check',() async {
      CsvReader reader = CsvReader('test/data/first.csv');
@@ -51,7 +52,7 @@ void main(){
 
        await inputParser.getFile();
       List<List<String>>? testus = await inputParser.loadedData;
-       logger.i(testus.toString());
+       loggerNoStack.i(testus.toString());
       PersonResult? result = inputParser.result;
       //loggerNoStack.i(inputParser.loadedData.toString());
       expect(result, isNotNull);

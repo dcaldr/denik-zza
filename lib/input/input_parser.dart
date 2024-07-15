@@ -24,12 +24,12 @@ var loggerNoStack = Logger(
 class InputParser {
   late Future<List<
       List<String>>?> loadedData; // note: this is like pointer magic in c++
-  String filePath = '';
+  String filePath = ''; //FIXME: change to Path object
   List<InputHold> definition = CsvDefinitions().mainCsv;
   List<Answer> parsedData = [];
    PersonResult? result;
 
-  /// Parses one line of data and returns the result
+  /// Parses one line of data and returns the result as [Answer]
   Future<Answer> parseLine(List<String> line) async {
     Answer answer = Answer();
     //basic check if both are same lengths
@@ -37,6 +37,7 @@ class InputParser {
       //TODO: better handling of this
       answer.error.errorMsg += 'řádek nemá požadovaný počet sloupců';
       answer.error.lineContents = line.toString();
+      answer.lineStatus = ParseStatus.bad;
       return answer;
     }
     // for each item parse with coresponding parser
@@ -45,12 +46,15 @@ class InputParser {
       hold.addInput(line[i]);
       answer.data.add(hold);
     }
+    /// TODO: Check errors from between lines
+    answer.lineStatus = ParseStatus.ok;
     return answer;
   }
 
-  /// Check errors from betwwen lines
 
-  ///1) get file
+
+  ///Gets and loads data from file
+  /// also calls [parseData]
   Future<void> getFile() async {
     CsvReader reader = CsvReader(filePath);
     if (reader.canLoadFile()) {
@@ -60,7 +64,8 @@ class InputParser {
   }
   /// Skip header line
 
-  /// parse based on parser
+  /// converts loaded data into [parsedData]
+  /// also creates [PersonResult]
   Future<void> parseData() async {
     loggerNoStack.i("Parsing data");
     List<List<String>>? data = await loadedData;
@@ -135,6 +140,7 @@ class Answer{
   // String line = '';
   ErrorLine error = ErrorLine();
   List<InputHold> _data = [];
+  /// how was the line marked during parsing (ok, warn, bad) should be expected
   ParseStatus lineStatus = ParseStatus.empty;
   bool cleanState = false;
 
