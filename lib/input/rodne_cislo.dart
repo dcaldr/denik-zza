@@ -1,4 +1,5 @@
 class RodneCislo {
+
   String _rc;
   bool hasValidFormat = false;
   bool hasValidSum = false;
@@ -29,6 +30,9 @@ class RodneCislo {
   }
   /// modus 11 - check
   bool isValidSum(){
+    if (!_isValidFormat(_rc)) {
+      return false;
+    }
 
     int sum = int.parse(_rc);
     int modulo = sum % 11;

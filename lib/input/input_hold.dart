@@ -45,7 +45,26 @@ abstract class InputHold{
   dynamic  _converter();
   dynamic addInput(dynamic intake){
     pureInput = intake;
-    _converter();
+
+    if(pureInput == null){
+      status = ParseStatus.empty;
+      output = null;
+    }
+
+    if(pureInput is int || pureInput is double){
+      input = pureInput.toString();
+    } else {
+      input = pureInput.trim();
+    }
+
+    if(input.isEmpty){
+      status = ParseStatus.bad;
+      output = null;
+    } else {
+      output = _converter();
+    }
+    // Some converter didn't assign status
+    status ??= ParseStatus.empty;
   }
 
   bool isEmpty(){

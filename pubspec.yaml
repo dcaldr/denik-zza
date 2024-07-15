@@ -50,6 +50,7 @@ dependencies:
   sqlite3: any
   csv: ^6.0.0
   diacritic: ^0.1.5
+  logger: ^2.4.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
