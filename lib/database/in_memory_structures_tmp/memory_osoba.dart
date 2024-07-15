@@ -6,7 +6,7 @@ class MemoryOsoba {
   late int id; // may use -1 means not assigned
   String jmeno;
   String prijmeni;
-  int? pohlavi; // muž ==1 ,žena == 2
+  int? pohlavi; // muž ==1 ,žena == 2 // TODO: add named constants for pohlavi
   String? adresa;
   String? cisloPojisteni;
   DateTime? datumNarozeni;
@@ -18,6 +18,7 @@ class MemoryOsoba {
   bool? wasPrinted;
   String? zdravotniPojistovna;
   String? oddil; //FIXME: zařadit do aplikace - lze změnit typ, jde o návrh
+  String? poznamka; //FIXME zařadit do aplikace
 
  /// Constructs a [MemoryOsoba] instance with essential parameters.
   MemoryOsoba( this.jmeno,  this.prijmeni, this.datumNarozeni, this.adresa,
