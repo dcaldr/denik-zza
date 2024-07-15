@@ -16,15 +16,24 @@ String errorMsg ='' ;
 CsvReader(this._path){
   canLoadFile();
 }
-
-
-
-/// reaad first line (coulmn names) in "raw" format
-   List<String>? getHeader(){
+/// removes first line from csv table (column names)
+Future<List<List>?> removeFirstLine(List<List<dynamic>>? csvTable) async{
+  if(csvTable == null){
     return null;
   }
-  /// pull data from file into memory
+  csvTable.removeAt(0);
+  return csvTable;
+}
+
+
+
+/// reaads first line (coulmn names) in "raw" format
+   List<String>? getHeader(){
+    return CsvParserSettings().converter.convert(_path!)[0].map((e) => e.toString()).toList(); //note: :DD
+  }
+  /// pulls data from file into memory
 /// returns null if file was not processed
+/// Also removes first line (column names) so it is not processed
   Future<List<List<dynamic>>?> readData() async{
     if(!canLoadFile()){
       return null;
@@ -34,6 +43,9 @@ CsvReader(this._path){
     // TODO: do tests on settings
     // parsing csv
     List<List<dynamic>>? csvTable =  CsvParserSettings().converter.convert(data);
+    csvTable = await removeFirstLine(csvTable);
+
+
    // return CsvParserSettings().converter.convert(data);
     return csvTable;
   }

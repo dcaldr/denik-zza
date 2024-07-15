@@ -5,9 +5,20 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/input/csv_format.dart';
 import 'package:denik_zza/input/input_hold.dart';
 import 'package:denik_zza/input/rodne_cislo.dart';
-
+import 'package:logger/logger.dart';
 import 'csv_definitions.dart';
 import 'csv_reader.dart';
+
+
+
+var logger = Logger(
+  printer: PrettyPrinter(),
+);
+
+var loggerNoStack = Logger(
+  printer: PrettyPrinter(methodCount: 0),
+);
+
 
 /// Controlling class (?)
 class InputParser {
@@ -44,38 +55,45 @@ class InputParser {
     CsvReader reader = CsvReader(filePath);
     if (reader.canLoadFile()) {
       loadedData = reader.readData();
-      parseData();
+      await parseData();
     }
   }
+  /// Skip header line
 
-  ///2) read file
-  ///3) parse based on parser
-  void parseData() async {
+  /// parse based on parser
+  Future<void> parseData() async {
+    loggerNoStack.i("Parsing data");
     List<List<dynamic>>? data = await loadedData;
     if (data == null) {
       //TODO: better handling of this
-      print("No data loaded.");
+      loggerNoStack.i("No data loaded.");
       return;
     }
     // for each line - do async parseLine, capture results in a list
     // when entire finishies
-    parsedData = await Future.wait(data.map(parseLine));
+try {
+  parsedData = await Future.wait(data.map(parseLine));
+} catch (e, stackTrace) {
+logger.e("An error occurred: $e", stackTrace:  stackTrace);
+}
     result = PersonResult(parsedData);
   }
   Future<PersonResult?> getResult() async{
     if (result == null){
-      getFile();
+      await getFile();
     }
-    return result;
+    return  result;
   }
 }
 
 class PersonResult{
+
   List<MemoryOsoba> persons = [];
   Map<MemoryOsoba,ErrorLine> warnPersons = {};
   List<ErrorLine> errors = [];
   List<Answer> answers =[];
   PersonResult(List<Answer> inAnswers) {
+    loggerNoStack.t("Person result");
     answers = inAnswers;
     for(Answer answer in inAnswers){
      if(answer.lineStatus == ParseStatus.bad){
@@ -91,7 +109,7 @@ class PersonResult{
        persons.add(answer.toPerson());
        continue;
      }
-     print("Person result unexpected value");
+     loggerNoStack.w("Person result unexpected value");
     }
   }
 }
@@ -139,10 +157,11 @@ class Answer{
     if(cleanState){
       return;
     }
-    if(data.isEmpty){
+
+    if(_data.isEmpty){
       return;
     }
-    if(data.length < 3){
+    if(_data.length < 3){
       lineStatus = ParseStatus.warn;
     }
     //IF name or surname missing
