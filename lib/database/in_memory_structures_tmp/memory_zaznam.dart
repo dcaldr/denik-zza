@@ -12,6 +12,7 @@ class MemoryZaznam {
   String? lecba; //TODO:Remove
   String? poznamka;
   double? teplota;  //FIXME: zařadit do aplikace, optional kolonka
+  String? obrazekPath; //FIXME: azřadit do aplikace //-- bude hoodně v budoucnu
   // may use -1 means not assigned
   late int idAuthor; // may use -1 means not assigned
   bool isPrinted = false; //preset
