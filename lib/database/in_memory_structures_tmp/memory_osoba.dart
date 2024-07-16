@@ -20,6 +20,7 @@ class MemoryOsoba {
   String? oddil; //FIXME: zařadit do aplikace - lze změnit typ, jde o návrh
   String? poznamka; //FIXME zařadit do aplikace
   bool prisel = false; //FIXME: zařadit do aplikace
+  String? potvrzeniPath; //FIXME: zařadit do aplikace
 
  /// Constructs a [MemoryOsoba] instance with essential parameters.
   MemoryOsoba( this.jmeno,  this.prijmeni, this.datumNarozeni, this.adresa,
