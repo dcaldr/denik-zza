@@ -1,6 +1,6 @@
-/// development version of osoba class
+///Manin [MemoryOsoba] class
 ///
-/// More fileds can be added but use primary public methods
+/// Holds all nesserary data for one person, might be later restroctured to be multiple classes
 ///
 class MemoryOsoba {
   late int id; // may use -1 means not assigned
@@ -47,7 +47,7 @@ class MemoryOsoba {
   /// Constructs a [MemoryOsoba] instance with dummy data.
   MemoryOsoba.dummyData( this.jmeno,  this.prijmeni, this.datumNarozeni, this.adresa,
       this.telefonniCislo, this.zdravotniPojistovna, this.cisloPojisteni, this.pohlavi,);
-
+/// Constructs a [MemoryOsoba] instance in cooperation with csv parser
   MemoryOsoba.csvNamed({
   required this.jmeno,
     required this.prijmeni,
