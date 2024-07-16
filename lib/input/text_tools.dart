@@ -35,13 +35,13 @@ class TextTools{
      } catch (e) {
        parsedDate = null;
      }
-     if (parsedDate != null) {
+     if (parsedDate == null) {
        return myParseDate(date);
      }
 
 
 
-     return null;
+     return parsedDate;
    }
    static myParseDate(String date){
      DateTime? parsedDate;

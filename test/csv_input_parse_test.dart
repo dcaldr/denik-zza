@@ -60,10 +60,10 @@ void main(){
       MemoryOsoba? person = await result?.goodPersons[0];
       expect(person, isNotNull);
       // here very literal check
-      print(person?.jmeno);
+      //print(person?.jmeno);
       expect(person?.jmeno, 'Jan');
       expect(person?.prijmeni, 'Hus');
-     // expect(person?.cisloPojisteni, '130610/2567');
+      expect(person?.cisloPojisteni, '130610/2567');
       expect(person?.datumNarozeni, DateTime(2013, 06, 10));
       expect(person?.pohlavi, 1);
       expect(person?.emailRodice,'hello@proble.com');
