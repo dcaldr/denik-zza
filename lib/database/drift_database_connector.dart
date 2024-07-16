@@ -42,7 +42,14 @@ class DriftDatabaseConnector implements DatabaseInterface {
       eligibleConfirmation: Value(osoba.zpusobilost!),
       nonInfectiousConfirmation: Value(osoba.bezinfekcnost!),
       insuranceCompanyFK: Value(await _driftDatabase.getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna)),
-      zzaActionFK: Value((await _driftDatabase.getCurrentActionID())!)
+      zzaActionFK: Value((await _driftDatabase.getCurrentActionID())!),
+      parentName: Value(osoba.jmenoRodice),
+      parentEmail: Value(osoba.emailRodice),
+      campUnit: Value(osoba.oddil),
+      note: Value(osoba.poznamka),
+      arrivedConfirmation: Value(osoba.prisel),
+      eligibleConfirmationPath: Value(osoba.potvrzeniPath)
+
     );
 
     _driftDatabase.addParticipant(c);
@@ -102,11 +109,17 @@ class DriftDatabaseConnector implements DatabaseInterface {
       }
 
       memoryParticipants.add(
-        MemoryOsoba.named(id: p.id, jmeno: p.firstName, prijmeni: p.lastName,
+        MemoryOsoba.fullNamed(id: p.id, jmeno: p.firstName, prijmeni: p.lastName,
         pohlavi: p.gender, adresa: p.address, cisloPojisteni: p.birthNumber,
         datumNarozeni: p.birthDate, telefonRodice: p.parentPhoneNumber,
         zpusobilost: p.eligibleConfirmation, bezinfekcnost: p.nonInfectiousConfirmation,
-        wasPrinted: p.wasPrinted, zdravotniPojistovna: insCompName)
+        wasPrinted: p.wasPrinted, zdravotniPojistovna: insCompName,
+            jmenoRodice: p.parentName, emailRodice: p.parentEmail,
+            poznamka: p.note, oddil: p.campUnit, prisel: p.arrivedConfirmation,
+          potvrzeniPath: p.eligibleConfirmationPath,
+
+
+        )
       );
     }
 
