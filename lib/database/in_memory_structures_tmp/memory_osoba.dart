@@ -63,4 +63,32 @@ class MemoryOsoba {
     this.zdravotniPojistovna,
     this.poznamka
   });
+  /// Constructs a [MemoryOsoba] instance with all parameters.
+  ///
+  /// This constructor is used to convert between classes, will be tested that
+  /// all parameters are present
+  MemoryOsoba.fullNamed({
+    required int? id,
+    required this.jmeno,
+    required this.prijmeni,
+    required this.pohlavi,
+    required this.adresa,
+    required this.cisloPojisteni,
+    required this.datumNarozeni,
+    required this.jmenoRodice,
+    required this.telefonRodice,
+    required this.emailRodice,
+    required  this.zpusobilost,
+    required this.bezinfekcnost,
+    required this.wasPrinted,
+    required  this.zdravotniPojistovna,
+    required  this.oddil,
+    required  this.poznamka,
+    required  bool? prisel,
+    required  this.potvrzeniPath,
+  }) {
+    this.id = id ?? -1;
+    this.prisel = prisel ?? false;
+
+  }
 }
