@@ -22,12 +22,19 @@ class Participants extends Table {
   TextColumn get lastName => text().withLength(min: 0, max: 64)();
   IntColumn get gender => integer().nullable().nullable()();
   TextColumn get address => text().withLength(min: 0, max: 128).nullable()();
-  TextColumn get birthNumber => text().withLength(min: 0, max: 11).nullable()();
+  TextColumn get birthNumber => text().withLength(min: 0, max: 11).nullable()(); //Rodne cislo
   DateTimeColumn get birthDate => dateTime().nullable()();
   TextColumn get parentPhoneNumber => text().withLength(min: 0, max: 13).nullable()();
   BoolColumn get eligibleConfirmation => boolean().withDefault(const Constant(false))();
   BoolColumn get nonInfectiousConfirmation => boolean().withDefault(const Constant(false))();
   BoolColumn get wasPrinted => boolean().withDefault(const Constant(false))();
+  //dovolil jsem si přidat
+  TextColumn get parentName => text().withLength(min: 0, max: 64).nullable()();
+  TextColumn get parentEmail => text().withLength(min: 0, max: 64).nullable()();
+  TextColumn get campUnit => text().withLength(min: 0, max: 64).nullable()(); // taborovy oddil //FIXME: asi zmizne
+  TextColumn get note => text().nullable()();
+  BoolColumn get arrivedConfirmation => boolean().withDefault(const Constant(false))();
+  TextColumn get eligibleConfirmationPath => text().nullable()();
 
   // Foreign keys
   IntColumn get insuranceCompanyFK => integer().references(InsuranceCompanies, #id).nullable()();
@@ -63,6 +70,7 @@ class Records extends Table {
 class AllergiesLimitations extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get description => text().withLength(min: 0, max: 1024)();
+  IntColumn get type => integer()(); // 1 - allergy, 2 - limitation // For the future
 
   // Foreign keys
   IntColumn get participantFK => integer().references(Participants, #id)();
