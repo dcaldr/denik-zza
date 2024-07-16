@@ -9,6 +9,6 @@ class MemoryAction{
   String? popis;
   DateTime odkdy;
   DateTime dokdy;
-  String? homeFolderPath;
-MemoryAction({ required this.idAkce ,required this.nadpis, this.popis, required this.odkdy,required this.dokdy, this.homeFolderPath});
+  String? domovskyAdresarPath;
+MemoryAction({ required this.idAkce ,required this.nadpis, this.popis, required this.odkdy,required this.dokdy, this.domovskyAdresarPath});
 }

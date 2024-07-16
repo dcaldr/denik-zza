@@ -6,7 +6,7 @@ import 'package:denik_zza/screens/participants/participant_detail_page.dart';
 import 'package:flutter/material.dart';
 
 import '../../database/database_wrapper.dart';
-import '../../database/in_memory_structures_tmp/memory_action.dart';
+import '../../database/in_memory_structures_tmp/memory_akce.dart';
 import '../../database/in_memory_structures_tmp/memory_osoba.dart';
 
 /// Widget of class ActionDetail.

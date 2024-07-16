@@ -1,4 +1,4 @@
-import 'in_memory_structures_tmp/memory_action.dart';
+import 'in_memory_structures_tmp/memory_akce.dart';
 import 'in_memory_structures_tmp/memory_osoba.dart';
 import 'in_memory_structures_tmp/memory_zaznam.dart';
 /// interface between database and app

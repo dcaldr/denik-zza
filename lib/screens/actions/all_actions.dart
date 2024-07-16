@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../database/database_interface.dart';
 import '../../database/database_wrapper.dart';
-import '../../database/in_memory_structures_tmp/memory_action.dart';
+import '../../database/in_memory_structures_tmp/memory_akce.dart';
 
 
 
