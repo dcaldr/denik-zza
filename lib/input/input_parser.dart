@@ -216,11 +216,12 @@ class Answer {
           pohlavi: data[3].getOutput(),
           adresa: data[4].getOutput(),
           datumNarozeni: data[5].getOutput(),
-          telefonniCislo: data[6].getOutput(),
-          emailRodice: data[7].getOutput(),
-          zpusobilost: data[8].getOutput(),
-          zdravotniPojistovna: data[9].getOutput(),
-          poznamka: data[10].getOutput()
+          jmenoRodice: data[6].getOutput(),
+          telefonniCislo: data[7].getOutput(),
+          emailRodice: data[8].getOutput(),
+          zpusobilost: data[9].getOutput(),
+          zdravotniPojistovna: data[10].getOutput(),
+          poznamka: data[11].getOutput()
 
       );
       // if rč

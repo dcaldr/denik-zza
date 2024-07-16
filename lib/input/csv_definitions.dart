@@ -11,6 +11,7 @@ class CsvDefinitions{
   PohlaviHold(columnName: "pohlaví"),
   AdresaHold(columnName: "adresa"),
   DatumNarozeniHold(columnName: "datum narození"),
+    JmenoHold(columnName: 'jméno rodič'),
   TelefonHold(columnName: "telefon rodič"),
   EmailHold(columnName: "email rodič"),
   PotvrzeniHold(columnName: "způsobilost"),
