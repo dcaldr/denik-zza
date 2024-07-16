@@ -43,6 +43,7 @@ class DriftDatabaseConnector implements DatabaseInterface {
       nonInfectiousConfirmation: Value(osoba.bezinfekcnost!),
       insuranceCompanyFK: Value(await _driftDatabase.getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna)),
       zzaActionFK: Value((await _driftDatabase.getCurrentActionID())!),
+      // note: přidáno
       parentName: Value(osoba.jmenoRodice),
       parentEmail: Value(osoba.emailRodice),
       campUnit: Value(osoba.oddil),
@@ -65,7 +66,10 @@ class DriftDatabaseConnector implements DatabaseInterface {
       description: Value(zaznam.popis!),
       treatment: const Value(""),
       paramedicFK: Value(zaznam.idAuthor),
-      participantFK: Value(zaznam.idPacient)
+      participantFK: Value(zaznam.idPacient),
+        //note: přidáno
+        note: Value(zaznam.poznamka),
+        picturePath: Value(zaznam.obrazekPath)
     );
 
     _driftDatabase.addRecord(c);
@@ -83,7 +87,9 @@ class DriftDatabaseConnector implements DatabaseInterface {
       actionTitle: Value(action.nadpis),
       actionDescription: Value(action.popis),
       dateFrom: Value(action.odkdy),
-      dateTo: Value(action.dokdy)
+      dateTo: Value(action.dokdy),
+        //note: přidáno
+      homeDirectory: Value(action.domovskyAdresarPath),
     );
 
     _driftDatabase.addZzaAction(c);
@@ -148,14 +154,19 @@ class DriftDatabaseConnector implements DatabaseInterface {
         description = '${r.description}\n${r.treatment}';
       }
 
-      memoryRecords.add(MemoryZaznam.named(
+      memoryRecords.add(MemoryZaznam.fullNamed(
           idZaznamu: r.id,
           casZaznamu: r.dateAndTime,
           nazev: r.title,
           popis: description,
           isPrinted: r.wasPrinted,
           idAuthor: r.paramedicFK,
-          idPacient: r.participantFK
+          idPacient: r.participantFK,
+          poznamka: r.note,
+          teplota: r.temperature,
+          obrazekPath: r.picturePath
+
+
       ));
     }
 
@@ -196,12 +207,13 @@ class DriftDatabaseConnector implements DatabaseInterface {
     List<MemoryAction> memoryActions = [];
 
     for(ZzaAction a in actions) {
-      memoryActions.add(MemoryAction(
+      memoryActions.add(MemoryAction.fullNamed(
           idAkce: a.id,
           nadpis: a.actionTitle,
           popis: a.actionDescription,
           odkdy: a.dateFrom,
-          dokdy: a.dateTo
+          dokdy: a.dateTo,
+          domovskyAdresarPath: a.homeDirectory,
       ));
     }
 

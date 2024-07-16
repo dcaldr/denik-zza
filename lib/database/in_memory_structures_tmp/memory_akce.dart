@@ -11,4 +11,8 @@ class MemoryAction{
   DateTime dokdy;
   String? domovskyAdresarPath;
 MemoryAction({ required this.idAkce ,required this.nadpis, this.popis, required this.odkdy,required this.dokdy, this.domovskyAdresarPath});
+///Constructor for [MemoryAction] with all forced parameters
+  ///
+  /// good for converting between classes
+MemoryAction.fullNamed({required this.idAkce, required this.nadpis, required this.popis, required this.odkdy, required this.dokdy, required this.domovskyAdresarPath});
 }
