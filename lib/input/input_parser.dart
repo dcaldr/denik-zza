@@ -217,7 +217,7 @@ class Answer {
           adresa: data[4].getOutput(),
           datumNarozeni: data[5].getOutput(),
           jmenoRodice: data[6].getOutput(),
-          telefonniCislo: data[7].getOutput(),
+          telefonRodice: data[7].getOutput(),
           emailRodice: data[8].getOutput(),
           zpusobilost: data[9].getOutput(),
           zdravotniPojistovna: data[10].getOutput(),

@@ -11,7 +11,7 @@ class MemoryOsoba {
   String? cisloPojisteni;
   DateTime? datumNarozeni;
   String? jmenoRodice; //FIXME: zařadit do aplikace
-  String? telefonniCislo; // rodiče //TODO: rename telefoniCisloRodice
+  String? telefonRodice; // rodiče
   String? emailRodice; //FIXME: zařadit do aplikace
   bool? zpusobilost;
   bool? bezinfekcnost;
@@ -24,7 +24,7 @@ class MemoryOsoba {
 
  /// Constructs a [MemoryOsoba] instance with essential parameters.
   MemoryOsoba( this.jmeno,  this.prijmeni, this.datumNarozeni, this.adresa,
-      this.telefonniCislo, this.zdravotniPojistovna, this.cisloPojisteni, this.pohlavi,);
+      this.telefonRodice, this.zdravotniPojistovna, this.cisloPojisteni, this.pohlavi,);
 
       /// Constructs a basic [MemoryOsoba] instance with only name and surname.
   MemoryOsoba.basic(this.jmeno, this.prijmeni);
@@ -38,7 +38,7 @@ class MemoryOsoba {
     this.adresa,
     this.cisloPojisteni,
     this.datumNarozeni,
-    this.telefonniCislo,
+    this.telefonRodice,
     required this.zpusobilost,
     required this.bezinfekcnost,
     this.wasPrinted,
@@ -47,7 +47,7 @@ class MemoryOsoba {
 
   /// Constructs a [MemoryOsoba] instance with dummy data.
   MemoryOsoba.dummyData( this.jmeno,  this.prijmeni, this.datumNarozeni, this.adresa,
-      this.telefonniCislo, this.zdravotniPojistovna, this.cisloPojisteni, this.pohlavi,);
+      this.telefonRodice, this.zdravotniPojistovna, this.cisloPojisteni, this.pohlavi,);
 /// Constructs a [MemoryOsoba] instance in cooperation with csv parser
   MemoryOsoba.csvNamed({
   required this.jmeno,
@@ -57,7 +57,7 @@ class MemoryOsoba {
     this.adresa,
     this.datumNarozeni,
     this.jmenoRodice,
-    this.telefonniCislo,
+    this.telefonRodice,
     this.emailRodice,
     this.zpusobilost,
     this.zdravotniPojistovna,
