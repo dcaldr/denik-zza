@@ -29,15 +29,20 @@ class MemoryZaznam {
   MemoryZaznam.longer(this.nazev, this.popis, this.idPacient);
 
   /// Constructs a [MemoryZaznam] instance with named parameters.
-  MemoryZaznam.named({
+  ///
+  /// Forces to provide all parameters. good for converting between classes
+  MemoryZaznam.fullNamed({
     required this.idZaznamu,
     required this.casZaznamu,
     required this.nazev,
-    this.popis,
-    this.lecba,
+    required this.popis,
+     this.lecba, // will be removed
     required this.isPrinted,
     required this.idAuthor,
-    required this.idPacient
+    required this.idPacient,
+    required this.poznamka,
+    required this.teplota,
+    required this.obrazekPath,
   });
 
  /// Overrides the default toString() method to provide a formatted representation of the [MemoryZaznam] instance.
