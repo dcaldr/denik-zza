@@ -53,3 +53,9 @@ db.sqlite
 *generated_plugin_registrant*
 **/GeneratedPluginRegistrant**
 /**/Flutter/GeneratedPluginRegistrant.*
+
+# generated files - build builds
+# coverige for now
+build
+coverage
+lib/input/scratchpad.dart
