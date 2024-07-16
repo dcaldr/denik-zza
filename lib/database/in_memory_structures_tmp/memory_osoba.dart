@@ -55,6 +55,7 @@ class MemoryOsoba {
     this.pohlavi,
     this.adresa,
     this.datumNarozeni,
+    this.jmenoRodice,
     this.telefonniCislo,
     this.emailRodice,
     this.zpusobilost,
