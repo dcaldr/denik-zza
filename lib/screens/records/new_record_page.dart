@@ -147,7 +147,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                       String mTitle = titleController.text;
                       String mPopis = descriptionController.text;
                       if (mTitle.isNotEmpty || mPopis.isNotEmpty) {
-                        MemoryZaznam zaznamIn = MemoryZaznam.fullNamed(
+                        MemoryZaznam zaznamIn = MemoryZaznam.oldUI(
                           nazev: mTitle,
                           popis: mPopis,
                           idPacient: widget.osoba.id,

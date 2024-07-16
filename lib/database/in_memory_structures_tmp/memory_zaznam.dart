@@ -44,6 +44,19 @@ class MemoryZaznam {
     required this.teplota,
     required this.obrazekPath,
   });
+  /// QuickFix for old UI
+  ///
+  /// creates a [MemoryZaznam] instance with essential parameters. for one ui element
+  @Deprecated('just for one ui')
+  MemoryZaznam.oldUI({
+    required this.nazev,
+    required this.popis,
+    required this.idPacient,
+    required this.idZaznamu,
+    required this.casZaznamu,
+    required this.isPrinted,
+    required this.idAuthor,
+  });
 
  /// Overrides the default toString() method to provide a formatted representation of the [MemoryZaznam] instance.
   @override
