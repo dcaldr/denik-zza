@@ -45,7 +45,7 @@ void main(){
     });
   });
   group('Full csv parsing (my logic) ',(){
-    final file = File('test/data/first.csv');
+    //final file = File('test/data/first.csv');
     test('best case parse',()async{
       InputParser inputParser = InputParser();
       expect(inputParser, isNotNull);
@@ -53,22 +53,25 @@ void main(){
 
        await inputParser.getFile();
       List<List<String>>? testus = await inputParser.loadedData;
-       loggerNoStack.i(testus.toString());
+       //loggerNoStack.i(testus.toString());
       PersonResult? result = inputParser.result;
       //loggerNoStack.i(inputParser.loadedData.toString());
       expect(result, isNotNull);
-      MemoryOsoba? person = await result?.goodPersons[0];
+      MemoryOsoba? person = result?.goodPersons[0];
       expect(person, isNotNull);
       // here very literal check
       //print(person?.jmeno);
       expect(person?.jmeno, 'Jan');
       expect(person?.prijmeni, 'Hus');
       expect(person?.cisloPojisteni, '130610/2567');
-      expect(person?.datumNarozeni, DateTime(2013, 06, 10));
       expect(person?.pohlavi, 1);
+      expect(person?.datumNarozeni, DateTime(2013, 06, 10));
       expect(person?.jmenoRodice, 'Mr Rodič');
+      expect(person?.telefonniCislo, '123456');
       expect(person?.emailRodice,'hello@proble.com');
+      expect(person?.zpusobilost, true);
       expect(person?.zdravotniPojistovna, 'ozp');
+      expect(person?.poznamka, 'není');
 
 
      // loggerNoStack.i(result?.persons.toString());
