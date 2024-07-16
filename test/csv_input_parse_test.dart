@@ -67,7 +67,7 @@ void main(){
       expect(person?.pohlavi, 1);
       expect(person?.datumNarozeni, DateTime(2013, 06, 10));
       expect(person?.jmenoRodice, 'Mr Rodič');
-      expect(person?.telefonniCislo, '123456');
+      expect(person?.telefonRodice, '123456');
       expect(person?.emailRodice,'hello@proble.com');
       expect(person?.zpusobilost, true);
       expect(person?.zdravotniPojistovna, 'ozp');

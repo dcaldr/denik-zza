@@ -193,7 +193,7 @@ class PDFGenerator {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text('Adresa: ${osoba.adresa}'),
-                pw.Text('Telefonní číslo: ${osoba.telefonniCislo}'),
+                pw.Text('Telefonní číslo: ${osoba.telefonRodice}'),
               ],
             ),
           ],

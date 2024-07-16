@@ -302,7 +302,7 @@ class AddParticipantPageState extends State<AddParticipantPage> {
                         adresa: locationController.text,
                         cisloPojisteni: insuranceNumberController.text,
                         datumNarozeni: selectedBirthDate,
-                        telefonniCislo: phoneNumberController.text,
+                        telefonRodice: phoneNumberController.text,
                         zpusobilost: eligibleConfirmationController.text.toLowerCase() == 'true',
                         bezinfekcnost: nonInfectiousConfirmationController.text.toLowerCase() == 'true',
                         wasPrinted: false, // Implicit-outOfContext

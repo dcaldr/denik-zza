@@ -38,7 +38,7 @@ class DriftDatabaseConnector implements DatabaseInterface {
       address: Value(osoba.adresa),
       birthNumber: Value(osoba.cisloPojisteni),
       birthDate: Value(osoba.datumNarozeni),
-      parentPhoneNumber: Value(osoba.telefonniCislo),
+      parentPhoneNumber: Value(osoba.telefonRodice),
       eligibleConfirmation: Value(osoba.zpusobilost!),
       nonInfectiousConfirmation: Value(osoba.bezinfekcnost!),
       insuranceCompanyFK: Value(await _driftDatabase.getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna)),
@@ -104,7 +104,7 @@ class DriftDatabaseConnector implements DatabaseInterface {
       memoryParticipants.add(
         MemoryOsoba.named(id: p.id, jmeno: p.firstName, prijmeni: p.lastName,
         pohlavi: p.gender, adresa: p.address, cisloPojisteni: p.birthNumber,
-        datumNarozeni: p.birthDate, telefonniCislo: p.parentPhoneNumber,
+        datumNarozeni: p.birthDate, telefonRodice: p.parentPhoneNumber,
         zpusobilost: p.eligibleConfirmation, bezinfekcnost: p.nonInfectiousConfirmation,
         wasPrinted: p.wasPrinted, zdravotniPojistovna: insCompName)
       );
