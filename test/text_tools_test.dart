@@ -31,7 +31,7 @@ void main() {
       expect(TextTools.normText(' ĚŠČŘžýáíéÚŮĎŤ '),'escrzyaieuudt');
     });
   });
-  /// TODO: Need to move elsewhere
+  /// TODO: Need? to move elsewhere
   group('comparing statuses', (){
     ParseStatus ok = ParseStatus.ok;
     ParseStatus format = ParseStatus.format;
@@ -51,6 +51,15 @@ void main() {
     test('Implicit operators', (){
       expect(format == format, true);
       expect(format != bad, true);
+    });
+  });
+  group('Date Parsing',(){
+    test('basic IT style date parse',(){
+      expect( TextTools.myParseDate('2020-01-02'), DateTime(2020, 01, 02));
+    });
+    test('basic CZ style date parse',(){
+      expect( TextTools.myParseDate('10.06.2020'), DateTime(2020, 06, 10));
+      expect( TextTools.myParseDate('10/06/2020'), DateTime(2020, 06, 10));
     });
   });
   }
