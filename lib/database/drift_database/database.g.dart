@@ -231,9 +231,15 @@ class $ZzaActionsTable extends ZzaActions
   late final GeneratedColumn<DateTime> dateTo = GeneratedColumn<DateTime>(
       'date_to', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _homeDirectoryMeta =
+      const VerificationMeta('homeDirectory');
+  @override
+  late final GeneratedColumn<String> homeDirectory = GeneratedColumn<String>(
+      'home_directory', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, actionTitle, actionDescription, dateFrom, dateTo];
+      [id, actionTitle, actionDescription, dateFrom, dateTo, homeDirectory];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -273,6 +279,12 @@ class $ZzaActionsTable extends ZzaActions
     } else if (isInserting) {
       context.missing(_dateToMeta);
     }
+    if (data.containsKey('home_directory')) {
+      context.handle(
+          _homeDirectoryMeta,
+          homeDirectory.isAcceptableOrUnknown(
+              data['home_directory']!, _homeDirectoryMeta));
+    }
     return context;
   }
 
@@ -292,6 +304,8 @@ class $ZzaActionsTable extends ZzaActions
           .read(DriftSqlType.dateTime, data['${effectivePrefix}date_from'])!,
       dateTo: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}date_to'])!,
+      homeDirectory: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}home_directory']),
     );
   }
 
@@ -307,12 +321,14 @@ class ZzaAction extends DataClass implements Insertable<ZzaAction> {
   final String? actionDescription;
   final DateTime dateFrom;
   final DateTime dateTo;
+  final String? homeDirectory;
   const ZzaAction(
       {required this.id,
       required this.actionTitle,
       this.actionDescription,
       required this.dateFrom,
-      required this.dateTo});
+      required this.dateTo,
+      this.homeDirectory});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -323,6 +339,9 @@ class ZzaAction extends DataClass implements Insertable<ZzaAction> {
     }
     map['date_from'] = Variable<DateTime>(dateFrom);
     map['date_to'] = Variable<DateTime>(dateTo);
+    if (!nullToAbsent || homeDirectory != null) {
+      map['home_directory'] = Variable<String>(homeDirectory);
+    }
     return map;
   }
 
@@ -335,6 +354,9 @@ class ZzaAction extends DataClass implements Insertable<ZzaAction> {
           : Value(actionDescription),
       dateFrom: Value(dateFrom),
       dateTo: Value(dateTo),
+      homeDirectory: homeDirectory == null && nullToAbsent
+          ? const Value.absent()
+          : Value(homeDirectory),
     );
   }
 
@@ -348,6 +370,7 @@ class ZzaAction extends DataClass implements Insertable<ZzaAction> {
           serializer.fromJson<String?>(json['actionDescription']),
       dateFrom: serializer.fromJson<DateTime>(json['dateFrom']),
       dateTo: serializer.fromJson<DateTime>(json['dateTo']),
+      homeDirectory: serializer.fromJson<String?>(json['homeDirectory']),
     );
   }
   @override
@@ -359,6 +382,7 @@ class ZzaAction extends DataClass implements Insertable<ZzaAction> {
       'actionDescription': serializer.toJson<String?>(actionDescription),
       'dateFrom': serializer.toJson<DateTime>(dateFrom),
       'dateTo': serializer.toJson<DateTime>(dateTo),
+      'homeDirectory': serializer.toJson<String?>(homeDirectory),
     };
   }
 
@@ -367,7 +391,8 @@ class ZzaAction extends DataClass implements Insertable<ZzaAction> {
           String? actionTitle,
           Value<String?> actionDescription = const Value.absent(),
           DateTime? dateFrom,
-          DateTime? dateTo}) =>
+          DateTime? dateTo,
+          Value<String?> homeDirectory = const Value.absent()}) =>
       ZzaAction(
         id: id ?? this.id,
         actionTitle: actionTitle ?? this.actionTitle,
@@ -376,6 +401,8 @@ class ZzaAction extends DataClass implements Insertable<ZzaAction> {
             : this.actionDescription,
         dateFrom: dateFrom ?? this.dateFrom,
         dateTo: dateTo ?? this.dateTo,
+        homeDirectory:
+            homeDirectory.present ? homeDirectory.value : this.homeDirectory,
       );
   ZzaAction copyWithCompanion(ZzaActionsCompanion data) {
     return ZzaAction(
@@ -387,6 +414,9 @@ class ZzaAction extends DataClass implements Insertable<ZzaAction> {
           : this.actionDescription,
       dateFrom: data.dateFrom.present ? data.dateFrom.value : this.dateFrom,
       dateTo: data.dateTo.present ? data.dateTo.value : this.dateTo,
+      homeDirectory: data.homeDirectory.present
+          ? data.homeDirectory.value
+          : this.homeDirectory,
     );
   }
 
@@ -397,14 +427,15 @@ class ZzaAction extends DataClass implements Insertable<ZzaAction> {
           ..write('actionTitle: $actionTitle, ')
           ..write('actionDescription: $actionDescription, ')
           ..write('dateFrom: $dateFrom, ')
-          ..write('dateTo: $dateTo')
+          ..write('dateTo: $dateTo, ')
+          ..write('homeDirectory: $homeDirectory')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, actionTitle, actionDescription, dateFrom, dateTo);
+  int get hashCode => Object.hash(
+      id, actionTitle, actionDescription, dateFrom, dateTo, homeDirectory);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -413,7 +444,8 @@ class ZzaAction extends DataClass implements Insertable<ZzaAction> {
           other.actionTitle == this.actionTitle &&
           other.actionDescription == this.actionDescription &&
           other.dateFrom == this.dateFrom &&
-          other.dateTo == this.dateTo);
+          other.dateTo == this.dateTo &&
+          other.homeDirectory == this.homeDirectory);
 }
 
 class ZzaActionsCompanion extends UpdateCompanion<ZzaAction> {
@@ -422,12 +454,14 @@ class ZzaActionsCompanion extends UpdateCompanion<ZzaAction> {
   final Value<String?> actionDescription;
   final Value<DateTime> dateFrom;
   final Value<DateTime> dateTo;
+  final Value<String?> homeDirectory;
   const ZzaActionsCompanion({
     this.id = const Value.absent(),
     this.actionTitle = const Value.absent(),
     this.actionDescription = const Value.absent(),
     this.dateFrom = const Value.absent(),
     this.dateTo = const Value.absent(),
+    this.homeDirectory = const Value.absent(),
   });
   ZzaActionsCompanion.insert({
     this.id = const Value.absent(),
@@ -435,6 +469,7 @@ class ZzaActionsCompanion extends UpdateCompanion<ZzaAction> {
     this.actionDescription = const Value.absent(),
     required DateTime dateFrom,
     required DateTime dateTo,
+    this.homeDirectory = const Value.absent(),
   })  : actionTitle = Value(actionTitle),
         dateFrom = Value(dateFrom),
         dateTo = Value(dateTo);
@@ -444,6 +479,7 @@ class ZzaActionsCompanion extends UpdateCompanion<ZzaAction> {
     Expression<String>? actionDescription,
     Expression<DateTime>? dateFrom,
     Expression<DateTime>? dateTo,
+    Expression<String>? homeDirectory,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -451,6 +487,7 @@ class ZzaActionsCompanion extends UpdateCompanion<ZzaAction> {
       if (actionDescription != null) 'action_description': actionDescription,
       if (dateFrom != null) 'date_from': dateFrom,
       if (dateTo != null) 'date_to': dateTo,
+      if (homeDirectory != null) 'home_directory': homeDirectory,
     });
   }
 
@@ -459,13 +496,15 @@ class ZzaActionsCompanion extends UpdateCompanion<ZzaAction> {
       Value<String>? actionTitle,
       Value<String?>? actionDescription,
       Value<DateTime>? dateFrom,
-      Value<DateTime>? dateTo}) {
+      Value<DateTime>? dateTo,
+      Value<String?>? homeDirectory}) {
     return ZzaActionsCompanion(
       id: id ?? this.id,
       actionTitle: actionTitle ?? this.actionTitle,
       actionDescription: actionDescription ?? this.actionDescription,
       dateFrom: dateFrom ?? this.dateFrom,
       dateTo: dateTo ?? this.dateTo,
+      homeDirectory: homeDirectory ?? this.homeDirectory,
     );
   }
 
@@ -487,6 +526,9 @@ class ZzaActionsCompanion extends UpdateCompanion<ZzaAction> {
     if (dateTo.present) {
       map['date_to'] = Variable<DateTime>(dateTo.value);
     }
+    if (homeDirectory.present) {
+      map['home_directory'] = Variable<String>(homeDirectory.value);
+    }
     return map;
   }
 
@@ -497,7 +539,8 @@ class ZzaActionsCompanion extends UpdateCompanion<ZzaAction> {
           ..write('actionTitle: $actionTitle, ')
           ..write('actionDescription: $actionDescription, ')
           ..write('dateFrom: $dateFrom, ')
-          ..write('dateTo: $dateTo')
+          ..write('dateTo: $dateTo, ')
+          ..write('homeDirectory: $homeDirectory')
           ..write(')'))
         .toString();
   }
@@ -1915,6 +1958,23 @@ class $RecordsTable extends Records with TableInfo<$RecordsTable, Record> {
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("was_printed" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+      'note', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _temperatureMeta =
+      const VerificationMeta('temperature');
+  @override
+  late final GeneratedColumn<double> temperature = GeneratedColumn<double>(
+      'temperature', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _picturePathMeta =
+      const VerificationMeta('picturePath');
+  @override
+  late final GeneratedColumn<String> picturePath = GeneratedColumn<String>(
+      'picture_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _paramedicFKMeta =
       const VerificationMeta('paramedicFK');
   @override
@@ -1941,6 +2001,9 @@ class $RecordsTable extends Records with TableInfo<$RecordsTable, Record> {
         description,
         treatment,
         wasPrinted,
+        note,
+        temperature,
+        picturePath,
         paramedicFK,
         participantFK
       ];
@@ -1989,6 +2052,22 @@ class $RecordsTable extends Records with TableInfo<$RecordsTable, Record> {
           wasPrinted.isAcceptableOrUnknown(
               data['was_printed']!, _wasPrintedMeta));
     }
+    if (data.containsKey('note')) {
+      context.handle(
+          _noteMeta, note.isAcceptableOrUnknown(data['note']!, _noteMeta));
+    }
+    if (data.containsKey('temperature')) {
+      context.handle(
+          _temperatureMeta,
+          temperature.isAcceptableOrUnknown(
+              data['temperature']!, _temperatureMeta));
+    }
+    if (data.containsKey('picture_path')) {
+      context.handle(
+          _picturePathMeta,
+          picturePath.isAcceptableOrUnknown(
+              data['picture_path']!, _picturePathMeta));
+    }
     if (data.containsKey('paramedic_f_k')) {
       context.handle(
           _paramedicFKMeta,
@@ -2026,6 +2105,12 @@ class $RecordsTable extends Records with TableInfo<$RecordsTable, Record> {
           .read(DriftSqlType.string, data['${effectivePrefix}treatment']),
       wasPrinted: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}was_printed'])!,
+      note: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}note']),
+      temperature: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}temperature']),
+      picturePath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}picture_path']),
       paramedicFK: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}paramedic_f_k'])!,
       participantFK: attachedDatabase.typeMapping
@@ -2046,6 +2131,9 @@ class Record extends DataClass implements Insertable<Record> {
   final String description;
   final String? treatment;
   final bool wasPrinted;
+  final String? note;
+  final double? temperature;
+  final String? picturePath;
   final int paramedicFK;
   final int participantFK;
   const Record(
@@ -2055,6 +2143,9 @@ class Record extends DataClass implements Insertable<Record> {
       required this.description,
       this.treatment,
       required this.wasPrinted,
+      this.note,
+      this.temperature,
+      this.picturePath,
       required this.paramedicFK,
       required this.participantFK});
   @override
@@ -2068,6 +2159,15 @@ class Record extends DataClass implements Insertable<Record> {
       map['treatment'] = Variable<String>(treatment);
     }
     map['was_printed'] = Variable<bool>(wasPrinted);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    if (!nullToAbsent || temperature != null) {
+      map['temperature'] = Variable<double>(temperature);
+    }
+    if (!nullToAbsent || picturePath != null) {
+      map['picture_path'] = Variable<String>(picturePath);
+    }
     map['paramedic_f_k'] = Variable<int>(paramedicFK);
     map['participant_f_k'] = Variable<int>(participantFK);
     return map;
@@ -2083,6 +2183,13 @@ class Record extends DataClass implements Insertable<Record> {
           ? const Value.absent()
           : Value(treatment),
       wasPrinted: Value(wasPrinted),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      temperature: temperature == null && nullToAbsent
+          ? const Value.absent()
+          : Value(temperature),
+      picturePath: picturePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(picturePath),
       paramedicFK: Value(paramedicFK),
       participantFK: Value(participantFK),
     );
@@ -2098,6 +2205,9 @@ class Record extends DataClass implements Insertable<Record> {
       description: serializer.fromJson<String>(json['description']),
       treatment: serializer.fromJson<String?>(json['treatment']),
       wasPrinted: serializer.fromJson<bool>(json['wasPrinted']),
+      note: serializer.fromJson<String?>(json['note']),
+      temperature: serializer.fromJson<double?>(json['temperature']),
+      picturePath: serializer.fromJson<String?>(json['picturePath']),
       paramedicFK: serializer.fromJson<int>(json['paramedicFK']),
       participantFK: serializer.fromJson<int>(json['participantFK']),
     );
@@ -2112,6 +2222,9 @@ class Record extends DataClass implements Insertable<Record> {
       'description': serializer.toJson<String>(description),
       'treatment': serializer.toJson<String?>(treatment),
       'wasPrinted': serializer.toJson<bool>(wasPrinted),
+      'note': serializer.toJson<String?>(note),
+      'temperature': serializer.toJson<double?>(temperature),
+      'picturePath': serializer.toJson<String?>(picturePath),
       'paramedicFK': serializer.toJson<int>(paramedicFK),
       'participantFK': serializer.toJson<int>(participantFK),
     };
@@ -2124,6 +2237,9 @@ class Record extends DataClass implements Insertable<Record> {
           String? description,
           Value<String?> treatment = const Value.absent(),
           bool? wasPrinted,
+          Value<String?> note = const Value.absent(),
+          Value<double?> temperature = const Value.absent(),
+          Value<String?> picturePath = const Value.absent(),
           int? paramedicFK,
           int? participantFK}) =>
       Record(
@@ -2133,6 +2249,9 @@ class Record extends DataClass implements Insertable<Record> {
         description: description ?? this.description,
         treatment: treatment.present ? treatment.value : this.treatment,
         wasPrinted: wasPrinted ?? this.wasPrinted,
+        note: note.present ? note.value : this.note,
+        temperature: temperature.present ? temperature.value : this.temperature,
+        picturePath: picturePath.present ? picturePath.value : this.picturePath,
         paramedicFK: paramedicFK ?? this.paramedicFK,
         participantFK: participantFK ?? this.participantFK,
       );
@@ -2147,6 +2266,11 @@ class Record extends DataClass implements Insertable<Record> {
       treatment: data.treatment.present ? data.treatment.value : this.treatment,
       wasPrinted:
           data.wasPrinted.present ? data.wasPrinted.value : this.wasPrinted,
+      note: data.note.present ? data.note.value : this.note,
+      temperature:
+          data.temperature.present ? data.temperature.value : this.temperature,
+      picturePath:
+          data.picturePath.present ? data.picturePath.value : this.picturePath,
       paramedicFK:
           data.paramedicFK.present ? data.paramedicFK.value : this.paramedicFK,
       participantFK: data.participantFK.present
@@ -2164,6 +2288,9 @@ class Record extends DataClass implements Insertable<Record> {
           ..write('description: $description, ')
           ..write('treatment: $treatment, ')
           ..write('wasPrinted: $wasPrinted, ')
+          ..write('note: $note, ')
+          ..write('temperature: $temperature, ')
+          ..write('picturePath: $picturePath, ')
           ..write('paramedicFK: $paramedicFK, ')
           ..write('participantFK: $participantFK')
           ..write(')'))
@@ -2171,8 +2298,18 @@ class Record extends DataClass implements Insertable<Record> {
   }
 
   @override
-  int get hashCode => Object.hash(id, dateAndTime, title, description,
-      treatment, wasPrinted, paramedicFK, participantFK);
+  int get hashCode => Object.hash(
+      id,
+      dateAndTime,
+      title,
+      description,
+      treatment,
+      wasPrinted,
+      note,
+      temperature,
+      picturePath,
+      paramedicFK,
+      participantFK);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2183,6 +2320,9 @@ class Record extends DataClass implements Insertable<Record> {
           other.description == this.description &&
           other.treatment == this.treatment &&
           other.wasPrinted == this.wasPrinted &&
+          other.note == this.note &&
+          other.temperature == this.temperature &&
+          other.picturePath == this.picturePath &&
           other.paramedicFK == this.paramedicFK &&
           other.participantFK == this.participantFK);
 }
@@ -2194,6 +2334,9 @@ class RecordsCompanion extends UpdateCompanion<Record> {
   final Value<String> description;
   final Value<String?> treatment;
   final Value<bool> wasPrinted;
+  final Value<String?> note;
+  final Value<double?> temperature;
+  final Value<String?> picturePath;
   final Value<int> paramedicFK;
   final Value<int> participantFK;
   const RecordsCompanion({
@@ -2203,6 +2346,9 @@ class RecordsCompanion extends UpdateCompanion<Record> {
     this.description = const Value.absent(),
     this.treatment = const Value.absent(),
     this.wasPrinted = const Value.absent(),
+    this.note = const Value.absent(),
+    this.temperature = const Value.absent(),
+    this.picturePath = const Value.absent(),
     this.paramedicFK = const Value.absent(),
     this.participantFK = const Value.absent(),
   });
@@ -2213,6 +2359,9 @@ class RecordsCompanion extends UpdateCompanion<Record> {
     required String description,
     this.treatment = const Value.absent(),
     this.wasPrinted = const Value.absent(),
+    this.note = const Value.absent(),
+    this.temperature = const Value.absent(),
+    this.picturePath = const Value.absent(),
     required int paramedicFK,
     required int participantFK,
   })  : dateAndTime = Value(dateAndTime),
@@ -2227,6 +2376,9 @@ class RecordsCompanion extends UpdateCompanion<Record> {
     Expression<String>? description,
     Expression<String>? treatment,
     Expression<bool>? wasPrinted,
+    Expression<String>? note,
+    Expression<double>? temperature,
+    Expression<String>? picturePath,
     Expression<int>? paramedicFK,
     Expression<int>? participantFK,
   }) {
@@ -2237,6 +2389,9 @@ class RecordsCompanion extends UpdateCompanion<Record> {
       if (description != null) 'description': description,
       if (treatment != null) 'treatment': treatment,
       if (wasPrinted != null) 'was_printed': wasPrinted,
+      if (note != null) 'note': note,
+      if (temperature != null) 'temperature': temperature,
+      if (picturePath != null) 'picture_path': picturePath,
       if (paramedicFK != null) 'paramedic_f_k': paramedicFK,
       if (participantFK != null) 'participant_f_k': participantFK,
     });
@@ -2249,6 +2404,9 @@ class RecordsCompanion extends UpdateCompanion<Record> {
       Value<String>? description,
       Value<String?>? treatment,
       Value<bool>? wasPrinted,
+      Value<String?>? note,
+      Value<double?>? temperature,
+      Value<String?>? picturePath,
       Value<int>? paramedicFK,
       Value<int>? participantFK}) {
     return RecordsCompanion(
@@ -2258,6 +2416,9 @@ class RecordsCompanion extends UpdateCompanion<Record> {
       description: description ?? this.description,
       treatment: treatment ?? this.treatment,
       wasPrinted: wasPrinted ?? this.wasPrinted,
+      note: note ?? this.note,
+      temperature: temperature ?? this.temperature,
+      picturePath: picturePath ?? this.picturePath,
       paramedicFK: paramedicFK ?? this.paramedicFK,
       participantFK: participantFK ?? this.participantFK,
     );
@@ -2284,6 +2445,15 @@ class RecordsCompanion extends UpdateCompanion<Record> {
     if (wasPrinted.present) {
       map['was_printed'] = Variable<bool>(wasPrinted.value);
     }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (temperature.present) {
+      map['temperature'] = Variable<double>(temperature.value);
+    }
+    if (picturePath.present) {
+      map['picture_path'] = Variable<String>(picturePath.value);
+    }
     if (paramedicFK.present) {
       map['paramedic_f_k'] = Variable<int>(paramedicFK.value);
     }
@@ -2302,6 +2472,9 @@ class RecordsCompanion extends UpdateCompanion<Record> {
           ..write('description: $description, ')
           ..write('treatment: $treatment, ')
           ..write('wasPrinted: $wasPrinted, ')
+          ..write('note: $note, ')
+          ..write('temperature: $temperature, ')
+          ..write('picturePath: $picturePath, ')
           ..write('paramedicFK: $paramedicFK, ')
           ..write('participantFK: $participantFK')
           ..write(')'))
@@ -3262,6 +3435,7 @@ typedef $$ZzaActionsTableCreateCompanionBuilder = ZzaActionsCompanion Function({
   Value<String?> actionDescription,
   required DateTime dateFrom,
   required DateTime dateTo,
+  Value<String?> homeDirectory,
 });
 typedef $$ZzaActionsTableUpdateCompanionBuilder = ZzaActionsCompanion Function({
   Value<int> id,
@@ -3269,6 +3443,7 @@ typedef $$ZzaActionsTableUpdateCompanionBuilder = ZzaActionsCompanion Function({
   Value<String?> actionDescription,
   Value<DateTime> dateFrom,
   Value<DateTime> dateTo,
+  Value<String?> homeDirectory,
 });
 
 class $$ZzaActionsTableTableManager extends RootTableManager<
@@ -3293,6 +3468,7 @@ class $$ZzaActionsTableTableManager extends RootTableManager<
             Value<String?> actionDescription = const Value.absent(),
             Value<DateTime> dateFrom = const Value.absent(),
             Value<DateTime> dateTo = const Value.absent(),
+            Value<String?> homeDirectory = const Value.absent(),
           }) =>
               ZzaActionsCompanion(
             id: id,
@@ -3300,6 +3476,7 @@ class $$ZzaActionsTableTableManager extends RootTableManager<
             actionDescription: actionDescription,
             dateFrom: dateFrom,
             dateTo: dateTo,
+            homeDirectory: homeDirectory,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -3307,6 +3484,7 @@ class $$ZzaActionsTableTableManager extends RootTableManager<
             Value<String?> actionDescription = const Value.absent(),
             required DateTime dateFrom,
             required DateTime dateTo,
+            Value<String?> homeDirectory = const Value.absent(),
           }) =>
               ZzaActionsCompanion.insert(
             id: id,
@@ -3314,6 +3492,7 @@ class $$ZzaActionsTableTableManager extends RootTableManager<
             actionDescription: actionDescription,
             dateFrom: dateFrom,
             dateTo: dateTo,
+            homeDirectory: homeDirectory,
           ),
         ));
 }
@@ -3343,6 +3522,11 @@ class $$ZzaActionsTableFilterComposer
 
   ColumnFilters<DateTime> get dateTo => $state.composableBuilder(
       column: $state.table.dateTo,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get homeDirectory => $state.composableBuilder(
+      column: $state.table.homeDirectory,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
@@ -3385,6 +3569,11 @@ class $$ZzaActionsTableOrderingComposer
 
   ColumnOrderings<DateTime> get dateTo => $state.composableBuilder(
       column: $state.table.dateTo,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get homeDirectory => $state.composableBuilder(
+      column: $state.table.homeDirectory,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 }
@@ -3990,6 +4179,9 @@ typedef $$RecordsTableCreateCompanionBuilder = RecordsCompanion Function({
   required String description,
   Value<String?> treatment,
   Value<bool> wasPrinted,
+  Value<String?> note,
+  Value<double?> temperature,
+  Value<String?> picturePath,
   required int paramedicFK,
   required int participantFK,
 });
@@ -4000,6 +4192,9 @@ typedef $$RecordsTableUpdateCompanionBuilder = RecordsCompanion Function({
   Value<String> description,
   Value<String?> treatment,
   Value<bool> wasPrinted,
+  Value<String?> note,
+  Value<double?> temperature,
+  Value<String?> picturePath,
   Value<int> paramedicFK,
   Value<int> participantFK,
 });
@@ -4027,6 +4222,9 @@ class $$RecordsTableTableManager extends RootTableManager<
             Value<String> description = const Value.absent(),
             Value<String?> treatment = const Value.absent(),
             Value<bool> wasPrinted = const Value.absent(),
+            Value<String?> note = const Value.absent(),
+            Value<double?> temperature = const Value.absent(),
+            Value<String?> picturePath = const Value.absent(),
             Value<int> paramedicFK = const Value.absent(),
             Value<int> participantFK = const Value.absent(),
           }) =>
@@ -4037,6 +4235,9 @@ class $$RecordsTableTableManager extends RootTableManager<
             description: description,
             treatment: treatment,
             wasPrinted: wasPrinted,
+            note: note,
+            temperature: temperature,
+            picturePath: picturePath,
             paramedicFK: paramedicFK,
             participantFK: participantFK,
           ),
@@ -4047,6 +4248,9 @@ class $$RecordsTableTableManager extends RootTableManager<
             required String description,
             Value<String?> treatment = const Value.absent(),
             Value<bool> wasPrinted = const Value.absent(),
+            Value<String?> note = const Value.absent(),
+            Value<double?> temperature = const Value.absent(),
+            Value<String?> picturePath = const Value.absent(),
             required int paramedicFK,
             required int participantFK,
           }) =>
@@ -4057,6 +4261,9 @@ class $$RecordsTableTableManager extends RootTableManager<
             description: description,
             treatment: treatment,
             wasPrinted: wasPrinted,
+            note: note,
+            temperature: temperature,
+            picturePath: picturePath,
             paramedicFK: paramedicFK,
             participantFK: participantFK,
           ),
@@ -4093,6 +4300,21 @@ class $$RecordsTableFilterComposer
 
   ColumnFilters<bool> get wasPrinted => $state.composableBuilder(
       column: $state.table.wasPrinted,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get note => $state.composableBuilder(
+      column: $state.table.note,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<double> get temperature => $state.composableBuilder(
+      column: $state.table.temperature,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get picturePath => $state.composableBuilder(
+      column: $state.table.picturePath,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
@@ -4151,6 +4373,21 @@ class $$RecordsTableOrderingComposer
 
   ColumnOrderings<bool> get wasPrinted => $state.composableBuilder(
       column: $state.table.wasPrinted,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get note => $state.composableBuilder(
+      column: $state.table.note,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<double> get temperature => $state.composableBuilder(
+      column: $state.table.temperature,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get picturePath => $state.composableBuilder(
+      column: $state.table.picturePath,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
