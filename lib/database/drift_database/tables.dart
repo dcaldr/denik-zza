@@ -1,5 +1,4 @@
 import 'package:drift/drift.dart';
-
 // Represents a table for storing information about insurance companies.
 class InsuranceCompanies extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -13,6 +12,8 @@ class ZzaActions extends Table {
   TextColumn get actionDescription => text().withLength(min: 0, max: 1024).nullable()();
   DateTimeColumn get dateFrom => dateTime()();
   DateTimeColumn get dateTo => dateTime()();
+  //note: přidáno
+TextColumn get homeDirectory => text().nullable()();
 }
 
 // Represents a table for storing information about participants.
@@ -28,7 +29,7 @@ class Participants extends Table {
   BoolColumn get eligibleConfirmation => boolean().withDefault(const Constant(false))();
   BoolColumn get nonInfectiousConfirmation => boolean().withDefault(const Constant(false))();
   BoolColumn get wasPrinted => boolean().withDefault(const Constant(false))();
-  //dovolil jsem si přidat
+  //note: dovolil jsem si přidat
   TextColumn get parentName => text().withLength(min: 0, max: 64).nullable()();
   TextColumn get parentEmail => text().withLength(min: 0, max: 64).nullable()();
   TextColumn get campUnit => text().withLength(min: 0, max: 64).nullable()(); // taborovy oddil //FIXME: asi zmizne
@@ -60,6 +61,10 @@ class Records extends Table {
   TextColumn get description => text().withLength(min: 0, max: 512)();
   TextColumn get treatment => text().withLength(min: 0, max: 512).nullable()();
   BoolColumn get wasPrinted => boolean().withDefault(const Constant(false))();
+  //note: přidáno
+  TextColumn get note => text().nullable()();
+  RealColumn get temperature => real().nullable()();
+  TextColumn get picturePath => text().nullable()();
 
   // Foreign keys
   IntColumn get paramedicFK => integer().references(Paramedics, #id)();
