@@ -1,3 +1,4 @@
+import 'package:denik_zza/input/file_manager.dart';
 import 'package:drift/drift.dart';
 
 import 'dart:io';
@@ -6,6 +7,7 @@ import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
+import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
 
 import 'tables.dart';
 
@@ -15,8 +17,9 @@ part 'database.g.dart';
 /// It extends from the generated [_$AppDatabase] class.
 @DriftDatabase(tables: [InsuranceCompanies, ZzaActions, Participants,
   Paramedics, Records, AllergiesLimitations, Medications, Cache])
+  String? dbLocation = FileManager.getDbFilePathSync();
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+  AppDatabase() : super(_openConnection(  dbLocation/* attach getDb location here*/));
 
   @override
   int get schemaVersion => 1;
@@ -193,9 +196,14 @@ class AppDatabase extends _$AppDatabase {
 
 /// Establish connection to sqlite database
 /// TODO later change where sqlite file is created
-LazyDatabase _openConnection() {
+///
+///
+
+
+LazyDatabase _openConnection([String? path]) {
   // the LazyDatabase util lets us find the right location for the file async.
   return LazyDatabase(() async {
+
     // put the database file, called db.sqlite here, into the documents folder
     // for your app.
 
@@ -204,6 +212,11 @@ LazyDatabase _openConnection() {
     final tmpDbFolder = Directory('.');
     final file = File(p.join(tmpDbFolder.path, 'db.sqlite'));
 
+    final dbFile = path != null ? File(path) : file;
+    if (Platform.isAndroid) {
+      await applyWorkaroundToOpenSqlite3OnOldAndroidVersions();
+    }
+
     // Make sqlite3 pick a more suitable location for temporary files - the
     // one from the system may be inaccessible due to sandboxing.
     final cachebase = (await getTemporaryDirectory()).path;
@@ -211,6 +224,6 @@ LazyDatabase _openConnection() {
     // Explicitly tell it about the correct temporary directory.
     sqlite3.tempDirectory = cachebase;
 
-    return NativeDatabase.createInBackground(file);
+    return NativeDatabase.createInBackground(dbFile);
   });
 }
