@@ -3,6 +3,10 @@
 #!/lib/print_ops/mainPDF.dart
 db.sqlite
 /test/rodne_cislo_hidden_test.dart
+lib/input/scratchpad.dart
+# generated files - build_runner
+# *.g.dart
+*.freezed.dart
 
 # Miscellaneous
 *.class
@@ -113,8 +117,6 @@ app.*.map.json
 # coverige for now
 build
 coverage
-lib/input/scratchpad.dart
 
-# generated files - build_runner
-*.g.dart
-*.freezed.dart
+
+
