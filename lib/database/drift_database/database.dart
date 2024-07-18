@@ -13,13 +13,13 @@ import 'tables.dart';
 
 part 'database.g.dart';
 
+FileManager fileManager = FileManager();
+String? dbLocation = fileManager.getDbFilePathSync();
+
 /// The main [AppDatabase] class representing the Drift database for the Zza app.
 /// It extends from the generated [_$AppDatabase] class.
-@DriftDatabase(tables: [InsuranceCompanies, ZzaActions, Participants,
-  Paramedics, Records, AllergiesLimitations, Medications, Cache])
-  String? dbLocation = FileManager.getDbFilePathSync();
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection(  dbLocation/* attach getDb location here*/));
+  AppDatabase() : super(_openConnection(dbLocation /* attach getDb location here*/));
 
   @override
   int get schemaVersion => 1;

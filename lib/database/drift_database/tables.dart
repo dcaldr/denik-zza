@@ -23,7 +23,7 @@ class Participants extends Table {
   TextColumn get lastName => text().withLength(min: 0, max: 64)();
   IntColumn get gender => integer().nullable().nullable()();
   TextColumn get address => text().withLength(min: 0, max: 128).nullable()();
-  TextColumn get birthNumber => text().withLength(min: 0, max: 11).nullable()(); //Rodne cislo
+  TextColumn get birthNumber => text().withLength(min: 0, max: 15).nullable()(); //Rodne cislo, preventivně zvýšeno
   DateTimeColumn get birthDate => dateTime().nullable()();
   TextColumn get parentPhoneNumber => text().withLength(min: 0, max: 13).nullable()();
   BoolColumn get eligibleConfirmation => boolean().withDefault(const Constant(false))();
