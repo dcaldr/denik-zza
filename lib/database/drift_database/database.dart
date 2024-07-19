@@ -13,13 +13,12 @@ import 'tables.dart';
 
 part 'database.g.dart';
 
-FileManager fileManager = FileManager();
-String? dbLocation = fileManager.getDbFilePathSync();
+
 
 /// The main [AppDatabase] class representing the Drift database for the Zza app.
 /// It extends from the generated [_$AppDatabase] class.
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection(dbLocation /* attach getDb location here*/));
+  AppDatabase() : super(_openConnection(/* attach getDb location here*/));
 
   @override
   int get schemaVersion => 1;
@@ -195,10 +194,9 @@ class AppDatabase extends _$AppDatabase {
 
 
 /// Establish connection to sqlite database
-/// TODO later change where sqlite file is created
 ///
 ///
-
+///
 
 LazyDatabase _openConnection([String? path]) {
   // the LazyDatabase util lets us find the right location for the file async.

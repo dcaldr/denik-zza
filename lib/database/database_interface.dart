@@ -94,6 +94,13 @@ Future<int?> getCurrentEventID();
   ///  if none present empty list will be returned
 Future<List<MemoryAction>> getAllZzaActions();
 
+//note: přidáno
+
+/// Returns a [Future] that resolves to a [MemoryAction], which represents the current event.
+  ///
+  /// If no current event is found, the method returns `null`.
+  Future<MemoryAction?> getCurrentAction();
+
 /// Adds new [MemoryAction] event to database
 ///
 ///  returns true if successful

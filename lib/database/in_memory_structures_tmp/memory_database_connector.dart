@@ -167,4 +167,10 @@ Future<int?> getCurrentEventID() {
     // TODO: implement setRecordPrintedValue
     throw UnimplementedError();
   }
+
+  @override
+  Future<MemoryAction?> getCurrentAction() {
+    // TODO: implement getCurrentAction
+    throw UnimplementedError();
+  }
 }

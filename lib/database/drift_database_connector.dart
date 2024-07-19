@@ -256,4 +256,22 @@ class DriftDatabaseConnector implements DatabaseInterface {
     // TODO: implement quickPrintZaznamyOsoby
     throw UnimplementedError();
   }
+//note: přidáno -- TODO: rewrite to db side of the code (ie return finished MemoryAction)
+  @override
+  Future<MemoryAction?> getCurrentAction() async {
+  final currentActionId = await _driftDatabase.getCurrentActionID();
+  if (currentActionId == null) {
+    return null;
+  }
+  final zzaAction = await _driftDatabase.getZzaActionByID(currentActionId);
+  if (zzaAction == null) return null;
+  return MemoryAction.fullNamed(
+    idAkce: zzaAction.id,
+    nadpis: zzaAction.actionTitle,
+    popis: zzaAction.actionDescription,
+    odkdy: zzaAction.dateFrom,
+    dokdy: zzaAction.dateTo,
+    domovskyAdresarPath: zzaAction.homeDirectory,
+  );
+}
 }

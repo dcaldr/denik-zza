@@ -9,9 +9,6 @@ import 'in_memory_structures_tmp/memory_database_connector.dart';
 ///  **Always use as ```dart
 ///   DatabaseInterface dbInterface = DatabaseWrapper().getDatabase();
 ///   ``` **
-///   or ```dart
-///   DatabaseInterface dbInterface = getDatabase();
-///   ```
 /// Right now, it's singleton by historical reasons.
 /// new databases should be easier to implement.
 class DatabaseWrapper  {
