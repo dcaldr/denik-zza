@@ -13,7 +13,7 @@ class MemoryLek{
    bool wasPrinted = false;
 
 
-   MemoryLek(this.id, this.nazev, this.popisDavkovani, this.bereSam, this.kdy, this.poznamkaLek, this.wasPrinted);
+   MemoryLek(this.id, this.nazev, this.popisDavkovani, this.bereSam, this.kdy, [this.poznamkaLek, this.wasPrinted = false]);
 }
 
 
