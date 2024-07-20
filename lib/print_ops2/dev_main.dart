@@ -135,7 +135,7 @@ class PdfPreviewScreen extends StatelessWidget {
       body: PdfPreview(
         build: (format) async {
           final template = GeneratePdfTemplate();
-          final pdf = await template.getPdfWidget( historicalFigure,omezeniList: omezeniList,lekList: lekList, zaznamList: historicalRecords);
+          final pdf = await template.getPdfWidget( osoba:  historicalFigure,omezeniList: omezeniList,lekList: lekList, zaznamList: historicalRecords);
           return pdf.save();
         },
         initialPageFormat: PdfPageFormat.a4,
