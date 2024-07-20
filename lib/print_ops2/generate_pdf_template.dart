@@ -10,37 +10,57 @@ import '../database/in_memory_structures_tmp/memory_lek.dart';
 import '../database/in_memory_structures_tmp/memory_omezeni.dart';
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
 import '../database/in_memory_structures_tmp/memory_zaznam.dart';
-/// Generates a pdf template for the given person
+/// Generates a pdf template for the given person WARNING: still missing hiding logic
 ///
 /// The template consists of a header, restrictions, and records.
-/// The class deosn't check if the provided inputs match each other,
+/// The class doesn't check if the provided inputs match each other,
 /// it is the responsibility of the caller to provide the correct data.
 class GeneratePdfTemplate {
   late pw.Widget header;
   static const headerPrimaryColor = PdfColor(0, 0, 0);
   static const hiddenColor = PdfColor(0, 0, 0, 0);
 
-  MemoryOsoba? osoba;
-  List<Omezeni>? omezeniList;
-  List<MemoryLek>? lekList;
-  List<MemoryZaznam>? zaznamList;
+  MemoryOsoba? _osoba;
+  List<Omezeni>? _omezeniList;
+  List<MemoryLek>? _lekList;
+  List<MemoryZaznam>? _zaznamList;
   /// status for the restrictions
   OkCodes _omezeniStatus =OkCodes.unset;
   /// status for the medications
   OkCodes _lekStatus = OkCodes.unset;
   /// status for both restrictions and medications
   OkCodes _allRestrictionsStatus = OkCodes.unset;
-
+/// status for the records
   OkCodes _recordStatus = OkCodes.unset;
+
+  set osoba (MemoryOsoba? inOsoba){
+    if(inOsoba != _osoba){
+      _omezeniStatus = OkCodes.unset;
+      _lekStatus = OkCodes.unset;
+      _allRestrictionsStatus = OkCodes.unset;
+      _recordStatus = OkCodes.unset;
+    }
+    this.osoba = _osoba;
+  }
+  set omezeniList (List<Omezeni>? inOmezeniList){
+      _omezeniStatus = OkCodes.unset;
+      _allRestrictionsStatus = OkCodes.unset;
+    omezeniList = _omezeniList;
+  }
+  set lekList (List<MemoryLek>? inLekList){
+      _lekStatus = OkCodes.unset;
+      _allRestrictionsStatus = OkCodes.unset;
+    lekList = _lekList;
+  }
 
   GeneratePdfTemplate();
 
   GeneratePdfTemplate.named({
-    required this.osoba,
-    this.omezeniList,
-    this.lekList,
-    this.zaznamList,
-  });
+    required MemoryOsoba? osoba,
+    List<Omezeni>? omezeniList,
+    List<MemoryLek>? lekList,
+    List<MemoryZaznam>? zaznamList,
+  }) : _zaznamList = zaznamList, _lekList = lekList, _omezeniList = omezeniList, _osoba = osoba;
 
   /// tests if appending is possible or needs to be completely recreated
   ///
@@ -49,7 +69,7 @@ class GeneratePdfTemplate {
   /// Header T -> Restrictions(all) F -> Records F - ok
   /// Header T -> Restrictions(some) F -> Records T - not ok
   bool canAppend(){
-   if (osoba == null || !(osoba?.wasPrinted ?? false)) {
+   if (_osoba == null || !(_osoba?.wasPrinted ?? false)) {
   return false;
 }
    // here osoba(header) always printed
@@ -80,8 +100,8 @@ class GeneratePdfTemplate {
     //   return;
     // }
     if (_omezeniStatus == OkCodes.unset) {
-      bool start = omezeniList!.first.wasPrinted;
-      for (var item in omezeniList!) {
+      bool start = _omezeniList!.first.wasPrinted;
+      for (var item in _omezeniList!) {
         // if start changes value return broken
         if(start != item.wasPrinted){
           _omezeniStatus = OkCodes.broken;
@@ -91,8 +111,8 @@ class GeneratePdfTemplate {
        _omezeniStatus = start ? OkCodes.printed : OkCodes.unprinted;
     }
     if (_lekStatus == OkCodes.unset) {
-      bool start = lekList!.first.wasPrinted;
-      for (var item in lekList!) {
+      bool start = _lekList!.first.wasPrinted;
+      for (var item in _lekList!) {
         // if start changes value return broken
         if(start != item.wasPrinted){
           _lekStatus = OkCodes.broken;
@@ -114,17 +134,17 @@ class GeneratePdfTemplate {
     if(_recordStatus != OkCodes.unset){
       return;
     }
-    if(zaznamList == null){
+    if(_zaznamList == null){
       _recordStatus = OkCodes.unprinted;
       return;
     }
 
     // if in testing mode check and Logger warn if not ordered
  assert(() {
-  var cmpList = List<MemoryZaznam>.from(zaznamList!);
-  zaznamList!.sort((a, b) => a.casZaznamu!.compareTo(b.casZaznamu!));
+  var cmpList = List<MemoryZaznam>.from(_zaznamList!);
+  _zaznamList!.sort((a, b) => a.casZaznamu!.compareTo(b.casZaznamu!));
   for (int i = 0; i < cmpList.length; i++) {
-    if (cmpList[i] != zaznamList![i]) {
+    if (cmpList[i] != _zaznamList![i]) {
       Logger().w("Records are not ordered by time, where expected in GeneratePdfTemplate");
       return true;
     }
@@ -134,16 +154,16 @@ class GeneratePdfTemplate {
 
 
     /// order by time of the record (oldest first)
-    zaznamList!.sort((a, b) => a.casZaznamu!.compareTo(b.casZaznamu!));
+    _zaznamList!.sort((a, b) => a.casZaznamu!.compareTo(b.casZaznamu!));
 
 
 
 
 
     /// after finding first true all the rest should be true or its broken
-    bool start = zaznamList!.first.isPrinted;
-    bool prevItem = zaznamList!.first.isPrinted;
-    for (var item in zaznamList!) {
+    bool start = _zaznamList!.first.isPrinted;
+    bool prevItem = _zaznamList!.first.isPrinted;
+    for (var item in _zaznamList!) {
       // if isPrinted after some that wasn't printed
       if(item.isPrinted && !prevItem){
         _recordStatus = OkCodes.broken;
