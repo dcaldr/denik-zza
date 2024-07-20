@@ -1,7 +1,5 @@
-
 import 'package:denik_zza/print_ops2/generate_pdf_template.dart';
 import 'package:pdf/widgets.dart' as pw;
-
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
 
 class PrintPdfHeader implements PdfSection {
@@ -11,10 +9,10 @@ class PrintPdfHeader implements PdfSection {
       child: pw.Padding(
         padding: const pw.EdgeInsets.all(5.0),
         child: pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
-            _buildLeftColumn(inOsoba),
-            _buildRightColumn(inOsoba),
+            pw.Expanded(flex: 1, child: _buildLeftColumn(inOsoba)),
+            pw.SizedBox(width: 10),
+            pw.Expanded(flex: 1, child: _buildRightColumn(inOsoba)),
           ],
         ),
       ),
@@ -38,7 +36,7 @@ class PrintPdfHeader implements PdfSection {
           text: pw.TextSpan(
             text: 'Jméno: ',
             style: pw.TextStyle(fontWeight: pw.FontWeight.normal),
-            children: <pw.TextSpan>[
+            children: [
               pw.TextSpan(
                 text: '${osoba?.jmeno ?? ''} ${osoba?.prijmeni ?? ''}',
                 style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
@@ -54,8 +52,6 @@ class PrintPdfHeader implements PdfSection {
         ),
         pw.Text(
           'Adresa: ${osoba?.adresa ?? ''}',
-          maxLines: 2,
-          overflow: pw.TextOverflow.clip,
         ),
       ],
     );
@@ -65,12 +61,10 @@ class PrintPdfHeader implements PdfSection {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Text('Rodič: ${osoba?.jmenoRodice ?? ''}'),
-        pw.Text('Tel. rodič: ${osoba?.telefonRodice ?? ''}'),
+        pw.Text('Rodič: ${osoba?.jmenoRodice ?? ''}', maxLines: 2, overflow: pw.TextOverflow.clip),
+        pw.Text('Tel. rodič: ${osoba?.telefonRodice ?? ''}', maxLines: 2, overflow: pw.TextOverflow.clip),
         pw.Text(
           'Email rodič: ${osoba?.emailRodice ?? ''}',
-          maxLines: 2,
-          overflow: pw.TextOverflow.clip,
         ),
       ],
     );
@@ -87,7 +81,6 @@ class PrintPdfHeader implements PdfSection {
 
   @override
   pw.Widget buildSection(bool append) {
-    // TODO: implement buildSection
     throw UnimplementedError();
   }
 }

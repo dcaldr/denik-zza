@@ -36,8 +36,9 @@ class GeneratePdfTemplate {
           return pw.Column(
             children: [
               header,
-              pw.SizedBox(height: 20),
+              pw.SizedBox(height: 5),
               if (restrictions != null) restrictions,
+              if (restrictions != null) pw.SizedBox(height: 5),
               if (zaznamList != null) PrintPdfRecords().buildRecordsList(zaznamList),
             ],
           );
