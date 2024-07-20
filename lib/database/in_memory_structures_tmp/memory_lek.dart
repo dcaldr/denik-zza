@@ -10,9 +10,10 @@ class MemoryLek{
    bool bereSam = false; // v UI by šlo přidat ještě všechny léky bere sám zaškrtnutí
    /// for future -- schedule tables, notification etc.
    DavkaKdy? kdy;
+   bool wasPrinted = false;
 
 
-   MemoryLek(this.id, this.nazev, this.popisDavkovani, this.bereSam, this.kdy);
+   MemoryLek(this.id, this.nazev, this.popisDavkovani, this.bereSam, this.kdy, this.poznamkaLek, this.wasPrinted);
 }
 
 
