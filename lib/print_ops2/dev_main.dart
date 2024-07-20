@@ -5,7 +5,7 @@ import '../database/in_memory_structures_tmp/memory_omezeni.dart';
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:printing/printing.dart';
 import '../database/in_memory_structures_tmp/memory_zaznam.dart';
-import 'print_template.dart';
+import 'generate_pdf_template.dart';
 
 MemoryOsoba historicalFigure = MemoryOsoba.fullNamed(
   id: 1,
