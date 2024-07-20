@@ -3,26 +3,30 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../database/in_memory_structures_tmp/memory_zaznam.dart';
 
-
 class PrintPdfRecords implements PdfSection {
   final List<MemoryZaznam>? records;
 
   PrintPdfRecords({this.records});
 
   pw.Widget buildRecordsList(List<MemoryZaznam>? zaznamList) {
-    return pw.Container(
-      decoration: pw.BoxDecoration(
-        border: pw.Border.all(
-          width: 2.0,
-          color: GeneratePdfTemplate.headerPrimaryColor,
+    if (zaznamList == null || zaznamList.isEmpty) {
+      return pw.Container();
+    }
+    return pw.Expanded(
+      child: pw.Container(
+        decoration: pw.BoxDecoration(
+          border: pw.Border.all(
+            width: 2.0,
+            color: GeneratePdfTemplate.headerPrimaryColor,
+          ),
         ),
-      ),
-      padding: const pw.EdgeInsets.all(8.0),
-      child: pw.Column(
-        children: zaznamList!.expand((record) => [
-          _noteItem(record),
-          pw.SizedBox(height: 5),
-        ]).toList(),
+        padding: const pw.EdgeInsets.all(8.0),
+        child: pw.Column(
+          children: zaznamList.expand((record) => [
+            _noteItem(record),
+            pw.SizedBox(height: 5),
+          ]).toList(),
+        ),
       ),
     );
   }
@@ -68,7 +72,6 @@ class PrintPdfRecords implements PdfSection {
 
   @override
   pw.Widget buildSection(bool append) {
-    // TODO: implement buildSection
-    throw UnimplementedError();
+    return buildRecordsList(records);
   }
 }

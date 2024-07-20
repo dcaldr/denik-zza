@@ -52,6 +52,9 @@ class PrintPdfHeader implements PdfSection {
         ),
         pw.Text(
           'Adresa: ${osoba?.adresa ?? ''}',
+          maxLines: 2,
+          overflow: pw.TextOverflow.clip,
+
         ),
       ],
     );
