@@ -145,7 +145,7 @@ Future<int?> getCurrentEventID() {
   }
 
   @override
-  bool addEvent(MemoryAction action) {
+  Future<bool> addEvent(MemoryAction action)async {
     // TODO: implement addEvent
     throw UnimplementedError();
   }

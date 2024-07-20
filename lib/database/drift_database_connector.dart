@@ -78,24 +78,24 @@ class DriftDatabaseConnector implements DatabaseInterface {
   }
 
   @override
-  bool addEvent(MemoryAction action) {
-    if(action.nadpis.isEmpty) {
-      return false;
-    }
+ Future<bool> addEvent(MemoryAction action) async {
+  if (action.nadpis.isEmpty) return false;
 
-    ZzaActionsCompanion c = ZzaActionsCompanion(
-      actionTitle: Value(action.nadpis),
-      actionDescription: Value(action.popis),
-      dateFrom: Value(action.odkdy),
-      dateTo: Value(action.dokdy),
-        //note: přidáno
-      homeDirectory: Value(action.domovskyAdresarPath),
-    );
+  final c = ZzaActionsCompanion(
+    actionTitle: Value(action.nadpis),
+    actionDescription: Value(action.popis),
+    dateFrom: Value(action.odkdy),
+    dateTo: Value(action.dokdy),
+    homeDirectory: Value(action.domovskyAdresarPath),
+  );
 
-    _driftDatabase.addZzaAction(c);
-
+  try {
+    await _driftDatabase.addZzaAction(c);
     return true;
+  } catch (e) {
+    return false;
   }
+}
 
   @override
   Future<List<MemoryOsoba>> getParticipantsByEvent(int idEvent) async {

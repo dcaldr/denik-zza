@@ -104,7 +104,7 @@ Future<List<MemoryAction>> getAllZzaActions();
 /// Adds new [MemoryAction] event to database
 ///
 ///  returns true if successful
-bool addEvent(MemoryAction action);
+Future<bool>  addEvent(MemoryAction action) ;
 
 /// Returns a [Future] that resolves to an [int], which represents count
 /// of event participants.
