@@ -51,6 +51,9 @@ dependencies:
   csv: ^6.0.0
   diacritic: 0.1.5
   logger: 2.4.0
+  intl: any
+  flutter_localizations:
+    sdk: flutter
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -77,6 +80,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/doc.jpg
+  generate: true
 
   # To add assets to your application, add an assets section, like this:
   # assets:
