@@ -17,7 +17,7 @@ MemoryOsoba historicalFigure = MemoryOsoba.fullNamed(
   datumNarozeni: DateTime(1369, 7, 6),
   jmenoRodice: 'Pan Hus',
   telefonRodice: '558977432',
-  emailRodice: 'velmi.dlouha.emailova.edresa@seznam.cz',
+  emailRodice: 'velmi.dlouha.emailova.adresa@seznam.cz',
   zpusobilost: true,
   bezinfekcnost: true,
   zdravotniPojistovna: 'Český Řízek',
