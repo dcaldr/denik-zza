@@ -16,9 +16,8 @@ part 'database.g.dart';
 
 
 /// The main [AppDatabase] class representing the Drift database for the Zza app.
-/// It extends from the generated [_$AppDatabase] class.
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection(/* attach getDb location here*/));
+  AppDatabase([String? path]) : super(_openConnection(path));
 
   @override
   int get schemaVersion => 1;
@@ -199,18 +198,13 @@ class AppDatabase extends _$AppDatabase {
 ///
 
 LazyDatabase _openConnection([String? path]) {
-  // the LazyDatabase util lets us find the right location for the file async.
   return LazyDatabase(() async {
+    // Use FileManager to get the database path
+    final fileManager = FileManager();
+    /// makes path to the database file if null or misssing use current directory;
+    final dbPath = path ?? await fileManager.getDbFilePath() ?? '.';
+    final dbFile = File(p.join(dbPath, 'db.sqlite'));
 
-    // put the database file, called db.sqlite here, into the documents folder
-    // for your app.
-
-    /// TODO change path here later
-    //final dbFolder = await getApplicationDocumentsDirectory();
-    final tmpDbFolder = Directory('.');
-    final file = File(p.join(tmpDbFolder.path, 'db.sqlite'));
-
-    final dbFile = path != null ? File(path) : file;
     if (Platform.isAndroid) {
       await applyWorkaroundToOpenSqlite3OnOldAndroidVersions();
     }
@@ -218,8 +212,6 @@ LazyDatabase _openConnection([String? path]) {
     // Make sqlite3 pick a more suitable location for temporary files - the
     // one from the system may be inaccessible due to sandboxing.
     final cachebase = (await getTemporaryDirectory()).path;
-    // We can't access /tmp on Android, which sqlite3 would try by default.
-    // Explicitly tell it about the correct temporary directory.
     sqlite3.tempDirectory = cachebase;
 
     return NativeDatabase.createInBackground(dbFile);
