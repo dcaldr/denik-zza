@@ -6,11 +6,12 @@ import '../input/file_manager.dart';
 import 'eventRegistration.dart';
 
 void main() async {
+  // tests if can be commented out the 3 lines below
   WidgetsFlutterBinding.ensureInitialized();
   Intl.defaultLocale = 'cs_CZ';
   await initializeDateFormatting('cs_CZ', null);
 
-  FileManager(bypassTesting: true);
+  FileManager();
   runApp(const MyApp());
 }
 
