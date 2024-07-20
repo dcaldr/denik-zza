@@ -6,6 +6,7 @@ import '../database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:printing/printing.dart';
 import '../database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'generate_pdf_template.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 MemoryOsoba historicalFigure = MemoryOsoba.fullNamed(
   id: 1,
@@ -135,13 +136,14 @@ class PdfPreviewScreen extends StatelessWidget {
       body: PdfPreview(
         build: (format) async {
           final template = GeneratePdfTemplate();
-          final pdf = await template.getPdfWidget( osoba:  historicalFigure,omezeniList: omezeniList,lekList: lekList, zaznamList: historicalRecords);
+          final pdfPages = await template.getPdfPages(osoba: historicalFigure, omezeniList: omezeniList, lekList: lekList, zaznamList: historicalRecords);
+          final pdf = pw.Document();
+          pdfPages.forEach((page) => pdf.addPage(page));
           return pdf.save();
         },
         initialPageFormat: PdfPageFormat.a4,
         maxPageWidth: MediaQuery.of(context).size.height / 1.6, // hard coded -by hand
         pdfFileName: "sample.pdf",
-
       ),
     );
   }

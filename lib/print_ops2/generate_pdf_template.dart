@@ -9,7 +9,11 @@ import '../database/in_memory_structures_tmp/memory_lek.dart';
 import '../database/in_memory_structures_tmp/memory_omezeni.dart';
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
 import '../database/in_memory_structures_tmp/memory_zaznam.dart';
-
+/// Generates a pdf template for the given person
+///
+/// The template consists of a header, restrictions, and records.
+/// The class deosn't check if the provided inputs match each other,
+/// it is the responsibility of the caller to provide the correct data.
 class GeneratePdfTemplate {
   late pw.Widget header;
   static const headerPrimaryColor = PdfColor(0, 0, 0);
@@ -21,15 +25,15 @@ class GeneratePdfTemplate {
   List<MemoryZaznam>? zaznamList;
 
   GeneratePdfTemplate();
-/// Constructor for storing data
+
   GeneratePdfTemplate.named({
     required this.osoba,
     this.omezeniList,
     this.lekList,
     this.zaznamList,
   });
-
-  Future<pw.Document> getPdfWidget({
+/// generates list of pages for pdf from the given person
+  Future<List<pw.Page>> getPdfPages({
     required MemoryOsoba osoba,
     List<Omezeni>? omezeniList,
     List<MemoryLek>? lekList,
@@ -38,23 +42,22 @@ class GeneratePdfTemplate {
     header = PrintPdfHeader().buildHeader(osoba);
     final restrictions = _buildRestrictions(omezeniList, lekList);
 
-    return pw.Document(
-      theme: await _loadFonts(),
-    )..addPage(
-        pw.Page(
-          build: (pw.Context context) {
-            return pw.Column(
-              children: [
-                header,
-                pw.SizedBox(height: 5),
-                if (restrictions != null) restrictions,
-                if (restrictions != null) pw.SizedBox(height: 5),
-                if (zaznamList != null) PrintPdfRecords().buildRecordsList(zaznamList),
-              ],
-            );
-          },
-        ),
-      );
+    return [
+      pw.Page(
+        theme: await _loadFonts(),
+        build: (pw.Context context) {
+          return pw.Column(
+            children: [
+              header,
+              pw.SizedBox(height: 5),
+              if (restrictions != null) restrictions,
+              if (restrictions != null) pw.SizedBox(height: 5),
+              if (zaznamList != null) PrintPdfRecords().buildRecordsList(zaznamList),
+            ],
+          );
+        },
+      ),
+    ];
   }
 
   pw.Widget? _buildRestrictions(List<Omezeni>? omezeniList, List<MemoryLek>? lekList) {
@@ -72,8 +75,6 @@ class GeneratePdfTemplate {
       boldItalic: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-BoldItalic.ttf')),
     );
   }
-
-
 }
 
 abstract class PdfSection {
