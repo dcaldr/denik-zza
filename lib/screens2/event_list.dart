@@ -2,8 +2,6 @@ import 'package:denik_zza/screens2/event_registration_form.dart';
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/editing_actions/action_detail.dart';
-import 'package:denik_zza/screens/editing_actions/add_action.dart';
-import 'package:denik_zza/screens/our_widgets/our_drawer.dart';
 import 'package:intl/intl.dart';
 import '../../database/database_interface.dart';
 import '../../database/database_wrapper.dart';

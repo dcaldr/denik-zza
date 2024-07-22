@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../actions/all_actions.dart';
 import '../actions/profile.dart';
-///One place for Drawer if necerssary
+///One place for Drawer if necessary
 ///
 /// Our version of drawer //TODO: add icons or something
 class OurDrawer extends StatelessWidget {
