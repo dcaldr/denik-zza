@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/editing_actions/action_detail.dart';
 import 'package:denik_zza/screens/editing_actions/add_action.dart';
 import 'package:denik_zza/screens/our_widgets/our_drawer.dart';
+import 'package:intl/intl.dart';
 import '../../database/database_interface.dart';
 import '../../database/database_wrapper.dart';
 import '../../database/in_memory_structures_tmp/memory_akce.dart';
@@ -15,7 +16,7 @@ class EventList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(context),
-      drawer: const OurDrawer(),
+      drawer: const OurDrawer(), //TODO: implement real drawer
       body: _buildActionList(),
     );
   }
@@ -26,7 +27,7 @@ class EventList extends StatelessWidget {
       actions: <Widget>[
         IconButton(
           icon: const Icon(Icons.add),
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AddActionPage())),
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AddActionPage())), //TODO: implement real add action page
         ),
         const IconButton(icon: Icon(Icons.search), onPressed: null), // Placeholder for future search functionality
       ],
@@ -51,31 +52,34 @@ class EventList extends StatelessWidget {
     );
   }
 
-  Widget _buildActionItem(BuildContext context, MemoryAction action) {
-    return FutureBuilder<int>(
-      future: database.getParticipantCountInAction(action.idAkce ?? -1),
-      builder: (context, participantSnapshot) {
-        if (participantSnapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
-        } else if (participantSnapshot.hasError) {
-          return Text('Error: ${participantSnapshot.error}');
-        } else {
-          return ListTile(
-            title: Text(action.nadpis),
-            subtitle: Text('${action.odkdy} - ${action.dokdy}'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(participantSnapshot.data.toString()),
-                const Icon(Icons.people),
-              ],
-            ),
-            onTap: () => _navigateToActionDetail(context, action),
-          );
-        }
-      },
-    );
-  }
+
+
+Widget _buildActionItem(BuildContext context, MemoryAction action) {
+  final dateFormat = DateFormat('dd.MM.yyyy', 'cs_CZ');
+  return FutureBuilder<int>(
+    future: database.getParticipantCountInAction(action.idAkce ?? -1),
+    builder: (context, participantSnapshot) {
+      if (participantSnapshot.connectionState == ConnectionState.waiting) {
+        return const CircularProgressIndicator();
+      } else if (participantSnapshot.hasError) {
+        return Text('Error: ${participantSnapshot.error}');
+      } else {
+        return ListTile(
+          title: Text(action.nadpis),
+          subtitle: Text('${dateFormat.format(action.odkdy)} - ${dateFormat.format(action.dokdy)}'),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(participantSnapshot.data.toString()),
+              const Icon(Icons.people),
+            ],
+          ),
+          onTap: () => _navigateToActionDetail(context, action),
+        );
+      }
+    },
+  );
+}
 
   void _navigateToActionDetail(BuildContext context, MemoryAction action) {
     Navigator.push(
