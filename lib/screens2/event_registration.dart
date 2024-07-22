@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../database/database_wrapper.dart';
 import '../database/in_memory_structures_tmp/memory_akce.dart';
+import 'event_list.dart';
 
 class EventRegistrationForm extends StatefulWidget {
   const EventRegistrationForm({super.key});
@@ -27,26 +28,34 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
     super.dispose();
   }
 
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      final dateFormat = DateFormat('dd.MM.yyyy');
-      final newAction = MemoryAction(
-        idAkce: null,
-        nadpis: _nadpisController.text,
-        popis: _popisController.text,
-        odkdy: dateFormat.parseStrict(_odkdyController.text),
-        dokdy: dateFormat.parseStrict(_dokdyController.text),
-        domovskyAdresarPath: null,
-      );
+void _submitForm() {
+  if (_formKey.currentState!.validate()) {
+    final dateFormat = DateFormat('dd.MM.yyyy');
+    final newAction = MemoryAction(
+      idAkce: null,
+      nadpis: _nadpisController.text,
+      popis: _popisController.text,
+      odkdy: dateFormat.parseStrict(_odkdyController.text),
+      dokdy: dateFormat.parseStrict(_dokdyController.text),
+      domovskyAdresarPath: null,
+    );
 
-      DatabaseWrapper.getDatabase().addEvent(newAction).then((success) {
-        final message = success
-            ? 'MemoryAction úspěšně přidána'
-            : 'Přidání MemoryAction se nezdařilo';
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-      });
-    }
+    DatabaseWrapper.getDatabase().addEvent(newAction).then((success) {
+      final message = success
+          ? 'MemoryAction úspěšně přidána'
+          : 'Přidání MemoryAction se nezdařilo';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+
+      if (success) {
+        // Navigate to EventList screen upon successful addition
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => EventList()),
+        );
+      }
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {
