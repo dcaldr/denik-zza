@@ -3,7 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import '../input/file_manager.dart';
-import 'eventRegistration.dart';
+import 'event_registration.dart';
 
 void main() async {
   // tests if can be commented out the 3 lines below
