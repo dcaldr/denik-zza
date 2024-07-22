@@ -1,3 +1,4 @@
+import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart';
@@ -25,7 +26,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const EventRegistrationForm(),
+     // home: const EventRegistrationForm(),
+      home: const ParticipantRegistrationForm(),
       locale: const Locale('cs', 'CZ'),
       supportedLocales: const [
         Locale('cs', 'CZ'),
