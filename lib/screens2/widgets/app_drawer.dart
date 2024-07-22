@@ -1,5 +1,6 @@
 import 'package:denik_zza/screens2/event_list.dart';
 import 'package:denik_zza/screens2/event_registration_form.dart';
+import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:flutter/material.dart';
 
 import '../../screens/actions/all_actions.dart';
@@ -29,7 +30,16 @@ class AppDrawer extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => const EventRegistrationForm()),
               );
             },
-          )
+          ),
+          ListTile(
+            title: const Text('Nový Účastník'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ParticipantRegistrationForm()),
+              );
+            },
+          ),
 
         ],
       ),
