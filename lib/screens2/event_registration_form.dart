@@ -61,7 +61,7 @@ void _submitForm() {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Registrace události')), //TODO: make one class
+      appBar: AppBar(title: const Text('Založit akci')), //TODO: make one class
       drawer: const AppDrawer(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

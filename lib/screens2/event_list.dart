@@ -1,4 +1,4 @@
-import 'package:denik_zza/screens2/event_registration.dart';
+import 'package:denik_zza/screens2/event_registration_form.dart';
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/editing_actions/action_detail.dart';
