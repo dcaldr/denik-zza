@@ -1,3 +1,5 @@
+import 'package:denik_zza/screens2/event_registration.dart';
+import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/editing_actions/action_detail.dart';
 import 'package:denik_zza/screens/editing_actions/add_action.dart';
@@ -16,7 +18,7 @@ class EventList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(context),
-      drawer: const OurDrawer(), //TODO: implement real drawer
+      drawer: const AppDrawer(),
       body: _buildActionList(),
     );
   }
@@ -27,7 +29,7 @@ class EventList extends StatelessWidget {
       actions: <Widget>[
         IconButton(
           icon: const Icon(Icons.add),
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AddActionPage())), //TODO: implement real add action page
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const EventRegistrationForm())), //TODO: implement real add action page
         ),
         const IconButton(icon: Icon(Icons.search), onPressed: null), // Placeholder for future search functionality
       ],

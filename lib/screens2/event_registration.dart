@@ -1,3 +1,4 @@
+import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/widgets/custom_date_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -60,7 +61,8 @@ void _submitForm() {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Registrace události')),
+      appBar: AppBar(title: const Text('Registrace události')), //TODO: make one class
+      drawer: const AppDrawer(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
