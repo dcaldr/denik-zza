@@ -7,9 +7,9 @@ import 'eventRegistration.dart';
 
 void main() async {
   // tests if can be commented out the 3 lines below
-  WidgetsFlutterBinding.ensureInitialized();
-  Intl.defaultLocale = 'cs_CZ';
-  await initializeDateFormatting('cs_CZ', null);
+ // WidgetsFlutterBinding.ensureInitialized();
+//  Intl.defaultLocale = 'cs_CZ';
+//  await initializeDateFormatting('cs_CZ', null);
 
   FileManager();
   runApp(const MyApp());
