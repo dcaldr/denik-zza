@@ -15,53 +15,46 @@ class EventRegistrationForm extends StatefulWidget {
 
 class _EventRegistrationFormState extends State<EventRegistrationForm> {
   final _formKey = GlobalKey<FormState>();
-  final _nadpisController = TextEditingController();
-  final _popisController = TextEditingController();
-  final _odkdyController = TextEditingController();
-  final _dokdyController = TextEditingController();
+  final Map<String, TextEditingController> _controllers = {
+    'nadpis': TextEditingController(),
+    'popis': TextEditingController(),
+    'odkdy': TextEditingController(),
+    'dokdy': TextEditingController(),
+  };
 
   @override
   void dispose() {
-    _nadpisController.dispose();
-    _popisController.dispose();
-    _odkdyController.dispose();
-    _dokdyController.dispose();
+    _controllers.forEach((_, controller) => controller.dispose());
     super.dispose();
   }
 
-void _submitForm() {
-  if (_formKey.currentState!.validate()) {
-    final dateFormat = DateFormat('dd.MM.yyyy');
-    final newAction = MemoryAction(
-      idAkce: null,
-      nadpis: _nadpisController.text,
-      popis: _popisController.text,
-      odkdy: dateFormat.parseStrict(_odkdyController.text),
-      dokdy: dateFormat.parseStrict(_dokdyController.text),
-      domovskyAdresarPath: null,
-    );
+  void _submitForm() {
+    if (_formKey.currentState!.validate()) {
+      final dateFormat = DateFormat('dd.MM.yyyy');
+      final newAction = MemoryAction(
+        idAkce: null,
+        nadpis: _controllers['nadpis']!.text,
+        popis: _controllers['popis']!.text,
+        odkdy: dateFormat.parseStrict(_controllers['odkdy']!.text),
+        dokdy: dateFormat.parseStrict(_controllers['dokdy']!.text),
+        domovskyAdresarPath: null,
+      );
 
-    DatabaseWrapper.getDatabase().addEvent(newAction).then((success) {
-      final message = success
-          ? 'MemoryAction úspěšně přidána'
-          : 'Přidání MemoryAction se nezdařilo';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      DatabaseWrapper.getDatabase().addEvent(newAction).then((success) {
+        final message = success ? 'Akce úspěšně přidána' : 'Přidání Akce se nezdařilo';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 
-      if (success) {
-        // Navigate to EventList screen upon successful addition
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => EventList()),
-        );
-      }
-    });
+        if (success) {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => EventList()));
+        }
+      });
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Založit akci')), //TODO: make one class
+      appBar: AppBar(title: const Text('Založit akci')),
       drawer: const AppDrawer(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -69,34 +62,19 @@ void _submitForm() {
           key: _formKey,
           child: ListView(
             children: [
-              _buildTextFormField(_nadpisController, 'Nadpis', 'Prosím zadejte nadpis'),
+              _buildTextFormField('nadpis', 'Nadpis', 'Prosím zadejte nadpis'),
               const SizedBox(height: 10),
-              _buildTextFieldWithCounter(_popisController, 'Popis', 130),
+              _buildTextFieldWithCounter('popis', 'Popis', 130),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(
-                    child: CustomDatePicker(
-                      controller: _odkdyController,
-                      labelText: 'Od kdy',
-                      validatorText: 'Prosím zadejte datum začátku',
-                    ),
-                  ),
+                  Expanded(child: CustomDatePicker(controller: _controllers['odkdy']!, labelText: 'Od kdy', validatorText: 'Prosím zadejte datum začátku')),
                   const SizedBox(width: 10),
-                  Expanded(
-                    child: CustomDatePicker(
-                      controller: _dokdyController,
-                      labelText: 'Do kdy',
-                      validatorText: 'Prosím zadejte datum konce',
-                    ),
-                  ),
+                  Expanded(child: CustomDatePicker(controller: _controllers['dokdy']!, labelText: 'Do kdy', validatorText: 'Prosím zadejte datum konce')),
                 ],
               ),
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _submitForm,
-                child: const Text('Odeslat'),
-              ),
+              ElevatedButton(onPressed: _submitForm, child: const Text('Odeslat')),
             ],
           ),
         ),
@@ -104,22 +82,17 @@ void _submitForm() {
     );
   }
 
-  Widget _buildTextFormField(TextEditingController controller, String labelText, String validatorText) {
+  Widget _buildTextFormField(String key, String labelText, String validatorText) {
     return TextFormField(
-      controller: controller,
+      controller: _controllers[key],
       decoration: InputDecoration(labelText: labelText),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return validatorText;
-        }
-        return null;
-      },
+      validator: (value) => value == null || value.isEmpty ? validatorText : null,
     );
   }
 
-  Widget _buildTextFieldWithCounter(TextEditingController controller, String labelText, int maxLength) {
+  Widget _buildTextFieldWithCounter(String key, String labelText, int maxLength) {
     return TextField(
-      controller: controller,
+      controller: _controllers[key],
       maxLines: 3,
       maxLength: maxLength,
       decoration: InputDecoration(
