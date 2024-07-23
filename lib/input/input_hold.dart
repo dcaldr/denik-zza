@@ -77,6 +77,21 @@ abstract class InputHold{
     return true;
   }
 
+ /// For validating FormFields  in Flutter
+  ///
+  ///
+String? validator() {
+    _converter();
+  if (status == ParseStatus.ok) {
+    return null;
+  } else if (status == ParseStatus.bad) {
+    return "{$columnName} má nesprávná data"; // Generic error message
+  } else if (status == ParseStatus.warn) {
+    return "Warning: Please check the input"; // Warning message
+  }
+  return "Unknown error"; // Fallback error message
+}
+
 }
 /// for parsing Jméno and Příjmení
 class JmenoHold extends InputHold{
@@ -141,6 +156,23 @@ class CisloPojisteniHold extends InputHold{
     output = rc.getRc();
   }
   return rc;
+  }
+
+  /// custom validator because rodne cislo is not a simple string
+  ///
+  ///
+  @override
+  validator(){
+    _converter();
+    if (status == ParseStatus.ok) {
+      return null;
+    } else if (status == ParseStatus.bad) {
+      return null; // for the form
+    } else if (status == ParseStatus.warn) {
+      return null; // for the form
+    }
+    return "Unknown error";
+
   }
 
 }
