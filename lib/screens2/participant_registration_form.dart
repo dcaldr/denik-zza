@@ -1,10 +1,11 @@
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
-import 'package:flutter/material.dart';
-import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/widgets/custom_date_picker.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
+
 import '../input/input_hold.dart';
-import '../input/rodne_cislo.dart'; // Corrected import
+import '../input/rodne_cislo.dart';
 
 class ParticipantRegistrationForm extends StatefulWidget {
   const ParticipantRegistrationForm({Key? key}) : super(key: key);
@@ -37,20 +38,62 @@ class _ParticipantRegistrationFormState
     'datumNarozeni': DatumNarozeniHold(),
     'adresa': AdresaHold(),
     'cisloPojisteni': CisloPojisteniHold(),
-    'jmenoRodice': JmenoHold(),
+    'jmenoRodice': JmenoHold( columnName: 'jmeno rodiče'),
     'telefonRodice': TelefonHold(),
     'emailRodice': EmailHold(),
     'zdravotniPojistovna': PojistovnaHold(),
     'poznamka': TextHold(),
     'pohlavi': PohlaviHold(),
   };
-  ///Adds a listener to the controller of the birth number
+
   @override
   void initState() {
     super.initState();
     _controllers['cisloPojisteni']!.addListener(() {
-      guessAndFillFields(_controllers['cisloPojisteni']!.text);
+      setState(() {
+        guessAndFillFields(_controllers['cisloPojisteni']!.text);
+      });
     });
+  }
+
+  void guessAndFillFields(String inText) {
+    if (inText.length >= 6) {
+      RodneCislo rc = RodneCislo(inText);
+      DateTime datumNarozeni = rc.getDatumNarozeni();
+      int pohlavi = rc.getPohlavi();
+
+      if (_controllers['datumNarozeni'] != null &&
+          _controllers['datumNarozeni']!.text.isEmpty) {
+        _controllers['datumNarozeni']!.text =
+            DateFormat('dd.MM.yyyy').format(datumNarozeni);
+      }
+
+      if (_controllers['pohlavi'] != null &&
+          _controllers['pohlavi']!.text.isEmpty) {
+        _controllers['pohlavi']!.text = pohlavi.toString();
+      }
+    }
+  }
+/// for debug purposes
+  void _showPersonDetails(MemoryOsoba osoba) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Person Details'),
+          content: Text(
+              'Name: ${osoba.jmeno} ${osoba.prijmeni}\nDate of Birth: ${osoba.datumNarozeni}\nGender: ${osoba.pohlavi}\nAddress: ${osoba.adresa}\nInsurance Number: ${osoba.cisloPojisteni}\nParent Name: ${osoba.jmenoRodice}\nParent Phone: ${osoba.telefonRodice}\nParent Email: ${osoba.emailRodice}\nHealth Insurance: ${osoba.zdravotniPojistovna}\nNote: ${osoba.poznamka}'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -82,7 +125,6 @@ class _ParticipantRegistrationFormState
                       return validator;
                     },
                   ),
-
                   TextFormField(
                     controller: _controllers['prijmeni'],
                     decoration: const InputDecoration(labelText: 'Příjmení'),
@@ -100,14 +142,25 @@ class _ParticipantRegistrationFormState
                     validator: (value) =>
                         _validators['cisloPojisteni']?.validator(),
                   ),
-                  CustomDatePicker(
-                    controller: _controllers['datumNarozeni']!,
-                    labelText: 'Datum Narození',
-                  ),
-                  TextFormField(
-                    controller: _controllers['pohlavi'],
-                    decoration: const InputDecoration(labelText: 'Pohlaví'),
-                    validator: (value) => _validators['pohlavi']?.validator(),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: CustomDatePicker(
+                          controller: _controllers['datumNarozeni']!,
+                          labelText: 'Datum Narození',
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _controllers['pohlavi'],
+                          decoration: const InputDecoration(labelText: 'Pohlaví'),
+                          validator: (value) =>
+                              _validators['pohlavi']?.validator(),
+                        ),
+                      ),
+                    ],
                   ),
                   TextFormField(
                     controller: _controllers['zdravotniPojistovna'],
@@ -116,8 +169,16 @@ class _ParticipantRegistrationFormState
                     validator: (value) =>
                         _validators['zdravotniPojistovna']?.validator(),
                   ),
-                  // Continue for other fields...
-
+                  TextFormField(
+                    controller: _controllers['adresa'],
+                    decoration: const InputDecoration(labelText: 'Adresa'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Adresa je povinné pole';
+                      }
+                      return _validators['adresa']?.validator();
+                    },
+                  ),
                   TextFormField(
                     controller: _controllers['jmenoRodice'],
                     decoration:
@@ -139,42 +200,50 @@ class _ParticipantRegistrationFormState
                     validator: (value) =>
                         _validators['telefonRodice']?.validator(),
                   ),
-                  TextFormField(
-                    controller: _controllers['poznamka'],
-                    decoration: const InputDecoration(
-                        labelText: 'Poznámka',
-                        border: OutlineInputBorder(),
-                        hintText: 'Tento text se nebude tisknout'),
-                    maxLines: 3,
-                  ),
                 ],
               ),
-              // Additional fields or buttons can be added here
+              TextFormField(
+                controller: _controllers['poznamka'],
+                decoration: const InputDecoration(
+                    labelText: 'Poznámka',
+                    border: OutlineInputBorder(),
+                    hintText: 'Tento text se nebude tisknout'),
+                maxLines: 3,
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    MemoryOsoba osoba = MemoryOsoba.fullNamed(
+                      id: null,
+                      jmeno: _controllers['jmeno']!.text,
+                      prijmeni: _controllers['prijmeni']!.text,
+                      datumNarozeni: DateFormat('dd.MM.yyyy')
+                          .parse(_controllers['datumNarozeni']!.text),
+                      adresa: _controllers['adresa']!.text,
+                      cisloPojisteni: _controllers['cisloPojisteni']!.text,
+                      jmenoRodice: _controllers['jmenoRodice']!.text,
+                      telefonRodice: _controllers['telefonRodice']!.text,
+                      emailRodice: _controllers['emailRodice']!.text,
+                      zdravotniPojistovna:
+                          _controllers['zdravotniPojistovna']!.text,
+                      poznamka: _controllers['poznamka']!.text,
+                      pohlavi: int.parse(_controllers['pohlavi']!.text),
+                      zpusobilost: false,
+                      bezinfekcnost: false,
+                      wasPrinted: false,
+                      oddil: '',
+                      prisel: false,
+                      potvrzeniPath: '',
+                    );
+                    _showPersonDetails(osoba);
+                  }
+                },
+                child: const Text('Odeslat'),
+              ),
             ],
           ),
         ),
       ),
     );
   }
-
-
-/// From part of rč. guess and fill fields
-  ///
-  /// fills in the fields that can be guessed from the birth number
-  /// so  datumNarozeni and pohlavi
-void guessAndFillFields(String inText) {
-  if (inText.length >= 6) {
-    RodneCislo rc = RodneCislo(inText);
-    DateTime datumNarozeni = rc.getDatumNarozeni();
-    int pohlavi = rc.getPohlavi();
-
-    if (_controllers['datumNarozeni'] != null && _controllers['datumNarozeni']!.text.isEmpty) {
-      _controllers['datumNarozeni']!.text = DateFormat('dd.MM.yyyy').format(datumNarozeni);
-    }
-
-    if (_controllers['pohlavi'] != null && _controllers['pohlavi']!.text.isEmpty) {
-      _controllers['pohlavi']!.text = pohlavi.toString();
-    }
-  }
-}
 }
