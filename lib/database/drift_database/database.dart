@@ -196,13 +196,13 @@ class AppDatabase extends _$AppDatabase {
     return answer;
   }
 
-  Future<int> updateParticipant(int id, MemoryOsoba osoba) {
-    return (update(participants)..where((p) =>
-    p.id.equals(id))).write(ParticipantsCompanion(
-      osoba.toCompanion())
-  }
+  Future<int> updateParticipant(int id, ParticipantsCompanion osoba) {
+  return (update(participants)..where((p) => p.id.equals(id))).write(osoba);
+}
 
-  Future<int> updateEvent(int? id, MemoryAction action) {}
+Future<int> updateEvent(int id, ZzaActionsCompanion action) {
+  return (update(zzaActions)..where((z) => z.id.equals(id))).write(action);
+}
 
   //==================== DELETES ===============================================
 }

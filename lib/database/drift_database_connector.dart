@@ -30,49 +30,51 @@ class DriftDatabaseConnector implements DatabaseInterface {
         )
       );
     }
-
-    ParticipantsCompanion c = ParticipantsCompanion(
-      firstName: Value(osoba.jmeno),
-      lastName: Value(osoba.prijmeni),
-      gender: Value(osoba.pohlavi),
-      address: Value(osoba.adresa),
-      birthNumber: Value(osoba.cisloPojisteni),
-      birthDate: Value(osoba.datumNarozeni),
-      parentPhoneNumber: Value(osoba.telefonRodice),
-      eligibleConfirmation: Value(osoba.zpusobilost!),
-      nonInfectiousConfirmation: Value(osoba.bezinfekcnost!),
-      insuranceCompanyFK: Value(await _driftDatabase.getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna)),
-      zzaActionFK: Value((await _driftDatabase.getCurrentActionID())!),
-      // note: přidáno
-      parentName: Value(osoba.jmenoRodice),
-      parentEmail: Value(osoba.emailRodice),
-      campUnit: Value(osoba.oddil),
-      note: Value(osoba.poznamka),
-      arrivedConfirmation: Value(osoba.prisel),
-      eligibleConfirmationPath: Value(osoba.potvrzeniPath)
-
-    );
-
-    _driftDatabase.addParticipant(c);
+      ///Now a function
+    // ParticipantsCompanion c = ParticipantsCompanion(
+    //   firstName: Value(osoba.jmeno),
+    //   lastName: Value(osoba.prijmeni),
+    //   gender: Value(osoba.pohlavi),
+    //   address: Value(osoba.adresa),
+    //   birthNumber: Value(osoba.cisloPojisteni),
+    //   birthDate: Value(osoba.datumNarozeni),
+    //   parentPhoneNumber: Value(osoba.telefonRodice),
+    //   eligibleConfirmation: Value(osoba.zpusobilost!),
+    //   nonInfectiousConfirmation: Value(osoba.bezinfekcnost!),
+    //   insuranceCompanyFK: Value(await _driftDatabase.getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna)),
+    //   zzaActionFK: Value((await _driftDatabase.getCurrentActionID())!),
+    //   // note: přidáno
+    //   parentName: Value(osoba.jmenoRodice),
+    //   parentEmail: Value(osoba.emailRodice),
+    //   campUnit: Value(osoba.oddil),
+    //   note: Value(osoba.poznamka),
+    //   arrivedConfirmation: Value(osoba.prisel),
+    //   eligibleConfirmationPath: Value(osoba.potvrzeniPath)
+    //
+    // );
+    ParticipantsCompanion c2 = await _toParticipantsCompanion(osoba);
+    await _driftDatabase.addParticipant(c2);
+    //await _driftDatabase.addParticipant(c);
 
     return true;
   }
 
   @override
   Future<bool> addZaznam(MemoryZaznam zaznam) async {
-    RecordsCompanion c = RecordsCompanion(
-      dateAndTime: Value(DateTime.now()),
-      title: Value(zaznam.nazev!),
-      description: Value(zaznam.popis!),
-      treatment: const Value(""),
-      paramedicFK: Value(zaznam.idAuthor),
-      participantFK: Value(zaznam.idPacient),
-        //note: přidáno
-        note: Value(zaznam.poznamka),
-        picturePath: Value(zaznam.obrazekPath)
-    );
-
-    _driftDatabase.addRecord(c);
+    // now a function
+    // RecordsCompanion c = RecordsCompanion(
+    //   dateAndTime: Value(DateTime.now()),
+    //   title: Value(zaznam.nazev!),
+    //   description: Value(zaznam.popis!),
+    //   treatment: const Value(""),
+    //   paramedicFK: Value(zaznam.idAuthor),
+    //   participantFK: Value(zaznam.idPacient),
+    //     //note: přidáno
+    //     note: Value(zaznam.poznamka),
+    //     picturePath: Value(zaznam.obrazekPath)
+    // );
+    await _driftDatabase.addRecord(_toRecordsCompanion(zaznam));
+    //_driftDatabase.addRecord(c);
 
     return true;
   }
@@ -80,17 +82,18 @@ class DriftDatabaseConnector implements DatabaseInterface {
   @override
  Future<bool> addEvent(MemoryAction action) async {
   if (action.nadpis.isEmpty) return false;
-
-  final c = ZzaActionsCompanion(
-    actionTitle: Value(action.nadpis),
-    actionDescription: Value(action.popis),
-    dateFrom: Value(action.odkdy),
-    dateTo: Value(action.dokdy),
-    homeDirectory: Value(action.domovskyAdresarPath),
-  );
+    // now a function
+  // final c = ZzaActionsCompanion(
+  //   actionTitle: Value(action.nadpis),
+  //   actionDescription: Value(action.popis),
+  //   dateFrom: Value(action.odkdy),
+  //   dateTo: Value(action.dokdy),
+  //   homeDirectory: Value(action.domovskyAdresarPath),
+  // );
 
   try {
-    await _driftDatabase.addZzaAction(c);
+    await _driftDatabase.addZzaAction(_toZzaActionsCompanion(action));
+    //await _driftDatabase.addZzaAction(c);
     return true;
   } catch (e) {
     return false;
@@ -101,35 +104,36 @@ class DriftDatabaseConnector implements DatabaseInterface {
   Future<List<MemoryOsoba>> getParticipantsByEvent(int idEvent) async {
     List<Participant> participants = await
     _driftDatabase.getParticipantsByAction(idEvent);
+    // now a function
+    // List<MemoryOsoba> memoryParticipants = [];
+    //
+    // for(Participant p in participants) {
+    //   int? insCompFK = p.insuranceCompanyFK;
+    //   InsuranceCompany? ic;
+    //   String? insCompName;
+    //
+    //   if(insCompFK != null) {
+    //     ic = await _driftDatabase.getInsuranceCompanyByID(insCompFK);
+    //     insCompName = ic?.name;
+    //   }
+    //
+    //   memoryParticipants.add(
+    //     MemoryOsoba.fullNamed(id: p.id, jmeno: p.firstName, prijmeni: p.lastName,
+    //     pohlavi: p.gender, adresa: p.address, cisloPojisteni: p.birthNumber,
+    //     datumNarozeni: p.birthDate, telefonRodice: p.parentPhoneNumber,
+    //     zpusobilost: p.eligibleConfirmation, bezinfekcnost: p.nonInfectiousConfirmation,
+    //     wasPrinted: p.wasPrinted, zdravotniPojistovna: insCompName,
+    //         jmenoRodice: p.parentName, emailRodice: p.parentEmail,
+    //         poznamka: p.note, oddil: p.campUnit, prisel: p.arrivedConfirmation,
+    //       potvrzeniPath: p.eligibleConfirmationPath,
+    //
+    //
+    //     )
+    //   );
+    // }
 
-    List<MemoryOsoba> memoryParticipants = [];
-
-    for(Participant p in participants) {
-      int? insCompFK = p.insuranceCompanyFK;
-      InsuranceCompany? ic;
-      String? insCompName;
-
-      if(insCompFK != null) {
-        ic = await _driftDatabase.getInsuranceCompanyByID(insCompFK);
-        insCompName = ic?.name;
-      }
-
-      memoryParticipants.add(
-        MemoryOsoba.fullNamed(id: p.id, jmeno: p.firstName, prijmeni: p.lastName,
-        pohlavi: p.gender, adresa: p.address, cisloPojisteni: p.birthNumber,
-        datumNarozeni: p.birthDate, telefonRodice: p.parentPhoneNumber,
-        zpusobilost: p.eligibleConfirmation, bezinfekcnost: p.nonInfectiousConfirmation,
-        wasPrinted: p.wasPrinted, zdravotniPojistovna: insCompName,
-            jmenoRodice: p.parentName, emailRodice: p.parentEmail,
-            poznamka: p.note, oddil: p.campUnit, prisel: p.arrivedConfirmation,
-          potvrzeniPath: p.eligibleConfirmationPath,
-
-
-        )
-      );
-    }
-
-    return memoryParticipants;
+    //return memoryParticipants;
+    return Future.wait(participants.map(_toMemoryOsoba).toList()); //může být asi i bez wait
   }
 
   @override
@@ -145,32 +149,34 @@ class DriftDatabaseConnector implements DatabaseInterface {
   @override
   Future<List<MemoryZaznam>> getRecordsByParticipantID(int id) async {
     List<Record> records = await _driftDatabase.getRecordsByParticipantID(id);
-    List<MemoryZaznam> memoryRecords = [];
+    // now a function
+    // List<MemoryZaznam> memoryRecords = [];
+    //
+    // String description = "";
+    //
+    // for(Record r in records) {
+    //   if(r.treatment != null) {
+    //     description = '${r.description}\n${r.treatment}';
+    //   }
+    //
+    //   memoryRecords.add(MemoryZaznam.fullNamed(
+    //       idZaznamu: r.id,
+    //       casZaznamu: r.dateAndTime,
+    //       nazev: r.title,
+    //       popis: description,
+    //       isPrinted: r.wasPrinted,
+    //       idAuthor: r.paramedicFK,
+    //       idPacient: r.participantFK,
+    //       poznamka: r.note,
+    //       teplota: r.temperature,
+    //       obrazekPath: r.picturePath
+    //
+    //
+    //   ));
+    // }
 
-    String description = "";
-
-    for(Record r in records) {
-      if(r.treatment != null) {
-        description = '${r.description}\n${r.treatment}';
-      }
-
-      memoryRecords.add(MemoryZaznam.fullNamed(
-          idZaznamu: r.id,
-          casZaznamu: r.dateAndTime,
-          nazev: r.title,
-          popis: description,
-          isPrinted: r.wasPrinted,
-          idAuthor: r.paramedicFK,
-          idPacient: r.participantFK,
-          poznamka: r.note,
-          teplota: r.temperature,
-          obrazekPath: r.picturePath
-
-
-      ));
-    }
-
-    return memoryRecords;
+    //return memoryRecords;
+    return  records.map(_toMemoryZaznam).toList();
   }
 
   @override
@@ -192,32 +198,37 @@ class DriftDatabaseConnector implements DatabaseInterface {
   @override
   Future<List<MemoryOsoba>> getParticipantsByCurrentEvent() async {
     int? currentEvent = await _driftDatabase.getCurrentActionID();
-    List<MemoryOsoba> memoryParticipants = [];
 
-    if(currentEvent != null) {
-      memoryParticipants = await getParticipantsByEvent(currentEvent);
-    }
-
-    return memoryParticipants;
-  }
-
+    // now a function
+  //   List<MemoryOsoba> memoryParticipants = [];
+  //
+  //   if(currentEvent != null) {
+  //     memoryParticipants = await getParticipantsByEvent(currentEvent);
+  //   }
+  //
+    // return memoryActions;
+    return currentEvent != null ? await getParticipantsByEvent(currentEvent) : [];
+}
+  //
   @override
   Future<List<MemoryAction>> getAllZzaActions() async {
     List<ZzaAction> actions = await _driftDatabase.getAllZzaActions();
-    List<MemoryAction> memoryActions = [];
+  // now a function
+    // List<MemoryAction> memoryActions = [];
+    //
+    // for(ZzaAction a in actions) {
+    //   memoryActions.add(MemoryAction.fullNamed(
+    //       idAkce: a.id,
+    //       nadpis: a.actionTitle,
+    //       popis: a.actionDescription,
+    //       odkdy: a.dateFrom,
+    //       dokdy: a.dateTo,
+    //       domovskyAdresarPath: a.homeDirectory,
+    //   ));
+    // }
+    return actions.map(_toMemoryAction).toList();
+ //   return memoryActions;
 
-    for(ZzaAction a in actions) {
-      memoryActions.add(MemoryAction.fullNamed(
-          idAkce: a.id,
-          nadpis: a.actionTitle,
-          popis: a.actionDescription,
-          odkdy: a.dateFrom,
-          dokdy: a.dateTo,
-          domovskyAdresarPath: a.homeDirectory,
-      ));
-    }
-
-    return memoryActions;
   }
 
   @override
@@ -264,16 +275,23 @@ class DriftDatabaseConnector implements DatabaseInterface {
     return null;
   }
   final zzaAction = await _driftDatabase.getZzaActionByID(currentActionId);
-  if (zzaAction == null) return null;
-  return MemoryAction.fullNamed(
-    idAkce: zzaAction.id,
-    nadpis: zzaAction.actionTitle,
-    popis: zzaAction.actionDescription,
-    odkdy: zzaAction.dateFrom,
-    dokdy: zzaAction.dateTo,
-    domovskyAdresarPath: zzaAction.homeDirectory,
-  );
-}
+  if (zzaAction == null) {
+    return null;
+  }
+    // now a function
+    // return MemoryAction.fullNamed(
+    //   idAkce: zzaAction.id,
+    //   nadpis: zzaAction.actionTitle,
+    //   popis: zzaAction.actionDescription,
+    //   odkdy: zzaAction.dateFrom,
+    //   dokdy: zzaAction.dateTo,
+    //   domovskyAdresarPath: zzaAction.homeDirectory,
+    // );
+    // return memoryActions;
+  return _toMemoryAction(zzaAction) ;
+  }
+
+
 
   @override
   Future<bool> setNoteValue(int personId, String value) {
@@ -284,17 +302,124 @@ class DriftDatabaseConnector implements DatabaseInterface {
 @override
 Future<int> updateParticipant(int? idOverride, MemoryOsoba osoba) async {
   final id = idOverride ?? osoba.id;
-
-// return _driftDatabase.updateParticipant(id, Parti osoba);
+final c = await _toParticipantsCompanion(osoba);
+ return _driftDatabase.updateParticipant(id,  c);
   throw UnimplementedError();
 }
 
 @override
 Future<int> updateEvent(int? idOverride, MemoryAction action) async {
   final id = idOverride ?? action.idAkce;
+  final c = _toZzaActionsCompanion(action);
 
-//return _driftDatabase.updateEvent(id, action);
+return _driftDatabase.updateEvent(id!, c);
   throw UnimplementedError();
 }
+ /// Translators from MemoryOsoba, MemoryZaznam, MemoryAction to Drift Companions
+  /// TODO: rewrite to use MemoryX directly as db companion (
+
+  Future<ParticipantsCompanion> _toParticipantsCompanion(MemoryOsoba osoba) async {
+    return ParticipantsCompanion(
+      firstName: Value(osoba.jmeno),
+      lastName: Value(osoba.prijmeni),
+      gender: Value(osoba.pohlavi),
+      address: Value(osoba.adresa),
+      birthNumber: Value(osoba.cisloPojisteni),
+      birthDate: Value(osoba.datumNarozeni),
+      parentPhoneNumber: Value(osoba.telefonRodice),
+      eligibleConfirmation: Value(osoba.zpusobilost!),
+      nonInfectiousConfirmation: Value(osoba.bezinfekcnost!),
+        insuranceCompanyFK: Value(await _driftDatabase.getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna)),
+    zzaActionFK: Value((await _driftDatabase.getCurrentActionID())!),
+      parentName: Value(osoba.jmenoRodice),
+      parentEmail: Value(osoba.emailRodice),
+      campUnit: Value(osoba.oddil),
+      note: Value(osoba.poznamka),
+      arrivedConfirmation: Value(osoba.prisel),
+      eligibleConfirmationPath: Value(osoba.potvrzeniPath),
+    );
+  }
+
+  RecordsCompanion _toRecordsCompanion(MemoryZaznam zaznam) {
+    return RecordsCompanion(
+      dateAndTime: Value(DateTime.now()),
+      title: Value(zaznam.nazev!),
+      description: Value(zaznam.popis!),
+      treatment: const Value(""),
+      paramedicFK: Value(zaznam.idAuthor),
+      participantFK: Value(zaznam.idPacient),
+      note: Value(zaznam.poznamka),
+      picturePath: Value(zaznam.obrazekPath),
+    );
+  }
+
+  ZzaActionsCompanion _toZzaActionsCompanion(MemoryAction action) {
+    return ZzaActionsCompanion(
+      actionTitle: Value(action.nadpis),
+      actionDescription: Value(action.popis),
+      dateFrom: Value(action.odkdy),
+      dateTo: Value(action.dokdy),
+      homeDirectory: Value(action.domovskyAdresarPath),
+    );
+  }
+
+  Future<MemoryOsoba> _toMemoryOsoba(Participant p) async {
+    int? insCompFK = p.insuranceCompanyFK;
+    InsuranceCompany? ic;
+    String? insCompName;
+
+    if (insCompFK != null) {
+      ic = await _driftDatabase.getInsuranceCompanyByID(insCompFK);
+      insCompName = ic?.name;
+    }
+
+    return MemoryOsoba.fullNamed(
+      id: p.id,
+      jmeno: p.firstName,
+      prijmeni: p.lastName,
+      pohlavi: p.gender,
+      adresa: p.address,
+      cisloPojisteni: p.birthNumber,
+      datumNarozeni: p.birthDate,
+      telefonRodice: p.parentPhoneNumber,
+      zpusobilost: p.eligibleConfirmation,
+      bezinfekcnost: p.nonInfectiousConfirmation,
+      wasPrinted: p.wasPrinted,
+      zdravotniPojistovna: insCompName,
+      jmenoRodice: p.parentName,
+      emailRodice: p.parentEmail,
+      poznamka: p.note,
+      oddil: p.campUnit,
+      prisel: p.arrivedConfirmation,
+      potvrzeniPath: p.eligibleConfirmationPath,
+    );
+  }
+
+  MemoryZaznam _toMemoryZaznam(Record r) {
+    String description = r.treatment != null ? '${r.description}\n${r.treatment}' : r.description;
+    return MemoryZaznam.fullNamed(
+      idZaznamu: r.id,
+      casZaznamu: r.dateAndTime,
+      nazev: r.title,
+      popis: description,
+      isPrinted: r.wasPrinted,
+      idAuthor: r.paramedicFK,
+      idPacient: r.participantFK,
+      poznamka: r.note,
+      teplota: r.temperature,
+      obrazekPath: r.picturePath,
+    );
+  }
+
+  MemoryAction _toMemoryAction(ZzaAction a) {
+    return MemoryAction.fullNamed(
+      idAkce: a.id,
+      nadpis: a.actionTitle,
+      popis: a.actionDescription,
+      odkdy: a.dateFrom,
+      dokdy: a.dateTo,
+      domovskyAdresarPath: a.homeDirectory,
+    );
+  }
 
 }
