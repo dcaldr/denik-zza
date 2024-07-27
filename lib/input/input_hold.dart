@@ -80,7 +80,8 @@ abstract class InputHold{
  /// For validating FormFields  in Flutter
   ///
   ///
-String? validator() {
+String? validator(String? input) {
+  addInput(input);
     _converter();
   if (status == ParseStatus.ok) {
     return null;
@@ -162,7 +163,8 @@ class CisloPojisteniHold extends InputHold{
   ///
   ///
   @override
-  validator(){
+  validator(String? input) {
+    addInput(input);
     _converter();
     if (status == ParseStatus.ok) {
       return null;
