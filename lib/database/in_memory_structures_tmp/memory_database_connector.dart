@@ -173,4 +173,22 @@ Future<int?> getCurrentEventID() {
     // TODO: implement getCurrentAction
     throw UnimplementedError();
   }
+
+  @override
+  Future<bool> setNoteValue(int personId, String value) {
+    // TODO: implement setNoteValue
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<int> updateEvent(int? idOverride, MemoryAction action) {
+    // TODO: implement updateEvent
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<int> updateParticipant(int? idOverride, MemoryOsoba osoba) {
+    // TODO: implement updateParticipant
+    throw UnimplementedError();
+  }
 }

@@ -121,4 +121,30 @@ bool setRecordPrintedValue(int id, bool value);
 ///
 /// Takes [id] of target participant and [value] as a target bool value.
 bool setParticipantPrintedValue(int id, bool value);
+
+//note: přidáno
+
+  /// Completely sets a new value for "poznámka" field to given [personId].
+  ///
+  /// This method takes [personId] as a parameter, which must be already present
+  ///  returns true if successful
+  Future<bool> setNoteValue(int personId, String value);
+// =============================UPDATES============================== //
+
+  /// Updates a [MemoryOsoba] instance in the database, with necessary logic
+  ///
+  /// If the [idOverride] is given it will use this value instead of the [MemoryOsoba.id] value
+  /// Updates [MemoryOsoba] instance with new values and also unsets the wasPrinted flag
+  /// Edits targeting only [MemoryOsoba.poznamka] should be done with [setNoteValue] method instead
+Future<int> updateParticipant(int? idOverride, MemoryOsoba osoba);
+
+  /// Updates a [MemoryZaznam] instance in the database, with necessary logic
+  ///
+  /// If the [idOverride] is given it will use this value instead of the [MemoryZaznam.id] value
+Future<int> updateEvent(int? idOverride, MemoryAction action);
+
+
+
+
+
 }

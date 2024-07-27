@@ -274,4 +274,27 @@ class DriftDatabaseConnector implements DatabaseInterface {
     domovskyAdresarPath: zzaAction.homeDirectory,
   );
 }
+
+  @override
+  Future<bool> setNoteValue(int personId, String value) {
+    return _driftDatabase.setNoteValue(personId, value);
+
+  }
+
+@override
+Future<int> updateParticipant(int? idOverride, MemoryOsoba osoba) async {
+  final id = idOverride ?? osoba.id;
+
+// return _driftDatabase.updateParticipant(id, Parti osoba);
+  throw UnimplementedError();
+}
+
+@override
+Future<int> updateEvent(int? idOverride, MemoryAction action) async {
+  final id = idOverride ?? action.idAkce;
+
+//return _driftDatabase.updateEvent(id, action);
+  throw UnimplementedError();
+}
+
 }

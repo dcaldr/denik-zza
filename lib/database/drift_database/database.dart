@@ -1,3 +1,5 @@
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_akce.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/input/file_manager.dart';
 import 'package:drift/drift.dart';
 
@@ -187,6 +189,20 @@ class AppDatabase extends _$AppDatabase {
     return (update(participants)..where((r) =>
         r.id.equals(id))).write(ParticipantsCompanion(wasPrinted: Value(value)));
   }
+
+  Future<bool> setNoteValue(int personId, String value) { //FIXME: 100% make tests for this
+    Future<bool> answer = (update(participants)..where((p) =>
+    p.id.equals(personId))).replace(ParticipantsCompanion(note: Value(value)));
+    return answer;
+  }
+
+  Future<int> updateParticipant(int id, MemoryOsoba osoba) {
+    return (update(participants)..where((p) =>
+    p.id.equals(id))).write(ParticipantsCompanion(
+      osoba.toCompanion())
+  }
+
+  Future<int> updateEvent(int? id, MemoryAction action) {}
 
   //==================== DELETES ===============================================
 }
