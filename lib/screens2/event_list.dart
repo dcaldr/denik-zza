@@ -7,10 +7,28 @@ import '../../database/database_interface.dart';
 import '../../database/database_wrapper.dart';
 import '../../database/in_memory_structures_tmp/memory_akce.dart';
 
-class EventList extends StatelessWidget {
+class EventList extends StatefulWidget {
   final DatabaseInterface database = DatabaseWrapper.getDatabase();
 
   EventList({super.key});
+
+  @override
+  _EventListState createState() => _EventListState();
+}
+
+class _EventListState extends State<EventList> {
+  int? currentEventID;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCurrentEventID();
+  }
+
+  void _fetchCurrentEventID() async {
+    currentEventID = await widget.database.getCurrentEventID();
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +54,7 @@ class EventList extends StatelessWidget {
 
   Widget _buildActionList() {
     return FutureBuilder<List<MemoryAction>>(
-      future: database.getAllZzaActions(),
+      future: widget.database.getAllZzaActions(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const CircularProgressIndicator();
@@ -52,34 +70,46 @@ class EventList extends StatelessWidget {
     );
   }
 
-
-
-Widget _buildActionItem(BuildContext context, MemoryAction action) {
-  final dateFormat = DateFormat('dd.MM.yyyy', 'cs_CZ');
-  return FutureBuilder<int>(
-    future: database.getParticipantCountInAction(action.idAkce ?? -1),
-    builder: (context, participantSnapshot) {
-      if (participantSnapshot.connectionState == ConnectionState.waiting) {
-        return const CircularProgressIndicator();
-      } else if (participantSnapshot.hasError) {
-        return Text('Error: ${participantSnapshot.error}');
-      } else {
-        return ListTile(
-          title: Text(action.nadpis),
-          subtitle: Text('${dateFormat.format(action.odkdy)} - ${dateFormat.format(action.dokdy)}'),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(participantSnapshot.data.toString()),
-              const Icon(Icons.people),
-            ],
-          ),
-          onTap: () => _navigateToActionDetail(context, action),
-        );
-      }
-    },
-  );
-}
+  Widget _buildActionItem(BuildContext context, MemoryAction action) {
+    final dateFormat = DateFormat('dd.MM.yyyy', 'cs_CZ');
+    return FutureBuilder<int>(
+      future: widget.database.getParticipantCountInAction(action.idAkce ?? -1),
+      builder: (context, participantSnapshot) {
+        if (participantSnapshot.connectionState == ConnectionState.waiting) {
+          return const CircularProgressIndicator();
+        } else if (participantSnapshot.hasError) {
+          return Text('Error: ${participantSnapshot.error}');
+        } else {
+          return ListTile(
+            title: Text(action.nadpis),
+            subtitle: Text('${dateFormat.format(action.odkdy)} - ${dateFormat.format(action.dokdy)}'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(participantSnapshot.data.toString()),
+                const Icon(Icons.people),
+                IconButton(
+                  icon: Icon(action.idAkce == currentEventID ? Icons.push_pin : Icons.push_pin_outlined),
+                  onPressed: () {
+                    setState(() {
+                      widget.database.updateCurrentEvent(action.idAkce);
+                      _fetchCurrentEventID();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar( //todo: prevent queueing of this type of snackbar messages
+                          content: Text('Vybraná akce změněna'),
+                        ),
+                      );
+                    });
+                  },
+                ),
+              ],
+            ),
+            onTap: () => _navigateToActionDetail(context, action),
+          );
+        }
+      },
+    );
+  }
 
   void _navigateToActionDetail(BuildContext context, MemoryAction action) {
     Navigator.push(
