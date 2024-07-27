@@ -26,8 +26,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-     // home: const EventRegistrationForm(),
-      home: const ParticipantRegistrationForm(),
+      home: const EventRegistrationForm(),
+      //home: const ParticipantRegistrationForm(),
       locale: const Locale('cs', 'CZ'),
       supportedLocales: const [
         Locale('cs', 'CZ'),
