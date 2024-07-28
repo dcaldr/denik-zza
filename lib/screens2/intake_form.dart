@@ -83,12 +83,12 @@ class TwoColumnRow extends StatelessWidget {
             ],
           ),
         ),
-        Flexible(
+        const Flexible(
           flex: 1,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Second Column'),
+              Text('Second Column'),
               Flexible(
                 fit: FlexFit.loose,
                 child: FileViewerLogic(),
