@@ -7,7 +7,9 @@ import '../database/in_memory_structures_tmp/memory_akce.dart';
 import 'event_list.dart';
 
 class EventRegistrationForm extends StatefulWidget {
-  const EventRegistrationForm({super.key});
+  final MemoryAction? action;
+
+  const EventRegistrationForm({super.key, this.action});
 
   @override
   _EventRegistrationFormState createState() => _EventRegistrationFormState();
@@ -23,6 +25,17 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.action != null) {
+      _controllers['nadpis']!.text = widget.action!.nadpis;
+      _controllers['popis']!.text = widget.action!.popis!;
+      _controllers['odkdy']!.text = DateFormat('dd.MM.yyyy').format(widget.action!.odkdy);
+      _controllers['dokdy']!.text = DateFormat('dd.MM.yyyy').format(widget.action!.dokdy);
+    }
+  }
+
+  @override
   void dispose() {
     _controllers.forEach((_, controller) => controller.dispose());
     super.dispose();
@@ -32,22 +45,33 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
     if (_formKey.currentState!.validate()) {
       final dateFormat = DateFormat('dd.MM.yyyy');
       final newAction = MemoryAction(
-        idAkce: null,
+        idAkce: widget.action?.idAkce,
         nadpis: _controllers['nadpis']!.text,
         popis: _controllers['popis']!.text,
         odkdy: dateFormat.parseStrict(_controllers['odkdy']!.text),
         dokdy: dateFormat.parseStrict(_controllers['dokdy']!.text),
-        domovskyAdresarPath: null,
+        domovskyAdresarPath: widget.action?.domovskyAdresarPath,
       );
 
-      DatabaseWrapper.getDatabase().addEvent(newAction).then((success) {
-        final message = success ? 'Akce úspěšně přidána' : 'Přidání Akce se nezdařilo';
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      if (widget.action == null) {
+        DatabaseWrapper.getDatabase().addEvent(newAction).then((success) {
+          final message = success ? 'Akce úspěšně přidána' : 'Přidání Akce se nezdařilo';
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 
-        if (success) {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => EventList()));
-        }
-      });
+          if (success) {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => EventList()));
+          }
+        });
+      } else {
+        DatabaseWrapper.getDatabase().updateEvent(newAction.idAkce, newAction).then((updateResult) {
+          final message = updateResult > 0 ? 'Akce úspěšně aktualizována' : 'Aktualizace Akce se nezdařila';
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+
+          if (updateResult > 0) {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => EventList()));
+          }
+        });
+      }
     }
   }
 
@@ -74,7 +98,7 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
                 ],
               ),
               const SizedBox(height: 20),
-              ElevatedButton(onPressed: _submitForm, child: const Text('Odeslat')),
+              ElevatedButton(onPressed: _submitForm, child: Text(widget.action == null ? 'Odeslat' : 'Aktualizovat')),
             ],
           ),
         ),
