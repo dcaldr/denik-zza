@@ -128,7 +128,6 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
       RodneCislo rc = RodneCislo(inText);
       DateTime datumNarozeni = rc.getDatumNarozeni();
       int pohlavi = rc.getPohlavi();
-      //TODO: add animation for highlighting the autofilled fields !!
       if (_controllers['datumNarozeni']!.text.isEmpty) {
         _controllers['datumNarozeni']!.text = DateFormat('dd.MM.yyyy').format(datumNarozeni);
       }
@@ -161,19 +160,15 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Registrace Účastníka')),
-      drawer: const AppDrawer(),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _buildGridView(),
-              _buildTextField('poznamka', 'Poznámka', 'Tento text se nebude tisknout', maxLines: 3),
-              ElevatedButton(onPressed: _submitForm, child: Text(widget.osoba == null ? 'Přidat' : 'Aktualizovat')),
-            ],
-          ),
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            _buildGridView(),
+            _buildTextField('poznamka', 'Poznámka', 'Tento text se nebude tisknout', maxLines: 3),
+            ElevatedButton(onPressed: _submitForm, child: Text(widget.osoba == null ? 'Přidat' : 'Aktualizovat')),
+          ],
         ),
       ),
     );
@@ -211,7 +206,7 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
   Widget _buildTextField(String key, String labelText, String? validatorText, {int maxLines = 1}) {
     return TextFormField(
       controller: _controllers[key],
-      decoration: InputDecoration(labelText: labelText, border: maxLines > 1 ? OutlineInputBorder() : null),
+      decoration: InputDecoration(labelText: labelText, border: maxLines > 1 ? const OutlineInputBorder() : null),
       validator: (value) {
         if (validatorText != null && (value == null || value.isEmpty)) {
           return validatorText;
@@ -219,6 +214,19 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
         return _validators[key]?.validator(value);
       },
       maxLines: maxLines,
+    );
+  }
+}
+
+class ParticipantRegistrationPage extends StatelessWidget {
+  const ParticipantRegistrationPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Registrace Účastníka')),
+      drawer: const AppDrawer(),
+      body: const ParticipantRegistrationForm(),
     );
   }
 }

@@ -36,7 +36,7 @@ class AppDrawer extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const ParticipantRegistrationForm()),
+                MaterialPageRoute(builder: (context) => const ParticipantRegistrationPage()),
               );
             },
           ),
