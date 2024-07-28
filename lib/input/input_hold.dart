@@ -210,6 +210,10 @@ class EmailHold extends InputHold{
 
   @override
   _converter() {
+    if(input.isEmpty){
+      status = ParseStatus.ok;
+      return input;
+    }
     if(input.contains("@")){
       status = ParseStatus.ok;
       return input;

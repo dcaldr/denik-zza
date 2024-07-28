@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 
+import '../database/database_wrapper.dart';
 import '../input/input_hold.dart';
 import '../input/rodne_cislo.dart';
 
 class ParticipantRegistrationForm extends StatefulWidget {
-  const ParticipantRegistrationForm({Key? key}) : super(key: key);
+  final MemoryOsoba? osoba;
+
+  const ParticipantRegistrationForm({super.key, this.osoba});
 
   @override
   _ParticipantRegistrationFormState createState() =>
@@ -47,13 +50,79 @@ class _ParticipantRegistrationFormState
   };
 
   @override
-  void initState() {
-    super.initState();
-    _controllers['cisloPojisteni']!.addListener(() {
-      setState(() {
-        guessAndFillFields(_controllers['cisloPojisteni']!.text);
-      });
+void initState() {
+  super.initState();
+  if (widget.osoba != null) {
+    _controllers['jmeno']!.text = widget.osoba!.jmeno;
+    _controllers['prijmeni']!.text = widget.osoba!.prijmeni;
+    _controllers['cisloPojisteni']!.text = widget.osoba!.cisloPojisteni!;
+    if (widget.osoba!.datumNarozeni != null) {
+      _controllers['datumNarozeni']!.text = DateFormat('dd.MM.yyyy').format(widget.osoba!.datumNarozeni!);
+    }
+    _controllers['pohlavi']!.text = widget.osoba!.pohlavi.toString();
+    _controllers['zdravotniPojistovna']!.text = widget.osoba!.zdravotniPojistovna!;
+    _controllers['adresa']!.text = widget.osoba!.adresa!;
+    _controllers['jmenoRodice']!.text = widget.osoba!.jmenoRodice!;
+    _controllers['emailRodice']!.text = widget.osoba!.emailRodice!;
+    _controllers['telefonRodice']!.text = widget.osoba!.telefonRodice!;
+    _controllers['poznamka']!.text = widget.osoba!.poznamka!;
+  }
+  _controllers['cisloPojisteni']!.addListener(() {
+    setState(() {
+      guessAndFillFields(_controllers['cisloPojisteni']!.text);
     });
+  });
+}
+
+  @override
+  void dispose() {
+    _controllers.forEach((_, controller) => controller.dispose());
+    super.dispose();
+  }
+
+  void _submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      MemoryOsoba osoba = MemoryOsoba.fullNamed(
+        id: widget.osoba?.id,
+        jmeno: _controllers['jmeno']!.text,
+        prijmeni: _controllers['prijmeni']!.text,
+        datumNarozeni: DateFormat('dd.MM.yyyy').parse(_controllers['datumNarozeni']!.text),
+        adresa: _controllers['adresa']!.text,
+        cisloPojisteni: _controllers['cisloPojisteni']!.text,
+        jmenoRodice: _controllers['jmenoRodice']!.text,
+        telefonRodice: _controllers['telefonRodice']!.text,
+        emailRodice: _controllers['emailRodice']!.text,
+        zdravotniPojistovna: _controllers['zdravotniPojistovna']!.text,
+        poznamka: _controllers['poznamka']!.text,
+        pohlavi: int.parse(_controllers['pohlavi']!.text),
+        zpusobilost: false,
+        bezinfekcnost: false,
+        wasPrinted: false,
+        oddil: '',
+        prisel: false,
+        potvrzeniPath: '',
+      );
+
+      if (widget.osoba == null) {
+        bool insertSuccess = await DatabaseWrapper.getDatabase().addOsoba(osoba);
+        if (!insertSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Insert failed')),
+          );
+        } else {
+          _showPersonDetails(osoba);
+        }
+      } else {
+        int updateResult = await DatabaseWrapper.getDatabase().updateParticipant(osoba.id, osoba);
+        if (updateResult == 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Update failed')),
+          );
+        } else {
+          _showPersonDetails(osoba);
+        }
+      }
+    }
   }
 
   void guessAndFillFields(String inText) {
@@ -173,7 +242,9 @@ Widget build(BuildContext context) {
                   controller: _controllers['adresa'],
                   decoration: const InputDecoration(labelText: 'Adresa'),
                   validator: (value) {
-
+                    if (value == null || value.isEmpty) {
+                      return 'Adresa je povinné pole';
+                    }
                     return _validators['adresa']?.validator(value);
                   },
                 ),
@@ -208,36 +279,10 @@ Widget build(BuildContext context) {
                   hintText: 'Tento text se nebude tisknout'),
               maxLines: 3,
             ),
-            ElevatedButton(
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  MemoryOsoba osoba = MemoryOsoba.fullNamed(
-                    id: null,
-                    jmeno: _controllers['jmeno']!.text,
-                    prijmeni: _controllers['prijmeni']!.text,
-                    datumNarozeni: DateFormat('dd.MM.yyyy')
-                        .parse(_controllers['datumNarozeni']!.text),
-                    adresa: _controllers['adresa']!.text,
-                    cisloPojisteni: _controllers['cisloPojisteni']!.text,
-                    jmenoRodice: _controllers['jmenoRodice']!.text,
-                    telefonRodice: _controllers['telefonRodice']!.text,
-                    emailRodice: _controllers['emailRodice']!.text,
-                    zdravotniPojistovna:
-                        _controllers['zdravotniPojistovna']!.text,
-                    poznamka: _controllers['poznamka']!.text,
-                    pohlavi: int.parse(_controllers['pohlavi']!.text),
-                    zpusobilost: false,
-                    bezinfekcnost: false,
-                    wasPrinted: false,
-                    oddil: '',
-                    prisel: false,
-                    potvrzeniPath: '',
-                  );
-                  _showPersonDetails(osoba);
-                }
-              },
-              child: const Text('Odeslat'),
-            ),
+        ElevatedButton(
+          onPressed: _submitForm,
+          child: Text(widget.osoba == null ? 'Přidat' : 'Aktualizovat'),
+        ),
           ],
         ),
       ),
