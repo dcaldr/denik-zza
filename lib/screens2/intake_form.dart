@@ -15,7 +15,7 @@ class IntakeForm extends StatelessWidget {
       ),
       body: const Center(
         child: SizedBox(
-          height: double.infinity,
+        //  height: double.infinity,
           child: LayoutStyle(),
         ),
       ),
@@ -27,20 +27,39 @@ class LayoutStyle extends StatelessWidget {
   const LayoutStyle({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          children: [
-            FirstRow(),
-            TwoColumnRow(),
-          ],
-        ),
-        SecondRow(),
-      ],
-    );
-  }
+Widget build(BuildContext context) {
+    //todo:SecondRow doesnt react to vertical resize of the screen
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      return Stack(
+        children: [
+          SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Column(
+                children: [
+                  const Column(
+                    children: [
+                      FirstRow(),
+                      TwoColumnRow(),
+                    ],
+                  ),
+                  SizedBox(height: constraints.maxHeight), // Spacer to push SecondRow to the bottom
+                ],
+              ),
+            ),
+          ),
+          const Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: SecondRow(),
+          ),
+        ],
+      );
+    },
+  );
+}
 }
 
 class FirstRow extends StatelessWidget {
