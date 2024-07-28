@@ -32,36 +32,35 @@ class _PersonAutocompleteState extends State<PersonAutocomplete> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        TextField(
-          controller: _controller,
+    return Autocomplete<MemoryOsoba>(
+      displayStringForOption: _displayStringForOption,
+      optionsBuilder: (TextEditingValue textEditingValue) {
+        if (textEditingValue.text.isEmpty) {
+          return const Iterable<MemoryOsoba>.empty();
+        }
+        return _persons.where((MemoryOsoba person) {
+          final lowerQuery = textEditingValue.text.toLowerCase();
+          return person.jmeno.toLowerCase().contains(lowerQuery) ||
+                 person.prijmeni.toLowerCase().contains(lowerQuery) ||
+                 (person.cisloPojisteni?.toLowerCase().contains(lowerQuery) ?? false);
+        });
+      },
+      onSelected: (MemoryOsoba person) {
+        widget.onPersonSelected(person);
+      },
+      fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+        return TextField(
+          controller: textEditingController,
+          focusNode: focusNode,
           decoration: InputDecoration(
-            prefixIcon: Icon(Icons.search),
+            prefixIcon: const Icon(Icons.search),
             hintText: 'Search for a person',
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8.0),
             ),
           ),
-        ),
-        Autocomplete<MemoryOsoba>(
-          displayStringForOption: _displayStringForOption,
-          optionsBuilder: (TextEditingValue textEditingValue) {
-            if (textEditingValue.text.isEmpty) {
-              return const Iterable<MemoryOsoba>.empty();
-            }
-            return _persons.where((MemoryOsoba person) {
-              final lowerQuery = textEditingValue.text.toLowerCase();
-              return person.jmeno.toLowerCase().contains(lowerQuery) ||
-                     person.prijmeni.toLowerCase().contains(lowerQuery) ||
-                     (person.cisloPojisteni?.toLowerCase().contains(lowerQuery) ?? false);
-            });
-          },
-          onSelected: (MemoryOsoba person) {
-            widget.onPersonSelected(person);
-          },
-        ),
-      ],
+        );
+      },
     );
   }
 }
