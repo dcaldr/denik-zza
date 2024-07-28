@@ -1,3 +1,4 @@
+import 'package:denik_zza/screens2/widgets/file_viewer_logic.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
@@ -68,7 +69,7 @@ class TwoColumnRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return  Row(
+    return Row(
       children: [
         Flexible(
           flex: 1,
@@ -82,11 +83,16 @@ class TwoColumnRow extends StatelessWidget {
             ],
           ),
         ),
-        const Flexible(
+        Flexible(
           flex: 1,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Second Column'),
+              const Text('Second Column'),
+              Flexible(
+                fit: FlexFit.loose,
+                child: FileViewerLogic(),
+              ),
             ],
           ),
         ),
