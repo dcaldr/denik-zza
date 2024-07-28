@@ -15,6 +15,7 @@ class PersonAutocomplete extends StatefulWidget {
 class _PersonAutocompleteState extends State<PersonAutocomplete> {
   final DatabaseInterface database = DatabaseWrapper.getDatabase();
   List<MemoryOsoba> _persons = [];
+  final TextEditingController _controller = TextEditingController();
 
   @override
   void initState() {
@@ -27,56 +28,40 @@ class _PersonAutocompleteState extends State<PersonAutocomplete> {
     setState(() {});
   }
 
+  static String _displayStringForOption(MemoryOsoba option) => '${option.jmeno} ${option.prijmeni}';
+
   @override
   Widget build(BuildContext context) {
-    return Autocomplete<MemoryOsoba>(
-      optionsBuilder: (TextEditingValue textEditingValue) {
-        if (textEditingValue.text.isEmpty) {
-          return const Iterable<MemoryOsoba>.empty();
-        }
-        return _persons.where((MemoryOsoba person) {
-          final lowerQuery = textEditingValue.text.toLowerCase();
-          return person.jmeno.toLowerCase().contains(lowerQuery) ||
-                 person.prijmeni.toLowerCase().contains(lowerQuery) ||
-                 (person.cisloPojisteni?.toLowerCase().contains(lowerQuery) ?? false);
-        });
-      },
-      displayStringForOption: (MemoryOsoba person) => '${person.jmeno} ${person.prijmeni}',
-      onSelected: (MemoryOsoba person) {
-        widget.onPersonSelected(person);
-      },
-      fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
-        return TextField(
-          controller: textEditingController,
-          focusNode: focusNode,
-          decoration: const InputDecoration(
-            labelText: 'najít osobu',
-          ),
-        );
-      },
-      optionsViewBuilder: (BuildContext context, AutocompleteOnSelected<MemoryOsoba> onSelected, Iterable<MemoryOsoba> options) {
-        return Align(
-          alignment: Alignment.topLeft,
-          child: Material(
-            child: Container(
-              height: 200,
-              child: ListView.builder(
-                itemCount: options.length,
-                itemBuilder: (BuildContext context, int index) {
-                  final MemoryOsoba option = options.elementAt(index);
-                  return ListTile(
-                    title: Text('${option.jmeno} ${option.prijmeni}'),
-                    subtitle: Text('Číslo pojištění: ${option.cisloPojisteni ?? 'N/A'}'),
-                    onTap: () {
-                      onSelected(option);
-                    },
-                  );
-                },
-              ),
+    return Column(
+      children: [
+        TextField(
+          controller: _controller,
+          decoration: InputDecoration(
+            prefixIcon: Icon(Icons.search),
+            hintText: 'Search for a person',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8.0),
             ),
           ),
-        );
-      },
+        ),
+        Autocomplete<MemoryOsoba>(
+          displayStringForOption: _displayStringForOption,
+          optionsBuilder: (TextEditingValue textEditingValue) {
+            if (textEditingValue.text.isEmpty) {
+              return const Iterable<MemoryOsoba>.empty();
+            }
+            return _persons.where((MemoryOsoba person) {
+              final lowerQuery = textEditingValue.text.toLowerCase();
+              return person.jmeno.toLowerCase().contains(lowerQuery) ||
+                     person.prijmeni.toLowerCase().contains(lowerQuery) ||
+                     (person.cisloPojisteni?.toLowerCase().contains(lowerQuery) ?? false);
+            });
+          },
+          onSelected: (MemoryOsoba person) {
+            widget.onPersonSelected(person);
+          },
+        ),
+      ],
     );
   }
 }
