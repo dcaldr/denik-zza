@@ -37,9 +37,9 @@ class _FileUploaderState extends State<FileUploader> {
               child: const Text('nahrát soubor'),
             ),
             if (_filePath != null)
-              Flexible(
+              const Flexible(
                 fit: FlexFit.loose,
-                child: FileViewerLogic(filePath: _filePath),
+                child: FileViewerLogic(),
               ),
           ],
         ),

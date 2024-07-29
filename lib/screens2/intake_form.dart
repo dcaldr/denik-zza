@@ -1,4 +1,5 @@
 import 'package:denik_zza/screens2/widgets/file_viewer_logic.dart';
+import 'package:denik_zza/screens2/widgets/file_viewer_screen_widget.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
@@ -15,7 +16,6 @@ class IntakeForm extends StatelessWidget {
       ),
       body: const Center(
         child: SizedBox(
-        //  height: double.infinity,
           child: LayoutStyle(),
         ),
       ),
@@ -27,39 +27,38 @@ class LayoutStyle extends StatelessWidget {
   const LayoutStyle({super.key});
 
   @override
-Widget build(BuildContext context) {
-    //todo:SecondRow doesnt react to vertical resize of the screen
-  return LayoutBuilder(
-    builder: (context, constraints) {
-      return Stack(
-        children: [
-          SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Column(
-                children: [
-                  const Column(
-                    children: [
-                      FirstRow(),
-                      TwoColumnRow(),
-                    ],
-                  ),
-                  SizedBox(height: constraints.maxHeight), // Spacer to push SecondRow to the bottom
-                ],
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Stack(
+          children: [
+            SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Column(
+                  children: [
+                    const Column(
+                      children: [
+                        FirstRow(),
+                        TwoColumnRow(),
+                      ],
+                    ),
+                    SizedBox(height: constraints.maxHeight),
+                  ],
+                ),
               ),
             ),
-          ),
-          const Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: SecondRow(),
-          ),
-        ],
-      );
-    },
-  );
-}
+            const Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: SecondRow(),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
 class FirstRow extends StatelessWidget {
@@ -102,7 +101,7 @@ class TwoColumnRow extends StatelessWidget {
             ],
           ),
         ),
-         const Flexible(
+         Flexible(
           flex: 1,
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -110,7 +109,12 @@ class TwoColumnRow extends StatelessWidget {
               Text('Second Column'),
               Flexible(
                 fit: FlexFit.loose,
-                child: FileViewerLogic(),
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height,
+                  ),
+                  child: const FileViewerScreen(initialFilePath: 'assets/565.pdf'),
+                ),
               ),
             ],
           ),

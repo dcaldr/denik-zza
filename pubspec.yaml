@@ -81,6 +81,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/doc.jpg
+    - assets/565.pdf
   generate: true
 
   # To add assets to your application, add an assets section, like this:

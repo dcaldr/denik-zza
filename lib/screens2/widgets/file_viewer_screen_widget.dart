@@ -47,8 +47,13 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
   }
 
   Widget _buildPDFView() {
-    return PdfPreview(
-      build: (format) => File(filePath).readAsBytesSync(),
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height,
+      ),
+      child: PdfPreview(
+        build: (format) => File(filePath).readAsBytesSync(),
+      ),
     );
   }
 
@@ -56,9 +61,14 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
     return InteractiveViewer(
       minScale: 0.2,
       maxScale: 10,
-      child: Image.file(
-        File(filePath),
-        fit: BoxFit.contain,
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height,
+        ),
+        child: Image.file(
+          File(filePath),
+          fit: BoxFit.contain,
+        ),
       ),
     );
   }
