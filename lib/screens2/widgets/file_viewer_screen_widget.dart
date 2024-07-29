@@ -50,11 +50,11 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height /1.3 , //note: eye balling the height
-        maxWidth: MediaQuery.of(context).size.width ,
+        maxWidth: MediaQuery.of(context).size.width /2 ,
       ),
       child: PdfPreview(
         build: (format) => File(filePath).readAsBytesSync(),
-        maxPageWidth: MediaQuery.of(context).size.width /1.3,
+        maxPageWidth: MediaQuery.of(context).size.width *4 ,
 
       ),
     );
