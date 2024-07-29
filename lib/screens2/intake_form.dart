@@ -111,7 +111,7 @@ class TwoColumnRow extends StatelessWidget {
                 fit: FlexFit.loose,
                 child: Container(
                   constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height,
+                    maxHeight: MediaQuery.of(context).size.height /1.6, // /1,6
                   ),
                   child: const FileViewerScreen(initialFilePath: 'assets/565.pdf'),
                 ),
