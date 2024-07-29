@@ -7,7 +7,7 @@ import 'package:denik_zza/screens2/participant_registration_form.dart';
 
 class IntakeForm extends StatelessWidget {
   const IntakeForm({super.key});
-
+//todo:add some sort of minimal size
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,30 +30,23 @@ class LayoutStyle extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return Stack(
+        return Column(
           children: [
-            SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Column(
-                  children: [
-                    const Column(
-                      children: [
-                        FirstRow(),
-                        TwoColumnRow(),
-                      ],
-                    ),
-                    SizedBox(height: constraints.maxHeight),
-                  ],
+            Expanded(
+              child: SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Column(
+                    children: [
+                      const FirstRow(),
+                      const TwoColumnRow(),
+                      SizedBox(height: constraints.maxHeight),
+                    ],
+                  ),
                 ),
               ),
             ),
-            const Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: SecondRow(),
-            ),
+            const SecondRow(),
           ],
         );
       },
@@ -129,15 +122,18 @@ class SecondRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Text('Second Row'),
-          SizedBox(width: 20),
-          ActionButtons(),
-        ],
+    return Align(
+      alignment: Alignment.bottomRight,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            const Text('Second Row'),
+            const SizedBox(width: 20),
+            const ActionButtons(),
+          ],
+        ),
       ),
     );
   }
