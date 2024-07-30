@@ -4,7 +4,7 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 
 class PersonAutocomplete extends StatefulWidget {
-  final void Function(MemoryOsoba) onPersonSelected;
+  final Function(MemoryOsoba) onPersonSelected;
 
   const PersonAutocomplete({super.key, required this.onPersonSelected});
 

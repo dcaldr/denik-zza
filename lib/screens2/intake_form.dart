@@ -5,18 +5,34 @@ import 'package:flutter/material.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 
-class IntakeForm extends StatelessWidget {
+class IntakeForm extends StatefulWidget {
   const IntakeForm({super.key});
-//todo:add some sort of minimal size
+
+  @override
+  _IntakeFormState createState() => _IntakeFormState();
+}
+
+class _IntakeFormState extends State<IntakeForm> {
+  MemoryOsoba? selectedPerson;
+
+  void _onPersonSelected(MemoryOsoba person) {
+    setState(() {
+      selectedPerson = person;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Intake Form'),
       ),
-      body: const Center(
+      body: Center(
         child: SizedBox(
-          child: LayoutStyle(),
+          child: LayoutStyle(
+            selectedPerson: selectedPerson,
+            onPersonSelected: _onPersonSelected,
+          ),
         ),
       ),
     );
@@ -24,7 +40,10 @@ class IntakeForm extends StatelessWidget {
 }
 
 class LayoutStyle extends StatelessWidget {
-  const LayoutStyle({super.key});
+  final MemoryOsoba? selectedPerson;
+  final Function(MemoryOsoba) onPersonSelected;
+
+  const LayoutStyle({super.key, required this.selectedPerson, required this.onPersonSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -38,8 +57,8 @@ class LayoutStyle extends StatelessWidget {
                   constraints: BoxConstraints(minHeight: constraints.maxHeight),
                   child: Column(
                     children: [
-                      const FirstRow(),
-                      const TwoColumnRow(),
+                      FirstRow(onPersonSelected: onPersonSelected),
+                      TwoColumnRow(selectedPerson: selectedPerson),
                       SizedBox(height: constraints.maxHeight),
                     ],
                   ),
@@ -55,7 +74,9 @@ class LayoutStyle extends StatelessWidget {
 }
 
 class FirstRow extends StatelessWidget {
-  const FirstRow({super.key});
+  final Function(MemoryOsoba) onPersonSelected;
+
+  const FirstRow({super.key, required this.onPersonSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -65,9 +86,7 @@ class FirstRow extends StatelessWidget {
         Flexible(
           child: Container(
             padding: const EdgeInsets.all(8),
-            child: PersonAutocomplete(onPersonSelected: (MemoryOsoba person) {
-              // Dummy function
-            }),
+            child: PersonAutocomplete(onPersonSelected: onPersonSelected),
           ),
         ),
       ],
@@ -76,7 +95,9 @@ class FirstRow extends StatelessWidget {
 }
 
 class TwoColumnRow extends StatelessWidget {
-  const TwoColumnRow({super.key});
+  final MemoryOsoba? selectedPerson;
+
+  const TwoColumnRow({super.key, required this.selectedPerson});
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +110,7 @@ class TwoColumnRow extends StatelessWidget {
               const Text('First Column'),
               Transform.scale(
                 scale: 0.85,
-                child: const ParticipantRegistrationForm(),
+                child: ParticipantRegistrationForm(osoba: selectedPerson),
               ),
             ],
           ),
@@ -106,8 +127,9 @@ class TwoColumnRow extends StatelessWidget {
                   constraints: BoxConstraints(
                     maxHeight: MediaQuery.of(context).size.height / 1.6,
                   ),
-                  // child: const FileViewerScreen(initialFilePath: 'assets/565.pdf'),
-                  child: const FileViewerLogic(),
+                  child: selectedPerson?.potvrzeniPath != null
+                      ? FileViewerScreen(initialFilePath: selectedPerson!.potvrzeniPath!)
+                      : const FileViewerLogic(),
                 ),
               ),
             ],

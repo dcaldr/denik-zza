@@ -59,20 +59,28 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     });
   }
 
+  @override
+  void didUpdateWidget(covariant ParticipantRegistrationForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.osoba != oldWidget.osoba) {
+      _populateFields(widget.osoba!);
+    }
+  }
+
   void _populateFields(MemoryOsoba osoba) {
     _controllers['jmeno']!.text = osoba.jmeno;
     _controllers['prijmeni']!.text = osoba.prijmeni;
-    _controllers['cisloPojisteni']!.text = osoba.cisloPojisteni!;
+    _controllers['cisloPojisteni']!.text = osoba.cisloPojisteni ?? '';
     if (osoba.datumNarozeni != null) {
       _controllers['datumNarozeni']!.text = DateFormat('dd.MM.yyyy').format(osoba.datumNarozeni!);
     }
-    _controllers['pohlavi']!.text = osoba.pohlavi.toString();
-    _controllers['zdravotniPojistovna']!.text = osoba.zdravotniPojistovna!;
-    _controllers['adresa']!.text = osoba.adresa!;
-    _controllers['jmenoRodice']!.text = osoba.jmenoRodice!;
-    _controllers['emailRodice']!.text = osoba.emailRodice!;
-    _controllers['telefonRodice']!.text = osoba.telefonRodice!;
-    _controllers['poznamka']!.text = osoba.poznamka!;
+    _controllers['pohlavi']!.text = osoba.pohlavi?.toString() ?? '';
+    _controllers['zdravotniPojistovna']!.text = osoba.zdravotniPojistovna ?? '';
+    _controllers['adresa']!.text = osoba.adresa ?? '';
+    _controllers['jmenoRodice']!.text = osoba.jmenoRodice ?? '';
+    _controllers['emailRodice']!.text = osoba.emailRodice ?? '';
+    _controllers['telefonRodice']!.text = osoba.telefonRodice ?? '';
+    _controllers['poznamka']!.text = osoba.poznamka ?? '';
   }
 
   @override
@@ -217,7 +225,6 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     );
   }
 }
-
 class ParticipantRegistrationPage extends StatelessWidget {
   const ParticipantRegistrationPage({super.key});
 
