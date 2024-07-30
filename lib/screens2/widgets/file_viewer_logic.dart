@@ -1,9 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import '../../input/file_manager.dart';
 import 'file_viewer_screen_widget.dart';
 import 'package:file_picker/file_picker.dart';
 
+
 class FileViewerLogic extends StatefulWidget {
-  const FileViewerLogic({super.key});
+  final Function(String) onFileUploaded;
+
+  const FileViewerLogic({super.key, required this.onFileUploaded});
 
   @override
   _FileViewerLogicState createState() => _FileViewerLogicState();
@@ -16,9 +22,14 @@ class _FileViewerLogicState extends State<FileViewerLogic> {
     FilePickerResult? result = await FilePicker.platform.pickFiles();
 
     if (result != null && result.files.single.path != null) {
+      final pickedFile = File(result.files.single.path!);
       setState(() {
-        _filePath = result.files.single.path;
+        _filePath = pickedFile.path;
       });
+      final newFilePath = await FileManager().putZpusobilost(pickedFile);
+      if (newFilePath != null) {
+        widget.onFileUploaded(newFilePath);
+      }
     }
   }
 

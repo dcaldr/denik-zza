@@ -138,7 +138,7 @@ class FileManager {
 /// reflect changes in current event, than tests [eventDir] correct structure
   ///
   /// Should be explicitly called from UI to better handle possible errors
-  /// TODO: create UI Popup for catching errors - with option to recerate event directory
+  /// TODO: create UI Popup for catching errors - with option to recreate event directory
 changeEvent() async {
   DatabaseInterface db = DatabaseWrapper.getDatabase();
   MemoryAction? event = await db.getCurrentAction();
@@ -192,6 +192,43 @@ backupDB() async {
   }
 }
 
+/// returns directory where zpusobilosti are for current event
+  ///
+  /// Use in cooperation when getting zpusobilost files from [MemoryOsoba] instances
+  /// if [eventDir] is null, returns null
+getZpusobilostFolder() async {
+  if (eventDir == null) {
+    logger.e('Event directory is null');
+    return;
+  }
+  return Directory('${eventDir!.path}/zpusobilosti');
+}
+
+Future<String?> putZpusobilost(File pickedFile) async {
+  if (eventDir == null) {
+    logger.e('Event directory is null');
+    return null;
+  }
+
+  try {
+    final zpusobilostDir = Directory('${eventDir!.path}/zpusobilosti');
+    await zpusobilostDir.create(recursive: true);
+
+    final newName = await nameCollisionSolver(zpusobilostDir, pickedFile.uri.pathSegments.last);
+    if (newName == null) {
+      logger.e('Error resolving name collision for uploaded file');
+      return null;
+    }
+
+    final destinationFile = File('${zpusobilostDir.path}/$newName');
+    await pickedFile.copy(destinationFile.path);
+    logger.i('File uploaded to: ${destinationFile.path}');
+    return destinationFile.path;
+  } catch (e) {
+    logger.e('Error uploading file: $e');
+    return null;
+  }
+}
 
   Future<void> _checkEventDirectoryExists(Directory candidate) async {
     if (!await candidate.exists()) {

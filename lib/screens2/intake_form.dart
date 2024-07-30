@@ -26,6 +26,14 @@ class _IntakeFormState extends State<IntakeForm> {
     });
   }
 
+  void _onFileUploaded(String newFilePath) {
+    if (selectedPerson != null) {
+      setState(() {
+        selectedPerson!.potvrzeniPath = newFilePath;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,6 +46,7 @@ class _IntakeFormState extends State<IntakeForm> {
           child: LayoutStyle(
             selectedPerson: selectedPerson,
             onPersonSelected: _onPersonSelected,
+            onFileUploaded: _onFileUploaded,
           ),
         ),
       ),
@@ -48,8 +57,9 @@ class _IntakeFormState extends State<IntakeForm> {
 class LayoutStyle extends StatelessWidget {
   final MemoryOsoba? selectedPerson;
   final Function(MemoryOsoba) onPersonSelected;
+  final Function(String) onFileUploaded;
 
-  const LayoutStyle({super.key, required this.selectedPerson, required this.onPersonSelected});
+  const LayoutStyle({super.key, required this.selectedPerson, required this.onPersonSelected, required this.onFileUploaded});
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +74,7 @@ class LayoutStyle extends StatelessWidget {
                   child: Column(
                     children: [
                       FirstRow(onPersonSelected: onPersonSelected),
-                      TwoColumnRow(selectedPerson: selectedPerson),
+                      TwoColumnRow(selectedPerson: selectedPerson, onFileUploaded: onFileUploaded),
                       SizedBox(height: constraints.maxHeight),
                     ],
                   ),
@@ -102,8 +112,9 @@ class FirstRow extends StatelessWidget {
 
 class TwoColumnRow extends StatelessWidget {
   final MemoryOsoba? selectedPerson;
+  final Function(String) onFileUploaded;
 
-  const TwoColumnRow({super.key, required this.selectedPerson});
+  const TwoColumnRow({super.key, required this.selectedPerson, required this.onFileUploaded});
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +146,7 @@ class TwoColumnRow extends StatelessWidget {
                   ),
                   child: selectedPerson?.potvrzeniPath != null
                       ? FileViewerScreen(initialFilePath: selectedPerson!.potvrzeniPath!)
-                      : const FileViewerLogic(),
+                      : FileViewerLogic(onFileUploaded: onFileUploaded),
                 ),
               ),
             ],
