@@ -11,11 +11,17 @@ import '../database/database_wrapper.dart';
 /// Provides db location, folder structure for each event, uploading file to each event
 /// Also handles possible same name errors
 class FileManager {
+  //TODO: test if eventDir is updated and returned as is in db
+
   static final FileManager _instance = FileManager._internal();
   static const String homeFolderName = 'Deník ZZA';
+  /// entire app directory
   Directory? homeDir;
+  Directory? eventDir;
+  Logger logger = Logger();
+  /// if true, [FileManager] is in testing mode and does not create directories
   bool isTesting;
-  List<String> subFolders = ['backup', 'zpusobilosti', 'vysetreni'];
+  List<String> subFolders = ['backup', 'zpusobilosti', 'vysetreni']; //FIXME - duplicate maybe keep only the one in factory
 
   FileManager._internal() : isTesting = false;
 
@@ -33,7 +39,9 @@ class FileManager {
   Future<Directory?> getHomeDir() async {
     return isTesting ? null : (homeDir ?? await createHomeDataDir());
   }
-
+/// creates home directory for entire app
+  ///
+  /// or changes the directory if [inputPath] is provided
   Future<Directory?> createHomeDataDir([String? inputPath]) async {
     if (isTesting) return null;
     if (homeDir != null && (inputPath == null || inputPath == homeDir?.path)) {
@@ -48,26 +56,29 @@ class FileManager {
     try {
       await thisDir.create(recursive: true);
     } catch (e) {
-      Logger().e('Error creating home directory: $e');
+      logger.e('Error creating home directory: $e');
       return null;
     }
     homeDir = thisDir;
     return thisDir;
   }
-
+/// creates directory for each event
+  ///
+  /// [eventFolderName] - name of the eventDirectory
+  /// returns [Directory] that doesn't collide with possible existing directories
   Future<Directory?> createNewEventDataDir(String eventFolderName) async {
     if (isTesting) return null;
     Directory? currentDir = await getHomeDir();
     String? newName = await nameCollisionSolver(currentDir!, eventFolderName);
     if (newName == null) {
-      Logger().e('Error creating event directory: $eventFolderName');
+     logger.e('Error creating event directory: $eventFolderName');
       return null;
     }
     Directory eventDirCandidate = Directory('${currentDir.path}/$newName');
     try {
       await eventDirCandidate.create(recursive: true);
     } catch (e) {
-      Logger().e('Error creating event directory: $eventDirCandidate $e');
+      logger.e('Error creating event directory: $eventDirCandidate $e');
       return null;
     }
     return createSubfolders(eventDirCandidate);
@@ -80,7 +91,7 @@ class FileManager {
       try {
         await subDir.create(recursive: true);
       } catch (e) {
-        Logger().e('Error creating subfolder: $subFolder $e');
+        logger.e('Error creating subfolder: $subFolder $e');
         return null;
       }
     }
@@ -89,7 +100,7 @@ class FileManager {
 
   Future<String?> nameCollisionSolver(Directory base, String inName) async {
     if (isTesting) return null;
-    final logger = Logger();
+   // final logger = Logger();
     if (!await base.exists()) {
       logger.e('Base directory does not exist: ${base.path}');
       return null;
@@ -103,7 +114,7 @@ class FileManager {
       String newName;
       int counter = 1;
       do {
-        newName = '${inName}_$counter';
+       newName = '${inName}_${counter.toString().padLeft(3, '0')}';
         FileSystemEntityType newType = await FileSystemEntity.type('${base.path}/$newName');
         if (newType == FileSystemEntityType.notFound) {
           logger.i('New name is available: $newName');
@@ -124,4 +135,51 @@ class FileManager {
   String? getDbFilePathSync() {
     return isTesting ? null : homeDir?.path;
   }
+/// reflect changes in current event, than tests [eventDir] correct structure
+  ///
+  /// Should be explicitly called from UI to better handle possible errors
+  /// TODO: create UI Popup for catching errors - with option to recerate event directory
+changeEvent() async {
+  DatabaseInterface db = DatabaseWrapper.getDatabase();
+  MemoryAction? event = await db.getCurrentAction();
+  if (event == null) {
+    eventDir = null;
+    logger.w('No current event found');
+    return;
+  }
+  // prevent unnecessary actions
+  if (event.domovskyAdresarPath == eventDir?.path) {
+    return;
+  }
+  // if event hasn't been created yet
+  if (event.domovskyAdresarPath == null || event.domovskyAdresarPath!.isEmpty) {
+    eventDir = await createNewEventDataDir(event.nadpis);
+    event.domovskyAdresarPath = eventDir?.path;
+    db.updateEvent(action: event);
+    return;
+  }
+  // if in db but not in class - check folder structure
+  Directory? candidate = Directory(event.domovskyAdresarPath!);
+  await _checkEventDirectoryExists(candidate);
+  await _validateSubfolders(candidate);
+}
+
+  Future<void> _checkEventDirectoryExists(Directory candidate) async {
+    if (!await candidate.exists()) {
+      logger.e('Event directory not found: ${candidate.path}');
+      throw FileSystemException('Domovský adresář nenalezen: ${candidate.path}');
+    }
+  }
+
+  Future<void> _validateSubfolders(Directory candidate) async {
+    for (var subFolder in subFolders) {
+      Directory subDir = Directory('${candidate.path}/$subFolder');
+      if (!await subDir.exists()) {
+        logger.e('Subfolder not found: $subFolder');
+        throw FileSystemException('Podadresář nenalezen: $subFolder');
+      }
+    }
+  }
+
+
 }
