@@ -144,7 +144,7 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
       }
     }
   }
-
+/// Debug function to show all fields in a dialog
   void _showPersonDetails(MemoryOsoba osoba) {
     showDialog(
       context: context,
@@ -174,8 +174,7 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
         child: Column(
           children: [
             _buildGridView(),
-            _buildTextField('poznamka', 'Poznámka', 'Tento text se nebude tisknout', maxLines: 3),
-            ElevatedButton(onPressed: _submitForm, child: Text(widget.osoba == null ? 'Přidat' : 'Aktualizovat')),
+            _buildTextField('poznamka', 'Poznámka', 'Tento text se nebude tisknout', maxLines: 3, hintText: 'Tento text se nebude tisknout'),            ElevatedButton(onPressed: _submitForm, child: Text(widget.osoba == null ? 'Přidat' : 'Aktualizovat')),
           ],
         ),
       ),
@@ -211,19 +210,23 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     );
   }
 
-  Widget _buildTextField(String key, String labelText, String? validatorText, {int maxLines = 1}) {
-    return TextFormField(
-      controller: _controllers[key],
-      decoration: InputDecoration(labelText: labelText, border: maxLines > 1 ? const OutlineInputBorder() : null),
-      validator: (value) {
-        if (validatorText != null && (value == null || value.isEmpty)) {
-          return validatorText;
-        }
-        return _validators[key]?.validator(value);
-      },
-      maxLines: maxLines,
-    );
-  }
+ Widget _buildTextField(String key, String labelText, String? validatorText, {int maxLines = 1, String? hintText}) {
+  return TextFormField(
+    controller: _controllers[key],
+    decoration: InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      border: maxLines > 1 ? const OutlineInputBorder() : null,
+    ),
+    validator: (value) {
+      if (validatorText != null && (value == null || value.isEmpty)) {
+        return validatorText;
+      }
+      return _validators[key]?.validator(value);
+    },
+    maxLines: maxLines,
+  );
+}
 }
 class ParticipantRegistrationPage extends StatelessWidget {
   const ParticipantRegistrationPage({super.key});
