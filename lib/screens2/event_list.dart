@@ -70,6 +70,25 @@ class _EventListState extends State<EventList> {
     );
   }
 
+  void _handlePinnedChanged(MemoryAction event) {
+    setState(() {
+      if(event.idAkce == _currentEventID) {
+        widget.database.updateCurrentEvent(null);
+      }
+      else {
+        widget.database.updateCurrentEvent(event.idAkce);
+      }
+
+      _fetchCurrentEventID();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar( //todo: prevent queueing of this type of snackbar messages
+            content: Text('Připnutá akce změněna'),
+          )
+      );
+    });
+  }
+
   Widget _buildActionItem(BuildContext context, MemoryAction action) {
     final dateFormat = DateFormat('dd.MM.yyyy', 'cs_CZ');
     return FutureBuilder<int>(
@@ -90,23 +109,7 @@ class _EventListState extends State<EventList> {
                 const Icon(Icons.people),
                 IconButton(
                   icon: Icon(action.idAkce == _currentEventID ? Icons.push_pin : Icons.push_pin_outlined),
-                  onPressed: () {
-                    setState(() {
-                      if(action.idAkce == _currentEventID) {
-                        widget.database.updateCurrentEvent(null);
-                      }
-                      else {
-                        widget.database.updateCurrentEvent(action.idAkce);
-                      }
-
-                      _fetchCurrentEventID();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar( //todo: prevent queueing of this type of snackbar messages
-                          content: Text('Vybraná akce změněna'),
-                        ),
-                      );
-                    });
-                  },
+                  onPressed: () => _handlePinnedChanged(action),
                 ),
               ],
             ),
