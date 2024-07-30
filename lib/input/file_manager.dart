@@ -35,7 +35,6 @@ class FileManager {
     }
     return _instance;
   }
-
   Future<Directory?> getHomeDir() async {
     return isTesting ? null : (homeDir ?? await createHomeDataDir());
   }
@@ -135,6 +134,7 @@ class FileManager {
   String? getDbFilePathSync() {
     return isTesting ? null : homeDir?.path;
   }
+
 /// reflect changes in current event, than tests [eventDir] correct structure
   ///
   /// Should be explicitly called from UI to better handle possible errors
@@ -163,6 +163,35 @@ changeEvent() async {
   await _checkEventDirectoryExists(candidate);
   await _validateSubfolders(candidate);
 }
+/// simple backup of the database
+backupDB() async {
+  if (eventDir == null) {
+    logger.e('Event directory is null');
+    return;
+  }
+
+  try {
+    final path = await getDbFilePath();
+    if (path == null) {
+      logger.e('Error getting db path');
+      return;
+    }
+    final dbFile = File('$path/denik_zza.db');
+    final backupDir = Directory('${eventDir!.path}/backup');
+    await backupDir.create(recursive: true);
+    final newName = await nameCollisionSolver(backupDir, 'denik_zza_backup.db');
+    if (newName == null) {
+      logger.e('Error resolving name collision for backup file');
+      return;
+    }
+    final backupFile = File('${backupDir.path}/$newName');
+    await dbFile.copy(backupFile.path);
+    logger.i('Backup created: ${backupFile.path}');
+  } catch (e) {
+    logger.e('Error creating backup: $e');
+  }
+}
+
 
   Future<void> _checkEventDirectoryExists(Directory candidate) async {
     if (!await candidate.exists()) {
