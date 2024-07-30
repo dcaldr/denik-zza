@@ -1,9 +1,14 @@
+import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/widgets/file_viewer_logic.dart';
 import 'package:denik_zza/screens2/widgets/file_viewer_screen_widget.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
+
+//TODO: buttons not attached to UI yet
+//TODO: First column not aligned to the top
+//TODO: resizing problems 1) vertical -> second column can overflow 2) horizontal -> second row can overflow (seen in pdfViewer)
 
 class IntakeForm extends StatefulWidget {
   const IntakeForm({super.key});
@@ -27,6 +32,7 @@ class _IntakeFormState extends State<IntakeForm> {
       appBar: AppBar(
         title: const Text('Intake Form'),
       ),
+      drawer: const AppDrawer(),
       body: Center(
         child: SizedBox(
           child: LayoutStyle(
