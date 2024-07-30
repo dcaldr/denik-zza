@@ -181,13 +181,13 @@ Future<int?> getCurrentEventID() {
   }
 
   @override
-  Future<int> updateEvent(int? idOverride, MemoryAction action) {
+  Future<int> updateEvent({int? idOverride, required MemoryAction action}) {
     // TODO: implement updateEvent
     throw UnimplementedError();
   }
 
   @override
-  Future<int> updateParticipant(int? idOverride, MemoryOsoba osoba) {
+  Future<int> updateParticipant({int? idOverride, required MemoryOsoba osoba}) {
     // TODO: implement updateParticipant
     throw UnimplementedError();
   }

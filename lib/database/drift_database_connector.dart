@@ -300,7 +300,7 @@ class DriftDatabaseConnector implements DatabaseInterface {
   }
 
 @override
-Future<int> updateParticipant(int? idOverride, MemoryOsoba osoba) async {
+Future<int> updateParticipant({int? idOverride, required MemoryOsoba osoba}) async {
   final id = idOverride ?? osoba.id;
 final c = await _toParticipantsCompanion(osoba);
  return _driftDatabase.updateParticipant(id,  c);
@@ -308,7 +308,7 @@ final c = await _toParticipantsCompanion(osoba);
 }
 
 @override
-Future<int> updateEvent(int? idOverride, MemoryAction action) async {
+Future<int> updateEvent({int? idOverride, required MemoryAction action}) async {
   final id = idOverride ?? action.idAkce;
   final c = _toZzaActionsCompanion(action);
 

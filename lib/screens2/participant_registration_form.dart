@@ -97,7 +97,7 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
         _showSnackBar(insertSuccess ? 'Insert successful' : 'Insert failed');
         if (insertSuccess) _showPersonDetails(osoba);
       } else {
-        int updateResult = await DatabaseWrapper.getDatabase().updateParticipant(osoba.id, osoba);
+        int updateResult = await DatabaseWrapper.getDatabase().updateParticipant(osoba:  osoba);
         _showSnackBar(updateResult > 0 ? 'Update successful' : 'Update failed');
         if (updateResult > 0) _showPersonDetails(osoba);
       }

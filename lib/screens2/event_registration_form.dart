@@ -63,7 +63,7 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
           }
         });
       } else {
-        DatabaseWrapper.getDatabase().updateEvent(newAction.idAkce, newAction).then((updateResult) {
+        DatabaseWrapper.getDatabase().updateEvent(action:  newAction).then((updateResult) {
           final message = updateResult > 0 ? 'Akce úspěšně aktualizována' : 'Aktualizace Akce se nezdařila';
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 

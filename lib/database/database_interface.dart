@@ -136,12 +136,12 @@ bool setParticipantPrintedValue(int id, bool value);
   /// If the [idOverride] is given it will use this value instead of the [MemoryOsoba.id] value
   /// Updates [MemoryOsoba] instance with new values and also unsets the wasPrinted flag
   /// Edits targeting only [MemoryOsoba.poznamka] should be done with [setNoteValue] method instead
-Future<int> updateParticipant(int? idOverride, MemoryOsoba osoba);
+Future<int> updateParticipant({int? idOverride, required MemoryOsoba osoba});
 
   /// Updates a [MemoryZaznam] instance in the database, with necessary logic
   ///
   /// If the [idOverride] is given it will use this value instead of the [MemoryZaznam.id] value
-Future<int> updateEvent(int? idOverride, MemoryAction action);
+Future<int> updateEvent({int? idOverride, required MemoryAction action});
 
 
 
