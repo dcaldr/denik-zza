@@ -94,19 +94,20 @@ class TwoColumnRow extends StatelessWidget {
             ],
           ),
         ),
-         Flexible(
+        Flexible(
           flex: 1,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Second Column'),
+              const Text('Second Column'),
               Flexible(
                 fit: FlexFit.loose,
                 child: Container(
                   constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height /1.6, // /1,6
+                    maxHeight: MediaQuery.of(context).size.height / 1.6,
                   ),
-                  child: const FileViewerScreen(initialFilePath: 'assets/565.pdf'),
+                  // child: const FileViewerScreen(initialFilePath: 'assets/565.pdf'),
+                  child: const FileViewerLogic(),
                 ),
               ),
             ],
