@@ -17,7 +17,7 @@ class EventList extends StatefulWidget {
 }
 
 class _EventListState extends State<EventList> {
-  int? currentEventID;
+  int? _currentEventID;
 
   @override
   void initState() {
@@ -26,7 +26,7 @@ class _EventListState extends State<EventList> {
   }
 
   void _fetchCurrentEventID() async {
-    currentEventID = await widget.database.getCurrentEventID();
+    _currentEventID = await widget.database.getCurrentEventID();
     setState(() {});
   }
 
@@ -89,10 +89,16 @@ class _EventListState extends State<EventList> {
                 Text(participantSnapshot.data.toString()),
                 const Icon(Icons.people),
                 IconButton(
-                  icon: Icon(action.idAkce == currentEventID ? Icons.push_pin : Icons.push_pin_outlined),
+                  icon: Icon(action.idAkce == _currentEventID ? Icons.push_pin : Icons.push_pin_outlined),
                   onPressed: () {
                     setState(() {
-                      widget.database.updateCurrentEvent(action.idAkce);
+                      if(action.idAkce == _currentEventID) {
+                        widget.database.updateCurrentEvent(null);
+                      }
+                      else {
+                        widget.database.updateCurrentEvent(action.idAkce);
+                      }
+
                       _fetchCurrentEventID();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar( //todo: prevent queueing of this type of snackbar messages
