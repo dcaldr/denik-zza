@@ -10,8 +10,9 @@ import '../input/rodne_cislo.dart';
 class ParticipantRegistrationForm extends StatefulWidget {
   final MemoryOsoba? osoba;
   final Function(bool Function())? onValidate;
+  final Function(MemoryOsoba)? onOsobaEdited;
 
-  const ParticipantRegistrationForm({super.key, this.osoba, this.onValidate});
+  const ParticipantRegistrationForm({super.key, this.osoba, this.onValidate, this.onOsobaEdited});
 
   @override
   _ParticipantRegistrationFormState createState() => _ParticipantRegistrationFormState();

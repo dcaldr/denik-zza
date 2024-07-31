@@ -36,6 +36,11 @@ class _IntakeFormState extends State<IntakeForm> {
       onValidate: (validate) {
         _validateParticipantForm = validate;
       },
+      onOsobaEdited: (osoba) {
+        setState(() {
+          selectedPerson = osoba;
+        });
+      },
     );
   }
 
@@ -55,6 +60,11 @@ class _IntakeFormState extends State<IntakeForm> {
         osoba: selectedPerson,
         onValidate: (validate) {
           _validateParticipantForm = validate;
+        },
+        onOsobaEdited: (osoba) {
+          setState(() {
+            selectedPerson = osoba;
+          });
         },
       );
     });
@@ -83,6 +93,11 @@ class _IntakeFormState extends State<IntakeForm> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(markAsArrived ? 'uložit a přišel' : 'uložit')),
+      );
+
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('něco nedopadlo')),
       );
     }
   }
