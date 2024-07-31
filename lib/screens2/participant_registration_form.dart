@@ -95,11 +95,11 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
       if (widget.osoba == null) {
         bool insertSuccess = await DatabaseWrapper.getDatabase().addOsoba(osoba);
         _showSnackBar(insertSuccess ? 'Insert successful' : 'Insert failed');
-        if (insertSuccess) _showPersonDetails(osoba);
+       // if (insertSuccess) _showPersonDetails(osoba);
       } else {
-        int updateResult = await DatabaseWrapper.getDatabase().updateParticipant(osoba:  osoba);
+        int updateResult = await DatabaseWrapper.getDatabase().updateParticipant(osoba: osoba);
         _showSnackBar(updateResult > 0 ? 'Update successful' : 'Update failed');
-        if (updateResult > 0) _showPersonDetails(osoba);
+      //  if (updateResult > 0) _showPersonDetails(osoba);
       }
     }
   }
@@ -144,7 +144,7 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
       }
     }
   }
-/// Debug function to show all fields in a dialog
+
   void _showPersonDetails(MemoryOsoba osoba) {
     showDialog(
       context: context,
@@ -174,7 +174,8 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
         child: Column(
           children: [
             _buildGridView(),
-            _buildTextField('poznamka', 'Poznámka', 'Tento text se nebude tisknout', maxLines: 3, hintText: 'Tento text se nebude tisknout'),            ElevatedButton(onPressed: _submitForm, child: Text(widget.osoba == null ? 'Přidat' : 'Aktualizovat')),
+            _buildTextField('poznamka', 'Poznámka', 'Tento text se nebude tisknout', maxLines: 3, hintText: 'Tento text se nebude tisknout'),
+            ElevatedButton(onPressed: _submitForm, child: Text(widget.osoba == null ? 'Přidat' : 'Aktualizovat')),
           ],
         ),
       ),
@@ -202,7 +203,7 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
           ],
         ),
         _buildTextField('zdravotniPojistovna', 'Zdravotní Pojišťovna', null),
-        _buildTextField('adresa', 'Adresa', 'Adresa je povinné pole'),
+        _buildTextField('adresa', 'Adresa', null),
         _buildTextField('jmenoRodice', 'Jméno rodiče', null),
         _buildTextField('emailRodice', 'Email rodiče', null),
         _buildTextField('telefonRodice', 'Telefon rodiče', null),
@@ -210,24 +211,28 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     );
   }
 
- Widget _buildTextField(String key, String labelText, String? validatorText, {int maxLines = 1, String? hintText}) {
-  return TextFormField(
-    controller: _controllers[key],
-    decoration: InputDecoration(
-      labelText: labelText,
-      hintText: hintText,
-      border: maxLines > 1 ? const OutlineInputBorder() : null,
-    ),
-    validator: (value) {
-      if (validatorText != null && (value == null || value.isEmpty)) {
-        return validatorText;
-      }
-      return _validators[key]?.validator(value);
-    },
-    maxLines: maxLines,
-  );
+  Widget _buildTextField(String key, String labelText, String? validatorText, {int maxLines = 1, String? hintText}) {
+    return TextFormField(
+      controller: _controllers[key],
+      decoration: InputDecoration(
+        labelText: labelText,
+        hintText: hintText,
+        border: maxLines > 1 ? const OutlineInputBorder() : null,
+      ),
+      validator: (value) {
+        if (key == 'poznamka' && (value == null || value.isEmpty)) {
+          return null; // Make 'poznamka' optional
+        }
+        if (validatorText != null && (value == null || value.isEmpty)) {
+          return validatorText;
+        }
+        return _validators[key]?.validator(value);
+      },
+      maxLines: maxLines,
+    );
+  }
 }
-}
+
 class ParticipantRegistrationPage extends StatelessWidget {
   const ParticipantRegistrationPage({super.key});
 
