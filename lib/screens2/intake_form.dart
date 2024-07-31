@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:denik_zza/screens2/widgets/memory_restriction_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/widgets/file_viewer_logic.dart';
@@ -148,11 +149,13 @@ Widget build(BuildContext context) {
               ),
               Transform.scale(
                 scale: 0.85,
-                child: const Row(
+                child:  Row(
                   children: [
-                    Expanded(child: RestrictionsWidget()),
-                    SizedBox(width: 10), // Add some spacing between the widgets
-                    Expanded(child: RestrictionsWidget()),
+                    Expanded(child: RestrictionsWidget(logic: MemoryRestrictionLogic())),
+                    const SizedBox(width: 10), // Add some spacing between the widgets
+                    Expanded(
+                        child: RestrictionsWidget(logic: MemoryLekLogic())
+                    ),
                   ],
                 ),
               ),

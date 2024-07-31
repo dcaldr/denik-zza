@@ -1,25 +1,38 @@
 import 'package:flutter/material.dart';
+import '../../database/database_interface.dart';
+import '../../database/database_wrapper.dart';
 
 class RestrictionsWidget extends StatefulWidget {
-  const RestrictionsWidget({super.key});
+  final LogicInterface logic;
+  const RestrictionsWidget({super.key, required this.logic});
 
   @override
   _RestrictionsWidgetState createState() => _RestrictionsWidgetState();
 }
 
 class _RestrictionsWidgetState extends State<RestrictionsWidget> {
-  final List<String> _items = [];
+  late final LogicInterface _logic;
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
 
-  void _addItem() {
-    if (_controller.text.trim().isNotEmpty) {
-      setState(() {
-        _items.add(_controller.text.trim());
-        _controller.clear();
-      });
-      _focusNode.requestFocus();
-    }
+  @override
+  void initState() {
+    super.initState();
+    _logic = widget.logic;
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    await _logic.fetchData();
+    setState(() {});
+  }
+
+  void _addItem(String name) {
+    setState(() {
+      _logic.addItem(name);
+      _controller.clear();
+    });
+    _focusNode.requestFocus();
   }
 
   @override
@@ -28,14 +41,15 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 200, // Set a smaller width
+          Text(_logic.getText()),
+          SizedBox(
+            width: 200,
             child: ListView.builder(
               shrinkWrap: true,
-              itemCount: _items.length,
+              itemCount: _logic.items.length,
               itemBuilder: (context, index) {
                 return ListTile(
-                  title: Text(_items[index]),
+                  title: Text(_logic.items[index]),
                 );
               },
             ),
@@ -45,20 +59,40 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    focusNode: _focusNode,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (value) => _addItem(),
-                    decoration: const InputDecoration(
-                      labelText: 'Enter restriction',
-                      border: OutlineInputBorder(),
-                    ),
+                  child: Autocomplete<String>(
+                    optionsBuilder: (TextEditingValue textEditingValue) {
+                      if (textEditingValue.text.isEmpty) {
+                        return const Iterable<String>.empty();
+                      }
+                      return _logic.names.where((name) {
+                        return name.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                      });
+                    },
+                    onSelected: (selection) {
+                      _addItem(selection);
+                    },
+                    fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+                      _controller.value = textEditingController.value;
+                      return TextField(
+                        controller: _controller,
+                        focusNode: _focusNode,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (value) {
+                          _addItem(value);
+                        },
+                        decoration: const InputDecoration(
+                          labelText: 'Enter restriction',
+                          border: OutlineInputBorder(),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.add),
-                  onPressed: _addItem,
+                  onPressed: () {
+                    _addItem(_controller.text);
+                  },
                 ),
               ],
             ),
@@ -67,4 +101,13 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
       ),
     );
   }
+}
+
+
+abstract class LogicInterface {
+  Future<void> fetchData();
+  void addItem(String name);
+  List<String> get items;
+  List<String> get names;
+  String getText();
 }
