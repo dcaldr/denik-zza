@@ -9,6 +9,7 @@ class MemoryOmezeniLogic implements LogicInterface {
   final List<String> _items = [];
   final List<String> _names = [];
   final List<MemoryOmezeni> _newOmezeni = [];
+  late int? pid;
 
   @override
   List<String> get items => _items;
@@ -17,6 +18,7 @@ class MemoryOmezeniLogic implements LogicInterface {
 
   @override
   Future<void> fetchData([int? participantId]) async {
+    pid = participantId;
     if (_names.isEmpty) {
       List<MemoryOmezeni> allOmezeni = await db.getAllOmezeni();
       _names.addAll(allOmezeni.map((e) => e.omezeni));
@@ -32,7 +34,7 @@ class MemoryOmezeniLogic implements LogicInterface {
   void addItem(String name) {
     if (!_items.contains(name)) {
       _items.add(name);
-      MemoryOmezeni newOmezeni = MemoryOmezeni(omezeni: name);
+      MemoryOmezeni newOmezeni = MemoryOmezeni(omezeni: name, idOsoby: pid);
       _newOmezeni.add(newOmezeni);
     }
   }
@@ -63,6 +65,7 @@ class MemoryLekLogic implements LogicInterface {
   final List<String> _items = [];
   final List<String> _names = [];
   final List<MemoryLek> _newLeky = [];
+  int? pid;
 
   @override
   List<String> get items => _items;
@@ -71,6 +74,7 @@ class MemoryLekLogic implements LogicInterface {
 
   @override
   Future<void> fetchData([int? participantId]) async {
+    pid = participantId;
     if (_names.isEmpty) {
       List<MemoryLek> allLeky = await db.getAllLeky();
       _names.addAll(allLeky.map((e) => e.nazev));
@@ -86,7 +90,7 @@ class MemoryLekLogic implements LogicInterface {
   void addItem(String name) {
     if (!_items.contains(name)) {
       _items.add(name);
-      MemoryLek newLek = MemoryLek(null, name, null, false, null);
+      MemoryLek newLek = MemoryLek.fullNamed(nazev: name, idOsoby: pid ??-1, id: null);
       _newLeky.add(newLek);
     }
   }

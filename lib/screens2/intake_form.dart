@@ -25,6 +25,7 @@ class _IntakeFormState extends State<IntakeForm> {
   final MemoryOmezeniLogic _omezeniLogic = MemoryOmezeniLogic();
   final MemoryLekLogic _lekLogic = MemoryLekLogic();
 
+
   @override
   void initState() {
     super.initState();
@@ -41,8 +42,8 @@ class _IntakeFormState extends State<IntakeForm> {
   void _onPersonSelected(MemoryOsoba person) {
     setState(() {
       selectedPerson = person;
-      _omezeniLogic.reset();
-      _lekLogic.reset();
+      _omezeniLogic.fetchData(person.id);
+      _lekLogic.fetchData(person.id);
     });
   }
 

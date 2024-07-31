@@ -480,7 +480,7 @@ return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergies
       description: Value(omezeni.omezeni),
       type: Value(omezeni.typOmezeni),
       wasPrinted: Value(omezeni.wasPrinted),
-      participantFK: Value(omezeni.idOsoby),
+      participantFK: Value(omezeni.idOsoby ?? -1),
 
     );
   }
