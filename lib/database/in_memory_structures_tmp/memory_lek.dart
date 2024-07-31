@@ -1,7 +1,7 @@
 /// Lék class expected n:1 relation to @memory_osoba.dart
 ///
 class MemoryLek{
-   int id; // může se odebrat jde o pomoc databázi
+   int? id; // může se odebrat jde o pomoc databázi
    String nazev; // názvy by měly být vyhledatelné (autocomplete)
    /// human readable Davkovani information i.e. "4 tablety pod jazyk" can be null
    String? popisDavkovani;

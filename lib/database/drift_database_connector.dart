@@ -322,7 +322,9 @@ return _driftDatabase.updateEvent(id!, c);
 
   @override
   Future<bool> addLek(MemoryLek lek) async {
-    int a = await _driftDatabase.addMedication(_toMedicationCompanion(lek));
+   MedicationsCompanion c =await _toMedicationCompanion(lek);
+
+    int a = await _driftDatabase.addMedication(c);
    if(a> 0){
      return true;
    }
@@ -340,8 +342,7 @@ return _driftDatabase.updateEvent(id!, c);
 
   @override
   Future<List<MemoryLek>> getAllLeky() {
-    return _driftDatabase.getAllMedications().then((medications) => medications.map(_toMemoryLek).toList() as List<MemoryLek>);
-  }
+    return _driftDatabase.getAllMedications().then((medications) => medications.map<MemoryLek>(_toMemoryLek).toList());  }
   @override
   Future<List<MemoryOmezeni>> getAllOmezeni() {
     return _driftDatabase.getAllAllergiesLimitations().then((allergiesLimitations) => allergiesLimitations.map(_toMemoryOmezeni).toList() as List<MemoryOmezeni>);
@@ -478,7 +479,7 @@ return _driftDatabase.updateEvent(id!, c);
 
     );
   }
-  _toMemoryLek(Medication lek) {
+ MemoryLek _toMemoryLek(Medication lek) {
     return MemoryLek.fullNamed(
       id: lek.id,
       nazev: lek.name,
@@ -489,7 +490,7 @@ return _driftDatabase.updateEvent(id!, c);
       //poznamka: lek.note,
     );
   }
-  _toMemoryOmezeni(AllergiesLimitation omezeni) {
+MemoryOmezeni  _toMemoryOmezeni(AllergiesLimitation omezeni) {
     return MemoryOmezeni.fullNamed(
       id: omezeni.id,
       omezeni: omezeni.description,
