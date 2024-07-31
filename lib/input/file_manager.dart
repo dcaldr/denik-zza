@@ -167,7 +167,7 @@ changeEvent() async {
 /// simple backup of the database
 backupDB() async {
   if (eventDir == null) {
-    logger.e('Event directory is null');
+    if (!isTesting) logger.e('Event directory is null');
     return;
   }
 
@@ -199,7 +199,7 @@ backupDB() async {
   /// if [eventDir] is null, returns null
 getZpusobilostFolder() async {
   if (eventDir == null) {
-    logger.e('Event directory is null');
+   if (!isTesting) logger.e('Event directory is null');
     return;
   }
   return Directory('${eventDir!.path}/zpusobilosti');
@@ -207,7 +207,7 @@ getZpusobilostFolder() async {
 
 Future<String?> putZpusobilost(File pickedFile) async {
   if (eventDir == null) {
-    logger.e('Event directory is null');
+    if (!isTesting) logger.e('Event directory is null');
     return null;
   }
 
@@ -224,7 +224,8 @@ Future<String?> putZpusobilost(File pickedFile) async {
     final destinationFile = File('${zpusobilostDir.path}/$newName');
     await pickedFile.copy(destinationFile.path);
     logger.i('File uploaded to: ${destinationFile.path}');
-    return destinationFile.path;
+    //return destinationFile.path;
+    return newName;
   } catch (e) {
     logger.e('Error uploading file: $e');
     return null;
