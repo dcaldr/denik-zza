@@ -93,12 +93,12 @@ List<MemoryZaznam> historicalRecords = [
   ),
 ];
 
-List<Omezeni> omezeniList = [
-  Omezeni(id: 1, omezeni: 'Bezlepková dieta', typOmezeni: 1),
-  Omezeni(id: 2, omezeni: 'Alergie na ořechy', typOmezeni: 2),
-  Omezeni(id: 3, omezeni: 'Laktózová intolerance', typOmezeni: 1),
-  Omezeni(id: 4, omezeni: 'Alergie na pyl', typOmezeni: 2),
-  Omezeni(id: 5, omezeni: 'Vegetariánství', typOmezeni: 1),
+List<MemoryOmezeni> omezeniList = [
+  MemoryOmezeni(id: 1, omezeni: 'Bezlepková dieta', typOmezeni: 1),
+  MemoryOmezeni(id: 2, omezeni: 'Alergie na ořechy', typOmezeni: 2),
+  MemoryOmezeni(id: 3, omezeni: 'Laktózová intolerance', typOmezeni: 1),
+  MemoryOmezeni(id: 4, omezeni: 'Alergie na pyl', typOmezeni: 2),
+  MemoryOmezeni(id: 5, omezeni: 'Vegetariánství', typOmezeni: 1),
 ];
 
 List<MemoryLek> lekList = [

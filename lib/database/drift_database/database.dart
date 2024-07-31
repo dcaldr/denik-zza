@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:async';
+
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_akce.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/input/file_manager.dart';
@@ -175,6 +178,7 @@ class AppDatabase extends _$AppDatabase {
     return i.id;
   }
 
+
   //==================== UPDATES ===============================================
 
   /// Update or insert into cache
@@ -207,6 +211,13 @@ class AppDatabase extends _$AppDatabase {
 Future<int> updateEvent(int id, ZzaActionsCompanion action) {
   return (update(zzaActions)..where((z) => z.id.equals(id))).write(action);
 }
+
+  Future<List<Medication>> getAllMedications() {
+    return select(medications).get();
+  }
+  Future<List<AllergiesLimitation>> getAllAllergiesLimitations() {
+    return select(allergiesLimitations).get();
+  }
 
   //==================== DELETES ===============================================
 }

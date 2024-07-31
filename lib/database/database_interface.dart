@@ -1,4 +1,7 @@
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_lek.dart';
+
 import 'in_memory_structures_tmp/memory_akce.dart';
+import 'in_memory_structures_tmp/memory_omezeni.dart';
 import 'in_memory_structures_tmp/memory_osoba.dart';
 import 'in_memory_structures_tmp/memory_zaznam.dart';
 /// interface between database and app
@@ -143,7 +146,23 @@ Future<int> updateParticipant({int? idOverride, required MemoryOsoba osoba});
   /// If the [idOverride] is given it will use this value instead of the [MemoryZaznam.id] value
 Future<int> updateEvent({int? idOverride, required MemoryAction action});
 
+/// get all [MemoryLek] from database
+  ///
+  /// returns [Future] list of all [MemoryLek] instances
+Future<List<MemoryLek>> getAllLeky();
+/// add new [MemoryLek] to database
+  ///
+  /// returns [Future] true if successful
+Future<bool> addLek(MemoryLek lek);
 
+/// get all [MemoryOmezeni] from database
+  ///
+  /// returns [Future] list of all [MemoryOmezeni] instances
+Future<List<MemoryOmezeni>> getAllOmezeni();
+/// add new [MemoryOmezeni] to database
+  ///
+  /// returns [Future] true if successful
+Future<bool> addOmezeni(MemoryOmezeni omezeni);
 
 
 

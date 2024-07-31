@@ -5,12 +5,12 @@ import '../database/in_memory_structures_tmp/memory_omezeni.dart';
 
 
 class PrintPdfRestrictions  implements PdfSection{
-  List<Omezeni>? omezeniList;
+  List<MemoryOmezeni>? omezeniList;
   List<MemoryLek>? lekList;
 
   PrintPdfRestrictions({this.omezeniList, this.lekList});
 
-  pw.Widget buildRestrictions(List<Omezeni>? omezeniList, List<MemoryLek>? lekList) {
+  pw.Widget buildRestrictions(List<MemoryOmezeni>? omezeniList, List<MemoryLek>? lekList) {
     return pw.Container(
       decoration: _buildRestrictionsDecoration(),
       child: pw.Padding(

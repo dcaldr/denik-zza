@@ -1,4 +1,6 @@
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_akce.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_lek.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart';
 
 import '../database_interface.dart';
 import 'memory_osoba.dart';
@@ -189,6 +191,31 @@ Future<int?> getCurrentEventID() {
   @override
   Future<int> updateParticipant({int? idOverride, required MemoryOsoba osoba}) {
     // TODO: implement updateParticipant
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<bool> addLek(MemoryLek lek) {
+    // TODO: implement addLek
+    throw UnimplementedError();
+
+  }
+
+  @override
+  Future<bool> addOmezeni(MemoryOmezeni omezeni) {
+    // TODO: implement addOmezeni
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<MemoryLek>> getAllLeky() {
+    // TODO: implement getAllLeky
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<MemoryOmezeni>> getAllOmezeni() {
+    // TODO: implement getAllOmezeni
     throw UnimplementedError();
   }
 }

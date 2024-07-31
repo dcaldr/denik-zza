@@ -21,7 +21,7 @@ class GeneratePdfTemplate {
   static const hiddenColor = PdfColor(0, 0, 0, 0);
 
   MemoryOsoba? _osoba;
-  List<Omezeni>? _omezeniList;
+  List<MemoryOmezeni>? _omezeniList;
   List<MemoryLek>? _lekList;
   List<MemoryZaznam>? _zaznamList;
   /// status for the restrictions
@@ -42,7 +42,7 @@ class GeneratePdfTemplate {
     }
     this.osoba = _osoba;
   }
-  set omezeniList (List<Omezeni>? inOmezeniList){
+  set omezeniList (List<MemoryOmezeni>? inOmezeniList){
       _omezeniStatus = OkCodes.unset;
       _allRestrictionsStatus = OkCodes.unset;
     omezeniList = _omezeniList;
@@ -57,7 +57,7 @@ class GeneratePdfTemplate {
 
   GeneratePdfTemplate.named({
     required MemoryOsoba? osoba,
-    List<Omezeni>? omezeniList,
+    List<MemoryOmezeni>? omezeniList,
     List<MemoryLek>? lekList,
     List<MemoryZaznam>? zaznamList,
   }) : _zaznamList = zaznamList, _lekList = lekList, _omezeniList = omezeniList, _osoba = osoba;
@@ -181,7 +181,7 @@ class GeneratePdfTemplate {
 /// generates list of pages for pdf from the given person
   Future<List<pw.Page>> getPdfPages({
     required MemoryOsoba osoba,
-    List<Omezeni>? omezeniList,
+    List<MemoryOmezeni>? omezeniList,
     List<MemoryLek>? lekList,
     List<MemoryZaznam>? zaznamList,
   }) async {
@@ -206,7 +206,7 @@ class GeneratePdfTemplate {
     ];
   }
 
-  pw.Widget? _buildRestrictions(List<Omezeni>? omezeniList, List<MemoryLek>? lekList) {
+  pw.Widget? _buildRestrictions(List<MemoryOmezeni>? omezeniList, List<MemoryLek>? lekList) {
     if (omezeniList != null && lekList != null) {
       return PrintPdfRestrictions().buildRestrictions(omezeniList, lekList);
     }

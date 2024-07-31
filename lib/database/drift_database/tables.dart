@@ -76,7 +76,7 @@ class AllergiesLimitations extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get description => text().withLength(min: 0, max: 1024)();
   IntColumn get type => integer()(); // 1 - allergy, 2 - limitation // For the future
-  BoolColumn get wasPrinted => boolean().withDefault(const Constant(false))();
+  BoolColumn get wasPrinted => boolean().withDefault( const Constant(false))();
 
   // Foreign keys
   IntColumn get participantFK => integer().references(Participants, #id)();

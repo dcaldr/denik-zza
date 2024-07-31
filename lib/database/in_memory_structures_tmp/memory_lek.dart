@@ -14,6 +14,8 @@ class MemoryLek{
 
 
    MemoryLek(this.id, this.nazev, this.popisDavkovani, this.bereSam, this.kdy, [this.poznamkaLek, this.wasPrinted = false]);
+   // todo improve this constructor
+   MemoryLek.fullNamed({required this.id, required this.nazev, this.popisDavkovani,   this.wasPrinted =false });
 }
 
 

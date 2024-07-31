@@ -1,4 +1,6 @@
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_akce.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_lek.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:drift/drift.dart';
@@ -317,6 +319,35 @@ Future<int> updateEvent({int? idOverride, required MemoryAction action}) async {
 return _driftDatabase.updateEvent(id!, c);
   throw UnimplementedError();
 }
+
+  @override
+  Future<bool> addLek(MemoryLek lek) async {
+    int a = await _driftDatabase.addMedication(_toMedicationCompanion(lek));
+   if(a> 0){
+     return true;
+   }
+   return false;
+  }
+
+  @override
+  Future<bool> addOmezeni(MemoryOmezeni omezeni) async{
+    int a = await _driftDatabase.addAllergiesLimitations(_toRestrictionCompanion(omezeni));
+    if(a> 0){
+      return true;
+    }
+    return false;
+  }
+
+  @override
+  Future<List<MemoryLek>> getAllLeky() {
+    return _driftDatabase.getAllMedications().then((medications) => medications.map(_toMemoryLek).toList() as List<MemoryLek>);
+  }
+  @override
+  Future<List<MemoryOmezeni>> getAllOmezeni() {
+    return _driftDatabase.getAllAllergiesLimitations().then((allergiesLimitations) => allergiesLimitations.map(_toMemoryOmezeni).toList() as List<MemoryOmezeni>);
+  }
+
+
  /// Translators from MemoryOsoba, MemoryZaznam, MemoryAction to Drift Companions
   /// TODO: rewrite to use MemoryX directly as db companion (
 
@@ -423,5 +454,48 @@ return _driftDatabase.updateEvent(id!, c);
       domovskyAdresarPath: a.homeDirectory,
     );
   }
+  _toMedicationCompanion(lek) {
+    return MedicationsCompanion(
+      id: Value(lek.id),
+      name: Value(lek.nazev),
+      dosage: Value(lek.davkovani),
+     //wasPrinted: Value(lek.wasPrinted),
+
+
+
+
+     // note: Value(lek.poznamka),
+    );
+  }
+  _toRestrictionCompanion(omezeni) {
+    return AllergiesLimitationsCompanion(
+      id: Value(omezeni.id),
+      description: Value(omezeni.nazev),
+      type: Value(omezeni.typ),
+      //wasPrinted: Value(omezeni.wasPrinted),
+
+    );
+  }
+  _toMemoryLek(Medication lek) {
+    return MemoryLek.fullNamed(
+      id: lek.id,
+      nazev: lek.name,
+      popisDavkovani: lek.dosage,
+
+      //wasPrinted: lek.wasPrinted,
+      //poznamka: lek.note,
+    );
+  }
+  _toMemoryOmezeni(AllergiesLimitation omezeni) {
+    return MemoryOmezeni.fullNamed(
+      id: omezeni.id,
+      omezeni: omezeni.description,
+      typOmezeni: omezeni.type,
+
+
+      //wasPrinted: omezeni.wasPrinted,
+    );
+  }
+
 
 }
