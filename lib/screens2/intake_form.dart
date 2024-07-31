@@ -80,15 +80,16 @@ class _IntakeFormState extends State<IntakeForm> {
 
   Future<void> _handleSave(BuildContext context, bool markAsArrived) async {
     if (_validateParticipantForm?.call() ?? false) {
+      MemoryOsoba? updatedPerson = await DatabaseWrapper.getDatabase().getOsobaById(selectedPerson!.id);
       await _omezeniLogic.update();
       await _lekLogic.update();
 
       if (selectedPerson != null) {
         final filePath = selectedPerson!.potvrzeniPath;
         if (filePath != null && filePath.isNotEmpty) {
-          selectedPerson!.potvrzeniPath = filePath;
+          updatedPerson.potvrzeniPath = filePath;
         }
-        await DatabaseWrapper.getDatabase().updateParticipant(osoba: selectedPerson!);
+        await DatabaseWrapper.getDatabase().updateParticipant(osoba: updatedPerson);
       }
 
       ScaffoldMessenger.of(context).showSnackBar(

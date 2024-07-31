@@ -98,7 +98,8 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
 
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      MemoryOsoba osoba = _createMemoryOsoba();
+      MemoryOsoba osoba = createMemoryOsoba();
+      widget.onOsobaEdited?.call(osoba); // Ensure callback is called
       if (widget.osoba == null) {
         bool insertSuccess = await DatabaseWrapper.getDatabase().addOsoba(osoba);
         _showSnackBar(insertSuccess ? 'Insert successful' : 'Insert failed');
@@ -109,7 +110,7 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     }
   }
 
-  MemoryOsoba _createMemoryOsoba() {
+  MemoryOsoba createMemoryOsoba() {
     return MemoryOsoba.fullNamed(
       id: widget.osoba?.id,
       jmeno: _controllers['jmeno']!.text,
@@ -255,6 +256,7 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     );
   }
 }
+
 class ParticipantRegistrationPage extends StatelessWidget {
   const ParticipantRegistrationPage({super.key});
 
