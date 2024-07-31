@@ -104,32 +104,33 @@ class FileManager {
     return baseDir;
   }
 
-  Future<String?> nameCollisionSolver(Directory base, String inName) async {
-    if (isTesting) return null;
-    // final logger = Logger();
-    if (!await base.exists()) {
-      logger.e('Base directory does not exist: ${base.path}');
-      return null;
-    }
-    final entityPath = '${base.path}/$inName';
-    final entityType = await FileSystemEntity.type(entityPath);
-    if (entityType == FileSystemEntityType.notFound) {
-      logger.i('No collision: $inName');
-      return inName;
-    } else {
-      String newName;
-      int counter = 1;
-      do {
-        newName = '${inName}_${counter.toString().padLeft(3, '0')}';
-        FileSystemEntityType newType = await FileSystemEntity.type('${base.path}/$newName');
-        if (newType == FileSystemEntityType.notFound) {
-          logger.i('New name is available: $newName');
-          return newName;
-        }
-        counter++;
-      } while (true);
-    }
+Future<String?> nameCollisionSolver(Directory base, String inName) async {
+  if (isTesting) return null;
+  if (!await base.exists()) {
+    logger.e('Base directory does not exist: ${base.path}');
+    return null;
   }
+  final entityPath = '${base.path}/$inName';
+  final entityType = await FileSystemEntity.type(entityPath);
+  if (entityType == FileSystemEntityType.notFound) {
+    logger.i('No collision: $inName');
+    return inName;
+  } else {
+    String newName;
+    int counter = 1;
+    final extension = inName.contains('.') ? inName.substring(inName.lastIndexOf('.')) : '';
+    final baseName = inName.replaceAll(extension, '');
+    do {
+      newName = '$baseName\_${counter.toString().padLeft(3, '0')}$extension';
+      FileSystemEntityType newType = await FileSystemEntity.type('${base.path}/$newName');
+      if (newType == FileSystemEntityType.notFound) {
+        logger.i('New name is available: $newName');
+        return newName;
+      }
+      counter++;
+    } while (true);
+  }
+}
 
   Future<String?> getDbFilePath() async {
     if (isTesting) return null;
