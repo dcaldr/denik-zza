@@ -168,6 +168,8 @@ Future<bool> addOmezeni(MemoryOmezeni omezeni);
 /// get [MemoryOmezeni] for given memoryOsoba from database
   Future<List<MemoryOmezeni>> getOmezeniByParticipantID(int id);
 
+  Future<MemoryOsoba> getOsobaById(int id);
+
 
 
 }

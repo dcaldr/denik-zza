@@ -230,4 +230,10 @@ Future<int?> getCurrentEventID() {
     // TODO: implement getOmezeniByParticipantID
     throw UnimplementedError();
   }
+
+  @override
+  Future<MemoryOsoba> getOsobaById(int id) {
+    // TODO: implement getOsobaById
+    throw UnimplementedError();
+  }
 }

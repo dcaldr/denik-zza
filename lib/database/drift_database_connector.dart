@@ -358,6 +358,11 @@ return _driftDatabase.updateEvent(id!, c);
 return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergiesLimitation) => allergiesLimitation != null ? [_toMemoryOmezeni(allergiesLimitation)] : []);
 }
 
+  @override
+  Future<MemoryOsoba> getOsobaById(int id) async {
+  return _driftDatabase.getParticipantByID(id).then((participant) async => await _toMemoryOsoba(participant!));
+  }
+
 
  /// Translators from MemoryOsoba, MemoryZaznam, MemoryAction to Drift Companions
   /// TODO: rewrite to use MemoryX directly as db companion (
@@ -506,6 +511,8 @@ MemoryOmezeni  _toMemoryOmezeni(AllergiesLimitation omezeni) {
       wasPrinted: omezeni.wasPrinted,
     );
   }
+
+
 
 
 
