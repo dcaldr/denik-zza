@@ -43,5 +43,31 @@ main(){
       // await fileManager.createHomeDataDir();
       // expect(fileManager.homeDir, isNotNull);
     });
+    test('keep setting isTesting true even after empty constructor',() async {
+      FileManager fileManager = FileManager(isTesting: true);
+      expect(fileManager, isNotNull);
+      expect(fileManager.isTesting, isTrue);
+      expect(fileManager.subFolders, isEmpty);
+      // repeated call to keep setting
+      fileManager = FileManager();
+      expect(fileManager, isNotNull);
+      expect(fileManager.isTesting, isTrue);
+      expect(fileManager.subFolders, isEmpty);
+      // await fileManager.createHomeDataDir();
+      // expect(fileManager.homeDir, isNotNull);
+    });
+    test('keep setting isTesting false even after empty constructor',() async {
+      FileManager fileManager = FileManager(isTesting: false);
+      expect(fileManager, isNotNull);
+      expect(fileManager.isTesting, isFalse);
+      expect(fileManager.subFolders, isNotEmpty);
+      // repeated call to keep setting
+      fileManager = FileManager();
+      expect(fileManager, isNotNull);
+      expect(fileManager.isTesting, isFalse);
+      expect(fileManager.subFolders, isNotEmpty);
+      // await fileManager.createHomeDataDir();
+      // expect(fileManager.homeDir, isNotNull);
+    });
   });
 }
