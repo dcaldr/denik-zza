@@ -14,6 +14,8 @@ void main() async {
 //  await initializeDateFormatting('cs_CZ', null);
 
   FileManager();
+  //db stuff here
+  FileManager().changeEvent();
   runApp(const MyApp());
 }
 

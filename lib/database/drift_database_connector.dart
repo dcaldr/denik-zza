@@ -2,6 +2,7 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_akce.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:drift/drift.dart';
+import '../input/file_manager.dart';
 import 'database_interface.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 
@@ -178,7 +179,7 @@ class DriftDatabaseConnector implements DatabaseInterface {
     //return memoryRecords;
     return  records.map(_toMemoryZaznam).toList();
   }
-
+  @Deprecated("Remove when possible")
   @override
   void updatePinnedEvent(int? pinnedEventID) async {
     _driftDatabase.updateCache(CacheCompanion(
@@ -189,6 +190,7 @@ class DriftDatabaseConnector implements DatabaseInterface {
 
   @override
   void updateCurrentEvent(int? currentEventID) async {
+    FileManager().changeEvent();
     _driftDatabase.updateCache(CacheCompanion(
         id: const Value(1),
         currentActionID: Value(currentEventID)

@@ -86,6 +86,7 @@ class FileManager {
       logger.e('Error creating event directory: $eventDirCandidate $e');
       return null;
     }
+    changeEvent();
     return createSubfolders(eventDirCandidate);
   }
 

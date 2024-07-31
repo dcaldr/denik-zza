@@ -1,3 +1,4 @@
+import 'package:denik_zza/input/file_manager.dart';
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/widgets/custom_date_picker.dart';
 import 'package:flutter/material.dart';
@@ -41,16 +42,17 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
     super.dispose();
   }
 
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       final dateFormat = DateFormat('dd.MM.yyyy');
+      final directory = await FileManager().createNewEventDataDir(_controllers['nadpis']!.text);
       final newAction = MemoryAction(
         idAkce: widget.action?.idAkce,
         nadpis: _controllers['nadpis']!.text,
         popis: _controllers['popis']!.text,
         odkdy: dateFormat.parseStrict(_controllers['odkdy']!.text),
         dokdy: dateFormat.parseStrict(_controllers['dokdy']!.text),
-        domovskyAdresarPath: widget.action?.domovskyAdresarPath,
+        domovskyAdresarPath: directory?.path,
       );
 
       if (widget.action == null) {
@@ -59,11 +61,13 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 
           if (success) {
+            //mark as selected event
+            DatabaseWrapper.getDatabase().updateCurrentEvent(newAction.idAkce!);
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => EventList()));
           }
         });
       } else {
-        DatabaseWrapper.getDatabase().updateEvent(action:  newAction).then((updateResult) {
+        DatabaseWrapper.getDatabase().updateEvent(action: newAction).then((updateResult) {
           final message = updateResult > 0 ? 'Akce úspěšně aktualizována' : 'Aktualizace Akce se nezdařila';
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 
