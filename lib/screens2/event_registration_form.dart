@@ -3,6 +3,7 @@ import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/widgets/custom_date_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:logger/logger.dart';
 import '../database/database_wrapper.dart';
 import '../database/in_memory_structures_tmp/memory_akce.dart';
 import 'event_list.dart';
@@ -62,7 +63,18 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
 
           if (success) {
             //mark as selected event
-            DatabaseWrapper.getDatabase().updateCurrentEvent(newAction.idAkce!);
+            //DatabaseWrapper.getDatabase().updateCurrentEvent(newAction.idAkce!);
+            //workaround
+            DatabaseWrapper.getDatabase().getAllZzaActions().then((actions) {
+              final lastAction = actions.last;
+              if (lastAction.nadpis == _controllers['nadpis']!.text &&
+                  DateFormat('dd.MM.yyyy').format(lastAction.odkdy) == _controllers['odkdy']!.text &&
+                  DateFormat('dd.MM.yyyy').format(lastAction.dokdy) == _controllers['dokdy']!.text) {
+                DatabaseWrapper.getDatabase().updateCurrentEvent(lastAction.idAkce!);
+              } else {
+                Logger().e('Sanity check failed: Last action details do not match the form input.');
+              }
+            });
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => EventList()));
           }
         });
