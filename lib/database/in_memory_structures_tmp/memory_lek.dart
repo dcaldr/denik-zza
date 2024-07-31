@@ -11,11 +11,12 @@ class MemoryLek{
    /// for future -- schedule tables, notification etc.
    DavkaKdy? kdy;
    bool wasPrinted = false;
+   int idOsoby = -1; // může se odebrat jde o pomoc databázi
 
 
    MemoryLek(this.id, this.nazev, this.popisDavkovani, this.bereSam, this.kdy, [this.poznamkaLek, this.wasPrinted = false]);
    // todo improve this constructor
-   MemoryLek.fullNamed({required this.id, required this.nazev, this.popisDavkovani,   this.wasPrinted =false });
+   MemoryLek.fullNamed({required this.id, required this.nazev, this.popisDavkovani, required this.idOsoby  ,  this.wasPrinted =false });
 }
 
 
