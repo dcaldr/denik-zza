@@ -146,7 +146,13 @@ class TwoColumnRow extends StatelessWidget {
                   scale: 0.85,
                   child: ParticipantRegistrationForm(osoba: selectedPerson),
                 ),
-                const RestrictionsWidget(),
+                const Row(
+                  children: [
+                    Expanded(child: RestrictionsWidget()),
+                    SizedBox(width: 10), // Add some spacing between the widgets
+                    Expanded(child: RestrictionsWidget()),
+                  ],
+                ),
               ],
             ),
           ),
@@ -177,16 +183,16 @@ class SecondRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Align(
+    return const Align(
       alignment: Alignment.bottomRight,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            const Text('Second Row'),
-            const SizedBox(width: 20),
-            const ActionButtons(),
+            Text('Second Row'),
+            SizedBox(width: 20),
+            ActionButtons(),
           ],
         ),
       ),
