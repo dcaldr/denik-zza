@@ -8,6 +8,7 @@ import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'package:denik_zza/screens2/widgets/restrictions_widget.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
+import '../database/database_wrapper.dart';
 import '../input/file_manager.dart';
 
 class IntakeForm extends StatefulWidget {
@@ -18,6 +19,7 @@ class IntakeForm extends StatefulWidget {
 }
 
 class _IntakeFormState extends State<IntakeForm> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   MemoryOsoba? selectedPerson;
   Directory? zpusobilostFolder;
 
@@ -57,7 +59,7 @@ class _IntakeFormState extends State<IntakeForm> {
       drawer: const AppDrawer(),
       body: Center(
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 1200),
+          constraints: const BoxConstraints(maxWidth: 1200),
           child: LayoutStyle(
             selectedPerson: selectedPerson,
             onPersonSelected: _onPersonSelected,
@@ -76,7 +78,13 @@ class LayoutStyle extends StatelessWidget {
   final Function(String) onFileUploaded;
   final Directory? zpusobilostFolder;
 
-  const LayoutStyle({super.key, required this.selectedPerson, required this.onPersonSelected, required this.onFileUploaded, required this.zpusobilostFolder});
+  const LayoutStyle({
+    super.key,
+    required this.selectedPerson,
+    required this.onPersonSelected,
+    required this.onFileUploaded,
+    required this.zpusobilostFolder,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -89,13 +97,21 @@ class LayoutStyle extends StatelessWidget {
               child: Column(
                 children: [
                   FirstRow(onPersonSelected: onPersonSelected),
-                  TwoColumnRow(selectedPerson: selectedPerson, onFileUploaded: onFileUploaded, zpusobilostFolder: zpusobilostFolder),
+                  TwoColumnRow(
+                    selectedPerson: selectedPerson,
+                    onFileUploaded: onFileUploaded,
+                    zpusobilostFolder: zpusobilostFolder,
+                  ),
                 ],
               ),
             ),
           ),
         ),
-        const SecondRow(),
+        SecondRow(
+          formKey: GlobalKey<FormState>(),
+          selectedPerson: selectedPerson,
+          onFileUploaded: onFileUploaded,
+        ),
       ],
     );
   }
@@ -193,20 +209,33 @@ class TwoColumnRow extends StatelessWidget {
 }
 
 class SecondRow extends StatelessWidget {
-  const SecondRow({super.key});
+  final GlobalKey<FormState> formKey;
+  final MemoryOsoba? selectedPerson;
+  final Function(String) onFileUploaded;
+
+  const SecondRow({
+    super.key,
+    required this.formKey,
+    required this.selectedPerson,
+    required this.onFileUploaded,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return const Align(
+    return Align(
       alignment: Alignment.bottomRight,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Text('Second Row'),
-            SizedBox(width: 20),
-            ActionButtons(),
+            const Text('Second Row'),
+            const SizedBox(width: 20),
+            ActionButtons(
+              formKey: formKey,
+              selectedPerson: selectedPerson,
+              onFileUploaded: onFileUploaded,
+            ),
           ],
         ),
       ),
@@ -215,7 +244,43 @@ class SecondRow extends StatelessWidget {
 }
 
 class ActionButtons extends StatelessWidget {
-  const ActionButtons({super.key});
+  final GlobalKey<FormState> formKey;
+  final MemoryOsoba? selectedPerson;
+  final Function(String) onFileUploaded;
+
+  const ActionButtons({
+    super.key,
+    required this.formKey,
+    required this.selectedPerson,
+    required this.onFileUploaded,
+  });
+
+  Future<void> _handleSave(BuildContext context, bool markAsArrived) async {
+    if (formKey.currentState!.validate()) {
+      // Upload restrictions and medications to the database
+      await MemoryOmezeniLogic().update();
+      await MemoryLekLogic().update();
+
+      // Update the person with the file path if needed
+      if (selectedPerson != null) {
+        final filePath = selectedPerson!.potvrzeniPath;
+        if (filePath != null && filePath.isNotEmpty) {
+          selectedPerson!.potvrzeniPath = filePath;
+        }
+        await DatabaseWrapper.getDatabase().updateParticipant(osoba: selectedPerson!);
+      }
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(markAsArrived ? 'uložit a přišel' : 'uložit')),
+      );
+    } else {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Form validation failed')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -225,9 +290,7 @@ class ActionButtons extends StatelessWidget {
         Tooltip(
           message: 'uložit a přišel',
           child: ElevatedButton.icon(
-            onPressed: () {
-              // Add your onPressed code here!
-            },
+            onPressed: () => _handleSave(context, true),
             icon: const Icon(Icons.check_circle, color: Colors.white),
             label: const Text('uložit a přišel'),
             style: ElevatedButton.styleFrom(
@@ -243,9 +306,7 @@ class ActionButtons extends StatelessWidget {
         Tooltip(
           message: 'uložit',
           child: ElevatedButton.icon(
-            onPressed: () {
-              // Add your onPressed code here!
-            },
+            onPressed: () => _handleSave(context, false),
             icon: const Icon(Icons.save, color: Colors.white),
             label: const Text('uložit'),
             style: ElevatedButton.styleFrom(
