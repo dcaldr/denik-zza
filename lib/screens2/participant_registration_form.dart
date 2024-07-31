@@ -117,23 +117,37 @@ MemoryOsoba _createMemoryOsoba() {
     prijmeni: _controllers['prijmeni']!.text,
     datumNarozeni: _controllers['datumNarozeni']!.text.isNotEmpty
         ? DateFormat('dd.MM.yyyy').parse(_controllers['datumNarozeni']!.text)
-        : null,
-    adresa: _controllers['adresa']!.text,
-    cisloPojisteni: _controllers['cisloPojisteni']!.text,
-    jmenoRodice: _controllers['jmenoRodice']!.text,
-    telefonRodice: _controllers['telefonRodice']!.text,
-    emailRodice: _controllers['emailRodice']!.text,
-    zdravotniPojistovna: _controllers['zdravotniPojistovna']!.text,
-    poznamka: _controllers['poznamka']!.text,
+        : widget.osoba?.datumNarozeni,
+    adresa: _controllers['adresa']!.text.isNotEmpty
+        ? _controllers['adresa']!.text
+        : widget.osoba?.adresa,
+    cisloPojisteni: _controllers['cisloPojisteni']!.text.isNotEmpty
+        ? _controllers['cisloPojisteni']!.text
+        : widget.osoba?.cisloPojisteni,
+    jmenoRodice: _controllers['jmenoRodice']!.text.isNotEmpty
+        ? _controllers['jmenoRodice']!.text
+        : widget.osoba?.jmenoRodice,
+    telefonRodice: _controllers['telefonRodice']!.text.isNotEmpty
+        ? _controllers['telefonRodice']!.text
+        : widget.osoba?.telefonRodice,
+    emailRodice: _controllers['emailRodice']!.text.isNotEmpty
+        ? _controllers['emailRodice']!.text
+        : widget.osoba?.emailRodice,
+    zdravotniPojistovna: _controllers['zdravotniPojistovna']!.text.isNotEmpty
+        ? _controllers['zdravotniPojistovna']!.text
+        : widget.osoba?.zdravotniPojistovna,
+    poznamka: _controllers['poznamka']!.text.isNotEmpty
+        ? _controllers['poznamka']!.text
+        : widget.osoba?.poznamka,
     pohlavi: _controllers['pohlavi']!.text.isNotEmpty
         ? int.parse(_controllers['pohlavi']!.text)
-        : null,
-    zpusobilost: false,
-    bezinfekcnost: false,
-    wasPrinted: false,
-    oddil: '',
-    prisel: false,
-    potvrzeniPath: '',
+        : widget.osoba?.pohlavi,
+    zpusobilost: widget.osoba?.zpusobilost ?? false,
+    bezinfekcnost: widget.osoba?.bezinfekcnost ?? false,
+    wasPrinted: widget.osoba?.wasPrinted ?? false,
+    oddil: widget.osoba?.oddil ?? '',
+    prisel: widget.osoba?.prisel ?? false,
+    potvrzeniPath: widget.osoba?.potvrzeniPath,
   );
 }
 
