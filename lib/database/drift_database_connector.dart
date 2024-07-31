@@ -29,7 +29,7 @@ class DriftDatabaseConnector implements DatabaseInterface {
     if(insCompId == null) {
       _driftDatabase.addInsuranceCompany(
         InsuranceCompaniesCompanion(
-          name: Value(osoba.zdravotniPojistovna!)
+          name: Value(osoba.zdravotniPojistovna?? ""),
         )
       );
     }

@@ -9,13 +9,14 @@ import '../input/rodne_cislo.dart';
 
 class ParticipantRegistrationForm extends StatefulWidget {
   final MemoryOsoba? osoba;
-  final Function(bool)? onValidate;
+  final Function(bool Function())? onValidate;
 
   const ParticipantRegistrationForm({super.key, this.osoba, this.onValidate});
 
   @override
   _ParticipantRegistrationFormState createState() => _ParticipantRegistrationFormState();
 }
+
 class _ParticipantRegistrationFormState extends State<ParticipantRegistrationForm> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _controllers = {
@@ -57,6 +58,7 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
         guessAndFillFields(_controllers['cisloPojisteni']!.text);
       });
     });
+    widget.onValidate?.call(validateForm);
   }
 
   @override
@@ -66,9 +68,7 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
       _populateFields(widget.osoba!);
     }
   }
-  /// used to hopefully validate the form from the outside
-  ///
-  /// returns true if the form is valid
+
   bool validateForm() {
     return _formKey.currentState?.validate() ?? false;
   }
@@ -101,55 +101,53 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
       if (widget.osoba == null) {
         bool insertSuccess = await DatabaseWrapper.getDatabase().addOsoba(osoba);
         _showSnackBar(insertSuccess ? 'Insert successful' : 'Insert failed');
-       // if (insertSuccess) _showPersonDetails(osoba);
       } else {
         int updateResult = await DatabaseWrapper.getDatabase().updateParticipant(osoba: osoba);
         _showSnackBar(updateResult > 0 ? 'Update successful' : 'Update failed');
-      //  if (updateResult > 0) _showPersonDetails(osoba);
       }
     }
   }
 
-MemoryOsoba _createMemoryOsoba() {
-  return MemoryOsoba.fullNamed(
-    id: widget.osoba?.id,
-    jmeno: _controllers['jmeno']!.text,
-    prijmeni: _controllers['prijmeni']!.text,
-    datumNarozeni: _controllers['datumNarozeni']!.text.isNotEmpty
-        ? DateFormat('dd.MM.yyyy').parse(_controllers['datumNarozeni']!.text)
-        : widget.osoba?.datumNarozeni,
-    adresa: _controllers['adresa']!.text.isNotEmpty
-        ? _controllers['adresa']!.text
-        : widget.osoba?.adresa,
-    cisloPojisteni: _controllers['cisloPojisteni']!.text.isNotEmpty
-        ? _controllers['cisloPojisteni']!.text
-        : widget.osoba?.cisloPojisteni,
-    jmenoRodice: _controllers['jmenoRodice']!.text.isNotEmpty
-        ? _controllers['jmenoRodice']!.text
-        : widget.osoba?.jmenoRodice,
-    telefonRodice: _controllers['telefonRodice']!.text.isNotEmpty
-        ? _controllers['telefonRodice']!.text
-        : widget.osoba?.telefonRodice,
-    emailRodice: _controllers['emailRodice']!.text.isNotEmpty
-        ? _controllers['emailRodice']!.text
-        : widget.osoba?.emailRodice,
-    zdravotniPojistovna: _controllers['zdravotniPojistovna']!.text.isNotEmpty
-        ? _controllers['zdravotniPojistovna']!.text
-        : widget.osoba?.zdravotniPojistovna,
-    poznamka: _controllers['poznamka']!.text.isNotEmpty
-        ? _controllers['poznamka']!.text
-        : widget.osoba?.poznamka,
-    pohlavi: _controllers['pohlavi']!.text.isNotEmpty
-        ? int.parse(_controllers['pohlavi']!.text)
-        : widget.osoba?.pohlavi,
-    zpusobilost: widget.osoba?.zpusobilost ?? false,
-    bezinfekcnost: widget.osoba?.bezinfekcnost ?? false,
-    wasPrinted: widget.osoba?.wasPrinted ?? false,
-    oddil: widget.osoba?.oddil ?? '',
-    prisel: widget.osoba?.prisel ?? false,
-    potvrzeniPath: widget.osoba?.potvrzeniPath,
-  );
-}
+  MemoryOsoba _createMemoryOsoba() {
+    return MemoryOsoba.fullNamed(
+      id: widget.osoba?.id,
+      jmeno: _controllers['jmeno']!.text,
+      prijmeni: _controllers['prijmeni']!.text,
+      datumNarozeni: _controllers['datumNarozeni']!.text.isNotEmpty
+          ? DateFormat('dd.MM.yyyy').parse(_controllers['datumNarozeni']!.text)
+          : widget.osoba?.datumNarozeni,
+      adresa: _controllers['adresa']!.text.isNotEmpty
+          ? _controllers['adresa']!.text
+          : widget.osoba?.adresa,
+      cisloPojisteni: _controllers['cisloPojisteni']!.text.isNotEmpty
+          ? _controllers['cisloPojisteni']!.text
+          : widget.osoba?.cisloPojisteni,
+      jmenoRodice: _controllers['jmenoRodice']!.text.isNotEmpty
+          ? _controllers['jmenoRodice']!.text
+          : widget.osoba?.jmenoRodice,
+      telefonRodice: _controllers['telefonRodice']!.text.isNotEmpty
+          ? _controllers['telefonRodice']!.text
+          : widget.osoba?.telefonRodice,
+      emailRodice: _controllers['emailRodice']!.text.isNotEmpty
+          ? _controllers['emailRodice']!.text
+          : widget.osoba?.emailRodice,
+      zdravotniPojistovna: _controllers['zdravotniPojistovna']!.text.isNotEmpty
+          ? _controllers['zdravotniPojistovna']!.text
+          : widget.osoba?.zdravotniPojistovna,
+      poznamka: _controllers['poznamka']!.text.isNotEmpty
+          ? _controllers['poznamka']!.text
+          : widget.osoba?.poznamka,
+      pohlavi: _controllers['pohlavi']!.text.isNotEmpty
+          ? int.parse(_controllers['pohlavi']!.text)
+          : widget.osoba?.pohlavi,
+      zpusobilost: widget.osoba?.zpusobilost ?? false,
+      bezinfekcnost: widget.osoba?.bezinfekcnost ?? false,
+      wasPrinted: widget.osoba?.wasPrinted ?? false,
+      oddil: widget.osoba?.oddil ?? '',
+      prisel: widget.osoba?.prisel ?? false,
+      potvrzeniPath: widget.osoba?.potvrzeniPath,
+    );
+  }
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
@@ -256,7 +254,6 @@ MemoryOsoba _createMemoryOsoba() {
     );
   }
 }
-
 class ParticipantRegistrationPage extends StatelessWidget {
   const ParticipantRegistrationPage({super.key});
 

@@ -25,12 +25,18 @@ class _IntakeFormState extends State<IntakeForm> {
   final MemoryOmezeniLogic _omezeniLogic = MemoryOmezeniLogic();
   final MemoryLekLogic _lekLogic = MemoryLekLogic();
   late ParticipantRegistrationForm _participantRegistrationForm;
+  bool Function()? _validateParticipantForm;
 
   @override
   void initState() {
     super.initState();
     _loadZpusobilostFolder();
-    _participantRegistrationForm = ParticipantRegistrationForm(osoba: selectedPerson);
+    _participantRegistrationForm = ParticipantRegistrationForm(
+      osoba: selectedPerson,
+      onValidate: (validate) {
+        _validateParticipantForm = validate;
+      },
+    );
   }
 
   Future<void> _loadZpusobilostFolder() async {
@@ -45,7 +51,12 @@ class _IntakeFormState extends State<IntakeForm> {
       selectedPerson = person;
       _omezeniLogic.fetchData(person.id);
       _lekLogic.fetchData(person.id);
-      _participantRegistrationForm = ParticipantRegistrationForm(osoba: selectedPerson);
+      _participantRegistrationForm = ParticipantRegistrationForm(
+        osoba: selectedPerson,
+        onValidate: (validate) {
+          _validateParticipantForm = validate;
+        },
+      );
     });
   }
 
@@ -58,20 +69,22 @@ class _IntakeFormState extends State<IntakeForm> {
   }
 
   Future<void> _handleSave(BuildContext context, bool markAsArrived) async {
-    await _omezeniLogic.update();
-    await _lekLogic.update();
+    if (_validateParticipantForm?.call() ?? false) {
+      await _omezeniLogic.update();
+      await _lekLogic.update();
 
-    if (selectedPerson != null) {
-      final filePath = selectedPerson!.potvrzeniPath;
-      if (filePath != null && filePath.isNotEmpty) {
-        selectedPerson!.potvrzeniPath = filePath;
+      if (selectedPerson != null) {
+        final filePath = selectedPerson!.potvrzeniPath;
+        if (filePath != null && filePath.isNotEmpty) {
+          selectedPerson!.potvrzeniPath = filePath;
+        }
+        await DatabaseWrapper.getDatabase().updateParticipant(osoba: selectedPerson!);
       }
-      await DatabaseWrapper.getDatabase().updateParticipant(osoba: selectedPerson!);
-    }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(markAsArrived ? 'uložit a přišel' : 'uložit')),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(markAsArrived ? 'uložit a přišel' : 'uložit')),
+      );
+    }
   }
 
   @override
