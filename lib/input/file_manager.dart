@@ -234,6 +234,7 @@ Future<String?> putZpusobilost(File pickedFile) async {
   ///
 /// [expectedFile] is the file that should be found in the directory
   /// if not found it will null it inside [MemoryOsoba] and return false
+  /// TODO: add to intake_form.dart
 Future<bool> validateZpusobilost(MemoryOsoba osoba) async {
   final zpusobilostDir = await getZpusobilostFolder();
   if (zpusobilostDir == null || osoba.potvrzeniPath == null) {

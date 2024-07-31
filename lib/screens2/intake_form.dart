@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/widgets/file_viewer_logic.dart';
 import 'package:denik_zza/screens2/widgets/file_viewer_screen_widget.dart';
@@ -5,6 +7,8 @@ import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
+
+import '../input/file_manager.dart';
 
 //TODO: buttons not attached to UI yet
 //TODO: First column not aligned to the top
@@ -19,6 +23,20 @@ class IntakeForm extends StatefulWidget {
 
 class _IntakeFormState extends State<IntakeForm> {
   MemoryOsoba? selectedPerson;
+  Directory? zpusobilostFolder;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadZpusobilostFolder();
+  }
+
+  Future<void> _loadZpusobilostFolder() async {
+    final folder = await FileManager().getZpusobilostFolder();
+    setState(() {
+      zpusobilostFolder = folder;
+    });
+  }
 
   void _onPersonSelected(MemoryOsoba person) {
     setState(() {
@@ -47,6 +65,7 @@ class _IntakeFormState extends State<IntakeForm> {
             selectedPerson: selectedPerson,
             onPersonSelected: _onPersonSelected,
             onFileUploaded: _onFileUploaded,
+            zpusobilostFolder: zpusobilostFolder,
           ),
         ),
       ),
@@ -58,8 +77,9 @@ class LayoutStyle extends StatelessWidget {
   final MemoryOsoba? selectedPerson;
   final Function(MemoryOsoba) onPersonSelected;
   final Function(String) onFileUploaded;
+  final Directory? zpusobilostFolder;
 
-  const LayoutStyle({super.key, required this.selectedPerson, required this.onPersonSelected, required this.onFileUploaded});
+  const LayoutStyle({super.key, required this.selectedPerson, required this.onPersonSelected, required this.onFileUploaded, required this.zpusobilostFolder});
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +94,7 @@ class LayoutStyle extends StatelessWidget {
                   child: Column(
                     children: [
                       FirstRow(onPersonSelected: onPersonSelected),
-                      TwoColumnRow(selectedPerson: selectedPerson, onFileUploaded: onFileUploaded),
+                      TwoColumnRow(selectedPerson: selectedPerson, onFileUploaded: onFileUploaded, zpusobilostFolder: zpusobilostFolder),
                       SizedBox(height: constraints.maxHeight),
                     ],
                   ),
@@ -113,8 +133,9 @@ class FirstRow extends StatelessWidget {
 class TwoColumnRow extends StatelessWidget {
   final MemoryOsoba? selectedPerson;
   final Function(String) onFileUploaded;
+  final Directory? zpusobilostFolder;
 
-  const TwoColumnRow({super.key, required this.selectedPerson, required this.onFileUploaded});
+  const TwoColumnRow({super.key, required this.selectedPerson, required this.onFileUploaded, required this.zpusobilostFolder});
 
   @override
   Widget build(BuildContext context) {
@@ -144,9 +165,9 @@ class TwoColumnRow extends StatelessWidget {
                   constraints: BoxConstraints(
                     maxHeight: MediaQuery.of(context).size.height / 1.6,
                   ),
-                  child: selectedPerson?.potvrzeniPath != null
-                      ? FileViewerScreen(initialFilePath: selectedPerson!.potvrzeniPath!)
-                      : FileViewerLogic(onFileUploaded: onFileUploaded),
+                  child: zpusobilostFolder == null || selectedPerson?.potvrzeniPath == null
+                      ? FileViewerLogic(onFileUploaded: onFileUploaded)
+                      : FileViewerScreen(initialFilePath: '${zpusobilostFolder!.path}/${selectedPerson!.potvrzeniPath}'),
                 ),
               ),
             ],
