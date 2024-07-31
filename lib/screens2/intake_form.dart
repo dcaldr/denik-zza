@@ -24,12 +24,13 @@ class _IntakeFormState extends State<IntakeForm> {
   Directory? zpusobilostFolder;
   final MemoryOmezeniLogic _omezeniLogic = MemoryOmezeniLogic();
   final MemoryLekLogic _lekLogic = MemoryLekLogic();
-
+  late ParticipantRegistrationForm _participantRegistrationForm;
 
   @override
   void initState() {
     super.initState();
     _loadZpusobilostFolder();
+    _participantRegistrationForm = ParticipantRegistrationForm(osoba: selectedPerson);
   }
 
   Future<void> _loadZpusobilostFolder() async {
@@ -44,6 +45,7 @@ class _IntakeFormState extends State<IntakeForm> {
       selectedPerson = person;
       _omezeniLogic.fetchData(person.id);
       _lekLogic.fetchData(person.id);
+      _participantRegistrationForm = ParticipantRegistrationForm(osoba: selectedPerson);
     });
   }
 
@@ -55,8 +57,7 @@ class _IntakeFormState extends State<IntakeForm> {
     }
   }
 
- Future<void> _handleSave(BuildContext context, bool markAsArrived) async {
-  // if (_formKey.currentState!.validate()) {
+  Future<void> _handleSave(BuildContext context, bool markAsArrived) async {
     await _omezeniLogic.update();
     await _lekLogic.update();
 
@@ -71,12 +72,7 @@ class _IntakeFormState extends State<IntakeForm> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(markAsArrived ? 'uložit a přišel' : 'uložit')),
     );
-  // } else {
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     const SnackBar(content: Text('Form validation failed')),
-  //   );
-  // }
-}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,6 +99,7 @@ class _IntakeFormState extends State<IntakeForm> {
                           zpusobilostFolder: zpusobilostFolder,
                           omezeniLogic: _omezeniLogic,
                           lekLogic: _lekLogic,
+                          participantRegistrationForm: _participantRegistrationForm,
                         ),
                       ],
                     ),
@@ -114,6 +111,7 @@ class _IntakeFormState extends State<IntakeForm> {
                 selectedPerson: selectedPerson,
                 onFileUploaded: _onFileUploaded,
                 handleSave: _handleSave,
+                participantRegistrationForm: _participantRegistrationForm,
               ),
             ],
           ),
@@ -153,6 +151,7 @@ class TwoColumnRow extends StatelessWidget {
   final Directory? zpusobilostFolder;
   final MemoryOmezeniLogic omezeniLogic;
   final MemoryLekLogic lekLogic;
+  final ParticipantRegistrationForm participantRegistrationForm;
 
   const TwoColumnRow({
     super.key,
@@ -161,6 +160,7 @@ class TwoColumnRow extends StatelessWidget {
     required this.zpusobilostFolder,
     required this.omezeniLogic,
     required this.lekLogic,
+    required this.participantRegistrationForm,
   });
 
   @override
@@ -176,7 +176,7 @@ class TwoColumnRow extends StatelessWidget {
                 const Text('First Column'),
                 Transform.scale(
                   scale: 0.85,
-                  child: ParticipantRegistrationForm(osoba: selectedPerson),
+                  child: participantRegistrationForm,
                 ),
                 Transform.scale(
                   scale: 0.85,
@@ -228,6 +228,7 @@ class SecondRow extends StatelessWidget {
   final MemoryOsoba? selectedPerson;
   final Function(String) onFileUploaded;
   final Function(BuildContext, bool) handleSave;
+  final ParticipantRegistrationForm participantRegistrationForm;
 
   const SecondRow({
     super.key,
@@ -235,6 +236,7 @@ class SecondRow extends StatelessWidget {
     required this.selectedPerson,
     required this.onFileUploaded,
     required this.handleSave,
+    required this.participantRegistrationForm,
   });
 
   @override
@@ -253,6 +255,7 @@ class SecondRow extends StatelessWidget {
               selectedPerson: selectedPerson,
               onFileUploaded: onFileUploaded,
               handleSave: handleSave,
+              participantRegistrationForm: participantRegistrationForm,
             ),
           ],
         ),
@@ -266,6 +269,7 @@ class ActionButtons extends StatelessWidget {
   final MemoryOsoba? selectedPerson;
   final Function(String) onFileUploaded;
   final Function(BuildContext, bool) handleSave;
+  final ParticipantRegistrationForm participantRegistrationForm;
 
   const ActionButtons({
     super.key,
@@ -273,6 +277,7 @@ class ActionButtons extends StatelessWidget {
     required this.selectedPerson,
     required this.onFileUploaded,
     required this.handleSave,
+    required this.participantRegistrationForm,
   });
 
   @override
