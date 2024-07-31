@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../database/database_interface.dart';
 import '../database/database_wrapper.dart';
+import '../database/in_memory_structures_tmp/memory_osoba.dart';
 
 /// Class to manage file operations - ie. "data directory"
 ///
@@ -229,6 +230,30 @@ Future<String?> putZpusobilost(File pickedFile) async {
     return null;
   }
 }
+/// tests if [MemoryOsoba.zpusobilostPath] is valid (and readable)
+  ///
+/// [expectedFile] is the file that should be found in the directory
+  /// if not found it will null it inside [MemoryOsoba] and return false
+Future<bool> validateZpusobilost(MemoryOsoba osoba) async {
+  final zpusobilostDir = await getZpusobilostFolder();
+  if (zpusobilostDir == null || osoba.potvrzeniPath == null) {
+    return true; // really true - because it's not an error
+  }
+  final expectedFile = File('${zpusobilostDir.path}/${osoba.potvrzeniPath}');
+  if (await expectedFile.exists()) {
+    try {
+      await expectedFile.openRead().first;
+      return true;
+    } catch (e) {
+      logger.e('File is not readable: ${expectedFile.path}');
+    }
+  } else {
+    logger.e('File not found: ${expectedFile.path}');
+  }
+  osoba.potvrzeniPath = null;
+  return false;
+}
+
 
   Future<void> _checkEventDirectoryExists(Directory candidate) async {
     if (!await candidate.exists()) {
