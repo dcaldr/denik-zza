@@ -1,5 +1,6 @@
 import 'package:denik_zza/screens2/event_list.dart';
 import 'package:denik_zza/screens2/event_registration_form.dart';
+import 'package:denik_zza/screens2/intake_form.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:flutter/material.dart';
 
@@ -40,6 +41,15 @@ class AppDrawer extends StatelessWidget {
               );
             },
           ),
+          ListTile(
+            title: const Text('Příjmací formulář'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const IntakeForm()),
+              );
+            },
+          )
 
         ],
       ),
