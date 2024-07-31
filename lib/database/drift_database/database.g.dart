@@ -2824,23 +2824,17 @@ class $MedicationsTable extends Medications
           GeneratedColumn.checkTextLength(minTextLength: 0, maxTextLength: 128),
       type: DriftSqlType.string,
       requiredDuringInsert: true);
-  static const VerificationMeta _dosageMeta = const VerificationMeta('dosage');
-  @override
-  late final GeneratedColumn<String> dosage = GeneratedColumn<String>(
-      'dosage', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 0, maxTextLength: 512),
-      type: DriftSqlType.string,
-      requiredDuringInsert: true);
   static const VerificationMeta _dosageTimingMeta =
       const VerificationMeta('dosageTiming');
   @override
   late final GeneratedColumn<String> dosageTiming = GeneratedColumn<String>(
-      'dosage_timing', aliasedName, false,
-      additionalChecks: GeneratedColumn.checkTextLength(
-          minTextLength: 0, maxTextLength: 1024),
-      type: DriftSqlType.string,
-      requiredDuringInsert: true);
+      'dosage_timing', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _dosageMeta = const VerificationMeta('dosage');
+  @override
+  late final GeneratedColumn<String> dosage = GeneratedColumn<String>(
+      'dosage', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _wasPrintedMeta =
       const VerificationMeta('wasPrinted');
   @override
@@ -2862,7 +2856,7 @@ class $MedicationsTable extends Medications
           GeneratedColumn.constraintIsAlways('REFERENCES participants (id)'));
   @override
   List<GeneratedColumn> get $columns =>
-      [id, name, dosage, dosageTiming, wasPrinted, participantFK];
+      [id, name, dosageTiming, dosage, wasPrinted, participantFK];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2882,19 +2876,15 @@ class $MedicationsTable extends Medications
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
-    if (data.containsKey('dosage')) {
-      context.handle(_dosageMeta,
-          dosage.isAcceptableOrUnknown(data['dosage']!, _dosageMeta));
-    } else if (isInserting) {
-      context.missing(_dosageMeta);
-    }
     if (data.containsKey('dosage_timing')) {
       context.handle(
           _dosageTimingMeta,
           dosageTiming.isAcceptableOrUnknown(
               data['dosage_timing']!, _dosageTimingMeta));
-    } else if (isInserting) {
-      context.missing(_dosageTimingMeta);
+    }
+    if (data.containsKey('dosage')) {
+      context.handle(_dosageMeta,
+          dosage.isAcceptableOrUnknown(data['dosage']!, _dosageMeta));
     }
     if (data.containsKey('was_printed')) {
       context.handle(
@@ -2923,10 +2913,10 @@ class $MedicationsTable extends Medications
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       name: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
-      dosage: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}dosage'])!,
       dosageTiming: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}dosage_timing'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}dosage_timing']),
+      dosage: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}dosage']),
       wasPrinted: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}was_printed'])!,
       participantFK: attachedDatabase.typeMapping
@@ -2943,15 +2933,15 @@ class $MedicationsTable extends Medications
 class Medication extends DataClass implements Insertable<Medication> {
   final int id;
   final String name;
-  final String dosage;
-  final String dosageTiming;
+  final String? dosageTiming;
+  final String? dosage;
   final bool wasPrinted;
   final int participantFK;
   const Medication(
       {required this.id,
       required this.name,
-      required this.dosage,
-      required this.dosageTiming,
+      this.dosageTiming,
+      this.dosage,
       required this.wasPrinted,
       required this.participantFK});
   @override
@@ -2959,8 +2949,12 @@ class Medication extends DataClass implements Insertable<Medication> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
-    map['dosage'] = Variable<String>(dosage);
-    map['dosage_timing'] = Variable<String>(dosageTiming);
+    if (!nullToAbsent || dosageTiming != null) {
+      map['dosage_timing'] = Variable<String>(dosageTiming);
+    }
+    if (!nullToAbsent || dosage != null) {
+      map['dosage'] = Variable<String>(dosage);
+    }
     map['was_printed'] = Variable<bool>(wasPrinted);
     map['participant_f_k'] = Variable<int>(participantFK);
     return map;
@@ -2970,8 +2964,11 @@ class Medication extends DataClass implements Insertable<Medication> {
     return MedicationsCompanion(
       id: Value(id),
       name: Value(name),
-      dosage: Value(dosage),
-      dosageTiming: Value(dosageTiming),
+      dosageTiming: dosageTiming == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dosageTiming),
+      dosage:
+          dosage == null && nullToAbsent ? const Value.absent() : Value(dosage),
       wasPrinted: Value(wasPrinted),
       participantFK: Value(participantFK),
     );
@@ -2983,8 +2980,8 @@ class Medication extends DataClass implements Insertable<Medication> {
     return Medication(
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
-      dosage: serializer.fromJson<String>(json['dosage']),
-      dosageTiming: serializer.fromJson<String>(json['dosageTiming']),
+      dosageTiming: serializer.fromJson<String?>(json['dosageTiming']),
+      dosage: serializer.fromJson<String?>(json['dosage']),
       wasPrinted: serializer.fromJson<bool>(json['wasPrinted']),
       participantFK: serializer.fromJson<int>(json['participantFK']),
     );
@@ -2995,8 +2992,8 @@ class Medication extends DataClass implements Insertable<Medication> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
-      'dosage': serializer.toJson<String>(dosage),
-      'dosageTiming': serializer.toJson<String>(dosageTiming),
+      'dosageTiming': serializer.toJson<String?>(dosageTiming),
+      'dosage': serializer.toJson<String?>(dosage),
       'wasPrinted': serializer.toJson<bool>(wasPrinted),
       'participantFK': serializer.toJson<int>(participantFK),
     };
@@ -3005,15 +3002,16 @@ class Medication extends DataClass implements Insertable<Medication> {
   Medication copyWith(
           {int? id,
           String? name,
-          String? dosage,
-          String? dosageTiming,
+          Value<String?> dosageTiming = const Value.absent(),
+          Value<String?> dosage = const Value.absent(),
           bool? wasPrinted,
           int? participantFK}) =>
       Medication(
         id: id ?? this.id,
         name: name ?? this.name,
-        dosage: dosage ?? this.dosage,
-        dosageTiming: dosageTiming ?? this.dosageTiming,
+        dosageTiming:
+            dosageTiming.present ? dosageTiming.value : this.dosageTiming,
+        dosage: dosage.present ? dosage.value : this.dosage,
         wasPrinted: wasPrinted ?? this.wasPrinted,
         participantFK: participantFK ?? this.participantFK,
       );
@@ -3021,10 +3019,10 @@ class Medication extends DataClass implements Insertable<Medication> {
     return Medication(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
-      dosage: data.dosage.present ? data.dosage.value : this.dosage,
       dosageTiming: data.dosageTiming.present
           ? data.dosageTiming.value
           : this.dosageTiming,
+      dosage: data.dosage.present ? data.dosage.value : this.dosage,
       wasPrinted:
           data.wasPrinted.present ? data.wasPrinted.value : this.wasPrinted,
       participantFK: data.participantFK.present
@@ -3038,8 +3036,8 @@ class Medication extends DataClass implements Insertable<Medication> {
     return (StringBuffer('Medication(')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('dosage: $dosage, ')
           ..write('dosageTiming: $dosageTiming, ')
+          ..write('dosage: $dosage, ')
           ..write('wasPrinted: $wasPrinted, ')
           ..write('participantFK: $participantFK')
           ..write(')'))
@@ -3048,15 +3046,15 @@ class Medication extends DataClass implements Insertable<Medication> {
 
   @override
   int get hashCode =>
-      Object.hash(id, name, dosage, dosageTiming, wasPrinted, participantFK);
+      Object.hash(id, name, dosageTiming, dosage, wasPrinted, participantFK);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Medication &&
           other.id == this.id &&
           other.name == this.name &&
-          other.dosage == this.dosage &&
           other.dosageTiming == this.dosageTiming &&
+          other.dosage == this.dosage &&
           other.wasPrinted == this.wasPrinted &&
           other.participantFK == this.participantFK);
 }
@@ -3064,42 +3062,40 @@ class Medication extends DataClass implements Insertable<Medication> {
 class MedicationsCompanion extends UpdateCompanion<Medication> {
   final Value<int> id;
   final Value<String> name;
-  final Value<String> dosage;
-  final Value<String> dosageTiming;
+  final Value<String?> dosageTiming;
+  final Value<String?> dosage;
   final Value<bool> wasPrinted;
   final Value<int> participantFK;
   const MedicationsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
-    this.dosage = const Value.absent(),
     this.dosageTiming = const Value.absent(),
+    this.dosage = const Value.absent(),
     this.wasPrinted = const Value.absent(),
     this.participantFK = const Value.absent(),
   });
   MedicationsCompanion.insert({
     this.id = const Value.absent(),
     required String name,
-    required String dosage,
-    required String dosageTiming,
+    this.dosageTiming = const Value.absent(),
+    this.dosage = const Value.absent(),
     this.wasPrinted = const Value.absent(),
     required int participantFK,
   })  : name = Value(name),
-        dosage = Value(dosage),
-        dosageTiming = Value(dosageTiming),
         participantFK = Value(participantFK);
   static Insertable<Medication> custom({
     Expression<int>? id,
     Expression<String>? name,
-    Expression<String>? dosage,
     Expression<String>? dosageTiming,
+    Expression<String>? dosage,
     Expression<bool>? wasPrinted,
     Expression<int>? participantFK,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
-      if (dosage != null) 'dosage': dosage,
       if (dosageTiming != null) 'dosage_timing': dosageTiming,
+      if (dosage != null) 'dosage': dosage,
       if (wasPrinted != null) 'was_printed': wasPrinted,
       if (participantFK != null) 'participant_f_k': participantFK,
     });
@@ -3108,15 +3104,15 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
   MedicationsCompanion copyWith(
       {Value<int>? id,
       Value<String>? name,
-      Value<String>? dosage,
-      Value<String>? dosageTiming,
+      Value<String?>? dosageTiming,
+      Value<String?>? dosage,
       Value<bool>? wasPrinted,
       Value<int>? participantFK}) {
     return MedicationsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
-      dosage: dosage ?? this.dosage,
       dosageTiming: dosageTiming ?? this.dosageTiming,
+      dosage: dosage ?? this.dosage,
       wasPrinted: wasPrinted ?? this.wasPrinted,
       participantFK: participantFK ?? this.participantFK,
     );
@@ -3131,11 +3127,11 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
     if (name.present) {
       map['name'] = Variable<String>(name.value);
     }
-    if (dosage.present) {
-      map['dosage'] = Variable<String>(dosage.value);
-    }
     if (dosageTiming.present) {
       map['dosage_timing'] = Variable<String>(dosageTiming.value);
+    }
+    if (dosage.present) {
+      map['dosage'] = Variable<String>(dosage.value);
     }
     if (wasPrinted.present) {
       map['was_printed'] = Variable<bool>(wasPrinted.value);
@@ -3151,8 +3147,8 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
     return (StringBuffer('MedicationsCompanion(')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('dosage: $dosage, ')
           ..write('dosageTiming: $dosageTiming, ')
+          ..write('dosage: $dosage, ')
           ..write('wasPrinted: $wasPrinted, ')
           ..write('participantFK: $participantFK')
           ..write(')'))
@@ -4644,8 +4640,8 @@ typedef $$MedicationsTableCreateCompanionBuilder = MedicationsCompanion
     Function({
   Value<int> id,
   required String name,
-  required String dosage,
-  required String dosageTiming,
+  Value<String?> dosageTiming,
+  Value<String?> dosage,
   Value<bool> wasPrinted,
   required int participantFK,
 });
@@ -4653,8 +4649,8 @@ typedef $$MedicationsTableUpdateCompanionBuilder = MedicationsCompanion
     Function({
   Value<int> id,
   Value<String> name,
-  Value<String> dosage,
-  Value<String> dosageTiming,
+  Value<String?> dosageTiming,
+  Value<String?> dosage,
   Value<bool> wasPrinted,
   Value<int> participantFK,
 });
@@ -4678,32 +4674,32 @@ class $$MedicationsTableTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> name = const Value.absent(),
-            Value<String> dosage = const Value.absent(),
-            Value<String> dosageTiming = const Value.absent(),
+            Value<String?> dosageTiming = const Value.absent(),
+            Value<String?> dosage = const Value.absent(),
             Value<bool> wasPrinted = const Value.absent(),
             Value<int> participantFK = const Value.absent(),
           }) =>
               MedicationsCompanion(
             id: id,
             name: name,
-            dosage: dosage,
             dosageTiming: dosageTiming,
+            dosage: dosage,
             wasPrinted: wasPrinted,
             participantFK: participantFK,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String name,
-            required String dosage,
-            required String dosageTiming,
+            Value<String?> dosageTiming = const Value.absent(),
+            Value<String?> dosage = const Value.absent(),
             Value<bool> wasPrinted = const Value.absent(),
             required int participantFK,
           }) =>
               MedicationsCompanion.insert(
             id: id,
             name: name,
-            dosage: dosage,
             dosageTiming: dosageTiming,
+            dosage: dosage,
             wasPrinted: wasPrinted,
             participantFK: participantFK,
           ),
@@ -4723,13 +4719,13 @@ class $$MedicationsTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  ColumnFilters<String> get dosage => $state.composableBuilder(
-      column: $state.table.dosage,
+  ColumnFilters<String> get dosageTiming => $state.composableBuilder(
+      column: $state.table.dosageTiming,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  ColumnFilters<String> get dosageTiming => $state.composableBuilder(
-      column: $state.table.dosageTiming,
+  ColumnFilters<String> get dosage => $state.composableBuilder(
+      column: $state.table.dosage,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
@@ -4764,13 +4760,13 @@ class $$MedicationsTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
-  ColumnOrderings<String> get dosage => $state.composableBuilder(
-      column: $state.table.dosage,
+  ColumnOrderings<String> get dosageTiming => $state.composableBuilder(
+      column: $state.table.dosageTiming,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
-  ColumnOrderings<String> get dosageTiming => $state.composableBuilder(
-      column: $state.table.dosageTiming,
+  ColumnOrderings<String> get dosage => $state.composableBuilder(
+      column: $state.table.dosage,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 

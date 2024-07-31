@@ -465,25 +465,20 @@ return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergies
       domovskyAdresarPath: a.homeDirectory,
     );
   }
-  _toMedicationCompanion(lek) {
+  _toMedicationCompanion(MemoryLek lek) {
     return MedicationsCompanion(
-      id: Value(lek.id),
       name: Value(lek.nazev),
-      dosage: Value(lek.davkovani),
-     wasPrinted: Value(lek.wasPrinted),
+      dosage: Value(lek.popisDavkovani ?? ""), // Provide a default value if null
+      dosageTiming: Value(lek.popisDavkovani ?? ""),
+      wasPrinted: Value(lek.wasPrinted),
       participantFK: Value(lek.idOsoby),
-
-
-
-
-     // note: Value(lek.poznamka),
     );
   }
-  _toRestrictionCompanion(omezeni) {
+  _toRestrictionCompanion(MemoryOmezeni omezeni) {
     return AllergiesLimitationsCompanion(
-      id: Value(omezeni.id),
-      description: Value(omezeni.nazev),
-      type: Value(omezeni.typ),
+      //id: Value(omezeni.id),
+      description: Value(omezeni.omezeni),
+      type: Value(omezeni.typOmezeni),
       wasPrinted: Value(omezeni.wasPrinted),
       participantFK: Value(omezeni.idOsoby),
 

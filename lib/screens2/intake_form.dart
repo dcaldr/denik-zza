@@ -54,6 +54,29 @@ class _IntakeFormState extends State<IntakeForm> {
     }
   }
 
+ Future<void> _handleSave(BuildContext context, bool markAsArrived) async {
+  // if (_formKey.currentState!.validate()) {
+    await _omezeniLogic.update();
+    await _lekLogic.update();
+
+    if (selectedPerson != null) {
+      final filePath = selectedPerson!.potvrzeniPath;
+      if (filePath != null && filePath.isNotEmpty) {
+        selectedPerson!.potvrzeniPath = filePath;
+      }
+      await DatabaseWrapper.getDatabase().updateParticipant(osoba: selectedPerson!);
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(markAsArrived ? 'uložit a přišel' : 'uložit')),
+    );
+  // } else {
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     const SnackBar(content: Text('Form validation failed')),
+  //   );
+  // }
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,67 +87,37 @@ class _IntakeFormState extends State<IntakeForm> {
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1600),
-          child: LayoutStyle(
-            selectedPerson: selectedPerson,
-            onPersonSelected: _onPersonSelected,
-            onFileUploaded: _onFileUploaded,
-            zpusobilostFolder: zpusobilostFolder,
-            omezeniLogic: _omezeniLogic,
-            lekLogic: _lekLogic,
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),
+                    child: Column(
+                      children: [
+                        FirstRow(onPersonSelected: _onPersonSelected),
+                        TwoColumnRow(
+                          selectedPerson: selectedPerson,
+                          onFileUploaded: _onFileUploaded,
+                          zpusobilostFolder: zpusobilostFolder,
+                          omezeniLogic: _omezeniLogic,
+                          lekLogic: _lekLogic,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              SecondRow(
+                formKey: _formKey,
+                selectedPerson: selectedPerson,
+                onFileUploaded: _onFileUploaded,
+                handleSave: _handleSave,
+              ),
+            ],
           ),
         ),
       ),
-    );
-  }
-}
-
-class LayoutStyle extends StatelessWidget {
-  final MemoryOsoba? selectedPerson;
-  final Function(MemoryOsoba) onPersonSelected;
-  final Function(String) onFileUploaded;
-  final Directory? zpusobilostFolder;
-  final MemoryOmezeniLogic omezeniLogic;
-  final MemoryLekLogic lekLogic;
-
-  const LayoutStyle({
-    super.key,
-    required this.selectedPerson,
-    required this.onPersonSelected,
-    required this.onFileUploaded,
-    required this.zpusobilostFolder,
-    required this.omezeniLogic,
-    required this.lekLogic,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),
-              child: Column(
-                children: [
-                  FirstRow(onPersonSelected: onPersonSelected),
-                  TwoColumnRow(
-                    selectedPerson: selectedPerson,
-                    onFileUploaded: onFileUploaded,
-                    zpusobilostFolder: zpusobilostFolder,
-                    omezeniLogic: omezeniLogic,
-                    lekLogic: lekLogic,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        SecondRow(
-          formKey: GlobalKey<FormState>(),
-          selectedPerson: selectedPerson,
-          onFileUploaded: onFileUploaded,
-        ),
-      ],
     );
   }
 }
@@ -194,7 +187,7 @@ class TwoColumnRow extends StatelessWidget {
                           participantId: selectedPerson?.id,
                         ),
                       ),
-                      const SizedBox(width: 10), // Add some spacing between the widgets
+                      const SizedBox(width: 10),
                       Expanded(
                         child: RestrictionsWidget(
                           logic: lekLogic,
@@ -233,12 +226,14 @@ class SecondRow extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final MemoryOsoba? selectedPerson;
   final Function(String) onFileUploaded;
+  final Function(BuildContext, bool) handleSave;
 
   const SecondRow({
     super.key,
     required this.formKey,
     required this.selectedPerson,
     required this.onFileUploaded,
+    required this.handleSave,
   });
 
   @override
@@ -256,6 +251,7 @@ class SecondRow extends StatelessWidget {
               formKey: formKey,
               selectedPerson: selectedPerson,
               onFileUploaded: onFileUploaded,
+              handleSave: handleSave,
             ),
           ],
         ),
@@ -268,40 +264,15 @@ class ActionButtons extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final MemoryOsoba? selectedPerson;
   final Function(String) onFileUploaded;
+  final Function(BuildContext, bool) handleSave;
 
   const ActionButtons({
     super.key,
     required this.formKey,
     required this.selectedPerson,
     required this.onFileUploaded,
+    required this.handleSave,
   });
-
-  Future<void> _handleSave(BuildContext context, bool markAsArrived) async {
-    if (formKey.currentState!.validate()) {
-      // Upload restrictions and medications to the database
-      await MemoryOmezeniLogic().update();
-      await MemoryLekLogic().update();
-
-      // Update the person with the file path if needed
-      if (selectedPerson != null) {
-        final filePath = selectedPerson!.potvrzeniPath;
-        if (filePath != null && filePath.isNotEmpty) {
-          selectedPerson!.potvrzeniPath = filePath;
-        }
-        await DatabaseWrapper.getDatabase().updateParticipant(osoba: selectedPerson!);
-      }
-
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(markAsArrived ? 'uložit a přišel' : 'uložit')),
-      );
-    } else {
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Form validation failed')),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -311,7 +282,7 @@ class ActionButtons extends StatelessWidget {
         Tooltip(
           message: 'uložit a přišel',
           child: ElevatedButton.icon(
-            onPressed: () => _handleSave(context, true),
+            onPressed: () => handleSave(context, true),
             icon: const Icon(Icons.check_circle, color: Colors.white),
             label: const Text('uložit a přišel'),
             style: ElevatedButton.styleFrom(
@@ -327,7 +298,7 @@ class ActionButtons extends StatelessWidget {
         Tooltip(
           message: 'uložit',
           child: ElevatedButton.icon(
-            onPressed: () => _handleSave(context, false),
+            onPressed: () => handleSave(context, false),
             icon: const Icon(Icons.save, color: Colors.white),
             label: const Text('uložit'),
             style: ElevatedButton.styleFrom(
