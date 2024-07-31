@@ -9,13 +9,13 @@ import '../input/rodne_cislo.dart';
 
 class ParticipantRegistrationForm extends StatefulWidget {
   final MemoryOsoba? osoba;
+  final Function(bool)? onValidate;
 
-  const ParticipantRegistrationForm({super.key, this.osoba});
+  const ParticipantRegistrationForm({super.key, this.osoba, this.onValidate});
 
   @override
   _ParticipantRegistrationFormState createState() => _ParticipantRegistrationFormState();
 }
-
 class _ParticipantRegistrationFormState extends State<ParticipantRegistrationForm> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _controllers = {
@@ -66,6 +66,12 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
       _populateFields(widget.osoba!);
     }
   }
+  /// used to hopefully validate the form from the outside
+  ///
+  /// returns true if the form is valid
+  bool validateForm() {
+    return _formKey.currentState?.validate() ?? false;
+  }
 
   void _populateFields(MemoryOsoba osoba) {
     _controllers['jmeno']!.text = osoba.jmeno;
@@ -104,28 +110,32 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     }
   }
 
-  MemoryOsoba _createMemoryOsoba() {
-    return MemoryOsoba.fullNamed(
-      id: widget.osoba?.id,
-      jmeno: _controllers['jmeno']!.text,
-      prijmeni: _controllers['prijmeni']!.text,
-      datumNarozeni: DateFormat('dd.MM.yyyy').parse(_controllers['datumNarozeni']!.text),
-      adresa: _controllers['adresa']!.text,
-      cisloPojisteni: _controllers['cisloPojisteni']!.text,
-      jmenoRodice: _controllers['jmenoRodice']!.text,
-      telefonRodice: _controllers['telefonRodice']!.text,
-      emailRodice: _controllers['emailRodice']!.text,
-      zdravotniPojistovna: _controllers['zdravotniPojistovna']!.text,
-      poznamka: _controllers['poznamka']!.text,
-      pohlavi: int.parse(_controllers['pohlavi']!.text),
-      zpusobilost: false,
-      bezinfekcnost: false,
-      wasPrinted: false,
-      oddil: '',
-      prisel: false,
-      potvrzeniPath: '',
-    );
-  }
+MemoryOsoba _createMemoryOsoba() {
+  return MemoryOsoba.fullNamed(
+    id: widget.osoba?.id,
+    jmeno: _controllers['jmeno']!.text,
+    prijmeni: _controllers['prijmeni']!.text,
+    datumNarozeni: _controllers['datumNarozeni']!.text.isNotEmpty
+        ? DateFormat('dd.MM.yyyy').parse(_controllers['datumNarozeni']!.text)
+        : null,
+    adresa: _controllers['adresa']!.text,
+    cisloPojisteni: _controllers['cisloPojisteni']!.text,
+    jmenoRodice: _controllers['jmenoRodice']!.text,
+    telefonRodice: _controllers['telefonRodice']!.text,
+    emailRodice: _controllers['emailRodice']!.text,
+    zdravotniPojistovna: _controllers['zdravotniPojistovna']!.text,
+    poznamka: _controllers['poznamka']!.text,
+    pohlavi: _controllers['pohlavi']!.text.isNotEmpty
+        ? int.parse(_controllers['pohlavi']!.text)
+        : null,
+    zpusobilost: false,
+    bezinfekcnost: false,
+    wasPrinted: false,
+    oddil: '',
+    prisel: false,
+    potvrzeniPath: '',
+  );
+}
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));

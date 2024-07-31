@@ -114,6 +114,10 @@ class PohlaviHold extends InputHold{
 
   @override
   _converter() {
+    if(input.isEmpty){
+      status = ParseStatus.ok;
+      return null;
+    }
     if(TextTools.looseCmpWithList(input, possibleMuz)){
       status = ParseStatus.ok;
       return 1;
