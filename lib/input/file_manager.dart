@@ -147,6 +147,7 @@ class FileManager {
   /// Should be explicitly called from UI to better handle possible errors
   /// TODO: create UI Popup for catching errors - with option to recreate event directory
   changeEvent() async {
+    logger.i('Changing event');
     DatabaseInterface db = DatabaseWrapper.getDatabase();
     MemoryAction? event = await db.getCurrentAction();
     if (event == null) {
@@ -156,19 +157,23 @@ class FileManager {
     }
     // prevent unnecessary actions
     if (event.domovskyAdresarPath == eventDir?.path) {
+      logger.i('Event directory is already set');
       return;
     }
     // if event hasn't been created yet
     if (event.domovskyAdresarPath == null || event.domovskyAdresarPath!.isEmpty) {
+      logger.i('Event directory not found in db');
       eventDir = await createNewEventDataDir(event.nadpis);
       event.domovskyAdresarPath = eventDir?.path;
       db.updateEvent(action: event);
       return;
     }
     // if in db but not in class - check folder structure
+    logger.i('Event directory found in db, not in class');
     Directory? candidate = Directory(event.domovskyAdresarPath!);
     await _checkEventDirectoryExists(candidate);
     await _validateSubfolders(candidate);
+    eventDir = candidate;
   }
 
   /// simple backup of the database
