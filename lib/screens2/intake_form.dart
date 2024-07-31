@@ -1,18 +1,13 @@
 import 'dart:io';
-
+import 'package:flutter/material.dart';
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/widgets/file_viewer_logic.dart';
 import 'package:denik_zza/screens2/widgets/file_viewer_screen_widget.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
-import 'package:flutter/material.dart';
+import 'package:denik_zza/screens2/widgets/restrictions_widget.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
-
 import '../input/file_manager.dart';
-
-//TODO: buttons not attached to UI yet
-//TODO: First column not aligned to the top
-//TODO: resizing problems 1) vertical -> second column can overflow 2) horizontal -> second row can overflow (seen in pdfViewer)
 
 class IntakeForm extends StatefulWidget {
   const IntakeForm({super.key});
@@ -60,7 +55,8 @@ class _IntakeFormState extends State<IntakeForm> {
       ),
       drawer: const AppDrawer(),
       body: Center(
-        child: SizedBox(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: 1200),
           child: LayoutStyle(
             selectedPerson: selectedPerson,
             onPersonSelected: _onPersonSelected,
@@ -83,28 +79,23 @@ class LayoutStyle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: Column(
-                    children: [
-                      FirstRow(onPersonSelected: onPersonSelected),
-                      TwoColumnRow(selectedPerson: selectedPerson, onFileUploaded: onFileUploaded, zpusobilostFolder: zpusobilostFolder),
-                      SizedBox(height: constraints.maxHeight),
-                    ],
-                  ),
-                ),
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),
+              child: Column(
+                children: [
+                  FirstRow(onPersonSelected: onPersonSelected),
+                  TwoColumnRow(selectedPerson: selectedPerson, onFileUploaded: onFileUploaded, zpusobilostFolder: zpusobilostFolder),
+                ],
               ),
             ),
-            const SecondRow(),
-          ],
-        );
-      },
+          ),
+        ),
+        const SecondRow(),
+      ],
     );
   }
 }
@@ -116,16 +107,19 @@ class FirstRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Text('First Row'),
-        Flexible(
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            child: PersonAutocomplete(onPersonSelected: onPersonSelected),
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        children: [
+          const Text('First Row'),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              child: PersonAutocomplete(onPersonSelected: onPersonSelected),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -139,29 +133,29 @@ class TwoColumnRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Flexible(
-          flex: 1,
-          child: Column(
-            children: [
-              const Text('First Column'),
-              Transform.scale(
-                scale: 0.85,
-                child: ParticipantRegistrationForm(osoba: selectedPerson),
-              ),
-            ],
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('First Column'),
+                Transform.scale(
+                  scale: 0.85,
+                  child: ParticipantRegistrationForm(osoba: selectedPerson),
+                ),
+                const RestrictionsWidget(),
+              ],
+            ),
           ),
-        ),
-        Flexible(
-          flex: 1,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Second Column'),
-              Flexible(
-                fit: FlexFit.loose,
-                child: Container(
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Second Column'),
+                Container(
                   constraints: BoxConstraints(
                     maxHeight: MediaQuery.of(context).size.height / 1.6,
                   ),
@@ -169,11 +163,11 @@ class TwoColumnRow extends StatelessWidget {
                       ? FileViewerLogic(onFileUploaded: onFileUploaded)
                       : FileViewerScreen(initialFilePath: '${zpusobilostFolder!.path}/${selectedPerson!.potvrzeniPath}'),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
