@@ -2,12 +2,23 @@ import 'package:flutter/material.dart';
 import '../../database/database_interface.dart';
 import '../../database/database_wrapper.dart';
 
+import 'package:flutter/material.dart';
+import '../../database/database_interface.dart';
+import '../../database/database_wrapper.dart';
+
 class RestrictionsWidget extends StatefulWidget {
   final LogicInterface logic;
-  const RestrictionsWidget({super.key, required this.logic});
+  final int? participantId;
+
+  const RestrictionsWidget({super.key, required this.logic, this.participantId});
 
   @override
   _RestrictionsWidgetState createState() => _RestrictionsWidgetState();
+
+  void update() {
+    _RestrictionsWidgetState? state = _RestrictionsWidgetState();
+    state._updateData();
+  }
 }
 
 class _RestrictionsWidgetState extends State<RestrictionsWidget> {
@@ -23,7 +34,12 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
   }
 
   Future<void> _fetchData() async {
-    await _logic.fetchData();
+    await _logic.fetchData(widget.participantId);
+    setState(() {});
+  }
+
+  Future<void> _updateData() async {
+    await _logic.update();
     setState(() {});
   }
 
@@ -103,11 +119,11 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
   }
 }
 
-
 abstract class LogicInterface {
-  Future<void> fetchData();
+  Future<void> fetchData([int? participantId]);
   void addItem(String name);
   List<String> get items;
   List<String> get names;
   String getText();
+  Future<void> update();
 }
