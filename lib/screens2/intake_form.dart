@@ -22,6 +22,8 @@ class _IntakeFormState extends State<IntakeForm> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   MemoryOsoba? selectedPerson;
   Directory? zpusobilostFolder;
+  final MemoryOmezeniLogic _omezeniLogic = MemoryOmezeniLogic();
+  final MemoryLekLogic _lekLogic = MemoryLekLogic();
 
   @override
   void initState() {
@@ -39,6 +41,8 @@ class _IntakeFormState extends State<IntakeForm> {
   void _onPersonSelected(MemoryOsoba person) {
     setState(() {
       selectedPerson = person;
+      _omezeniLogic.reset();
+      _lekLogic.reset();
     });
   }
 
@@ -59,12 +63,14 @@ class _IntakeFormState extends State<IntakeForm> {
       drawer: const AppDrawer(),
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
+          constraints: const BoxConstraints(maxWidth: 1600),
           child: LayoutStyle(
             selectedPerson: selectedPerson,
             onPersonSelected: _onPersonSelected,
             onFileUploaded: _onFileUploaded,
             zpusobilostFolder: zpusobilostFolder,
+            omezeniLogic: _omezeniLogic,
+            lekLogic: _lekLogic,
           ),
         ),
       ),
@@ -77,6 +83,8 @@ class LayoutStyle extends StatelessWidget {
   final Function(MemoryOsoba) onPersonSelected;
   final Function(String) onFileUploaded;
   final Directory? zpusobilostFolder;
+  final MemoryOmezeniLogic omezeniLogic;
+  final MemoryLekLogic lekLogic;
 
   const LayoutStyle({
     super.key,
@@ -84,6 +92,8 @@ class LayoutStyle extends StatelessWidget {
     required this.onPersonSelected,
     required this.onFileUploaded,
     required this.zpusobilostFolder,
+    required this.omezeniLogic,
+    required this.lekLogic,
   });
 
   @override
@@ -101,6 +111,8 @@ class LayoutStyle extends StatelessWidget {
                     selectedPerson: selectedPerson,
                     onFileUploaded: onFileUploaded,
                     zpusobilostFolder: zpusobilostFolder,
+                    omezeniLogic: omezeniLogic,
+                    lekLogic: lekLogic,
                   ),
                 ],
               ),
@@ -145,8 +157,17 @@ class TwoColumnRow extends StatelessWidget {
   final MemoryOsoba? selectedPerson;
   final Function(String) onFileUploaded;
   final Directory? zpusobilostFolder;
+  final MemoryOmezeniLogic omezeniLogic;
+  final MemoryLekLogic lekLogic;
 
-  const TwoColumnRow({super.key, required this.selectedPerson, required this.onFileUploaded, required this.zpusobilostFolder});
+  const TwoColumnRow({
+    super.key,
+    required this.selectedPerson,
+    required this.onFileUploaded,
+    required this.zpusobilostFolder,
+    required this.omezeniLogic,
+    required this.lekLogic,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -169,14 +190,14 @@ class TwoColumnRow extends StatelessWidget {
                     children: [
                       Expanded(
                         child: RestrictionsWidget(
-                          logic: MemoryOmezeniLogic(),
+                          logic: omezeniLogic,
                           participantId: selectedPerson?.id,
                         ),
                       ),
                       const SizedBox(width: 10), // Add some spacing between the widgets
                       Expanded(
                         child: RestrictionsWidget(
-                          logic: MemoryLekLogic(),
+                          logic: lekLogic,
                           participantId: selectedPerson?.id,
                         ),
                       ),

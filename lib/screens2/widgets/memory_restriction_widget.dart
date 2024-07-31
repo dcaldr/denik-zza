@@ -50,6 +50,11 @@ class MemoryOmezeniLogic implements LogicInterface {
     _newOmezeni.clear();
     await fetchData();
   }
+
+  void reset() {
+    _items.clear();
+    _newOmezeni.clear();
+  }
 }
 
 
@@ -98,5 +103,10 @@ class MemoryLekLogic implements LogicInterface {
     }
     _newLeky.clear();
     await fetchData();
+  }
+
+  void reset() {
+    _items.clear();
+    _newLeky.clear();
   }
 }
