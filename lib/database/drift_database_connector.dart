@@ -459,7 +459,7 @@ return _driftDatabase.updateEvent(id!, c);
       id: Value(lek.id),
       name: Value(lek.nazev),
       dosage: Value(lek.davkovani),
-     //wasPrinted: Value(lek.wasPrinted),
+     wasPrinted: Value(lek.wasPrinted),
 
 
 
@@ -472,7 +472,7 @@ return _driftDatabase.updateEvent(id!, c);
       id: Value(omezeni.id),
       description: Value(omezeni.nazev),
       type: Value(omezeni.typ),
-      //wasPrinted: Value(omezeni.wasPrinted),
+      wasPrinted: Value(omezeni.wasPrinted),
 
     );
   }
@@ -482,7 +482,7 @@ return _driftDatabase.updateEvent(id!, c);
       nazev: lek.name,
       popisDavkovani: lek.dosage,
 
-      //wasPrinted: lek.wasPrinted,
+      wasPrinted: lek.wasPrinted,
       //poznamka: lek.note,
     );
   }
@@ -493,7 +493,7 @@ return _driftDatabase.updateEvent(id!, c);
       typOmezeni: omezeni.type,
 
 
-      //wasPrinted: omezeni.wasPrinted,
+      wasPrinted: omezeni.wasPrinted,
     );
   }
 

@@ -67,7 +67,7 @@ class Records extends Table {
   TextColumn get picturePath => text().nullable()();
 
   // Foreign keys
-  IntColumn get paramedicFK => integer().references(Paramedics, #id)();
+  IntColumn get paramedicFK => integer().references(Paramedics,  #id)();
   IntColumn get participantFK => integer().references(Participants, #id)();
 }
 

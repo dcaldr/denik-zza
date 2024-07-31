@@ -21,6 +21,8 @@ part 'database.g.dart';
 
 
 /// The main [AppDatabase] class representing the Drift database for the Zza app.
+@DriftDatabase(tables: [InsuranceCompanies, ZzaActions, Participants,
+  Paramedics, Records, AllergiesLimitations, Medications, Cache])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([String? path]) : super(_openConnection(path));
 

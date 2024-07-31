@@ -599,7 +599,7 @@ class $ParticipantsTable extends Participants
   late final GeneratedColumn<String> birthNumber = GeneratedColumn<String>(
       'birth_number', aliasedName, true,
       additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 0, maxTextLength: 11),
+          GeneratedColumn.checkTextLength(minTextLength: 0, maxTextLength: 15),
       type: DriftSqlType.string,
       requiredDuringInsert: false);
   static const VerificationMeta _birthDateMeta =
@@ -2511,6 +2511,16 @@ class $AllergiesLimitationsTable extends AllergiesLimitations
   late final GeneratedColumn<int> type = GeneratedColumn<int>(
       'type', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _wasPrintedMeta =
+      const VerificationMeta('wasPrinted');
+  @override
+  late final GeneratedColumn<bool> wasPrinted = GeneratedColumn<bool>(
+      'was_printed', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("was_printed" IN (0, 1))'),
+      defaultValue: const Constant(false));
   static const VerificationMeta _participantFKMeta =
       const VerificationMeta('participantFK');
   @override
@@ -2521,7 +2531,8 @@ class $AllergiesLimitationsTable extends AllergiesLimitations
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('REFERENCES participants (id)'));
   @override
-  List<GeneratedColumn> get $columns => [id, description, type, participantFK];
+  List<GeneratedColumn> get $columns =>
+      [id, description, type, wasPrinted, participantFK];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2550,6 +2561,12 @@ class $AllergiesLimitationsTable extends AllergiesLimitations
     } else if (isInserting) {
       context.missing(_typeMeta);
     }
+    if (data.containsKey('was_printed')) {
+      context.handle(
+          _wasPrintedMeta,
+          wasPrinted.isAcceptableOrUnknown(
+              data['was_printed']!, _wasPrintedMeta));
+    }
     if (data.containsKey('participant_f_k')) {
       context.handle(
           _participantFKMeta,
@@ -2573,6 +2590,8 @@ class $AllergiesLimitationsTable extends AllergiesLimitations
           .read(DriftSqlType.string, data['${effectivePrefix}description'])!,
       type: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}type'])!,
+      wasPrinted: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}was_printed'])!,
       participantFK: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}participant_f_k'])!,
     );
@@ -2589,11 +2608,13 @@ class AllergiesLimitation extends DataClass
   final int id;
   final String description;
   final int type;
+  final bool wasPrinted;
   final int participantFK;
   const AllergiesLimitation(
       {required this.id,
       required this.description,
       required this.type,
+      required this.wasPrinted,
       required this.participantFK});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2601,6 +2622,7 @@ class AllergiesLimitation extends DataClass
     map['id'] = Variable<int>(id);
     map['description'] = Variable<String>(description);
     map['type'] = Variable<int>(type);
+    map['was_printed'] = Variable<bool>(wasPrinted);
     map['participant_f_k'] = Variable<int>(participantFK);
     return map;
   }
@@ -2610,6 +2632,7 @@ class AllergiesLimitation extends DataClass
       id: Value(id),
       description: Value(description),
       type: Value(type),
+      wasPrinted: Value(wasPrinted),
       participantFK: Value(participantFK),
     );
   }
@@ -2621,6 +2644,7 @@ class AllergiesLimitation extends DataClass
       id: serializer.fromJson<int>(json['id']),
       description: serializer.fromJson<String>(json['description']),
       type: serializer.fromJson<int>(json['type']),
+      wasPrinted: serializer.fromJson<bool>(json['wasPrinted']),
       participantFK: serializer.fromJson<int>(json['participantFK']),
     );
   }
@@ -2631,16 +2655,22 @@ class AllergiesLimitation extends DataClass
       'id': serializer.toJson<int>(id),
       'description': serializer.toJson<String>(description),
       'type': serializer.toJson<int>(type),
+      'wasPrinted': serializer.toJson<bool>(wasPrinted),
       'participantFK': serializer.toJson<int>(participantFK),
     };
   }
 
   AllergiesLimitation copyWith(
-          {int? id, String? description, int? type, int? participantFK}) =>
+          {int? id,
+          String? description,
+          int? type,
+          bool? wasPrinted,
+          int? participantFK}) =>
       AllergiesLimitation(
         id: id ?? this.id,
         description: description ?? this.description,
         type: type ?? this.type,
+        wasPrinted: wasPrinted ?? this.wasPrinted,
         participantFK: participantFK ?? this.participantFK,
       );
   AllergiesLimitation copyWithCompanion(AllergiesLimitationsCompanion data) {
@@ -2649,6 +2679,8 @@ class AllergiesLimitation extends DataClass
       description:
           data.description.present ? data.description.value : this.description,
       type: data.type.present ? data.type.value : this.type,
+      wasPrinted:
+          data.wasPrinted.present ? data.wasPrinted.value : this.wasPrinted,
       participantFK: data.participantFK.present
           ? data.participantFK.value
           : this.participantFK,
@@ -2661,13 +2693,15 @@ class AllergiesLimitation extends DataClass
           ..write('id: $id, ')
           ..write('description: $description, ')
           ..write('type: $type, ')
+          ..write('wasPrinted: $wasPrinted, ')
           ..write('participantFK: $participantFK')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, description, type, participantFK);
+  int get hashCode =>
+      Object.hash(id, description, type, wasPrinted, participantFK);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2675,6 +2709,7 @@ class AllergiesLimitation extends DataClass
           other.id == this.id &&
           other.description == this.description &&
           other.type == this.type &&
+          other.wasPrinted == this.wasPrinted &&
           other.participantFK == this.participantFK);
 }
 
@@ -2683,17 +2718,20 @@ class AllergiesLimitationsCompanion
   final Value<int> id;
   final Value<String> description;
   final Value<int> type;
+  final Value<bool> wasPrinted;
   final Value<int> participantFK;
   const AllergiesLimitationsCompanion({
     this.id = const Value.absent(),
     this.description = const Value.absent(),
     this.type = const Value.absent(),
+    this.wasPrinted = const Value.absent(),
     this.participantFK = const Value.absent(),
   });
   AllergiesLimitationsCompanion.insert({
     this.id = const Value.absent(),
     required String description,
     required int type,
+    this.wasPrinted = const Value.absent(),
     required int participantFK,
   })  : description = Value(description),
         type = Value(type),
@@ -2702,12 +2740,14 @@ class AllergiesLimitationsCompanion
     Expression<int>? id,
     Expression<String>? description,
     Expression<int>? type,
+    Expression<bool>? wasPrinted,
     Expression<int>? participantFK,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (description != null) 'description': description,
       if (type != null) 'type': type,
+      if (wasPrinted != null) 'was_printed': wasPrinted,
       if (participantFK != null) 'participant_f_k': participantFK,
     });
   }
@@ -2716,11 +2756,13 @@ class AllergiesLimitationsCompanion
       {Value<int>? id,
       Value<String>? description,
       Value<int>? type,
+      Value<bool>? wasPrinted,
       Value<int>? participantFK}) {
     return AllergiesLimitationsCompanion(
       id: id ?? this.id,
       description: description ?? this.description,
       type: type ?? this.type,
+      wasPrinted: wasPrinted ?? this.wasPrinted,
       participantFK: participantFK ?? this.participantFK,
     );
   }
@@ -2737,6 +2779,9 @@ class AllergiesLimitationsCompanion
     if (type.present) {
       map['type'] = Variable<int>(type.value);
     }
+    if (wasPrinted.present) {
+      map['was_printed'] = Variable<bool>(wasPrinted.value);
+    }
     if (participantFK.present) {
       map['participant_f_k'] = Variable<int>(participantFK.value);
     }
@@ -2749,6 +2794,7 @@ class AllergiesLimitationsCompanion
           ..write('id: $id, ')
           ..write('description: $description, ')
           ..write('type: $type, ')
+          ..write('wasPrinted: $wasPrinted, ')
           ..write('participantFK: $participantFK')
           ..write(')'))
         .toString();
@@ -2795,6 +2841,16 @@ class $MedicationsTable extends Medications
           minTextLength: 0, maxTextLength: 1024),
       type: DriftSqlType.string,
       requiredDuringInsert: true);
+  static const VerificationMeta _wasPrintedMeta =
+      const VerificationMeta('wasPrinted');
+  @override
+  late final GeneratedColumn<bool> wasPrinted = GeneratedColumn<bool>(
+      'was_printed', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("was_printed" IN (0, 1))'),
+      defaultValue: const Constant(false));
   static const VerificationMeta _participantFKMeta =
       const VerificationMeta('participantFK');
   @override
@@ -2806,7 +2862,7 @@ class $MedicationsTable extends Medications
           GeneratedColumn.constraintIsAlways('REFERENCES participants (id)'));
   @override
   List<GeneratedColumn> get $columns =>
-      [id, name, dosage, dosageTiming, participantFK];
+      [id, name, dosage, dosageTiming, wasPrinted, participantFK];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2840,6 +2896,12 @@ class $MedicationsTable extends Medications
     } else if (isInserting) {
       context.missing(_dosageTimingMeta);
     }
+    if (data.containsKey('was_printed')) {
+      context.handle(
+          _wasPrintedMeta,
+          wasPrinted.isAcceptableOrUnknown(
+              data['was_printed']!, _wasPrintedMeta));
+    }
     if (data.containsKey('participant_f_k')) {
       context.handle(
           _participantFKMeta,
@@ -2865,6 +2927,8 @@ class $MedicationsTable extends Medications
           .read(DriftSqlType.string, data['${effectivePrefix}dosage'])!,
       dosageTiming: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}dosage_timing'])!,
+      wasPrinted: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}was_printed'])!,
       participantFK: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}participant_f_k'])!,
     );
@@ -2881,12 +2945,14 @@ class Medication extends DataClass implements Insertable<Medication> {
   final String name;
   final String dosage;
   final String dosageTiming;
+  final bool wasPrinted;
   final int participantFK;
   const Medication(
       {required this.id,
       required this.name,
       required this.dosage,
       required this.dosageTiming,
+      required this.wasPrinted,
       required this.participantFK});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2895,6 +2961,7 @@ class Medication extends DataClass implements Insertable<Medication> {
     map['name'] = Variable<String>(name);
     map['dosage'] = Variable<String>(dosage);
     map['dosage_timing'] = Variable<String>(dosageTiming);
+    map['was_printed'] = Variable<bool>(wasPrinted);
     map['participant_f_k'] = Variable<int>(participantFK);
     return map;
   }
@@ -2905,6 +2972,7 @@ class Medication extends DataClass implements Insertable<Medication> {
       name: Value(name),
       dosage: Value(dosage),
       dosageTiming: Value(dosageTiming),
+      wasPrinted: Value(wasPrinted),
       participantFK: Value(participantFK),
     );
   }
@@ -2917,6 +2985,7 @@ class Medication extends DataClass implements Insertable<Medication> {
       name: serializer.fromJson<String>(json['name']),
       dosage: serializer.fromJson<String>(json['dosage']),
       dosageTiming: serializer.fromJson<String>(json['dosageTiming']),
+      wasPrinted: serializer.fromJson<bool>(json['wasPrinted']),
       participantFK: serializer.fromJson<int>(json['participantFK']),
     );
   }
@@ -2928,6 +2997,7 @@ class Medication extends DataClass implements Insertable<Medication> {
       'name': serializer.toJson<String>(name),
       'dosage': serializer.toJson<String>(dosage),
       'dosageTiming': serializer.toJson<String>(dosageTiming),
+      'wasPrinted': serializer.toJson<bool>(wasPrinted),
       'participantFK': serializer.toJson<int>(participantFK),
     };
   }
@@ -2937,12 +3007,14 @@ class Medication extends DataClass implements Insertable<Medication> {
           String? name,
           String? dosage,
           String? dosageTiming,
+          bool? wasPrinted,
           int? participantFK}) =>
       Medication(
         id: id ?? this.id,
         name: name ?? this.name,
         dosage: dosage ?? this.dosage,
         dosageTiming: dosageTiming ?? this.dosageTiming,
+        wasPrinted: wasPrinted ?? this.wasPrinted,
         participantFK: participantFK ?? this.participantFK,
       );
   Medication copyWithCompanion(MedicationsCompanion data) {
@@ -2953,6 +3025,8 @@ class Medication extends DataClass implements Insertable<Medication> {
       dosageTiming: data.dosageTiming.present
           ? data.dosageTiming.value
           : this.dosageTiming,
+      wasPrinted:
+          data.wasPrinted.present ? data.wasPrinted.value : this.wasPrinted,
       participantFK: data.participantFK.present
           ? data.participantFK.value
           : this.participantFK,
@@ -2966,6 +3040,7 @@ class Medication extends DataClass implements Insertable<Medication> {
           ..write('name: $name, ')
           ..write('dosage: $dosage, ')
           ..write('dosageTiming: $dosageTiming, ')
+          ..write('wasPrinted: $wasPrinted, ')
           ..write('participantFK: $participantFK')
           ..write(')'))
         .toString();
@@ -2973,7 +3048,7 @@ class Medication extends DataClass implements Insertable<Medication> {
 
   @override
   int get hashCode =>
-      Object.hash(id, name, dosage, dosageTiming, participantFK);
+      Object.hash(id, name, dosage, dosageTiming, wasPrinted, participantFK);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2982,6 +3057,7 @@ class Medication extends DataClass implements Insertable<Medication> {
           other.name == this.name &&
           other.dosage == this.dosage &&
           other.dosageTiming == this.dosageTiming &&
+          other.wasPrinted == this.wasPrinted &&
           other.participantFK == this.participantFK);
 }
 
@@ -2990,12 +3066,14 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
   final Value<String> name;
   final Value<String> dosage;
   final Value<String> dosageTiming;
+  final Value<bool> wasPrinted;
   final Value<int> participantFK;
   const MedicationsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.dosage = const Value.absent(),
     this.dosageTiming = const Value.absent(),
+    this.wasPrinted = const Value.absent(),
     this.participantFK = const Value.absent(),
   });
   MedicationsCompanion.insert({
@@ -3003,6 +3081,7 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
     required String name,
     required String dosage,
     required String dosageTiming,
+    this.wasPrinted = const Value.absent(),
     required int participantFK,
   })  : name = Value(name),
         dosage = Value(dosage),
@@ -3013,6 +3092,7 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
     Expression<String>? name,
     Expression<String>? dosage,
     Expression<String>? dosageTiming,
+    Expression<bool>? wasPrinted,
     Expression<int>? participantFK,
   }) {
     return RawValuesInsertable({
@@ -3020,6 +3100,7 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
       if (name != null) 'name': name,
       if (dosage != null) 'dosage': dosage,
       if (dosageTiming != null) 'dosage_timing': dosageTiming,
+      if (wasPrinted != null) 'was_printed': wasPrinted,
       if (participantFK != null) 'participant_f_k': participantFK,
     });
   }
@@ -3029,12 +3110,14 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
       Value<String>? name,
       Value<String>? dosage,
       Value<String>? dosageTiming,
+      Value<bool>? wasPrinted,
       Value<int>? participantFK}) {
     return MedicationsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       dosage: dosage ?? this.dosage,
       dosageTiming: dosageTiming ?? this.dosageTiming,
+      wasPrinted: wasPrinted ?? this.wasPrinted,
       participantFK: participantFK ?? this.participantFK,
     );
   }
@@ -3054,6 +3137,9 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
     if (dosageTiming.present) {
       map['dosage_timing'] = Variable<String>(dosageTiming.value);
     }
+    if (wasPrinted.present) {
+      map['was_printed'] = Variable<bool>(wasPrinted.value);
+    }
     if (participantFK.present) {
       map['participant_f_k'] = Variable<int>(participantFK.value);
     }
@@ -3067,6 +3153,7 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
           ..write('name: $name, ')
           ..write('dosage: $dosage, ')
           ..write('dosageTiming: $dosageTiming, ')
+          ..write('wasPrinted: $wasPrinted, ')
           ..write('participantFK: $participantFK')
           ..write(')'))
         .toString();
@@ -4421,6 +4508,7 @@ typedef $$AllergiesLimitationsTableCreateCompanionBuilder
   Value<int> id,
   required String description,
   required int type,
+  Value<bool> wasPrinted,
   required int participantFK,
 });
 typedef $$AllergiesLimitationsTableUpdateCompanionBuilder
@@ -4428,6 +4516,7 @@ typedef $$AllergiesLimitationsTableUpdateCompanionBuilder
   Value<int> id,
   Value<String> description,
   Value<int> type,
+  Value<bool> wasPrinted,
   Value<int> participantFK,
 });
 
@@ -4452,24 +4541,28 @@ class $$AllergiesLimitationsTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<String> description = const Value.absent(),
             Value<int> type = const Value.absent(),
+            Value<bool> wasPrinted = const Value.absent(),
             Value<int> participantFK = const Value.absent(),
           }) =>
               AllergiesLimitationsCompanion(
             id: id,
             description: description,
             type: type,
+            wasPrinted: wasPrinted,
             participantFK: participantFK,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String description,
             required int type,
+            Value<bool> wasPrinted = const Value.absent(),
             required int participantFK,
           }) =>
               AllergiesLimitationsCompanion.insert(
             id: id,
             description: description,
             type: type,
+            wasPrinted: wasPrinted,
             participantFK: participantFK,
           ),
         ));
@@ -4490,6 +4583,11 @@ class $$AllergiesLimitationsTableFilterComposer
 
   ColumnFilters<int> get type => $state.composableBuilder(
       column: $state.table.type,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<bool> get wasPrinted => $state.composableBuilder(
+      column: $state.table.wasPrinted,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
@@ -4524,6 +4622,11 @@ class $$AllergiesLimitationsTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
+  ColumnOrderings<bool> get wasPrinted => $state.composableBuilder(
+      column: $state.table.wasPrinted,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
   $$ParticipantsTableOrderingComposer get participantFK {
     final $$ParticipantsTableOrderingComposer composer = $state.composerBuilder(
         composer: this,
@@ -4543,6 +4646,7 @@ typedef $$MedicationsTableCreateCompanionBuilder = MedicationsCompanion
   required String name,
   required String dosage,
   required String dosageTiming,
+  Value<bool> wasPrinted,
   required int participantFK,
 });
 typedef $$MedicationsTableUpdateCompanionBuilder = MedicationsCompanion
@@ -4551,6 +4655,7 @@ typedef $$MedicationsTableUpdateCompanionBuilder = MedicationsCompanion
   Value<String> name,
   Value<String> dosage,
   Value<String> dosageTiming,
+  Value<bool> wasPrinted,
   Value<int> participantFK,
 });
 
@@ -4575,6 +4680,7 @@ class $$MedicationsTableTableManager extends RootTableManager<
             Value<String> name = const Value.absent(),
             Value<String> dosage = const Value.absent(),
             Value<String> dosageTiming = const Value.absent(),
+            Value<bool> wasPrinted = const Value.absent(),
             Value<int> participantFK = const Value.absent(),
           }) =>
               MedicationsCompanion(
@@ -4582,6 +4688,7 @@ class $$MedicationsTableTableManager extends RootTableManager<
             name: name,
             dosage: dosage,
             dosageTiming: dosageTiming,
+            wasPrinted: wasPrinted,
             participantFK: participantFK,
           ),
           createCompanionCallback: ({
@@ -4589,6 +4696,7 @@ class $$MedicationsTableTableManager extends RootTableManager<
             required String name,
             required String dosage,
             required String dosageTiming,
+            Value<bool> wasPrinted = const Value.absent(),
             required int participantFK,
           }) =>
               MedicationsCompanion.insert(
@@ -4596,6 +4704,7 @@ class $$MedicationsTableTableManager extends RootTableManager<
             name: name,
             dosage: dosage,
             dosageTiming: dosageTiming,
+            wasPrinted: wasPrinted,
             participantFK: participantFK,
           ),
         ));
@@ -4621,6 +4730,11 @@ class $$MedicationsTableFilterComposer
 
   ColumnFilters<String> get dosageTiming => $state.composableBuilder(
       column: $state.table.dosageTiming,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<bool> get wasPrinted => $state.composableBuilder(
+      column: $state.table.wasPrinted,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
@@ -4657,6 +4771,11 @@ class $$MedicationsTableOrderingComposer
 
   ColumnOrderings<String> get dosageTiming => $state.composableBuilder(
       column: $state.table.dosageTiming,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<bool> get wasPrinted => $state.composableBuilder(
+      column: $state.table.wasPrinted,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
