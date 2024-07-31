@@ -165,7 +165,7 @@ class TwoColumnRow extends StatelessWidget {
                   constraints: BoxConstraints(
                     maxHeight: MediaQuery.of(context).size.height / 1.6,
                   ),
-                  child: zpusobilostFolder == null || selectedPerson?.potvrzeniPath == null
+                  child: zpusobilostFolder == null || (selectedPerson?.potvrzeniPath == null || selectedPerson!.potvrzeniPath!.isEmpty)
                       ? FileViewerLogic(onFileUploaded: onFileUploaded)
                       : FileViewerScreen(initialFilePath: '${zpusobilostFolder!.path}/${selectedPerson!.potvrzeniPath}'),
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 import 'package:path/path.dart' as path;
 import 'package:printing/printing.dart';
 import 'dart:io';
@@ -6,7 +7,7 @@ import 'dart:io';
 class FileViewerScreen extends StatefulWidget {
   final String initialFilePath;
 
-  const FileViewerScreen({super.key, required this.initialFilePath});
+   const FileViewerScreen({super.key, required this.initialFilePath});
 
   @override
   _FileViewerScreenState createState() => _FileViewerScreenState();
@@ -19,17 +20,21 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
   void initState() {
     super.initState();
     filePath = widget.initialFilePath;
+   Logger().i('filePath in init: $filePath');
+
   }
 
   void updateFilePath(String newFilePath) {
     setState(() {
       filePath = newFilePath;
+      Logger().i('filePath in update: $filePath');
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final String extension = path.extension(filePath).toLowerCase();
+    Logger().i('extension: $extension');
 
     return Scaffold(
       body: _buildView(extension),
