@@ -29,7 +29,7 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: double.infinity, // Set finite width constraints
+            width: 200, // Set a smaller width
             child: ListView.builder(
               shrinkWrap: true,
               itemCount: _items.length,

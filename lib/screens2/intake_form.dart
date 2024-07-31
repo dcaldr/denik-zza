@@ -132,50 +132,53 @@ class TwoColumnRow extends StatelessWidget {
   const TwoColumnRow({super.key, required this.selectedPerson, required this.onFileUploaded, required this.zpusobilostFolder});
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('First Column'),
-                Transform.scale(
-                  scale: 0.85,
-                  child: ParticipantRegistrationForm(osoba: selectedPerson),
-                ),
-                const Row(
+Widget build(BuildContext context) {
+  return Padding(
+    padding: const EdgeInsets.all(8.0),
+    child: Row(
+      children: [
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('First Column'),
+              Transform.scale(
+                scale: 0.85,
+                child: ParticipantRegistrationForm(osoba: selectedPerson),
+              ),
+              Transform.scale(
+                scale: 0.85,
+                child: const Row(
                   children: [
                     Expanded(child: RestrictionsWidget()),
                     SizedBox(width: 10), // Add some spacing between the widgets
                     Expanded(child: RestrictionsWidget()),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Second Column'),
-                Container(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height / 1.6,
-                  ),
-                  child: zpusobilostFolder == null || (selectedPerson?.potvrzeniPath == null || selectedPerson!.potvrzeniPath!.isEmpty)
-                      ? FileViewerLogic(onFileUploaded: onFileUploaded)
-                      : FileViewerScreen(initialFilePath: '${zpusobilostFolder!.path}/${selectedPerson!.potvrzeniPath}'),
+        ),
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Second Column'),
+              Container(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height / 1.6,
                 ),
-              ],
-            ),
+                child: zpusobilostFolder == null || (selectedPerson?.potvrzeniPath == null || selectedPerson!.potvrzeniPath!.isEmpty)
+                    ? FileViewerLogic(onFileUploaded: onFileUploaded)
+                    : FileViewerScreen(initialFilePath: '${zpusobilostFolder!.path}/${selectedPerson!.potvrzeniPath}'),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 }
 
 class SecondRow extends StatelessWidget {
