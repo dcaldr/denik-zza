@@ -218,4 +218,16 @@ Future<int?> getCurrentEventID() {
     // TODO: implement getAllOmezeni
     throw UnimplementedError();
   }
+
+  @override
+  Future<List<MemoryLek>> getLekyByParticipantID(int id) {
+    // TODO: implement getLekyByParticipantID
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<MemoryOmezeni>> getOmezeniByParticipantID(int id) {
+    // TODO: implement getOmezeniByParticipantID
+    throw UnimplementedError();
+  }
 }

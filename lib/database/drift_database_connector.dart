@@ -345,8 +345,18 @@ return _driftDatabase.updateEvent(id!, c);
     return _driftDatabase.getAllMedications().then((medications) => medications.map<MemoryLek>(_toMemoryLek).toList());  }
   @override
   Future<List<MemoryOmezeni>> getAllOmezeni() {
-    return _driftDatabase.getAllAllergiesLimitations().then((allergiesLimitations) => allergiesLimitations.map(_toMemoryOmezeni).toList() as List<MemoryOmezeni>);
+    return _driftDatabase.getAllAllergiesLimitations().then((allergiesLimitations) => allergiesLimitations.map(_toMemoryOmezeni).toList());
   }
+
+  @override
+  Future<List<MemoryLek>> getLekyByParticipantID(int id) {
+    return _driftDatabase.getMedicationsByParticipantID(id).then((medications) => medications.map(_toMemoryLek).toList());
+  }
+
+  @override
+  Future<List<MemoryOmezeni>> getOmezeniByParticipantID(int id) {
+return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergiesLimitation) => allergiesLimitation != null ? [_toMemoryOmezeni(allergiesLimitation)] : []);
+}
 
 
  /// Translators from MemoryOsoba, MemoryZaznam, MemoryAction to Drift Companions
@@ -501,6 +511,8 @@ MemoryOmezeni  _toMemoryOmezeni(AllergiesLimitation omezeni) {
       wasPrinted: omezeni.wasPrinted,
     );
   }
+
+
 
 
 }

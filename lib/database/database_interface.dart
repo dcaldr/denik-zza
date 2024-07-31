@@ -163,6 +163,10 @@ Future<List<MemoryOmezeni>> getAllOmezeni();
   ///
   /// returns [Future] true if successful
 Future<bool> addOmezeni(MemoryOmezeni omezeni);
+/// get [MemoryLek] for given memoryOsoba from database
+  Future<List<MemoryLek>> getLekyByParticipantID(int id);
+/// get [MemoryOmezeni] for given memoryOsoba from database
+  Future<List<MemoryOmezeni>> getOmezeniByParticipantID(int id);
 
 
 
