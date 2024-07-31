@@ -71,8 +71,11 @@ class AppDatabase extends _$AppDatabase {
 
   /// Get all actions
   Future<List<ZzaAction>> getAllZzaActions() async {
-    return (select(zzaActions)..orderBy([(a) =>
-        OrderingTerm(expression: a.dateFrom)])).get();
+    final actions = await (select(zzaActions)..orderBy([(a) => OrderingTerm(expression: a.dateFrom)])).get();
+    if (actions.isEmpty) {
+      return []; // Return an empty list if no actions are found
+    }
+    return actions;
   }
 
   /// Get all participants
@@ -149,10 +152,11 @@ class AppDatabase extends _$AppDatabase {
 
   /// Get pinned action ID, returns either int or null
   Future<int?> getCurrentActionID() async {
-    CacheData c = await (select(cache)..where((c) =>
-        c.id.equals(1))).getSingle();
-
-    return c.currentActionID;
+    final cacheData = await (select(cache)..where((c) => c.id.equals(1))).getSingleOrNull();
+    if (cacheData == null) {
+      return null; // Return null if no cache data is found
+    }
+    return cacheData.currentActionID;
   }
 
   /// Get insurance company ID by name
