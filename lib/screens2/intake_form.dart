@@ -43,15 +43,10 @@ class _IntakeFormState extends State<IntakeForm> {
       },
       onRefresh: _refreshPage,
     );
-    _fetchPersons();
+
   }
 
-  void _fetchPersons() async {
-    // Fetch persons from the database
-    // Example implementation:
-    // _persons = await DatabaseWrapper.getDatabase().getParticipantsByCurrentEvent();
-    setState(() {});
-  }
+
 
   void _refreshPage() {
     setState(() {
@@ -68,7 +63,9 @@ class _IntakeFormState extends State<IntakeForm> {
         },
         onRefresh: _refreshPage,
       );
-      _fetchPersons();
+      _omezeniLogic.reset();
+      _lekLogic.reset();
+      //_personAutocomplete.refreshData();
     });
   }
 

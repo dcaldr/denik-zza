@@ -29,8 +29,11 @@ class _PersonAutocompleteState extends State<PersonAutocomplete> {
     setState(() {});
   }
 
-  static String _displayStringForOption(MemoryOsoba option) => '${option.jmeno} ${option.prijmeni}';
+  void refreshData() {
+    _fetchPersons();
+  }
 
+  static String _displayStringForOption(MemoryOsoba option) => '${option.jmeno} ${option.prijmeni} ${option.id}';
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -48,7 +51,8 @@ class _PersonAutocompleteState extends State<PersonAutocomplete> {
                      (person.cisloPojisteni?.toLowerCase().contains(lowerQuery) ?? false);
             });
           },
-          onSelected: (MemoryOsoba person) {
+          onSelected: (MemoryOsoba person) async {
+            _persons = await database.getParticipantsByCurrentEvent();
             widget.onPersonSelected(person);
           },
           fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
@@ -64,10 +68,6 @@ class _PersonAutocompleteState extends State<PersonAutocomplete> {
               ),
             );
           },
-        ),
-        ElevatedButton(
-          onPressed: widget.onRefresh,
-          child: const Text('Refresh'),
         ),
       ],
     );

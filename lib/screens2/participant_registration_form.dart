@@ -11,7 +11,10 @@ class ParticipantRegistrationForm extends StatefulWidget {
   final MemoryOsoba? osoba;
   final Function(bool Function())? onValidate;
   final Function(MemoryOsoba)? onOsobaEdited;
-  final VoidCallback? onRefresh; // Added onRefresh parameter
+  final VoidCallback? onRefresh;
+
+
+
 
   const ParticipantRegistrationForm({super.key, this.osoba, this.onValidate, this.onOsobaEdited, this.onRefresh});
 
@@ -61,6 +64,11 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
       });
     });
     widget.onValidate?.call(validateForm);
+  }
+  void clearFields() {
+    _controllers.forEach((key, controller) {
+      controller.clear();
+    });
   }
 
   @override
