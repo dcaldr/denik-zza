@@ -5,8 +5,9 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 
 class PersonAutocomplete extends StatefulWidget {
   final Function(MemoryOsoba) onPersonSelected;
+  final VoidCallback onRefresh;
 
-  const PersonAutocomplete({super.key, required this.onPersonSelected});
+  const PersonAutocomplete({super.key, required this.onPersonSelected, required this.onRefresh});
 
   @override
   _PersonAutocompleteState createState() => _PersonAutocompleteState();
@@ -32,35 +33,43 @@ class _PersonAutocompleteState extends State<PersonAutocomplete> {
 
   @override
   Widget build(BuildContext context) {
-    return Autocomplete<MemoryOsoba>(
-      displayStringForOption: _displayStringForOption,
-      optionsBuilder: (TextEditingValue textEditingValue) {
-        if (textEditingValue.text.isEmpty) {
-          return const Iterable<MemoryOsoba>.empty();
-        }
-        return _persons.where((MemoryOsoba person) {
-          final lowerQuery = textEditingValue.text.toLowerCase();
-          return person.jmeno.toLowerCase().contains(lowerQuery) ||
-                 person.prijmeni.toLowerCase().contains(lowerQuery) ||
-                 (person.cisloPojisteni?.toLowerCase().contains(lowerQuery) ?? false);
-        });
-      },
-      onSelected: (MemoryOsoba person) {
-        widget.onPersonSelected(person);
-      },
-      fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
-        return TextField(
-          controller: textEditingController,
-          focusNode: focusNode,
-          decoration: InputDecoration(
-            prefixIcon: const Icon(Icons.search),
-            hintText: 'Search for a person',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-          ),
-        );
-      },
+    return Column(
+      children: [
+        Autocomplete<MemoryOsoba>(
+          displayStringForOption: _displayStringForOption,
+          optionsBuilder: (TextEditingValue textEditingValue) {
+            if (textEditingValue.text.isEmpty) {
+              return const Iterable<MemoryOsoba>.empty();
+            }
+            return _persons.where((MemoryOsoba person) {
+              final lowerQuery = textEditingValue.text.toLowerCase();
+              return person.jmeno.toLowerCase().contains(lowerQuery) ||
+                     person.prijmeni.toLowerCase().contains(lowerQuery) ||
+                     (person.cisloPojisteni?.toLowerCase().contains(lowerQuery) ?? false);
+            });
+          },
+          onSelected: (MemoryOsoba person) {
+            widget.onPersonSelected(person);
+          },
+          fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+            return TextField(
+              controller: textEditingController,
+              focusNode: focusNode,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: 'Search for a person',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+              ),
+            );
+          },
+        ),
+        ElevatedButton(
+          onPressed: widget.onRefresh,
+          child: const Text('Refresh'),
+        ),
+      ],
     );
   }
 }

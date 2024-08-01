@@ -41,7 +41,35 @@ class _IntakeFormState extends State<IntakeForm> {
           selectedPerson = osoba;
         });
       },
+      onRefresh: _refreshPage,
     );
+    _fetchPersons();
+  }
+
+  void _fetchPersons() async {
+    // Fetch persons from the database
+    // Example implementation:
+    // _persons = await DatabaseWrapper.getDatabase().getParticipantsByCurrentEvent();
+    setState(() {});
+  }
+
+  void _refreshPage() {
+    setState(() {
+      selectedPerson = null;
+      _participantRegistrationForm = ParticipantRegistrationForm(
+        osoba: selectedPerson,
+        onValidate: (validate) {
+          _validateParticipantForm = validate;
+        },
+        onOsobaEdited: (osoba) {
+          setState(() {
+            selectedPerson = osoba;
+          });
+        },
+        onRefresh: _refreshPage,
+      );
+      _fetchPersons();
+    });
   }
 
   Future<void> _loadZpusobilostFolder() async {
@@ -66,6 +94,7 @@ class _IntakeFormState extends State<IntakeForm> {
             selectedPerson = osoba;
           });
         },
+        onRefresh: _refreshPage,
       );
     });
   }
@@ -80,30 +109,27 @@ class _IntakeFormState extends State<IntakeForm> {
 
   Future<void> _handleSave(BuildContext context, bool markAsArrived) async {
     if (_validateParticipantForm?.call() ?? false) {
-  if (selectedPerson != null) {
+      if (selectedPerson != null) {
+        await _omezeniLogic.update();
+        await _lekLogic.update();
 
-    await _omezeniLogic.update();
-    await _lekLogic.update();
+        final filePath = selectedPerson?.potvrzeniPath;
+        if (filePath != null && filePath.isNotEmpty) {
+          selectedPerson?.potvrzeniPath = filePath;
+          await DatabaseWrapper.getDatabase().updateParticipant(osoba: selectedPerson!);
+        }
 
-    final filePath = selectedPerson?.potvrzeniPath;
-    if (filePath != null && filePath.isNotEmpty) {
-      selectedPerson?.potvrzeniPath = filePath;
-      await DatabaseWrapper.getDatabase().updateParticipant(osoba: selectedPerson!);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(markAsArrived ? 'uložit a přišel' : 'uložit')),
+        );
+
+        _refreshPage();
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('něco nedopadlo')),
+      );
     }
-
-
-
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(markAsArrived ? 'uložit a přišel' : 'uložit')),
-    );
-  }
-} else {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('něco nedopadlo')),
-  );
-}
-
   }
 
   @override
@@ -124,7 +150,7 @@ class _IntakeFormState extends State<IntakeForm> {
                     constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),
                     child: Column(
                       children: [
-                        FirstRow(onPersonSelected: _onPersonSelected),
+                        FirstRow(onPersonSelected: _onPersonSelected, onRefresh: _refreshPage),
                         TwoColumnRow(
                           selectedPerson: selectedPerson,
                           onFileUploaded: _onFileUploaded,
@@ -155,8 +181,9 @@ class _IntakeFormState extends State<IntakeForm> {
 
 class FirstRow extends StatelessWidget {
   final Function(MemoryOsoba) onPersonSelected;
+  final VoidCallback onRefresh;
 
-  const FirstRow({super.key, required this.onPersonSelected});
+  const FirstRow({super.key, required this.onPersonSelected, required this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +195,7 @@ class FirstRow extends StatelessWidget {
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(8),
-              child: PersonAutocomplete(onPersonSelected: onPersonSelected),
+              child: PersonAutocomplete(onPersonSelected: onPersonSelected, onRefresh: onRefresh),
             ),
           ),
         ],

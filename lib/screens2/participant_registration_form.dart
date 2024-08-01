@@ -11,8 +11,9 @@ class ParticipantRegistrationForm extends StatefulWidget {
   final MemoryOsoba? osoba;
   final Function(bool Function())? onValidate;
   final Function(MemoryOsoba)? onOsobaEdited;
+  final VoidCallback? onRefresh; // Added onRefresh parameter
 
-  const ParticipantRegistrationForm({super.key, this.osoba, this.onValidate, this.onOsobaEdited});
+  const ParticipantRegistrationForm({super.key, this.osoba, this.onValidate, this.onOsobaEdited, this.onRefresh});
 
   @override
   _ParticipantRegistrationFormState createState() => _ParticipantRegistrationFormState();
@@ -65,6 +66,9 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
   @override
   void didUpdateWidget(covariant ParticipantRegistrationForm oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if(widget.osoba == null) {
+      return;
+    }
     if (widget.osoba != oldWidget.osoba) {
       _populateFields(widget.osoba!);
     }
