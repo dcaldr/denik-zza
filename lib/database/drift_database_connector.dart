@@ -355,7 +355,7 @@ return _driftDatabase.updateEvent(id!, c);
 
   @override
   Future<List<MemoryOmezeni>> getOmezeniByParticipantID(int id) {
-return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergiesLimitation) => allergiesLimitation != null ? [_toMemoryOmezeni(allergiesLimitation)] : []);
+return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergiesLimitations) => allergiesLimitations.map(_toMemoryOmezeni).toList());
 }
 
   @override

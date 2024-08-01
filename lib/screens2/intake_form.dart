@@ -80,27 +80,30 @@ class _IntakeFormState extends State<IntakeForm> {
 
   Future<void> _handleSave(BuildContext context, bool markAsArrived) async {
     if (_validateParticipantForm?.call() ?? false) {
-      MemoryOsoba? updatedPerson = await DatabaseWrapper.getDatabase().getOsobaById(selectedPerson!.id);
-      await _omezeniLogic.update();
-      await _lekLogic.update();
+  if (selectedPerson != null) {
 
-      if (selectedPerson != null) {
-        final filePath = selectedPerson!.potvrzeniPath;
-        if (filePath != null && filePath.isNotEmpty) {
-          updatedPerson.potvrzeniPath = filePath;
-        }
-        await DatabaseWrapper.getDatabase().updateParticipant(osoba: updatedPerson);
-      }
+    await _omezeniLogic.update();
+    await _lekLogic.update();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(markAsArrived ? 'uložit a přišel' : 'uložit')),
-      );
-
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('něco nedopadlo')),
-      );
+    final filePath = selectedPerson?.potvrzeniPath;
+    if (filePath != null && filePath.isNotEmpty) {
+      selectedPerson?.potvrzeniPath = filePath;
+      await DatabaseWrapper.getDatabase().updateParticipant(osoba: selectedPerson!);
     }
+
+
+
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(markAsArrived ? 'uložit a přišel' : 'uložit')),
+    );
+  }
+} else {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('něco nedopadlo')),
+  );
+}
+
   }
 
   @override

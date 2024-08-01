@@ -136,9 +136,9 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// Get allergies and limitations based on participant ID,
-  Future<AllergiesLimitation?> getAllergiesLimitationsByParticipantID(int id) async {
+  Future<List<AllergiesLimitation>> getAllergiesLimitationsByParticipantID(int id) async {
     return await (select(allergiesLimitations)..where((a) =>
-        a.participantFK.equals(id))).getSingleOrNull();
+        a.participantFK.equals(id))).get();
   }
 
   /// Get medications based on participant ID

@@ -70,9 +70,13 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     }
   }
 
-  bool validateForm() {
-    return _formKey.currentState?.validate() ?? false;
+ bool validateForm() {
+  if (_formKey.currentState?.validate() ?? false) {
+    _submitForm();
+    return true;
   }
+  return false;
+}
 
   void _populateFields(MemoryOsoba osoba) {
     _controllers['jmeno']!.text = osoba.jmeno;
