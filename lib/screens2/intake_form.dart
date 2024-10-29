@@ -11,6 +11,9 @@ import 'package:denik_zza/screens2/participant_registration_form.dart';
 import '../database/database_wrapper.dart';
 import '../input/file_manager.dart';
 
+/// warning: will need a lot of simplifications and removals of unused/ not needed code
+/// mainly towards PersonAutocomplete, MemoryOmezeniLogic, MemoryLekLogic, ParticipantRegistrationForm
+/// And also hardcoded screen sizes
 class IntakeForm extends StatefulWidget {
   const IntakeForm({super.key});
 
@@ -26,6 +29,7 @@ class _IntakeFormState extends State<IntakeForm> {
   final MemoryLekLogic _lekLogic = MemoryLekLogic();
   late ParticipantRegistrationForm _participantRegistrationForm;
   bool Function()? _validateParticipantForm;
+  late PersonAutocomplete _personAutocomplete;
 
   @override
   void initState() {
@@ -43,10 +47,11 @@ class _IntakeFormState extends State<IntakeForm> {
       },
       onRefresh: _refreshPage,
     );
-
+    _personAutocomplete = PersonAutocomplete(
+      onPersonSelected: _onPersonSelected,
+      onRefresh: _refreshPage,
+    );
   }
-
-
 
   void _refreshPage() {
     setState(() {
@@ -65,7 +70,7 @@ class _IntakeFormState extends State<IntakeForm> {
       );
       _omezeniLogic.reset();
       _lekLogic.reset();
-      //_personAutocomplete.refreshData();
+      _personAutocomplete.reset();
     });
   }
 
@@ -147,7 +152,7 @@ class _IntakeFormState extends State<IntakeForm> {
                     constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),
                     child: Column(
                       children: [
-                        FirstRow(onPersonSelected: _onPersonSelected, onRefresh: _refreshPage),
+                        FirstRow(onPersonSelected: _onPersonSelected, onRefresh: _refreshPage, personAutocomplete: _personAutocomplete),
                         TwoColumnRow(
                           selectedPerson: selectedPerson,
                           onFileUploaded: _onFileUploaded,
@@ -179,8 +184,9 @@ class _IntakeFormState extends State<IntakeForm> {
 class FirstRow extends StatelessWidget {
   final Function(MemoryOsoba) onPersonSelected;
   final VoidCallback onRefresh;
+  final PersonAutocomplete personAutocomplete;
 
-  const FirstRow({super.key, required this.onPersonSelected, required this.onRefresh});
+  const FirstRow({super.key, required this.onPersonSelected, required this.onRefresh, required this.personAutocomplete});
 
   @override
   Widget build(BuildContext context) {

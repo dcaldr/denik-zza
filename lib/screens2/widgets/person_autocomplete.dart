@@ -11,6 +11,12 @@ class PersonAutocomplete extends StatefulWidget {
 
   @override
   _PersonAutocompleteState createState() => _PersonAutocompleteState();
+
+
+  void reset() {
+    _PersonAutocompleteState state = createState();
+    state.refreshData();
+  }
 }
 
 class _PersonAutocompleteState extends State<PersonAutocomplete> {
