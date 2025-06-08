@@ -121,3 +121,5 @@ coverage
 
 
 /lib/screens2/main_intake_dev.dart
+docs/reports/
+docs/reports/**
