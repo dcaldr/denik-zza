@@ -1,54 +1,56 @@
 import 'dart:io';
-import 'package:denik_zza/screens2/widgets/memory_restriction_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
-import 'package:denik_zza/screens2/widgets/file_viewer_logic.dart';
-import 'package:denik_zza/screens2/widgets/file_viewer_screen_widget.dart';
-import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
-import 'package:denik_zza/screens2/widgets/restrictions_widget.dart';
+import 'package:denik_zza/screens2/widgets/intake_bottom_row.dart';
+import 'package:denik_zza/screens2/widgets/intake_main_content.dart';
+import 'package:denik_zza/screens2/widgets/intake_person_row.dart';
+import 'package:denik_zza/screens2/widgets/memory_restriction_widget.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 import '../database/database_wrapper.dart';
 import '../input/file_manager.dart';
 
-/// warning: will need a lot of simplifications and removals of unused/ not needed code
-/// mainly towards PersonAutocomplete, MemoryOmezeniLogic, MemoryLekLogic, ParticipantRegistrationForm
-/// And also hardcoded screen sizes
+/// IntakeForm widget for managing participant check-in process
+/// Handles person selection, form editing, restrictions, and file uploads
 class IntakeForm extends StatefulWidget {
   const IntakeForm({super.key});
 
   @override
-  _IntakeFormState createState() => _IntakeFormState();
+  State<IntakeForm> createState() => _IntakeFormState();
 }
 
 class _IntakeFormState extends State<IntakeForm> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  
+  // Selected person and related data
   MemoryOsoba? selectedPerson;
   Directory? zpusobilostFolder;
+  
+  // Business logic instances
   final MemoryOmezeniLogic _omezeniLogic = MemoryOmezeniLogic();
   final MemoryLekLogic _lekLogic = MemoryLekLogic();
-  late ParticipantRegistrationForm _participantRegistrationForm;
+  
+  // Form validation function
   bool Function()? _validateParticipantForm;
-  late PersonAutocomplete _personAutocomplete;
+    // Widget instances
+  ParticipantRegistrationForm? _participantRegistrationForm;
 
   @override
   void initState() {
     super.initState();
     _loadZpusobilostFolder();
-    _participantRegistrationForm = ParticipantRegistrationForm(
+    _initializeWidgets();
+  }
+
+  void _initializeWidgets() {
+    _participantRegistrationForm = _createParticipantForm();
+  }
+
+  ParticipantRegistrationForm _createParticipantForm() {
+    return ParticipantRegistrationForm(
       osoba: selectedPerson,
-      onValidate: (validate) {
-        _validateParticipantForm = validate;
-      },
-      onOsobaEdited: (osoba) {
-        setState(() {
-          selectedPerson = osoba;
-        });
-      },
-      onRefresh: _refreshPage,
-    );
-    _personAutocomplete = PersonAutocomplete(
-      onPersonSelected: _onPersonSelected,
+      onValidate: (validate) => _validateParticipantForm = validate,
+      onOsobaEdited: (osoba) => setState(() => selectedPerson = osoba),
       onRefresh: _refreshPage,
     );
   }
@@ -56,58 +58,28 @@ class _IntakeFormState extends State<IntakeForm> {
   void _refreshPage() {
     setState(() {
       selectedPerson = null;
-      _participantRegistrationForm = ParticipantRegistrationForm(
-        osoba: selectedPerson,
-        onValidate: (validate) {
-          _validateParticipantForm = validate;
-        },
-        onOsobaEdited: (osoba) {
-          setState(() {
-            selectedPerson = osoba;
-          });
-        },
-        onRefresh: _refreshPage,
-      );
+      _participantRegistrationForm = _createParticipantForm();
       _omezeniLogic.reset();
       _lekLogic.reset();
-      _personAutocomplete.reset();
-    });
-  }
+      // PersonAutocomplete will be rebuilt with new state
+    });  }
 
   Future<void> _loadZpusobilostFolder() async {
     final folder = await FileManager().getZpusobilostFolder();
-    setState(() {
-      zpusobilostFolder = folder;
-    });
-  }
+    setState(() => zpusobilostFolder = folder);  }
 
   void _onPersonSelected(MemoryOsoba person) {
     setState(() {
       selectedPerson = person;
       _omezeniLogic.fetchData(person.id);
       _lekLogic.fetchData(person.id);
-      _participantRegistrationForm = ParticipantRegistrationForm(
-        osoba: selectedPerson,
-        onValidate: (validate) {
-          _validateParticipantForm = validate;
-        },
-        onOsobaEdited: (osoba) {
-          setState(() {
-            selectedPerson = osoba;
-          });
-        },
-        onRefresh: _refreshPage,
-      );
-    });
-  }
+      _participantRegistrationForm = _createParticipantForm();
+    });  }
 
   void _onFileUploaded(String newFilePath) {
     if (selectedPerson != null) {
-      setState(() {
-        selectedPerson!.potvrzeniPath = newFilePath;
-      });
-    }
-  }
+      setState(() => selectedPerson!.potvrzeniPath = newFilePath);
+    }  }
 
   Future<void> _handleSave(BuildContext context, bool markAsArrived) async {
     if (_validateParticipantForm?.call() ?? false) {
@@ -121,18 +93,21 @@ class _IntakeFormState extends State<IntakeForm> {
           await DatabaseWrapper.getDatabase().updateParticipant(osoba: selectedPerson!);
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(markAsArrived ? 'uložit a přišel' : 'uložit')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(markAsArrived ? 'uložit a přišel' : 'uložit')),
+          );
+        }
 
         _refreshPage();
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('něco nedopadlo')),
-      );
-    }
-  }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('něco nedopadlo')),
+        );
+      }
+    }  }
 
   @override
   Widget build(BuildContext context) {
@@ -149,254 +124,40 @@ class _IntakeFormState extends State<IntakeForm> {
               Expanded(
                 child: SingleChildScrollView(
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),
+                    constraints: BoxConstraints(
+                      minHeight: MediaQuery.of(context).size.height
+                    ),
                     child: Column(
-                      children: [
-                        FirstRow(onPersonSelected: _onPersonSelected, onRefresh: _refreshPage, personAutocomplete: _personAutocomplete),
-                        TwoColumnRow(
-                          selectedPerson: selectedPerson,
-                          onFileUploaded: _onFileUploaded,
-                          zpusobilostFolder: zpusobilostFolder,
-                          omezeniLogic: _omezeniLogic,
-                          lekLogic: _lekLogic,
-                          participantRegistrationForm: _participantRegistrationForm,
+                      children: [                        IntakePersonRow(
+                          onPersonSelected: _onPersonSelected, 
+                          onRefresh: _refreshPage,
                         ),
+                        if (_participantRegistrationForm != null)
+                          IntakeMainContent(
+                            selectedPerson: selectedPerson,
+                            onFileUploaded: _onFileUploaded,
+                            zpusobilostFolder: zpusobilostFolder,
+                            omezeniLogic: _omezeniLogic,
+                            lekLogic: _lekLogic,
+                            participantRegistrationForm: _participantRegistrationForm!,
+                          ),
                       ],
                     ),
                   ),
                 ),
               ),
-              SecondRow(
-                formKey: _formKey,
-                selectedPerson: selectedPerson,
-                onFileUploaded: _onFileUploaded,
-                handleSave: _handleSave,
-                participantRegistrationForm: _participantRegistrationForm,
-              ),
+              if (_participantRegistrationForm != null)
+                IntakeBottomRow(
+                  formKey: _formKey,
+                  selectedPerson: selectedPerson,
+                  onFileUploaded: _onFileUploaded,
+                  handleSave: _handleSave,
+                  participantRegistrationForm: _participantRegistrationForm!,
+                ),
             ],
           ),
         ),
       ),
-    );
-  }
-}
-
-class FirstRow extends StatelessWidget {
-  final Function(MemoryOsoba) onPersonSelected;
-  final VoidCallback onRefresh;
-  final PersonAutocomplete personAutocomplete;
-
-  const FirstRow({super.key, required this.onPersonSelected, required this.onRefresh, required this.personAutocomplete});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          const Text('First Row'),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              child: PersonAutocomplete(onPersonSelected: onPersonSelected, onRefresh: onRefresh),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class TwoColumnRow extends StatelessWidget {
-  final MemoryOsoba? selectedPerson;
-  final Function(String) onFileUploaded;
-  final Directory? zpusobilostFolder;
-  final MemoryOmezeniLogic omezeniLogic;
-  final MemoryLekLogic lekLogic;
-  final ParticipantRegistrationForm participantRegistrationForm;
-
-  const TwoColumnRow({
-    super.key,
-    required this.selectedPerson,
-    required this.onFileUploaded,
-    required this.zpusobilostFolder,
-    required this.omezeniLogic,
-    required this.lekLogic,
-    required this.participantRegistrationForm,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('First Column'),
-                Transform.scale(
-                  scale: 0.85,
-                  child: participantRegistrationForm,
-                ),
-                Transform.scale(
-                  scale: 0.85,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: RestrictionsWidget(
-                          logic: omezeniLogic,
-                          participantId: selectedPerson?.id,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: RestrictionsWidget(
-                          logic: lekLogic,
-                          participantId: selectedPerson?.id,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Second Column'),
-                Container(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height / 1.6,
-                  ),
-                  child: zpusobilostFolder == null || (selectedPerson?.potvrzeniPath == null || selectedPerson!.potvrzeniPath!.isEmpty)
-                      ? FileViewerLogic(onFileUploaded: onFileUploaded)
-                      : FileViewerScreen(initialFilePath: '${zpusobilostFolder!.path}/${selectedPerson!.potvrzeniPath}'),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class SecondRow extends StatelessWidget {
-  final GlobalKey<FormState> formKey;
-  final MemoryOsoba? selectedPerson;
-  final Function(String) onFileUploaded;
-  final Function(BuildContext, bool) handleSave;
-  final ParticipantRegistrationForm participantRegistrationForm;
-
-  const SecondRow({
-    super.key,
-    required this.formKey,
-    required this.selectedPerson,
-    required this.onFileUploaded,
-    required this.handleSave,
-    required this.participantRegistrationForm,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.bottomRight,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            const Text('Second Row'),
-            const SizedBox(width: 20),
-            ActionButtons(
-              formKey: formKey,
-              selectedPerson: selectedPerson,
-              onFileUploaded: onFileUploaded,
-              handleSave: handleSave,
-              participantRegistrationForm: participantRegistrationForm,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ActionButtons extends StatelessWidget {
-  final GlobalKey<FormState> formKey;
-  final MemoryOsoba? selectedPerson;
-  final Function(String) onFileUploaded;
-  final Function(BuildContext, bool) handleSave;
-  final ParticipantRegistrationForm participantRegistrationForm;
-
-  const ActionButtons({
-    super.key,
-    required this.formKey,
-    required this.selectedPerson,
-    required this.onFileUploaded,
-    required this.handleSave,
-    required this.participantRegistrationForm,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Tooltip(
-          message: 'uložit a přišel',
-          child: ElevatedButton.icon(
-            onPressed: () => handleSave(context, true),
-            icon: const Icon(Icons.check_circle, color: Colors.white),
-            label: const Text('uložit a přišel'),
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white, backgroundColor: Colors.green,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Tooltip(
-          message: 'uložit',
-          child: ElevatedButton.icon(
-            onPressed: () => handleSave(context, false),
-            icon: const Icon(Icons.save, color: Colors.white),
-            label: const Text('uložit'),
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white, backgroundColor: Colors.blue,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Tooltip(
-          message: 'neukládat',
-          child: ElevatedButton.icon(
-            onPressed: () {
-              // Add your onPressed code here!
-            },
-            icon: const Icon(Icons.cancel, color: Colors.white),
-            label: const Text('neukládat'),
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white, backgroundColor: Colors.red,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

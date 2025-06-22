@@ -1,0 +1,265 @@
+Index: lib/input/text_tools.dart
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/lib/input/text_tools.dart b/lib/input/text_tools.dart
+--- a/lib/input/text_tools.dart	
++++ b/lib/input/text_tools.dart	(date 1720782567464)
+@@ -1,6 +1,5 @@
+ /// Tools for manipulating strings mainly for matching purposes
+ /// should extend existing options
+-library;
+ import 'package:diacritic/diacritic.dart';
+ class TextTools{
+ /// creates "normalized" version of text
+@@ -18,18 +17,6 @@
+      b = normText(b);
+      return a == b;
+   }
+-   static bool looseCmpWithList(String a, List<String> bList) {
+-     a = normText(a);
+-     for (String b in bList) {
+-       b = normText(b);
+-       if (a == b) {
+-         return true;
+-       }
+-     }
+-     return false;
+-   }
+-
+-
+ 
+ 
+ }
+\ No newline at end of file
+Index: lib/input/rodne_cislo.dart
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/lib/input/rodne_cislo.dart b/lib/input/rodne_cislo.dart
+--- a/lib/input/rodne_cislo.dart	
++++ b/lib/input/rodne_cislo.dart	(date 1720786644817)
+@@ -1,17 +1,17 @@
+ class RodneCislo {
+-  String rc;
+-  bool valid = false;
++  String _rc;
++  bool hasValidFormat = false;
++  bool hasValidSum = false;
+ 
+-  RodneCislo(this.rc) {
+-    rc = formatRc(rc);
+-    if (!_isValidFormat(rc)) {
+-      valid = false;
++  RodneCislo(this._rc) {
++    _rc = formatRc(_rc);
++    if (!_isValidFormat(_rc)) {
++      hasValidFormat = false;
+     } else {
+-      valid = true;
++      hasValidFormat = true;
+     }
+-    if (!rc.contains('/')) {
+-      rc = '${rc.substring(0, 6)}/${rc.substring(6, 10)}';
+-    }
++    hasValidSum = isValidSum();
++
+   }
+ 
+   String formatRc(String rcCandidate) {
+@@ -22,15 +22,23 @@
+   bool _isValidFormat(String rc) {
+     // Kontrola délky a toho, zda obsahuje pouze číslice (kromě případného lomítka)
+     if (rc.length == 10 || (rc.length == 11 && rc[6] == '/')) {
+-      String digits = rc.replaceAll('/', '');
+-      return RegExp(r'^\d{9,10}$').hasMatch(digits);
++     // String digits = rc.replaceAll('/', '');
++      return RegExp(r'^\d{9,10}$').hasMatch(rc);
+     }
+     return false;
+   }
++  /// modus 11 - check
++  bool isValidSum(){
++
++    int sum = int.parse(_rc);
++    int modulo = sum % 11;
++
++    return (modulo == 0) || (modulo == 1 && _rc.endsWith('0'));
++  }
+ 
+   int getPohlavi() {
+-    int mesic = getHrubyMesic();
+-    if (mesic < 50) {
++    //int mesic = getHrubyMesic();
++    if (getHrubyMesic() < 50) {
+       return 1;
+     } else {
+       return 2;
+@@ -60,17 +68,25 @@
+   }
+ 
+   int getDen() {
+-    int den = int.parse(rc.substring(4, 6));
++    int den = int.parse(_rc.substring(4, 6));
+     return den;
+   }
+ 
+   int getHrubyMesic() {
+-    int mesic = int.parse(rc.substring(2, 4));
++    int mesic = int.parse(_rc.substring(2, 4));
+     return mesic;
+   }
+ 
+   int getRok() {
+-    int rok = int.parse(rc.substring(0, 2));
++    int rok = int.parse(_rc.substring(0, 2));
+     return rok;
+   }
++
++  String getRc() {
++  String outRc = _rc;
++  if (!_rc.contains('/')) {
++    outRc = '${_rc.substring(0, 6)}/${_rc.substring(6)}';
++  };
++  return outRc;
++}
+ }
+Index: lib/input/input_parser.dart
+===================================================================
+diff --git a/lib/input/input_parser.dart b/lib/input/input_parser.dart
+deleted file mode 100644
+--- a/lib/input/input_parser.dart	
++++ /dev/null	
+@@ -1,35 +0,0 @@
+-/// MIght be subjected to change: rename refactor to different files:
+-library;
+-
+-/// Controlling class (?)
+-class InputParser{
+-  List<List<dynamic>> loadedData = [];
+-
+-  /// Parses one line of data and returns the result
+-  Answer parseLine(List<dynamic> line){
+-    return Answer();
+-  }
+-  /// Check errors from betwwen lines
+-
+-}
+-/// Holds result and stats of entire parsing process
+-/// Works regardless of shape
+-class InputResult{
+-  List<Answer> answers = [];
+-
+-}
+-/// holds one line of processed data, with its outcome
+-class Answer{
+-
+-}
+-
+-enum ParseStatus{ ok, format, warn, bad, empty }
+-extension ParseStatusCmp on ParseStatus {
+-  int compareTo(ParseStatus other) =>index.compareTo(other.index);
+-  bool operator <(ParseStatus other) => index < other.index;
+-  bool operator >(ParseStatus other) => index > other.index;
+-  bool operator <=(ParseStatus other) => index <= other.index;
+-  bool operator >=(ParseStatus other) => index >= other.index;
+-  //bool operator ==(ParseStatus other) => index == other.index; // cannot be overridden
+-  //bool operator !=(ParseStatus other) => index != other.index;
+-}
+\ No newline at end of file
+Index: lib/input/input_hold.dart
+===================================================================
+diff --git a/lib/input/input_hold.dart b/lib/input/input_hold.dart
+deleted file mode 100644
+--- a/lib/input/input_hold.dart	
++++ /dev/null	
+@@ -1,87 +0,0 @@
+-import 'input_parser.dart';
+-import 'text_tools.dart';
+-
+-/// This class parses one data item
+-abstract class InputHold{
+-  dynamic pureInput;
+-  String input ="";
+-  dynamic output;
+-  ParseStatus? status;
+-  String columnName;
+-
+-
+-  InputHold(this.pureInput, this.columnName) {
+-    if(pureInput is int || pureInput is double){
+-      input = pureInput.toString();
+-    } else {
+-      input = pureInput.trim();
+-    }
+-
+-    if(input.isEmpty){
+-      status = ParseStatus.bad;
+-      output = null;
+-    } else {
+-      output = converter();
+-    }
+-    // Some converter didn't assign status
+-    status ??= ParseStatus.empty;
+-
+-  }
+-
+-  dynamic  converter();
+-
+-  bool isEmpty(){
+-    if(input.isEmpty ){
+-      return false;
+-    }
+-    return true;
+-  }
+-
+-}
+-/// for parsing Jméno and Příjmení
+-class JmenoHold extends InputHold{
+-  JmenoHold(super.input, super.columnName);
+-  @override
+-  dynamic converter() {
+-    status = ParseStatus.ok;
+-    return input;
+-  }
+-}
+-
+-class PohlaviHold extends InputHold{
+-  List<String> possibleMuz=["m", "1", "muž", "chlapec", "kluk",];
+-  List<String> possibleZena=["ž", "2", "žena", "dívka", "holka",];
+-
+-PohlaviHold(dynamic pureInput, {String columnName = "pohlaví"}) : super(pureInput, columnName);
+-  @override
+-  converter() {
+-    if(TextTools.looseCmpWithList(input, possibleMuz)){
+-      status = ParseStatus.ok;
+-      return 1;
+-    } else if(TextTools.looseCmpWithList(input, possibleZena)){
+-      status = ParseStatus.ok;
+-      return 2;
+-    } else {
+-      status = ParseStatus.bad;
+-      return null;
+-    }
+-
+-  }
+-}
+-
+-class AdresaHold extends InputHold{
+-  AdresaHold(dynamic pureInput, {String columnName = "adresa"}) : super(pureInput, columnName);
+-  @override
+-  converter() {
+-    status = ParseStatus.ok;
+-    return input;
+-  }
+-}
+-class CisloPojisteniHold extends InputHold{
+-  CisloPojisteniHold(dynamic pureInput, {String columnName = "číslo pojištění"}) : super(pureInput, columnName);
+-  @override
+-  converter() {
+-    status = ParseStatus.ok;
+-    return input;
+-  }
+-}

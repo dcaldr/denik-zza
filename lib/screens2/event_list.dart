@@ -1,5 +1,6 @@
 import 'package:denik_zza/screens2/event_registration_form.dart';
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
+import 'package:denik_zza/screens2/widgets/event_list_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens2/event_detail.dart';
 import 'package:intl/intl.dart';
@@ -38,16 +39,21 @@ class _EventListState extends State<EventList> {
       body: _buildActionList(),
     );
   }
-
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
-      title: const Text('Všechny akce', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+      title: const Text(
+        EventListConstants.title, 
+        style: EventListConstants.titleStyle
+      ),
       actions: <Widget>[
         IconButton(
           icon: const Icon(Icons.add),
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const EventRegistrationForm())), //TODO: implement real add action page
+          onPressed: () => _navigateToEventRegistration(context),
         ),
-        const IconButton(icon: Icon(Icons.search), onPressed: null), // Placeholder for future search functionality
+        const IconButton(
+          icon: Icon(Icons.search), 
+          onPressed: null
+        ), // Placeholder for future search functionality
       ],
     );
   }
@@ -57,9 +63,8 @@ class _EventListState extends State<EventList> {
       future: widget.database.getAllZzaActions(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
-        } else if (snapshot.hasError) {
-          return Text('Error: ${snapshot.error}');
+          return const CircularProgressIndicator();        } else if (snapshot.hasError) {
+          return Text('${EventListConstants.errorPrefix}${snapshot.error}');
         } else {
           return ListView.builder(
             itemCount: snapshot.data!.length,
@@ -79,12 +84,10 @@ class _EventListState extends State<EventList> {
         widget.database.updateCurrentEvent(event.idAkce);
       }
 
-      _fetchCurrentEventID();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar( //todo: prevent queueing of this type of snackbar messages
-            content: Text('Připnutá akce změněna'),
-          )
+      _fetchCurrentEventID();      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(EventListConstants.pinChangedMessage),
+        )
       );
     });
   }
@@ -117,6 +120,13 @@ class _EventListState extends State<EventList> {
           );
         }
       },
+    );
+  }
+
+  void _navigateToEventRegistration(BuildContext context) {
+    Navigator.push(
+      context, 
+      MaterialPageRoute(builder: (context) => const EventRegistrationForm())
     );
   }
 

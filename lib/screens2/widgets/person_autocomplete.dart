@@ -7,16 +7,14 @@ class PersonAutocomplete extends StatefulWidget {
   final Function(MemoryOsoba) onPersonSelected;
   final VoidCallback onRefresh;
 
-  const PersonAutocomplete({super.key, required this.onPersonSelected, required this.onRefresh});
+  const PersonAutocomplete({
+    super.key, 
+    required this.onPersonSelected, 
+    required this.onRefresh
+  });
 
   @override
-  _PersonAutocompleteState createState() => _PersonAutocompleteState();
-
-
-  void reset() {
-    _PersonAutocompleteState state = createState();
-    state.refreshData();
-  }
+  State<PersonAutocomplete> createState() => _PersonAutocompleteState();
 }
 
 class _PersonAutocompleteState extends State<PersonAutocomplete> {
