@@ -40,7 +40,7 @@ class GeneratePdfTemplate {
       _allRestrictionsStatus = OkCodes.unset;
       _recordStatus = OkCodes.unset;
     }
-    this.osoba = _osoba;
+    osoba = _osoba;
   }
   set omezeniList (List<MemoryOmezeni>? inOmezeniList){
       _omezeniStatus = OkCodes.unset;

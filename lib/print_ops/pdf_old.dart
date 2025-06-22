@@ -122,7 +122,7 @@ class PDFGeneratorOLD {
     return pdf;
   }
 
-  generatePDFasSomething( List<String> notes,[List<int> toSkip = const [2]]) async {
+  Future<Future<Uint8List>> generatePDFasSomething( List<String> notes,[List<int> toSkip = const [2]]) async {
   //  final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
     final pdf = pw.Document(
       theme: pw.ThemeData.withFont(

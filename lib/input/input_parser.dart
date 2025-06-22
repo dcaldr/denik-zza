@@ -2,7 +2,6 @@
 library;
 
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
-import 'package:denik_zza/input/csv_format.dart';
 import 'package:denik_zza/input/input_hold.dart';
 import 'package:denik_zza/input/rodne_cislo.dart';
 import 'package:logger/logger.dart';

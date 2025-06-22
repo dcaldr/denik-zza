@@ -138,7 +138,9 @@ class PdfPreviewScreen extends StatelessWidget {
           final template = GeneratePdfTemplate();
           final pdfPages = await template.getPdfPages(osoba: historicalFigure, omezeniList: omezeniList, lekList: lekList, zaznamList: historicalRecords);
           final pdf = pw.Document();
-          pdfPages.forEach((page) => pdf.addPage(page));
+          for (var page in pdfPages) {
+            pdf.addPage(page);
+          }
           return pdf.save();
         },
         initialPageFormat: PdfPageFormat.a4,

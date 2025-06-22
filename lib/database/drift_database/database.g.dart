@@ -3435,23 +3435,142 @@ typedef $$InsuranceCompaniesTableUpdateCompanionBuilder
   Value<String> name,
 });
 
+final class $$InsuranceCompaniesTableReferences extends BaseReferences<
+    _$AppDatabase, $InsuranceCompaniesTable, InsuranceCompany> {
+  $$InsuranceCompaniesTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$ParticipantsTable, List<Participant>>
+      _participantsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+          db.participants,
+          aliasName: $_aliasNameGenerator(
+              db.insuranceCompanies.id, db.participants.insuranceCompanyFK));
+
+  $$ParticipantsTableProcessedTableManager get participantsRefs {
+    final manager = $$ParticipantsTableTableManager($_db, $_db.participants)
+        .filter(
+            (f) => f.insuranceCompanyFK.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_participantsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$InsuranceCompaniesTableFilterComposer
+    extends Composer<_$AppDatabase, $InsuranceCompaniesTable> {
+  $$InsuranceCompaniesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  Expression<bool> participantsRefs(
+      Expression<bool> Function($$ParticipantsTableFilterComposer f) f) {
+    final $$ParticipantsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.participants,
+        getReferencedColumn: (t) => t.insuranceCompanyFK,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ParticipantsTableFilterComposer(
+              $db: $db,
+              $table: $db.participants,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$InsuranceCompaniesTableOrderingComposer
+    extends Composer<_$AppDatabase, $InsuranceCompaniesTable> {
+  $$InsuranceCompaniesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+}
+
+class $$InsuranceCompaniesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $InsuranceCompaniesTable> {
+  $$InsuranceCompaniesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  Expression<T> participantsRefs<T extends Object>(
+      Expression<T> Function($$ParticipantsTableAnnotationComposer a) f) {
+    final $$ParticipantsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.participants,
+        getReferencedColumn: (t) => t.insuranceCompanyFK,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ParticipantsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.participants,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
 class $$InsuranceCompaniesTableTableManager extends RootTableManager<
     _$AppDatabase,
     $InsuranceCompaniesTable,
     InsuranceCompany,
     $$InsuranceCompaniesTableFilterComposer,
     $$InsuranceCompaniesTableOrderingComposer,
+    $$InsuranceCompaniesTableAnnotationComposer,
     $$InsuranceCompaniesTableCreateCompanionBuilder,
-    $$InsuranceCompaniesTableUpdateCompanionBuilder> {
+    $$InsuranceCompaniesTableUpdateCompanionBuilder,
+    (InsuranceCompany, $$InsuranceCompaniesTableReferences),
+    InsuranceCompany,
+    PrefetchHooks Function({bool participantsRefs})> {
   $$InsuranceCompaniesTableTableManager(
       _$AppDatabase db, $InsuranceCompaniesTable table)
       : super(TableManagerState(
           db: db,
           table: table,
-          filteringComposer:
-              $$InsuranceCompaniesTableFilterComposer(ComposerState(db, table)),
-          orderingComposer: $$InsuranceCompaniesTableOrderingComposer(
-              ComposerState(db, table)),
+          createFilteringComposer: () =>
+              $$InsuranceCompaniesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$InsuranceCompaniesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$InsuranceCompaniesTableAnnotationComposer(
+                  $db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> name = const Value.absent(),
@@ -3468,50 +3587,51 @@ class $$InsuranceCompaniesTableTableManager extends RootTableManager<
             id: id,
             name: name,
           ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$InsuranceCompaniesTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({participantsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (participantsRefs) db.participants],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (participantsRefs)
+                    await $_getPrefetchedData<InsuranceCompany,
+                            $InsuranceCompaniesTable, Participant>(
+                        currentTable: table,
+                        referencedTable: $$InsuranceCompaniesTableReferences
+                            ._participantsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$InsuranceCompaniesTableReferences(db, table, p0)
+                                .participantsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.insuranceCompanyFK == item.id),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
         ));
 }
 
-class $$InsuranceCompaniesTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $InsuranceCompaniesTable> {
-  $$InsuranceCompaniesTableFilterComposer(super.$state);
-  ColumnFilters<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get name => $state.composableBuilder(
-      column: $state.table.name,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ComposableFilter participantsRefs(
-      ComposableFilter Function($$ParticipantsTableFilterComposer f) f) {
-    final $$ParticipantsTableFilterComposer composer = $state.composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $state.db.participants,
-        getReferencedColumn: (t) => t.insuranceCompanyFK,
-        builder: (joinBuilder, parentComposers) =>
-            $$ParticipantsTableFilterComposer(ComposerState($state.db,
-                $state.db.participants, joinBuilder, parentComposers)));
-    return f(composer);
-  }
-}
-
-class $$InsuranceCompaniesTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $InsuranceCompaniesTable> {
-  $$InsuranceCompaniesTableOrderingComposer(super.$state);
-  ColumnOrderings<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get name => $state.composableBuilder(
-      column: $state.table.name,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-}
-
+typedef $$InsuranceCompaniesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $InsuranceCompaniesTable,
+    InsuranceCompany,
+    $$InsuranceCompaniesTableFilterComposer,
+    $$InsuranceCompaniesTableOrderingComposer,
+    $$InsuranceCompaniesTableAnnotationComposer,
+    $$InsuranceCompaniesTableCreateCompanionBuilder,
+    $$InsuranceCompaniesTableUpdateCompanionBuilder,
+    (InsuranceCompany, $$InsuranceCompaniesTableReferences),
+    InsuranceCompany,
+    PrefetchHooks Function({bool participantsRefs})>;
 typedef $$ZzaActionsTableCreateCompanionBuilder = ZzaActionsCompanion Function({
   Value<int> id,
   required String actionTitle,
@@ -3529,22 +3649,177 @@ typedef $$ZzaActionsTableUpdateCompanionBuilder = ZzaActionsCompanion Function({
   Value<String?> homeDirectory,
 });
 
+final class $$ZzaActionsTableReferences
+    extends BaseReferences<_$AppDatabase, $ZzaActionsTable, ZzaAction> {
+  $$ZzaActionsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$ParticipantsTable, List<Participant>>
+      _participantsRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.participants,
+              aliasName: $_aliasNameGenerator(
+                  db.zzaActions.id, db.participants.zzaActionFK));
+
+  $$ParticipantsTableProcessedTableManager get participantsRefs {
+    final manager = $$ParticipantsTableTableManager($_db, $_db.participants)
+        .filter((f) => f.zzaActionFK.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_participantsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$ZzaActionsTableFilterComposer
+    extends Composer<_$AppDatabase, $ZzaActionsTable> {
+  $$ZzaActionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get actionTitle => $composableBuilder(
+      column: $table.actionTitle, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get actionDescription => $composableBuilder(
+      column: $table.actionDescription,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get dateFrom => $composableBuilder(
+      column: $table.dateFrom, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get dateTo => $composableBuilder(
+      column: $table.dateTo, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get homeDirectory => $composableBuilder(
+      column: $table.homeDirectory, builder: (column) => ColumnFilters(column));
+
+  Expression<bool> participantsRefs(
+      Expression<bool> Function($$ParticipantsTableFilterComposer f) f) {
+    final $$ParticipantsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.participants,
+        getReferencedColumn: (t) => t.zzaActionFK,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ParticipantsTableFilterComposer(
+              $db: $db,
+              $table: $db.participants,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$ZzaActionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ZzaActionsTable> {
+  $$ZzaActionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get actionTitle => $composableBuilder(
+      column: $table.actionTitle, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get actionDescription => $composableBuilder(
+      column: $table.actionDescription,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get dateFrom => $composableBuilder(
+      column: $table.dateFrom, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get dateTo => $composableBuilder(
+      column: $table.dateTo, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get homeDirectory => $composableBuilder(
+      column: $table.homeDirectory,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$ZzaActionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ZzaActionsTable> {
+  $$ZzaActionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get actionTitle => $composableBuilder(
+      column: $table.actionTitle, builder: (column) => column);
+
+  GeneratedColumn<String> get actionDescription => $composableBuilder(
+      column: $table.actionDescription, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get dateFrom =>
+      $composableBuilder(column: $table.dateFrom, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get dateTo =>
+      $composableBuilder(column: $table.dateTo, builder: (column) => column);
+
+  GeneratedColumn<String> get homeDirectory => $composableBuilder(
+      column: $table.homeDirectory, builder: (column) => column);
+
+  Expression<T> participantsRefs<T extends Object>(
+      Expression<T> Function($$ParticipantsTableAnnotationComposer a) f) {
+    final $$ParticipantsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.participants,
+        getReferencedColumn: (t) => t.zzaActionFK,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ParticipantsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.participants,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
 class $$ZzaActionsTableTableManager extends RootTableManager<
     _$AppDatabase,
     $ZzaActionsTable,
     ZzaAction,
     $$ZzaActionsTableFilterComposer,
     $$ZzaActionsTableOrderingComposer,
+    $$ZzaActionsTableAnnotationComposer,
     $$ZzaActionsTableCreateCompanionBuilder,
-    $$ZzaActionsTableUpdateCompanionBuilder> {
+    $$ZzaActionsTableUpdateCompanionBuilder,
+    (ZzaAction, $$ZzaActionsTableReferences),
+    ZzaAction,
+    PrefetchHooks Function({bool participantsRefs})> {
   $$ZzaActionsTableTableManager(_$AppDatabase db, $ZzaActionsTable table)
       : super(TableManagerState(
           db: db,
           table: table,
-          filteringComposer:
-              $$ZzaActionsTableFilterComposer(ComposerState(db, table)),
-          orderingComposer:
-              $$ZzaActionsTableOrderingComposer(ComposerState(db, table)),
+          createFilteringComposer: () =>
+              $$ZzaActionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ZzaActionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ZzaActionsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> actionTitle = const Value.absent(),
@@ -3577,90 +3852,51 @@ class $$ZzaActionsTableTableManager extends RootTableManager<
             dateTo: dateTo,
             homeDirectory: homeDirectory,
           ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$ZzaActionsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({participantsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (participantsRefs) db.participants],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (participantsRefs)
+                    await $_getPrefetchedData<ZzaAction, $ZzaActionsTable,
+                            Participant>(
+                        currentTable: table,
+                        referencedTable: $$ZzaActionsTableReferences
+                            ._participantsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$ZzaActionsTableReferences(db, table, p0)
+                                .participantsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.zzaActionFK == item.id),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
         ));
 }
 
-class $$ZzaActionsTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $ZzaActionsTable> {
-  $$ZzaActionsTableFilterComposer(super.$state);
-  ColumnFilters<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get actionTitle => $state.composableBuilder(
-      column: $state.table.actionTitle,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get actionDescription => $state.composableBuilder(
-      column: $state.table.actionDescription,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<DateTime> get dateFrom => $state.composableBuilder(
-      column: $state.table.dateFrom,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<DateTime> get dateTo => $state.composableBuilder(
-      column: $state.table.dateTo,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get homeDirectory => $state.composableBuilder(
-      column: $state.table.homeDirectory,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ComposableFilter participantsRefs(
-      ComposableFilter Function($$ParticipantsTableFilterComposer f) f) {
-    final $$ParticipantsTableFilterComposer composer = $state.composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $state.db.participants,
-        getReferencedColumn: (t) => t.zzaActionFK,
-        builder: (joinBuilder, parentComposers) =>
-            $$ParticipantsTableFilterComposer(ComposerState($state.db,
-                $state.db.participants, joinBuilder, parentComposers)));
-    return f(composer);
-  }
-}
-
-class $$ZzaActionsTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $ZzaActionsTable> {
-  $$ZzaActionsTableOrderingComposer(super.$state);
-  ColumnOrderings<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get actionTitle => $state.composableBuilder(
-      column: $state.table.actionTitle,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get actionDescription => $state.composableBuilder(
-      column: $state.table.actionDescription,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<DateTime> get dateFrom => $state.composableBuilder(
-      column: $state.table.dateFrom,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<DateTime> get dateTo => $state.composableBuilder(
-      column: $state.table.dateTo,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get homeDirectory => $state.composableBuilder(
-      column: $state.table.homeDirectory,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-}
-
+typedef $$ZzaActionsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ZzaActionsTable,
+    ZzaAction,
+    $$ZzaActionsTableFilterComposer,
+    $$ZzaActionsTableOrderingComposer,
+    $$ZzaActionsTableAnnotationComposer,
+    $$ZzaActionsTableCreateCompanionBuilder,
+    $$ZzaActionsTableUpdateCompanionBuilder,
+    (ZzaAction, $$ZzaActionsTableReferences),
+    ZzaAction,
+    PrefetchHooks Function({bool participantsRefs})>;
 typedef $$ParticipantsTableCreateCompanionBuilder = ParticipantsCompanion
     Function({
   Value<int> id,
@@ -3706,22 +3942,561 @@ typedef $$ParticipantsTableUpdateCompanionBuilder = ParticipantsCompanion
   Value<int> zzaActionFK,
 });
 
+final class $$ParticipantsTableReferences
+    extends BaseReferences<_$AppDatabase, $ParticipantsTable, Participant> {
+  $$ParticipantsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $InsuranceCompaniesTable _insuranceCompanyFKTable(_$AppDatabase db) =>
+      db.insuranceCompanies.createAlias($_aliasNameGenerator(
+          db.participants.insuranceCompanyFK, db.insuranceCompanies.id));
+
+  $$InsuranceCompaniesTableProcessedTableManager? get insuranceCompanyFK {
+    final $_column = $_itemColumn<int>('insurance_company_f_k');
+    if ($_column == null) return null;
+    final manager =
+        $$InsuranceCompaniesTableTableManager($_db, $_db.insuranceCompanies)
+            .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_insuranceCompanyFKTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static $ZzaActionsTable _zzaActionFKTable(_$AppDatabase db) =>
+      db.zzaActions.createAlias(
+          $_aliasNameGenerator(db.participants.zzaActionFK, db.zzaActions.id));
+
+  $$ZzaActionsTableProcessedTableManager get zzaActionFK {
+    final $_column = $_itemColumn<int>('zza_action_f_k')!;
+
+    final manager = $$ZzaActionsTableTableManager($_db, $_db.zzaActions)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_zzaActionFKTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static MultiTypedResultKey<$RecordsTable, List<Record>> _recordsRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.records,
+          aliasName: $_aliasNameGenerator(
+              db.participants.id, db.records.participantFK));
+
+  $$RecordsTableProcessedTableManager get recordsRefs {
+    final manager = $$RecordsTableTableManager($_db, $_db.records)
+        .filter((f) => f.participantFK.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_recordsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<$AllergiesLimitationsTable,
+      List<AllergiesLimitation>> _allergiesLimitationsRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.allergiesLimitations,
+          aliasName: $_aliasNameGenerator(
+              db.participants.id, db.allergiesLimitations.participantFK));
+
+  $$AllergiesLimitationsTableProcessedTableManager
+      get allergiesLimitationsRefs {
+    final manager = $$AllergiesLimitationsTableTableManager(
+            $_db, $_db.allergiesLimitations)
+        .filter((f) => f.participantFK.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache =
+        $_typedResult.readTableOrNull(_allergiesLimitationsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<$MedicationsTable, List<Medication>>
+      _medicationsRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.medications,
+              aliasName: $_aliasNameGenerator(
+                  db.participants.id, db.medications.participantFK));
+
+  $$MedicationsTableProcessedTableManager get medicationsRefs {
+    final manager = $$MedicationsTableTableManager($_db, $_db.medications)
+        .filter((f) => f.participantFK.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_medicationsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$ParticipantsTableFilterComposer
+    extends Composer<_$AppDatabase, $ParticipantsTable> {
+  $$ParticipantsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get firstName => $composableBuilder(
+      column: $table.firstName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get lastName => $composableBuilder(
+      column: $table.lastName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get gender => $composableBuilder(
+      column: $table.gender, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get address => $composableBuilder(
+      column: $table.address, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get birthNumber => $composableBuilder(
+      column: $table.birthNumber, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get birthDate => $composableBuilder(
+      column: $table.birthDate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get parentPhoneNumber => $composableBuilder(
+      column: $table.parentPhoneNumber,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get eligibleConfirmation => $composableBuilder(
+      column: $table.eligibleConfirmation,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get nonInfectiousConfirmation => $composableBuilder(
+      column: $table.nonInfectiousConfirmation,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get wasPrinted => $composableBuilder(
+      column: $table.wasPrinted, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get parentName => $composableBuilder(
+      column: $table.parentName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get parentEmail => $composableBuilder(
+      column: $table.parentEmail, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get campUnit => $composableBuilder(
+      column: $table.campUnit, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get note => $composableBuilder(
+      column: $table.note, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get arrivedConfirmation => $composableBuilder(
+      column: $table.arrivedConfirmation,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get eligibleConfirmationPath => $composableBuilder(
+      column: $table.eligibleConfirmationPath,
+      builder: (column) => ColumnFilters(column));
+
+  $$InsuranceCompaniesTableFilterComposer get insuranceCompanyFK {
+    final $$InsuranceCompaniesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.insuranceCompanyFK,
+        referencedTable: $db.insuranceCompanies,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$InsuranceCompaniesTableFilterComposer(
+              $db: $db,
+              $table: $db.insuranceCompanies,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$ZzaActionsTableFilterComposer get zzaActionFK {
+    final $$ZzaActionsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.zzaActionFK,
+        referencedTable: $db.zzaActions,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ZzaActionsTableFilterComposer(
+              $db: $db,
+              $table: $db.zzaActions,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  Expression<bool> recordsRefs(
+      Expression<bool> Function($$RecordsTableFilterComposer f) f) {
+    final $$RecordsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.records,
+        getReferencedColumn: (t) => t.participantFK,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$RecordsTableFilterComposer(
+              $db: $db,
+              $table: $db.records,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> allergiesLimitationsRefs(
+      Expression<bool> Function($$AllergiesLimitationsTableFilterComposer f)
+          f) {
+    final $$AllergiesLimitationsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.allergiesLimitations,
+        getReferencedColumn: (t) => t.participantFK,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$AllergiesLimitationsTableFilterComposer(
+              $db: $db,
+              $table: $db.allergiesLimitations,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> medicationsRefs(
+      Expression<bool> Function($$MedicationsTableFilterComposer f) f) {
+    final $$MedicationsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.medications,
+        getReferencedColumn: (t) => t.participantFK,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$MedicationsTableFilterComposer(
+              $db: $db,
+              $table: $db.medications,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$ParticipantsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ParticipantsTable> {
+  $$ParticipantsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get firstName => $composableBuilder(
+      column: $table.firstName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get lastName => $composableBuilder(
+      column: $table.lastName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get gender => $composableBuilder(
+      column: $table.gender, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get address => $composableBuilder(
+      column: $table.address, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get birthNumber => $composableBuilder(
+      column: $table.birthNumber, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get birthDate => $composableBuilder(
+      column: $table.birthDate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get parentPhoneNumber => $composableBuilder(
+      column: $table.parentPhoneNumber,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get eligibleConfirmation => $composableBuilder(
+      column: $table.eligibleConfirmation,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get nonInfectiousConfirmation => $composableBuilder(
+      column: $table.nonInfectiousConfirmation,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get wasPrinted => $composableBuilder(
+      column: $table.wasPrinted, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get parentName => $composableBuilder(
+      column: $table.parentName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get parentEmail => $composableBuilder(
+      column: $table.parentEmail, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get campUnit => $composableBuilder(
+      column: $table.campUnit, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get note => $composableBuilder(
+      column: $table.note, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get arrivedConfirmation => $composableBuilder(
+      column: $table.arrivedConfirmation,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get eligibleConfirmationPath => $composableBuilder(
+      column: $table.eligibleConfirmationPath,
+      builder: (column) => ColumnOrderings(column));
+
+  $$InsuranceCompaniesTableOrderingComposer get insuranceCompanyFK {
+    final $$InsuranceCompaniesTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.insuranceCompanyFK,
+        referencedTable: $db.insuranceCompanies,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$InsuranceCompaniesTableOrderingComposer(
+              $db: $db,
+              $table: $db.insuranceCompanies,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$ZzaActionsTableOrderingComposer get zzaActionFK {
+    final $$ZzaActionsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.zzaActionFK,
+        referencedTable: $db.zzaActions,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ZzaActionsTableOrderingComposer(
+              $db: $db,
+              $table: $db.zzaActions,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$ParticipantsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ParticipantsTable> {
+  $$ParticipantsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get firstName =>
+      $composableBuilder(column: $table.firstName, builder: (column) => column);
+
+  GeneratedColumn<String> get lastName =>
+      $composableBuilder(column: $table.lastName, builder: (column) => column);
+
+  GeneratedColumn<int> get gender =>
+      $composableBuilder(column: $table.gender, builder: (column) => column);
+
+  GeneratedColumn<String> get address =>
+      $composableBuilder(column: $table.address, builder: (column) => column);
+
+  GeneratedColumn<String> get birthNumber => $composableBuilder(
+      column: $table.birthNumber, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get birthDate =>
+      $composableBuilder(column: $table.birthDate, builder: (column) => column);
+
+  GeneratedColumn<String> get parentPhoneNumber => $composableBuilder(
+      column: $table.parentPhoneNumber, builder: (column) => column);
+
+  GeneratedColumn<bool> get eligibleConfirmation => $composableBuilder(
+      column: $table.eligibleConfirmation, builder: (column) => column);
+
+  GeneratedColumn<bool> get nonInfectiousConfirmation => $composableBuilder(
+      column: $table.nonInfectiousConfirmation, builder: (column) => column);
+
+  GeneratedColumn<bool> get wasPrinted => $composableBuilder(
+      column: $table.wasPrinted, builder: (column) => column);
+
+  GeneratedColumn<String> get parentName => $composableBuilder(
+      column: $table.parentName, builder: (column) => column);
+
+  GeneratedColumn<String> get parentEmail => $composableBuilder(
+      column: $table.parentEmail, builder: (column) => column);
+
+  GeneratedColumn<String> get campUnit =>
+      $composableBuilder(column: $table.campUnit, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<bool> get arrivedConfirmation => $composableBuilder(
+      column: $table.arrivedConfirmation, builder: (column) => column);
+
+  GeneratedColumn<String> get eligibleConfirmationPath => $composableBuilder(
+      column: $table.eligibleConfirmationPath, builder: (column) => column);
+
+  $$InsuranceCompaniesTableAnnotationComposer get insuranceCompanyFK {
+    final $$InsuranceCompaniesTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.insuranceCompanyFK,
+            referencedTable: $db.insuranceCompanies,
+            getReferencedColumn: (t) => t.id,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$InsuranceCompaniesTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.insuranceCompanies,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return composer;
+  }
+
+  $$ZzaActionsTableAnnotationComposer get zzaActionFK {
+    final $$ZzaActionsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.zzaActionFK,
+        referencedTable: $db.zzaActions,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ZzaActionsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.zzaActions,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  Expression<T> recordsRefs<T extends Object>(
+      Expression<T> Function($$RecordsTableAnnotationComposer a) f) {
+    final $$RecordsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.records,
+        getReferencedColumn: (t) => t.participantFK,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$RecordsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.records,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<T> allergiesLimitationsRefs<T extends Object>(
+      Expression<T> Function($$AllergiesLimitationsTableAnnotationComposer a)
+          f) {
+    final $$AllergiesLimitationsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.allergiesLimitations,
+            getReferencedColumn: (t) => t.participantFK,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$AllergiesLimitationsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.allergiesLimitations,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
+
+  Expression<T> medicationsRefs<T extends Object>(
+      Expression<T> Function($$MedicationsTableAnnotationComposer a) f) {
+    final $$MedicationsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.medications,
+        getReferencedColumn: (t) => t.participantFK,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$MedicationsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.medications,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
 class $$ParticipantsTableTableManager extends RootTableManager<
     _$AppDatabase,
     $ParticipantsTable,
     Participant,
     $$ParticipantsTableFilterComposer,
     $$ParticipantsTableOrderingComposer,
+    $$ParticipantsTableAnnotationComposer,
     $$ParticipantsTableCreateCompanionBuilder,
-    $$ParticipantsTableUpdateCompanionBuilder> {
+    $$ParticipantsTableUpdateCompanionBuilder,
+    (Participant, $$ParticipantsTableReferences),
+    Participant,
+    PrefetchHooks Function(
+        {bool insuranceCompanyFK,
+        bool zzaActionFK,
+        bool recordsRefs,
+        bool allergiesLimitationsRefs,
+        bool medicationsRefs})> {
   $$ParticipantsTableTableManager(_$AppDatabase db, $ParticipantsTable table)
       : super(TableManagerState(
           db: db,
           table: table,
-          filteringComposer:
-              $$ParticipantsTableFilterComposer(ComposerState(db, table)),
-          orderingComposer:
-              $$ParticipantsTableOrderingComposer(ComposerState(db, table)),
+          createFilteringComposer: () =>
+              $$ParticipantsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ParticipantsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ParticipantsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> firstName = const Value.absent(),
@@ -3806,290 +4581,127 @@ class $$ParticipantsTableTableManager extends RootTableManager<
             insuranceCompanyFK: insuranceCompanyFK,
             zzaActionFK: zzaActionFK,
           ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$ParticipantsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: (
+              {insuranceCompanyFK = false,
+              zzaActionFK = false,
+              recordsRefs = false,
+              allergiesLimitationsRefs = false,
+              medicationsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (recordsRefs) db.records,
+                if (allergiesLimitationsRefs) db.allergiesLimitations,
+                if (medicationsRefs) db.medications
+              ],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (insuranceCompanyFK) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.insuranceCompanyFK,
+                    referencedTable: $$ParticipantsTableReferences
+                        ._insuranceCompanyFKTable(db),
+                    referencedColumn: $$ParticipantsTableReferences
+                        ._insuranceCompanyFKTable(db)
+                        .id,
+                  ) as T;
+                }
+                if (zzaActionFK) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.zzaActionFK,
+                    referencedTable:
+                        $$ParticipantsTableReferences._zzaActionFKTable(db),
+                    referencedColumn:
+                        $$ParticipantsTableReferences._zzaActionFKTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (recordsRefs)
+                    await $_getPrefetchedData<Participant, $ParticipantsTable,
+                            Record>(
+                        currentTable: table,
+                        referencedTable:
+                            $$ParticipantsTableReferences._recordsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$ParticipantsTableReferences(db, table, p0)
+                                .recordsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.participantFK == item.id),
+                        typedResults: items),
+                  if (allergiesLimitationsRefs)
+                    await $_getPrefetchedData<Participant, $ParticipantsTable,
+                            AllergiesLimitation>(
+                        currentTable: table,
+                        referencedTable: $$ParticipantsTableReferences
+                            ._allergiesLimitationsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$ParticipantsTableReferences(db, table, p0)
+                                .allergiesLimitationsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.participantFK == item.id),
+                        typedResults: items),
+                  if (medicationsRefs)
+                    await $_getPrefetchedData<Participant, $ParticipantsTable,
+                            Medication>(
+                        currentTable: table,
+                        referencedTable: $$ParticipantsTableReferences
+                            ._medicationsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$ParticipantsTableReferences(db, table, p0)
+                                .medicationsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.participantFK == item.id),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
         ));
 }
 
-class $$ParticipantsTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $ParticipantsTable> {
-  $$ParticipantsTableFilterComposer(super.$state);
-  ColumnFilters<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get firstName => $state.composableBuilder(
-      column: $state.table.firstName,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get lastName => $state.composableBuilder(
-      column: $state.table.lastName,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<int> get gender => $state.composableBuilder(
-      column: $state.table.gender,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get address => $state.composableBuilder(
-      column: $state.table.address,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get birthNumber => $state.composableBuilder(
-      column: $state.table.birthNumber,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<DateTime> get birthDate => $state.composableBuilder(
-      column: $state.table.birthDate,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get parentPhoneNumber => $state.composableBuilder(
-      column: $state.table.parentPhoneNumber,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<bool> get eligibleConfirmation => $state.composableBuilder(
-      column: $state.table.eligibleConfirmation,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<bool> get nonInfectiousConfirmation => $state.composableBuilder(
-      column: $state.table.nonInfectiousConfirmation,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<bool> get wasPrinted => $state.composableBuilder(
-      column: $state.table.wasPrinted,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get parentName => $state.composableBuilder(
-      column: $state.table.parentName,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get parentEmail => $state.composableBuilder(
-      column: $state.table.parentEmail,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get campUnit => $state.composableBuilder(
-      column: $state.table.campUnit,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get note => $state.composableBuilder(
-      column: $state.table.note,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<bool> get arrivedConfirmation => $state.composableBuilder(
-      column: $state.table.arrivedConfirmation,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get eligibleConfirmationPath =>
-      $state.composableBuilder(
-          column: $state.table.eligibleConfirmationPath,
-          builder: (column, joinBuilders) =>
-              ColumnFilters(column, joinBuilders: joinBuilders));
-
-  $$InsuranceCompaniesTableFilterComposer get insuranceCompanyFK {
-    final $$InsuranceCompaniesTableFilterComposer composer = $state
-        .composerBuilder(
-            composer: this,
-            getCurrentColumn: (t) => t.insuranceCompanyFK,
-            referencedTable: $state.db.insuranceCompanies,
-            getReferencedColumn: (t) => t.id,
-            builder: (joinBuilder, parentComposers) =>
-                $$InsuranceCompaniesTableFilterComposer(ComposerState(
-                    $state.db,
-                    $state.db.insuranceCompanies,
-                    joinBuilder,
-                    parentComposers)));
-    return composer;
-  }
-
-  $$ZzaActionsTableFilterComposer get zzaActionFK {
-    final $$ZzaActionsTableFilterComposer composer = $state.composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.zzaActionFK,
-        referencedTable: $state.db.zzaActions,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder, parentComposers) =>
-            $$ZzaActionsTableFilterComposer(ComposerState($state.db,
-                $state.db.zzaActions, joinBuilder, parentComposers)));
-    return composer;
-  }
-
-  ComposableFilter recordsRefs(
-      ComposableFilter Function($$RecordsTableFilterComposer f) f) {
-    final $$RecordsTableFilterComposer composer = $state.composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $state.db.records,
-        getReferencedColumn: (t) => t.participantFK,
-        builder: (joinBuilder, parentComposers) => $$RecordsTableFilterComposer(
-            ComposerState(
-                $state.db, $state.db.records, joinBuilder, parentComposers)));
-    return f(composer);
-  }
-
-  ComposableFilter allergiesLimitationsRefs(
-      ComposableFilter Function($$AllergiesLimitationsTableFilterComposer f)
-          f) {
-    final $$AllergiesLimitationsTableFilterComposer composer =
-        $state.composerBuilder(
-            composer: this,
-            getCurrentColumn: (t) => t.id,
-            referencedTable: $state.db.allergiesLimitations,
-            getReferencedColumn: (t) => t.participantFK,
-            builder: (joinBuilder, parentComposers) =>
-                $$AllergiesLimitationsTableFilterComposer(ComposerState(
-                    $state.db,
-                    $state.db.allergiesLimitations,
-                    joinBuilder,
-                    parentComposers)));
-    return f(composer);
-  }
-
-  ComposableFilter medicationsRefs(
-      ComposableFilter Function($$MedicationsTableFilterComposer f) f) {
-    final $$MedicationsTableFilterComposer composer = $state.composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $state.db.medications,
-        getReferencedColumn: (t) => t.participantFK,
-        builder: (joinBuilder, parentComposers) =>
-            $$MedicationsTableFilterComposer(ComposerState($state.db,
-                $state.db.medications, joinBuilder, parentComposers)));
-    return f(composer);
-  }
-}
-
-class $$ParticipantsTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $ParticipantsTable> {
-  $$ParticipantsTableOrderingComposer(super.$state);
-  ColumnOrderings<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get firstName => $state.composableBuilder(
-      column: $state.table.firstName,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get lastName => $state.composableBuilder(
-      column: $state.table.lastName,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<int> get gender => $state.composableBuilder(
-      column: $state.table.gender,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get address => $state.composableBuilder(
-      column: $state.table.address,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get birthNumber => $state.composableBuilder(
-      column: $state.table.birthNumber,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<DateTime> get birthDate => $state.composableBuilder(
-      column: $state.table.birthDate,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get parentPhoneNumber => $state.composableBuilder(
-      column: $state.table.parentPhoneNumber,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<bool> get eligibleConfirmation => $state.composableBuilder(
-      column: $state.table.eligibleConfirmation,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<bool> get nonInfectiousConfirmation =>
-      $state.composableBuilder(
-          column: $state.table.nonInfectiousConfirmation,
-          builder: (column, joinBuilders) =>
-              ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<bool> get wasPrinted => $state.composableBuilder(
-      column: $state.table.wasPrinted,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get parentName => $state.composableBuilder(
-      column: $state.table.parentName,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get parentEmail => $state.composableBuilder(
-      column: $state.table.parentEmail,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get campUnit => $state.composableBuilder(
-      column: $state.table.campUnit,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get note => $state.composableBuilder(
-      column: $state.table.note,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<bool> get arrivedConfirmation => $state.composableBuilder(
-      column: $state.table.arrivedConfirmation,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get eligibleConfirmationPath =>
-      $state.composableBuilder(
-          column: $state.table.eligibleConfirmationPath,
-          builder: (column, joinBuilders) =>
-              ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  $$InsuranceCompaniesTableOrderingComposer get insuranceCompanyFK {
-    final $$InsuranceCompaniesTableOrderingComposer composer =
-        $state.composerBuilder(
-            composer: this,
-            getCurrentColumn: (t) => t.insuranceCompanyFK,
-            referencedTable: $state.db.insuranceCompanies,
-            getReferencedColumn: (t) => t.id,
-            builder: (joinBuilder, parentComposers) =>
-                $$InsuranceCompaniesTableOrderingComposer(ComposerState(
-                    $state.db,
-                    $state.db.insuranceCompanies,
-                    joinBuilder,
-                    parentComposers)));
-    return composer;
-  }
-
-  $$ZzaActionsTableOrderingComposer get zzaActionFK {
-    final $$ZzaActionsTableOrderingComposer composer = $state.composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.zzaActionFK,
-        referencedTable: $state.db.zzaActions,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder, parentComposers) =>
-            $$ZzaActionsTableOrderingComposer(ComposerState($state.db,
-                $state.db.zzaActions, joinBuilder, parentComposers)));
-    return composer;
-  }
-}
-
+typedef $$ParticipantsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ParticipantsTable,
+    Participant,
+    $$ParticipantsTableFilterComposer,
+    $$ParticipantsTableOrderingComposer,
+    $$ParticipantsTableAnnotationComposer,
+    $$ParticipantsTableCreateCompanionBuilder,
+    $$ParticipantsTableUpdateCompanionBuilder,
+    (Participant, $$ParticipantsTableReferences),
+    Participant,
+    PrefetchHooks Function(
+        {bool insuranceCompanyFK,
+        bool zzaActionFK,
+        bool recordsRefs,
+        bool allergiesLimitationsRefs,
+        bool medicationsRefs})>;
 typedef $$ParamedicsTableCreateCompanionBuilder = ParamedicsCompanion Function({
   Value<int> id,
   required String firstName,
@@ -4109,22 +4721,183 @@ typedef $$ParamedicsTableUpdateCompanionBuilder = ParamedicsCompanion Function({
   Value<String> username,
 });
 
+final class $$ParamedicsTableReferences
+    extends BaseReferences<_$AppDatabase, $ParamedicsTable, Paramedic> {
+  $$ParamedicsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$RecordsTable, List<Record>> _recordsRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.records,
+          aliasName:
+              $_aliasNameGenerator(db.paramedics.id, db.records.paramedicFK));
+
+  $$RecordsTableProcessedTableManager get recordsRefs {
+    final manager = $$RecordsTableTableManager($_db, $_db.records)
+        .filter((f) => f.paramedicFK.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_recordsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$ParamedicsTableFilterComposer
+    extends Composer<_$AppDatabase, $ParamedicsTable> {
+  $$ParamedicsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get firstName => $composableBuilder(
+      column: $table.firstName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get lastName => $composableBuilder(
+      column: $table.lastName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get address => $composableBuilder(
+      column: $table.address, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get birthDate => $composableBuilder(
+      column: $table.birthDate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get phoneNumber => $composableBuilder(
+      column: $table.phoneNumber, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get username => $composableBuilder(
+      column: $table.username, builder: (column) => ColumnFilters(column));
+
+  Expression<bool> recordsRefs(
+      Expression<bool> Function($$RecordsTableFilterComposer f) f) {
+    final $$RecordsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.records,
+        getReferencedColumn: (t) => t.paramedicFK,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$RecordsTableFilterComposer(
+              $db: $db,
+              $table: $db.records,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$ParamedicsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ParamedicsTable> {
+  $$ParamedicsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get firstName => $composableBuilder(
+      column: $table.firstName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get lastName => $composableBuilder(
+      column: $table.lastName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get address => $composableBuilder(
+      column: $table.address, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get birthDate => $composableBuilder(
+      column: $table.birthDate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get phoneNumber => $composableBuilder(
+      column: $table.phoneNumber, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get username => $composableBuilder(
+      column: $table.username, builder: (column) => ColumnOrderings(column));
+}
+
+class $$ParamedicsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ParamedicsTable> {
+  $$ParamedicsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get firstName =>
+      $composableBuilder(column: $table.firstName, builder: (column) => column);
+
+  GeneratedColumn<String> get lastName =>
+      $composableBuilder(column: $table.lastName, builder: (column) => column);
+
+  GeneratedColumn<String> get address =>
+      $composableBuilder(column: $table.address, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get birthDate =>
+      $composableBuilder(column: $table.birthDate, builder: (column) => column);
+
+  GeneratedColumn<String> get phoneNumber => $composableBuilder(
+      column: $table.phoneNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get username =>
+      $composableBuilder(column: $table.username, builder: (column) => column);
+
+  Expression<T> recordsRefs<T extends Object>(
+      Expression<T> Function($$RecordsTableAnnotationComposer a) f) {
+    final $$RecordsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.records,
+        getReferencedColumn: (t) => t.paramedicFK,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$RecordsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.records,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
 class $$ParamedicsTableTableManager extends RootTableManager<
     _$AppDatabase,
     $ParamedicsTable,
     Paramedic,
     $$ParamedicsTableFilterComposer,
     $$ParamedicsTableOrderingComposer,
+    $$ParamedicsTableAnnotationComposer,
     $$ParamedicsTableCreateCompanionBuilder,
-    $$ParamedicsTableUpdateCompanionBuilder> {
+    $$ParamedicsTableUpdateCompanionBuilder,
+    (Paramedic, $$ParamedicsTableReferences),
+    Paramedic,
+    PrefetchHooks Function({bool recordsRefs})> {
   $$ParamedicsTableTableManager(_$AppDatabase db, $ParamedicsTable table)
       : super(TableManagerState(
           db: db,
           table: table,
-          filteringComposer:
-              $$ParamedicsTableFilterComposer(ComposerState(db, table)),
-          orderingComposer:
-              $$ParamedicsTableOrderingComposer(ComposerState(db, table)),
+          createFilteringComposer: () =>
+              $$ParamedicsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ParamedicsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ParamedicsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> firstName = const Value.absent(),
@@ -4161,100 +4934,51 @@ class $$ParamedicsTableTableManager extends RootTableManager<
             phoneNumber: phoneNumber,
             username: username,
           ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$ParamedicsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({recordsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (recordsRefs) db.records],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (recordsRefs)
+                    await $_getPrefetchedData<Paramedic, $ParamedicsTable,
+                            Record>(
+                        currentTable: table,
+                        referencedTable:
+                            $$ParamedicsTableReferences._recordsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$ParamedicsTableReferences(db, table, p0)
+                                .recordsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.paramedicFK == item.id),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
         ));
 }
 
-class $$ParamedicsTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $ParamedicsTable> {
-  $$ParamedicsTableFilterComposer(super.$state);
-  ColumnFilters<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get firstName => $state.composableBuilder(
-      column: $state.table.firstName,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get lastName => $state.composableBuilder(
-      column: $state.table.lastName,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get address => $state.composableBuilder(
-      column: $state.table.address,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<DateTime> get birthDate => $state.composableBuilder(
-      column: $state.table.birthDate,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get phoneNumber => $state.composableBuilder(
-      column: $state.table.phoneNumber,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get username => $state.composableBuilder(
-      column: $state.table.username,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ComposableFilter recordsRefs(
-      ComposableFilter Function($$RecordsTableFilterComposer f) f) {
-    final $$RecordsTableFilterComposer composer = $state.composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $state.db.records,
-        getReferencedColumn: (t) => t.paramedicFK,
-        builder: (joinBuilder, parentComposers) => $$RecordsTableFilterComposer(
-            ComposerState(
-                $state.db, $state.db.records, joinBuilder, parentComposers)));
-    return f(composer);
-  }
-}
-
-class $$ParamedicsTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $ParamedicsTable> {
-  $$ParamedicsTableOrderingComposer(super.$state);
-  ColumnOrderings<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get firstName => $state.composableBuilder(
-      column: $state.table.firstName,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get lastName => $state.composableBuilder(
-      column: $state.table.lastName,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get address => $state.composableBuilder(
-      column: $state.table.address,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<DateTime> get birthDate => $state.composableBuilder(
-      column: $state.table.birthDate,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get phoneNumber => $state.composableBuilder(
-      column: $state.table.phoneNumber,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get username => $state.composableBuilder(
-      column: $state.table.username,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-}
-
+typedef $$ParamedicsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ParamedicsTable,
+    Paramedic,
+    $$ParamedicsTableFilterComposer,
+    $$ParamedicsTableOrderingComposer,
+    $$ParamedicsTableAnnotationComposer,
+    $$ParamedicsTableCreateCompanionBuilder,
+    $$ParamedicsTableUpdateCompanionBuilder,
+    (Paramedic, $$ParamedicsTableReferences),
+    Paramedic,
+    PrefetchHooks Function({bool recordsRefs})>;
 typedef $$RecordsTableCreateCompanionBuilder = RecordsCompanion Function({
   Value<int> id,
   required DateTime dateAndTime,
@@ -4282,22 +5006,294 @@ typedef $$RecordsTableUpdateCompanionBuilder = RecordsCompanion Function({
   Value<int> participantFK,
 });
 
+final class $$RecordsTableReferences
+    extends BaseReferences<_$AppDatabase, $RecordsTable, Record> {
+  $$RecordsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ParamedicsTable _paramedicFKTable(_$AppDatabase db) =>
+      db.paramedics.createAlias(
+          $_aliasNameGenerator(db.records.paramedicFK, db.paramedics.id));
+
+  $$ParamedicsTableProcessedTableManager get paramedicFK {
+    final $_column = $_itemColumn<int>('paramedic_f_k')!;
+
+    final manager = $$ParamedicsTableTableManager($_db, $_db.paramedics)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_paramedicFKTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static $ParticipantsTable _participantFKTable(_$AppDatabase db) =>
+      db.participants.createAlias(
+          $_aliasNameGenerator(db.records.participantFK, db.participants.id));
+
+  $$ParticipantsTableProcessedTableManager get participantFK {
+    final $_column = $_itemColumn<int>('participant_f_k')!;
+
+    final manager = $$ParticipantsTableTableManager($_db, $_db.participants)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_participantFKTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$RecordsTableFilterComposer
+    extends Composer<_$AppDatabase, $RecordsTable> {
+  $$RecordsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get dateAndTime => $composableBuilder(
+      column: $table.dateAndTime, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get title => $composableBuilder(
+      column: $table.title, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get treatment => $composableBuilder(
+      column: $table.treatment, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get wasPrinted => $composableBuilder(
+      column: $table.wasPrinted, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get note => $composableBuilder(
+      column: $table.note, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get temperature => $composableBuilder(
+      column: $table.temperature, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get picturePath => $composableBuilder(
+      column: $table.picturePath, builder: (column) => ColumnFilters(column));
+
+  $$ParamedicsTableFilterComposer get paramedicFK {
+    final $$ParamedicsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.paramedicFK,
+        referencedTable: $db.paramedics,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ParamedicsTableFilterComposer(
+              $db: $db,
+              $table: $db.paramedics,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$ParticipantsTableFilterComposer get participantFK {
+    final $$ParticipantsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.participantFK,
+        referencedTable: $db.participants,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ParticipantsTableFilterComposer(
+              $db: $db,
+              $table: $db.participants,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$RecordsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RecordsTable> {
+  $$RecordsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get dateAndTime => $composableBuilder(
+      column: $table.dateAndTime, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get title => $composableBuilder(
+      column: $table.title, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get treatment => $composableBuilder(
+      column: $table.treatment, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get wasPrinted => $composableBuilder(
+      column: $table.wasPrinted, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get note => $composableBuilder(
+      column: $table.note, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get temperature => $composableBuilder(
+      column: $table.temperature, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get picturePath => $composableBuilder(
+      column: $table.picturePath, builder: (column) => ColumnOrderings(column));
+
+  $$ParamedicsTableOrderingComposer get paramedicFK {
+    final $$ParamedicsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.paramedicFK,
+        referencedTable: $db.paramedics,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ParamedicsTableOrderingComposer(
+              $db: $db,
+              $table: $db.paramedics,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$ParticipantsTableOrderingComposer get participantFK {
+    final $$ParticipantsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.participantFK,
+        referencedTable: $db.participants,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ParticipantsTableOrderingComposer(
+              $db: $db,
+              $table: $db.participants,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$RecordsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RecordsTable> {
+  $$RecordsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get dateAndTime => $composableBuilder(
+      column: $table.dateAndTime, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => column);
+
+  GeneratedColumn<String> get treatment =>
+      $composableBuilder(column: $table.treatment, builder: (column) => column);
+
+  GeneratedColumn<bool> get wasPrinted => $composableBuilder(
+      column: $table.wasPrinted, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<double> get temperature => $composableBuilder(
+      column: $table.temperature, builder: (column) => column);
+
+  GeneratedColumn<String> get picturePath => $composableBuilder(
+      column: $table.picturePath, builder: (column) => column);
+
+  $$ParamedicsTableAnnotationComposer get paramedicFK {
+    final $$ParamedicsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.paramedicFK,
+        referencedTable: $db.paramedics,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ParamedicsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.paramedics,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$ParticipantsTableAnnotationComposer get participantFK {
+    final $$ParticipantsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.participantFK,
+        referencedTable: $db.participants,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ParticipantsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.participants,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
 class $$RecordsTableTableManager extends RootTableManager<
     _$AppDatabase,
     $RecordsTable,
     Record,
     $$RecordsTableFilterComposer,
     $$RecordsTableOrderingComposer,
+    $$RecordsTableAnnotationComposer,
     $$RecordsTableCreateCompanionBuilder,
-    $$RecordsTableUpdateCompanionBuilder> {
+    $$RecordsTableUpdateCompanionBuilder,
+    (Record, $$RecordsTableReferences),
+    Record,
+    PrefetchHooks Function({bool paramedicFK, bool participantFK})> {
   $$RecordsTableTableManager(_$AppDatabase db, $RecordsTable table)
       : super(TableManagerState(
           db: db,
           table: table,
-          filteringComposer:
-              $$RecordsTableFilterComposer(ComposerState(db, table)),
-          orderingComposer:
-              $$RecordsTableOrderingComposer(ComposerState(db, table)),
+          createFilteringComposer: () =>
+              $$RecordsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RecordsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RecordsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<DateTime> dateAndTime = const Value.absent(),
@@ -4350,155 +5346,71 @@ class $$RecordsTableTableManager extends RootTableManager<
             paramedicFK: paramedicFK,
             participantFK: participantFK,
           ),
+          withReferenceMapper: (p0) => p0
+              .map((e) =>
+                  (e.readTable(table), $$RecordsTableReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: (
+              {paramedicFK = false, participantFK = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (paramedicFK) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.paramedicFK,
+                    referencedTable:
+                        $$RecordsTableReferences._paramedicFKTable(db),
+                    referencedColumn:
+                        $$RecordsTableReferences._paramedicFKTable(db).id,
+                  ) as T;
+                }
+                if (participantFK) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.participantFK,
+                    referencedTable:
+                        $$RecordsTableReferences._participantFKTable(db),
+                    referencedColumn:
+                        $$RecordsTableReferences._participantFKTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ));
 }
 
-class $$RecordsTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $RecordsTable> {
-  $$RecordsTableFilterComposer(super.$state);
-  ColumnFilters<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<DateTime> get dateAndTime => $state.composableBuilder(
-      column: $state.table.dateAndTime,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get title => $state.composableBuilder(
-      column: $state.table.title,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get description => $state.composableBuilder(
-      column: $state.table.description,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get treatment => $state.composableBuilder(
-      column: $state.table.treatment,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<bool> get wasPrinted => $state.composableBuilder(
-      column: $state.table.wasPrinted,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get note => $state.composableBuilder(
-      column: $state.table.note,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<double> get temperature => $state.composableBuilder(
-      column: $state.table.temperature,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get picturePath => $state.composableBuilder(
-      column: $state.table.picturePath,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  $$ParamedicsTableFilterComposer get paramedicFK {
-    final $$ParamedicsTableFilterComposer composer = $state.composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.paramedicFK,
-        referencedTable: $state.db.paramedics,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder, parentComposers) =>
-            $$ParamedicsTableFilterComposer(ComposerState($state.db,
-                $state.db.paramedics, joinBuilder, parentComposers)));
-    return composer;
-  }
-
-  $$ParticipantsTableFilterComposer get participantFK {
-    final $$ParticipantsTableFilterComposer composer = $state.composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.participantFK,
-        referencedTable: $state.db.participants,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder, parentComposers) =>
-            $$ParticipantsTableFilterComposer(ComposerState($state.db,
-                $state.db.participants, joinBuilder, parentComposers)));
-    return composer;
-  }
-}
-
-class $$RecordsTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $RecordsTable> {
-  $$RecordsTableOrderingComposer(super.$state);
-  ColumnOrderings<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<DateTime> get dateAndTime => $state.composableBuilder(
-      column: $state.table.dateAndTime,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get title => $state.composableBuilder(
-      column: $state.table.title,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get description => $state.composableBuilder(
-      column: $state.table.description,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get treatment => $state.composableBuilder(
-      column: $state.table.treatment,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<bool> get wasPrinted => $state.composableBuilder(
-      column: $state.table.wasPrinted,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get note => $state.composableBuilder(
-      column: $state.table.note,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<double> get temperature => $state.composableBuilder(
-      column: $state.table.temperature,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get picturePath => $state.composableBuilder(
-      column: $state.table.picturePath,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  $$ParamedicsTableOrderingComposer get paramedicFK {
-    final $$ParamedicsTableOrderingComposer composer = $state.composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.paramedicFK,
-        referencedTable: $state.db.paramedics,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder, parentComposers) =>
-            $$ParamedicsTableOrderingComposer(ComposerState($state.db,
-                $state.db.paramedics, joinBuilder, parentComposers)));
-    return composer;
-  }
-
-  $$ParticipantsTableOrderingComposer get participantFK {
-    final $$ParticipantsTableOrderingComposer composer = $state.composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.participantFK,
-        referencedTable: $state.db.participants,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder, parentComposers) =>
-            $$ParticipantsTableOrderingComposer(ComposerState($state.db,
-                $state.db.participants, joinBuilder, parentComposers)));
-    return composer;
-  }
-}
-
+typedef $$RecordsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $RecordsTable,
+    Record,
+    $$RecordsTableFilterComposer,
+    $$RecordsTableOrderingComposer,
+    $$RecordsTableAnnotationComposer,
+    $$RecordsTableCreateCompanionBuilder,
+    $$RecordsTableUpdateCompanionBuilder,
+    (Record, $$RecordsTableReferences),
+    Record,
+    PrefetchHooks Function({bool paramedicFK, bool participantFK})>;
 typedef $$AllergiesLimitationsTableCreateCompanionBuilder
     = AllergiesLimitationsCompanion Function({
   Value<int> id,
@@ -4516,23 +5428,178 @@ typedef $$AllergiesLimitationsTableUpdateCompanionBuilder
   Value<int> participantFK,
 });
 
+final class $$AllergiesLimitationsTableReferences extends BaseReferences<
+    _$AppDatabase, $AllergiesLimitationsTable, AllergiesLimitation> {
+  $$AllergiesLimitationsTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $ParticipantsTable _participantFKTable(_$AppDatabase db) =>
+      db.participants.createAlias($_aliasNameGenerator(
+          db.allergiesLimitations.participantFK, db.participants.id));
+
+  $$ParticipantsTableProcessedTableManager get participantFK {
+    final $_column = $_itemColumn<int>('participant_f_k')!;
+
+    final manager = $$ParticipantsTableTableManager($_db, $_db.participants)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_participantFKTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$AllergiesLimitationsTableFilterComposer
+    extends Composer<_$AppDatabase, $AllergiesLimitationsTable> {
+  $$AllergiesLimitationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get type => $composableBuilder(
+      column: $table.type, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get wasPrinted => $composableBuilder(
+      column: $table.wasPrinted, builder: (column) => ColumnFilters(column));
+
+  $$ParticipantsTableFilterComposer get participantFK {
+    final $$ParticipantsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.participantFK,
+        referencedTable: $db.participants,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ParticipantsTableFilterComposer(
+              $db: $db,
+              $table: $db.participants,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$AllergiesLimitationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AllergiesLimitationsTable> {
+  $$AllergiesLimitationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get type => $composableBuilder(
+      column: $table.type, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get wasPrinted => $composableBuilder(
+      column: $table.wasPrinted, builder: (column) => ColumnOrderings(column));
+
+  $$ParticipantsTableOrderingComposer get participantFK {
+    final $$ParticipantsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.participantFK,
+        referencedTable: $db.participants,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ParticipantsTableOrderingComposer(
+              $db: $db,
+              $table: $db.participants,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$AllergiesLimitationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AllergiesLimitationsTable> {
+  $$AllergiesLimitationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => column);
+
+  GeneratedColumn<int> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<bool> get wasPrinted => $composableBuilder(
+      column: $table.wasPrinted, builder: (column) => column);
+
+  $$ParticipantsTableAnnotationComposer get participantFK {
+    final $$ParticipantsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.participantFK,
+        referencedTable: $db.participants,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ParticipantsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.participants,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
 class $$AllergiesLimitationsTableTableManager extends RootTableManager<
     _$AppDatabase,
     $AllergiesLimitationsTable,
     AllergiesLimitation,
     $$AllergiesLimitationsTableFilterComposer,
     $$AllergiesLimitationsTableOrderingComposer,
+    $$AllergiesLimitationsTableAnnotationComposer,
     $$AllergiesLimitationsTableCreateCompanionBuilder,
-    $$AllergiesLimitationsTableUpdateCompanionBuilder> {
+    $$AllergiesLimitationsTableUpdateCompanionBuilder,
+    (AllergiesLimitation, $$AllergiesLimitationsTableReferences),
+    AllergiesLimitation,
+    PrefetchHooks Function({bool participantFK})> {
   $$AllergiesLimitationsTableTableManager(
       _$AppDatabase db, $AllergiesLimitationsTable table)
       : super(TableManagerState(
           db: db,
           table: table,
-          filteringComposer: $$AllergiesLimitationsTableFilterComposer(
-              ComposerState(db, table)),
-          orderingComposer: $$AllergiesLimitationsTableOrderingComposer(
-              ComposerState(db, table)),
+          createFilteringComposer: () =>
+              $$AllergiesLimitationsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AllergiesLimitationsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AllergiesLimitationsTableAnnotationComposer(
+                  $db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> description = const Value.absent(),
@@ -4561,81 +5628,64 @@ class $$AllergiesLimitationsTableTableManager extends RootTableManager<
             wasPrinted: wasPrinted,
             participantFK: participantFK,
           ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$AllergiesLimitationsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({participantFK = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (participantFK) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.participantFK,
+                    referencedTable: $$AllergiesLimitationsTableReferences
+                        ._participantFKTable(db),
+                    referencedColumn: $$AllergiesLimitationsTableReferences
+                        ._participantFKTable(db)
+                        .id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ));
 }
 
-class $$AllergiesLimitationsTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $AllergiesLimitationsTable> {
-  $$AllergiesLimitationsTableFilterComposer(super.$state);
-  ColumnFilters<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get description => $state.composableBuilder(
-      column: $state.table.description,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<int> get type => $state.composableBuilder(
-      column: $state.table.type,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<bool> get wasPrinted => $state.composableBuilder(
-      column: $state.table.wasPrinted,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  $$ParticipantsTableFilterComposer get participantFK {
-    final $$ParticipantsTableFilterComposer composer = $state.composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.participantFK,
-        referencedTable: $state.db.participants,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder, parentComposers) =>
-            $$ParticipantsTableFilterComposer(ComposerState($state.db,
-                $state.db.participants, joinBuilder, parentComposers)));
-    return composer;
-  }
-}
-
-class $$AllergiesLimitationsTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $AllergiesLimitationsTable> {
-  $$AllergiesLimitationsTableOrderingComposer(super.$state);
-  ColumnOrderings<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get description => $state.composableBuilder(
-      column: $state.table.description,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<int> get type => $state.composableBuilder(
-      column: $state.table.type,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<bool> get wasPrinted => $state.composableBuilder(
-      column: $state.table.wasPrinted,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  $$ParticipantsTableOrderingComposer get participantFK {
-    final $$ParticipantsTableOrderingComposer composer = $state.composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.participantFK,
-        referencedTable: $state.db.participants,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder, parentComposers) =>
-            $$ParticipantsTableOrderingComposer(ComposerState($state.db,
-                $state.db.participants, joinBuilder, parentComposers)));
-    return composer;
-  }
-}
-
+typedef $$AllergiesLimitationsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $AllergiesLimitationsTable,
+        AllergiesLimitation,
+        $$AllergiesLimitationsTableFilterComposer,
+        $$AllergiesLimitationsTableOrderingComposer,
+        $$AllergiesLimitationsTableAnnotationComposer,
+        $$AllergiesLimitationsTableCreateCompanionBuilder,
+        $$AllergiesLimitationsTableUpdateCompanionBuilder,
+        (AllergiesLimitation, $$AllergiesLimitationsTableReferences),
+        AllergiesLimitation,
+        PrefetchHooks Function({bool participantFK})>;
 typedef $$MedicationsTableCreateCompanionBuilder = MedicationsCompanion
     Function({
   Value<int> id,
@@ -4655,22 +5705,184 @@ typedef $$MedicationsTableUpdateCompanionBuilder = MedicationsCompanion
   Value<int> participantFK,
 });
 
+final class $$MedicationsTableReferences
+    extends BaseReferences<_$AppDatabase, $MedicationsTable, Medication> {
+  $$MedicationsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ParticipantsTable _participantFKTable(_$AppDatabase db) =>
+      db.participants.createAlias($_aliasNameGenerator(
+          db.medications.participantFK, db.participants.id));
+
+  $$ParticipantsTableProcessedTableManager get participantFK {
+    final $_column = $_itemColumn<int>('participant_f_k')!;
+
+    final manager = $$ParticipantsTableTableManager($_db, $_db.participants)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_participantFKTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$MedicationsTableFilterComposer
+    extends Composer<_$AppDatabase, $MedicationsTable> {
+  $$MedicationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get dosageTiming => $composableBuilder(
+      column: $table.dosageTiming, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get dosage => $composableBuilder(
+      column: $table.dosage, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get wasPrinted => $composableBuilder(
+      column: $table.wasPrinted, builder: (column) => ColumnFilters(column));
+
+  $$ParticipantsTableFilterComposer get participantFK {
+    final $$ParticipantsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.participantFK,
+        referencedTable: $db.participants,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ParticipantsTableFilterComposer(
+              $db: $db,
+              $table: $db.participants,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$MedicationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MedicationsTable> {
+  $$MedicationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get dosageTiming => $composableBuilder(
+      column: $table.dosageTiming,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get dosage => $composableBuilder(
+      column: $table.dosage, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get wasPrinted => $composableBuilder(
+      column: $table.wasPrinted, builder: (column) => ColumnOrderings(column));
+
+  $$ParticipantsTableOrderingComposer get participantFK {
+    final $$ParticipantsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.participantFK,
+        referencedTable: $db.participants,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ParticipantsTableOrderingComposer(
+              $db: $db,
+              $table: $db.participants,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$MedicationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MedicationsTable> {
+  $$MedicationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get dosageTiming => $composableBuilder(
+      column: $table.dosageTiming, builder: (column) => column);
+
+  GeneratedColumn<String> get dosage =>
+      $composableBuilder(column: $table.dosage, builder: (column) => column);
+
+  GeneratedColumn<bool> get wasPrinted => $composableBuilder(
+      column: $table.wasPrinted, builder: (column) => column);
+
+  $$ParticipantsTableAnnotationComposer get participantFK {
+    final $$ParticipantsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.participantFK,
+        referencedTable: $db.participants,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ParticipantsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.participants,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
 class $$MedicationsTableTableManager extends RootTableManager<
     _$AppDatabase,
     $MedicationsTable,
     Medication,
     $$MedicationsTableFilterComposer,
     $$MedicationsTableOrderingComposer,
+    $$MedicationsTableAnnotationComposer,
     $$MedicationsTableCreateCompanionBuilder,
-    $$MedicationsTableUpdateCompanionBuilder> {
+    $$MedicationsTableUpdateCompanionBuilder,
+    (Medication, $$MedicationsTableReferences),
+    Medication,
+    PrefetchHooks Function({bool participantFK})> {
   $$MedicationsTableTableManager(_$AppDatabase db, $MedicationsTable table)
       : super(TableManagerState(
           db: db,
           table: table,
-          filteringComposer:
-              $$MedicationsTableFilterComposer(ComposerState(db, table)),
-          orderingComposer:
-              $$MedicationsTableOrderingComposer(ComposerState(db, table)),
+          createFilteringComposer: () =>
+              $$MedicationsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MedicationsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MedicationsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> name = const Value.absent(),
@@ -4703,91 +5915,62 @@ class $$MedicationsTableTableManager extends RootTableManager<
             wasPrinted: wasPrinted,
             participantFK: participantFK,
           ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$MedicationsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({participantFK = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (participantFK) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.participantFK,
+                    referencedTable:
+                        $$MedicationsTableReferences._participantFKTable(db),
+                    referencedColumn:
+                        $$MedicationsTableReferences._participantFKTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ));
 }
 
-class $$MedicationsTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $MedicationsTable> {
-  $$MedicationsTableFilterComposer(super.$state);
-  ColumnFilters<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get name => $state.composableBuilder(
-      column: $state.table.name,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get dosageTiming => $state.composableBuilder(
-      column: $state.table.dosageTiming,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get dosage => $state.composableBuilder(
-      column: $state.table.dosage,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<bool> get wasPrinted => $state.composableBuilder(
-      column: $state.table.wasPrinted,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  $$ParticipantsTableFilterComposer get participantFK {
-    final $$ParticipantsTableFilterComposer composer = $state.composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.participantFK,
-        referencedTable: $state.db.participants,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder, parentComposers) =>
-            $$ParticipantsTableFilterComposer(ComposerState($state.db,
-                $state.db.participants, joinBuilder, parentComposers)));
-    return composer;
-  }
-}
-
-class $$MedicationsTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $MedicationsTable> {
-  $$MedicationsTableOrderingComposer(super.$state);
-  ColumnOrderings<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get name => $state.composableBuilder(
-      column: $state.table.name,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get dosageTiming => $state.composableBuilder(
-      column: $state.table.dosageTiming,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get dosage => $state.composableBuilder(
-      column: $state.table.dosage,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<bool> get wasPrinted => $state.composableBuilder(
-      column: $state.table.wasPrinted,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  $$ParticipantsTableOrderingComposer get participantFK {
-    final $$ParticipantsTableOrderingComposer composer = $state.composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.participantFK,
-        referencedTable: $state.db.participants,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder, parentComposers) =>
-            $$ParticipantsTableOrderingComposer(ComposerState($state.db,
-                $state.db.participants, joinBuilder, parentComposers)));
-    return composer;
-  }
-}
-
+typedef $$MedicationsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $MedicationsTable,
+    Medication,
+    $$MedicationsTableFilterComposer,
+    $$MedicationsTableOrderingComposer,
+    $$MedicationsTableAnnotationComposer,
+    $$MedicationsTableCreateCompanionBuilder,
+    $$MedicationsTableUpdateCompanionBuilder,
+    (Medication, $$MedicationsTableReferences),
+    Medication,
+    PrefetchHooks Function({bool participantFK})>;
 typedef $$CacheTableCreateCompanionBuilder = CacheCompanion Function({
   Value<int> id,
   Value<int?> pinnedActionID,
@@ -4799,22 +5982,88 @@ typedef $$CacheTableUpdateCompanionBuilder = CacheCompanion Function({
   Value<int?> currentActionID,
 });
 
+class $$CacheTableFilterComposer extends Composer<_$AppDatabase, $CacheTable> {
+  $$CacheTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get pinnedActionID => $composableBuilder(
+      column: $table.pinnedActionID,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get currentActionID => $composableBuilder(
+      column: $table.currentActionID,
+      builder: (column) => ColumnFilters(column));
+}
+
+class $$CacheTableOrderingComposer
+    extends Composer<_$AppDatabase, $CacheTable> {
+  $$CacheTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get pinnedActionID => $composableBuilder(
+      column: $table.pinnedActionID,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get currentActionID => $composableBuilder(
+      column: $table.currentActionID,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$CacheTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CacheTable> {
+  $$CacheTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get pinnedActionID => $composableBuilder(
+      column: $table.pinnedActionID, builder: (column) => column);
+
+  GeneratedColumn<int> get currentActionID => $composableBuilder(
+      column: $table.currentActionID, builder: (column) => column);
+}
+
 class $$CacheTableTableManager extends RootTableManager<
     _$AppDatabase,
     $CacheTable,
     CacheData,
     $$CacheTableFilterComposer,
     $$CacheTableOrderingComposer,
+    $$CacheTableAnnotationComposer,
     $$CacheTableCreateCompanionBuilder,
-    $$CacheTableUpdateCompanionBuilder> {
+    $$CacheTableUpdateCompanionBuilder,
+    (CacheData, BaseReferences<_$AppDatabase, $CacheTable, CacheData>),
+    CacheData,
+    PrefetchHooks Function()> {
   $$CacheTableTableManager(_$AppDatabase db, $CacheTable table)
       : super(TableManagerState(
           db: db,
           table: table,
-          filteringComposer:
-              $$CacheTableFilterComposer(ComposerState(db, table)),
-          orderingComposer:
-              $$CacheTableOrderingComposer(ComposerState(db, table)),
+          createFilteringComposer: () =>
+              $$CacheTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CacheTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CacheTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<int?> pinnedActionID = const Value.absent(),
@@ -4835,46 +6084,25 @@ class $$CacheTableTableManager extends RootTableManager<
             pinnedActionID: pinnedActionID,
             currentActionID: currentActionID,
           ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
         ));
 }
 
-class $$CacheTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $CacheTable> {
-  $$CacheTableFilterComposer(super.$state);
-  ColumnFilters<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<int> get pinnedActionID => $state.composableBuilder(
-      column: $state.table.pinnedActionID,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<int> get currentActionID => $state.composableBuilder(
-      column: $state.table.currentActionID,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-}
-
-class $$CacheTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $CacheTable> {
-  $$CacheTableOrderingComposer(super.$state);
-  ColumnOrderings<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<int> get pinnedActionID => $state.composableBuilder(
-      column: $state.table.pinnedActionID,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<int> get currentActionID => $state.composableBuilder(
-      column: $state.table.currentActionID,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-}
+typedef $$CacheTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $CacheTable,
+    CacheData,
+    $$CacheTableFilterComposer,
+    $$CacheTableOrderingComposer,
+    $$CacheTableAnnotationComposer,
+    $$CacheTableCreateCompanionBuilder,
+    $$CacheTableUpdateCompanionBuilder,
+    (CacheData, BaseReferences<_$AppDatabase, $CacheTable, CacheData>),
+    CacheData,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;

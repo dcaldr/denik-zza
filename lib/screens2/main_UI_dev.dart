@@ -1,11 +1,7 @@
 import 'package:denik_zza/screens2/event_list.dart';
-import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:intl/intl.dart';
-import 'package:intl/date_symbol_data_local.dart';
 import '../input/file_manager.dart';
-import 'event_registration_form.dart';
 
 void main() async {
   // tests if can be commented out the 3 lines below

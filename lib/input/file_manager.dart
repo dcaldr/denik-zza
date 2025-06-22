@@ -121,7 +121,7 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
     final extension = inName.contains('.') ? inName.substring(inName.lastIndexOf('.')) : '';
     final baseName = inName.replaceAll(extension, '');
     do {
-      newName = '$baseName\_${counter.toString().padLeft(3, '0')}$extension';
+      newName = '${baseName}_${counter.toString().padLeft(3, '0')}$extension';
       FileSystemEntityType newType = await FileSystemEntity.type('${base.path}/$newName');
       if (newType == FileSystemEntityType.notFound) {
         logger.i('New name is available: $newName');
@@ -147,7 +147,7 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
   ///
   /// Should be explicitly called from UI to better handle possible errors
   /// TODO: create UI Popup for catching errors - with option to recreate event directory
-  changeEvent() async {
+  Future<void> changeEvent() async {
     logger.i('Changing event');
     DatabaseInterface db = DatabaseWrapper.getDatabase();
     MemoryAction? event = await db.getCurrentAction();
@@ -178,7 +178,7 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
   }
 
   /// simple backup of the database
-  backupDB() async {
+  Future<void> backupDB() async {
     if (eventDir == null) {
       if (!isTesting) logger.e('Event directory is null');
       return;
@@ -210,11 +210,11 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
   ///
   /// Use in cooperation when getting zpusobilost files from [MemoryOsoba] instances
   /// if [eventDir] is null, returns null
-  getZpusobilostFolder() async {
+  Future<Directory> getZpusobilostFolder() async {
     if (eventDir == null) {
       if (!isTesting) logger.e('Event directory is null', stackTrace: StackTrace.current);
       logger.i('is testing set to $isTesting');
-      return;
+      return throw Exception('Event directory is null');
     }
     return Directory('${eventDir!.path}/zpusobilosti');
   }
@@ -253,7 +253,7 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
   /// TODO: add to intake_form.dart
   Future<bool> validateZpusobilost(MemoryOsoba osoba) async {
     final zpusobilostDir = await getZpusobilostFolder();
-    if (zpusobilostDir == null || osoba.potvrzeniPath == null) {
+    if (osoba.potvrzeniPath == null) {
       return true; // really true - because it's not an error
     }
     final expectedFile = File('${zpusobilostDir.path}/${osoba.potvrzeniPath}');

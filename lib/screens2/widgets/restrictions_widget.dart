@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../database/database_interface.dart';
-import '../../database/database_wrapper.dart';
 
-import 'package:flutter/material.dart';
-import '../../database/database_interface.dart';
-import '../../database/database_wrapper.dart';
 
 class RestrictionsWidget extends StatefulWidget {
   final LogicInterface logic;

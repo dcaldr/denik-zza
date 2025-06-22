@@ -1,8 +1,5 @@
 import 'dart:async';
-import 'dart:async';
 
-import 'package:denik_zza/database/in_memory_structures_tmp/memory_akce.dart';
-import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/input/file_manager.dart';
 import 'package:drift/drift.dart';
 

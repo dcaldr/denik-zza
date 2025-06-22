@@ -15,7 +15,7 @@ var loggerNoStack = Logger(
 );
 
 //TODO: path provider needs to be mocked or bypassed as https://github.com/flutter/packages/blob/main/packages/path_provider/path_provider/test/path_provider_test.dart
-main(){
+void main(){
   TestWidgetsFlutterBinding.ensureInitialized();
   DartPluginRegistrant.ensureInitialized();
   group('FileManager bypass test  logic',(){

@@ -210,7 +210,7 @@ class PDFGenerator {
   /// along with [testOsoba] FIXME: remove when possible
   @Deprecated(
       "This shouldn't be used in production code, will be removed when possible")
-  devTMPgeneratePDFasSomething(List<String> notes,
+  Future<Future<Uint8List>> devTMPgeneratePDFasSomething(List<String> notes,
       [List<int> toSkip = const [2]]) async {
    // final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
     final pdf = pw.Document(
@@ -249,7 +249,7 @@ class PDFGenerator {
   ///
   /// This method was supposed to be used for generating PDFs, but merging finished PDFs doesn't seem possible
   /// so now it returns some representation of the PDF
-  generatePDFSkeleton({
+  Future<pw.Page> generatePDFSkeleton({
     required MemoryOsoba osoba,
     List<MemoryZaznam>? zaznamy,
     bool forceIn = false,

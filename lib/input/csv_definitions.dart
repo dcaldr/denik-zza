@@ -25,7 +25,7 @@ class CsvDefinitions{
     }
     return result;
   }
-  getColumnNamesAsCsv(List<InputHold> columnsList){
+  String getColumnNamesAsCsv(List<InputHold> columnsList){
     return const ListToCsvConverter().convert([getColumnNames(columnsList)]);
   }
 }

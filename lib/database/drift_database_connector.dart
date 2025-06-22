@@ -322,7 +322,7 @@ return _driftDatabase.updateEvent(id!, c);
 
   @override
   Future<bool> addLek(MemoryLek lek) async {
-   MedicationsCompanion c =await _toMedicationCompanion(lek);
+   MedicationsCompanion c =_toMedicationCompanion(lek);
 
     int a = await _driftDatabase.addMedication(c);
    if(a> 0){
@@ -470,7 +470,7 @@ return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergies
       domovskyAdresarPath: a.homeDirectory,
     );
   }
-  _toMedicationCompanion(MemoryLek lek) {
+  MedicationsCompanion _toMedicationCompanion(MemoryLek lek) {
     return MedicationsCompanion(
       name: Value(lek.nazev),
       dosage: Value(lek.popisDavkovani ?? ""), // Provide a default value if null
@@ -479,7 +479,7 @@ return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergies
       participantFK: Value(lek.idOsoby),
     );
   }
-  _toRestrictionCompanion(MemoryOmezeni omezeni) {
+  AllergiesLimitationsCompanion _toRestrictionCompanion(MemoryOmezeni omezeni) {
     return AllergiesLimitationsCompanion(
       //id: Value(omezeni.id),
       description: Value(omezeni.omezeni),

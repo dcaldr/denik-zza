@@ -3,7 +3,6 @@
 import 'dart:io';
 
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
-import 'package:denik_zza/input/csv_definitions.dart';
 import 'package:denik_zza/input/csv_reader.dart';
 import 'package:denik_zza/input/input_parser.dart';
 import 'package:flutter_test/flutter_test.dart';

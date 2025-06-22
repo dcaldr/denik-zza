@@ -43,7 +43,7 @@ class TextTools{
 
      return parsedDate;
    }
-   static myParseDate(String date){
+   static DateTime? myParseDate(String date){
      DateTime? parsedDate;
      // split text
      List<String> splitted= date.split(RegExp(r'[-/.\s]'));
@@ -73,6 +73,7 @@ class TextTools{
       if (parsedDate != null) {
         return parsedDate;
       }
+      return null;
 
 
    }
