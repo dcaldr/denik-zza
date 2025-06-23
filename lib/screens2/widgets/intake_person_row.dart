@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../database/in_memory_structures_tmp/memory_osoba.dart';
+import '../shared/intake_types.dart';
 import 'person_autocomplete.dart';
 
 class IntakePersonRow extends StatelessWidget {
-  final Function(MemoryOsoba) onPersonSelected;
-  final VoidCallback onRefresh;
+  final PersonSelectedCallback onPersonSelected;
+  final IntakeRefreshCallback onRefresh;
 
   const IntakePersonRow({
     super.key, 
