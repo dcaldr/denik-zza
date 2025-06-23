@@ -18,9 +18,7 @@ class IntakeBottomRow extends StatelessWidget {
     required this.onFileUploaded,
     required this.handleSave,
     required this.participantRegistrationForm,
-  });
-
-  @override
+  });  @override
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.bottomRight,

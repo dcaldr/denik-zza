@@ -108,38 +108,29 @@ class _TmpIntakeFormImprovedState extends State<TmpIntakeFormImproved> {
       appBar: AppBar(
         title: const Text('Intake Form (Improved)'),
       ),
-      drawer: const AppDrawer(),
+      drawer: const AppDrawer(),      
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1600),
           child: Column(
             children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: MediaQuery.of(context).size.height
-                    ),
-                    child: Column(
-                      children: [
-                        IntakePersonRow(
-                          onPersonSelected: _onPersonSelected, 
-                          onRefresh: _refreshPage,
-                        ),
-                        if (_participantRegistrationForm != null)
-                          IntakeMainContent(
-                            selectedPerson: _controller.selectedPerson,
-                            onFileUploaded: _onFileUploaded,
-                            zpusobilostFolder: _controller.zpusobilostFolder,
-                            omezeniLogic: _controller.omezeniLogic,
-                            lekLogic: _controller.lekLogic,
-                            participantRegistrationForm: _participantRegistrationForm!,
-                          ),
-                      ],
+              IntakePersonRow(
+                onPersonSelected: _onPersonSelected, 
+                onRefresh: _refreshPage,
+              ),
+              if (_participantRegistrationForm != null)
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: IntakeMainContent(
+                      selectedPerson: _controller.selectedPerson,
+                      onFileUploaded: _onFileUploaded,
+                      zpusobilostFolder: _controller.zpusobilostFolder,
+                      omezeniLogic: _controller.omezeniLogic,
+                      lekLogic: _controller.lekLogic,
+                      participantRegistrationForm: _participantRegistrationForm!,
                     ),
                   ),
                 ),
-              ),
               if (_participantRegistrationForm != null)
                 IntakeBottomRow(
                   formKey: _formKey,

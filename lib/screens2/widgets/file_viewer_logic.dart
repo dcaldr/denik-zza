@@ -31,23 +31,43 @@ class _FileViewerLogicState extends State<FileViewerLogic> {
         widget.onFileUploaded(newFilePath);
       }
     }
-  }
-
-  @override
+  }  @override
   Widget build(BuildContext context) {
     return _filePath != null && _filePath!.isNotEmpty
         ? FileViewerScreen(initialFilePath: _filePath!)
-        : Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('soubor nenalezen.'),
-                ElevatedButton(
-                  onPressed: _pickFile,
-                  child: const Text('nahrát soubor'),
+        : LayoutBuilder(
+            builder: (context, constraints) {
+              // If height is too small, show a simplified version
+              if (constraints.maxHeight < 60) {
+                return const Center(
+                  child: Text('no file', 
+                    style: TextStyle(fontSize: 10),
+                    textAlign: TextAlign.center,
+                  ),
+                );
+              }
+              
+              // For normal heights, wrap in SingleChildScrollView to prevent overflow
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('soubor nenalezen.'),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: _pickFile,
+                          child: const Text('nahrát soubor'),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ],
-            ),
+              );
+            },
           );
   }
 }

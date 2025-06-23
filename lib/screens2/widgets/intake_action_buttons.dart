@@ -17,9 +17,7 @@ class IntakeActionButtons extends StatelessWidget {
     required this.onFileUploaded,
     required this.handleSave,
     required this.participantRegistrationForm,
-  });
-
-  @override
+  });  @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -47,8 +45,7 @@ class IntakeActionButtons extends StatelessWidget {
             onPressed: () => handleSave(context, false),
             icon: const Icon(Icons.save, color: Colors.white),
             label: const Text('uložit'),
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white, 
+            style: ElevatedButton.styleFrom(              foregroundColor: Colors.white, 
               backgroundColor: Colors.blue,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(

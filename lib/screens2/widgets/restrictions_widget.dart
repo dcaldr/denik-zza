@@ -64,48 +64,107 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
                 );
               },
             ),
-          ),
-          Padding(
+          ),          Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Autocomplete<String>(
-                    optionsBuilder: (TextEditingValue textEditingValue) {
-                      if (textEditingValue.text.isEmpty) {
-                        return const Iterable<String>.empty();
-                      }
-                      return _logic.names.where((name) {
-                        return name.toLowerCase().contains(textEditingValue.text.toLowerCase());
-                      });
-                    },
-                    onSelected: (selection) {
-                      _addItem(selection);
-                    },
-                    fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
-                      _controller.value = textEditingController.value;
-                      return TextField(
-                        controller: _controller,
-                        focusNode: _focusNode,
-                        textInputAction: TextInputAction.done,
-                        onSubmitted: (value) {
-                          _addItem(value);
-                        },
-                        decoration: const InputDecoration(
-                          labelText: 'Enter restriction',
-                          border: OutlineInputBorder(),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // If width is too small, stack vertically or hide completely
+                if (constraints.maxWidth < 160) {
+                  return SizedBox(
+                    width: constraints.maxWidth,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: Autocomplete<String>(
+                            optionsBuilder: (TextEditingValue textEditingValue) {
+                              if (textEditingValue.text.isEmpty) {
+                                return const Iterable<String>.empty();
+                              }
+                              return _logic.names.where((name) {
+                                return name.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                              });
+                            },
+                            onSelected: (selection) {
+                              _addItem(selection);
+                            },
+                            fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+                              _controller.value = textEditingController.value;
+                              return TextField(
+                                controller: _controller,
+                                focusNode: _focusNode,
+                                textInputAction: TextInputAction.done,
+                                onSubmitted: (value) {
+                                  _addItem(value);
+                                },
+                                decoration: const InputDecoration(
+                                  labelText: 'Enter restriction',
+                                  border: OutlineInputBorder(),
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                      );
-                    },
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () {
-                    _addItem(_controller.text);
-                  },
-                ),
-              ],
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: IconButton(
+                            icon: const Icon(Icons.add),
+                            onPressed: () {
+                              _addItem(_controller.text);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                
+                // For normal widths, use horizontal layout
+                return Row(
+                  children: [
+                    Expanded(
+                      child: Autocomplete<String>(
+                        optionsBuilder: (TextEditingValue textEditingValue) {
+                          if (textEditingValue.text.isEmpty) {
+                            return const Iterable<String>.empty();
+                          }
+                          return _logic.names.where((name) {
+                            return name.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                          });
+                        },
+                        onSelected: (selection) {
+                          _addItem(selection);
+                        },
+                        fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+                          _controller.value = textEditingController.value;
+                          return TextField(
+                            controller: _controller,
+                            focusNode: _focusNode,
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: (value) {
+                              _addItem(value);
+                            },
+                            decoration: const InputDecoration(
+                              labelText: 'Enter restriction',
+                              border: OutlineInputBorder(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () {
+                        _addItem(_controller.text);
+                      },
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ],
