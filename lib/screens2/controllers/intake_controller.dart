@@ -55,8 +55,21 @@ class IntakeController extends ChangeNotifier {
           selectedPerson?.potvrzeniPath = filePath;
         }
         
-        await DatabaseWrapper.getDatabase().updateParticipant(osoba: selectedPerson!);
-        return true;
+        // Set arrived status if requested
+        if (markAsArrived) {
+          selectedPerson!.prisel = true;
+        }
+        
+        // Distinguish between new and existing persons
+        if (selectedPerson!.id == -1) {
+          // New person - use addOsoba
+          final success = await DatabaseWrapper.getDatabase().addOsoba(selectedPerson!);
+          return success;
+        } else {
+          // Existing person - use updateParticipant
+          final updateResult = await DatabaseWrapper.getDatabase().updateParticipant(osoba: selectedPerson!);
+          return updateResult > 0;
+        }
       }
     }
     return false;

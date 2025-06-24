@@ -1,16 +1,11 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/widgets/intake_bottom_row.dart';
 import 'package:denik_zza/screens2/widgets/intake_main_content.dart';
 import 'package:denik_zza/screens2/widgets/intake_person_row.dart';
-import 'package:denik_zza/screens2/widgets/memory_restriction_widget.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:denik_zza/screens2/controllers/intake_controller.dart';
-import 'package:denik_zza/screens2/shared/intake_types.dart';
-import '../database/database_wrapper.dart';
-import '../input/file_manager.dart';
 
 /// Improved IntakeForm widget using IntakeController for business logic
 /// This version separates UI concerns from business logic
@@ -49,10 +44,8 @@ class _TmpIntakeFormImprovedState extends State<TmpIntakeFormImproved> {
   /// Called when controller state changes
   void _onControllerStateChanged() {
     setState(() {
-      // Rebuild participant form when person changes
-      if (_controller.hasSelectedPerson) {
-        _participantRegistrationForm = _createParticipantForm();
-      }
+      // Rebuild participant form when person changes (always show form)
+      _participantRegistrationForm = _createParticipantForm();
     });
   }
 
