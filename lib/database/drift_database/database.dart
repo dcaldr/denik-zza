@@ -160,10 +160,9 @@ class AppDatabase extends _$AppDatabase {
     }
     return cacheData.currentActionID;
   }
-
   /// Get insurance company ID by name
   Future<int?> getInsuranceCompanyIDbyName(String? name) async {
-    if(name == null) {
+    if(name == null || name.trim().isEmpty) {
       return null;
     }
 

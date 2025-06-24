@@ -64,7 +64,8 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
                 );
               },
             ),
-          ),          Padding(
+          ),          
+          Padding(
             padding: const EdgeInsets.all(8.0),
             child: LayoutBuilder(
               builder: (context, constraints) {

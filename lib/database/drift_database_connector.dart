@@ -21,18 +21,21 @@ class DriftDatabaseConnector implements DatabaseInterface {
   ///Drift database instance
   final _driftDatabase = AppDatabase();
 
-
   @override
   Future<bool> addOsoba(MemoryOsoba osoba) async {
     int? insCompId = await _driftDatabase.getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna);
 
-    if(insCompId == null) {
+    // Only create insurance company if the name is not empty/null
+    if(insCompId == null && osoba.zdravotniPojistovna != null && osoba.zdravotniPojistovna!.trim().isNotEmpty) {
       _driftDatabase.addInsuranceCompany(
         InsuranceCompaniesCompanion(
-          name: Value(osoba.zdravotniPojistovna?? ""),
+          name: Value(osoba.zdravotniPojistovna!),
         )
       );
+      // Update insCompId after creating the insurance company
+      insCompId = await _driftDatabase.getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna);
     }
+    // If insurance company name is empty/null, insCompId remains null
       ///Now a function
     // ParticipantsCompanion c = ParticipantsCompanion(
     //   firstName: Value(osoba.jmeno),
@@ -366,8 +369,13 @@ return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergies
 
  /// Translators from MemoryOsoba, MemoryZaznam, MemoryAction to Drift Companions
   /// TODO: rewrite to use MemoryX directly as db companion (
-
   Future<ParticipantsCompanion> _toParticipantsCompanion(MemoryOsoba osoba) async {
+    // Get insurance company ID, but only if name is not empty
+    int? insCompId;
+    if (osoba.zdravotniPojistovna != null && osoba.zdravotniPojistovna!.trim().isNotEmpty) {
+      insCompId = await _driftDatabase.getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna);
+    }
+    
     return ParticipantsCompanion(
       firstName: Value(osoba.jmeno),
       lastName: Value(osoba.prijmeni),
@@ -378,7 +386,7 @@ return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergies
       parentPhoneNumber: Value(osoba.telefonRodice),
       eligibleConfirmation: Value(osoba.zpusobilost!),
       nonInfectiousConfirmation: Value(osoba.bezinfekcnost!),
-        insuranceCompanyFK: Value(await _driftDatabase.getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna)),
+        insuranceCompanyFK: Value(insCompId),
     zzaActionFK: Value((await _driftDatabase.getCurrentActionID())!),
       parentName: Value(osoba.jmenoRodice),
       parentEmail: Value(osoba.emailRodice),
