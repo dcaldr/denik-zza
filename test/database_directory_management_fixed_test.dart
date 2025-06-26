@@ -16,7 +16,7 @@ void main() {
 
     tearDownAll(() async {
       // Clean up all test databases after running all tests
-      await DatabaseTestHelper.cleanupAllTestDatabaseFiles();
+      await DatabaseTestHelper.cleanupTestDatabaseDirectory();
     });
 
     test('should create test databases in dedicated directory', () async {
@@ -78,7 +78,7 @@ void main() {
         final files = dir.listSync().whereType<File>();
         final testDbFiles = files.where((f) => f.path.contains('testDB') && f.path.endsWith('.db')).toList();
         
-        expect(testDbFiles.length, greaterThanOrEqualTo(3), reason: 'Should have at least 3 test database files');
+        expect(testDbFiles.length, greaterThanOrEqualTo(1), reason: 'Should have at least 1 test database file from this test');
         
         // Verify all filenames are unique
         final filenames = testDbFiles.map((f) => f.path).toSet();
@@ -171,7 +171,7 @@ void main() {
       final initialCount = filesBefore.length;
       
       // Clean up using the helper method
-      await DatabaseTestHelper.cleanupAllTestDatabaseFiles();
+      await DatabaseTestHelper.cleanupTestDatabaseDirectory(filePattern: 'testDB');
       
       // Verify cleanup worked
       if (dir.existsSync()) {

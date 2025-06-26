@@ -9,17 +9,39 @@ enum TestDatabaseType { memory, file }
 /// Global test database override - when set, all tests use this type
 TestDatabaseType? _globalTestDatabaseOverride;
 
+/// Cache for singleton database instances to avoid Drift warnings
+final Map<String, AppDatabase> _databaseInstances = {};
+
+/// Flag to track if drift warnings have been disabled for tests
+bool _driftWarningsDisabled = false;
+
 /// Database Test Helper for Drift Database Testing
 /// 
 /// Provides flexible test database creation with three modes:
 /// 1. Per-test-suite choice (memory or file)
 /// 2. Global force all-memory 
 /// 3. Global force all-file
+/// 
+/// This helper manages database instances as singletons to prevent
+/// Drift's "multiple database instances" warnings.
 class DatabaseTestHelper {
+  
+  /// Disable Drift warnings for test environments
+  /// 
+  /// Call this once at the beginning of your test suite to suppress
+  /// Drift's multiple database instance warnings, which are expected
+  /// in test environments where we create many isolated databases.
+  static void disableDriftWarnings() {
+    if (!_driftWarningsDisabled) {
+      driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+      _driftWarningsDisabled = true;
+    }
+  }
   
   /// Creates a test database instance based on the specified type
   /// 
   /// This is the main function you'll use in your test setUp() methods.
+  /// Automatically disables Drift warnings for test environments.
   /// 
   /// Example usage:
   /// ```dart
@@ -30,31 +52,38 @@ class DatabaseTestHelper {
   /// });
   /// 
   /// tearDown(() async {
-  ///   await database.close();
-  ///   // For file databases, optionally clean up test files
-  ///   if (database.executor is NativeDatabase) {
-  ///     // Clean up logic here if needed
-  ///   }
+  ///   await DatabaseTestHelper.closeTestDatabase(database);
   /// });
   /// ```
   static AppDatabase createTestDatabase(TestDatabaseType type) {
+    // Automatically disable Drift warnings for tests
+    disableDriftWarnings();
+    
     // Check for global override first
     final effectiveType = _globalTestDatabaseOverride ?? type;
     
     switch (effectiveType) {
       case TestDatabaseType.memory:
-        return _createMemoryDatabase();
+        return _getOrCreateMemoryDatabase();
       case TestDatabaseType.file:
         return _createFileDatabase();
     }
   }
   
-  /// Create an in-memory test database (fast, isolated)
-  static AppDatabase _createMemoryDatabase() {
-    return AppDatabase(':memory:');
+  /// Get or create a singleton memory database instance
+  static AppDatabase _getOrCreateMemoryDatabase() {
+    const key = 'memory';
+    if (_databaseInstances.containsKey(key)) {
+      return _databaseInstances[key]!;
+    }
+    
+    final database = AppDatabase(':memory:');
+    _databaseInstances[key] = database;
+    return database;
   }
   
   /// Create a file-based test database (persistent, real SQLite file)
+  /// Each test gets a unique file to ensure isolation
   static AppDatabase _createFileDatabase() {
     // Create unique test database file with human-readable timestamp + counter
     final timestamp = DateTime.now();
@@ -69,7 +98,14 @@ class DatabaseTestHelper {
     
     final testDbPath = '${testDbDir.path}/test_${formattedDate}_testDB_$uniqueId.db';
     
-    return AppDatabase(testDbPath);
+    // Check if we already have this instance cached
+    if (_databaseInstances.containsKey(testDbPath)) {
+      return _databaseInstances[testDbPath]!;
+    }
+    
+    final database = AppDatabase(testDbPath);
+    _databaseInstances[testDbPath] = database;
+    return database;
   }
   
   /// Set global override - forces ALL tests to use specified database type
@@ -103,17 +139,82 @@ class DatabaseTestHelper {
   
   /// Close and optionally clean up a test database file
   /// 
-  /// Call this in tearDown() when you're done with a file database.
-  /// The cleanup parameter is optional - set to true only if you want to delete the file.
+  /// Call this in tearDown() when you're done with a database.
+  /// This properly manages the singleton cache and prevents memory leaks.
+  /// 
+  /// Note: For memory databases, we only remove from cache but don't actually
+  /// close the database if it might be reused by other tests. For file databases,
+  /// we always close since each test gets its own file.
   static Future<void> closeTestDatabase(AppDatabase database, {bool cleanup = false}) async {
-    await database.close();
+    // Find the key for this database instance
+    String? keyToRemove;
+    for (final entry in _databaseInstances.entries) {
+      if (identical(entry.value, database)) {
+        keyToRemove = entry.key;
+        break;
+      }
+    }
     
-    // Cleanup is optional and disabled by default to preserve test data
-    if (cleanup) {
-      // Note: Individual file cleanup would require storing the path,
-      // which is not easily accessible from the database instance.
-      // If cleanup is needed, consider using cleanupTestDatabaseDirectory() 
-      // with specific file patterns.
+    if (keyToRemove != null) {
+      if (keyToRemove == 'memory') {
+        // For memory database, we don't close it as it's shared across tests
+        // Just clear any data instead
+        try {
+          // Clear all tables to reset state for next test
+          await _clearDatabaseTables(database);
+        } catch (e) {
+          // If clearing fails, remove from cache and close
+          _databaseInstances.remove(keyToRemove);
+          await database.close();
+        }
+      } else {
+        // For file databases, always close and remove from cache
+        _databaseInstances.remove(keyToRemove);
+        await database.close();
+        
+        // Cleanup is optional and disabled by default to preserve test data
+        if (cleanup) {
+          try {
+            final file = File(keyToRemove);
+            if (await file.exists()) {
+              await file.delete();
+            }
+          } catch (e) {
+            // Ignore file deletion errors
+          }
+        }
+      }
+    } else {
+      // If not found in cache, just close it
+      await database.close();
+    }
+  }
+  
+  /// Clear all data from database tables (used for memory database reset)
+  static Future<void> _clearDatabaseTables(AppDatabase database) async {
+    await database.transaction(() async {
+      // Clear tables in reverse dependency order to avoid foreign key constraints
+      await database.delete(database.records).go();
+      await database.delete(database.participants).go();
+      await database.delete(database.insuranceCompanies).go();
+      await database.delete(database.zzaActions).go();
+    });
+  }
+  
+  /// Clear all cached database instances
+  /// 
+  /// Use this sparingly - typically only in test cleanup or when you need
+  /// to completely reset the database state between test suites.
+  static Future<void> clearAllDatabaseInstances() async {
+    final databases = List.from(_databaseInstances.values);
+    _databaseInstances.clear();
+    
+    for (final database in databases) {
+      try {
+        await database.close();
+      } catch (e) {
+        // Ignore close errors
+      }
     }
   }
   
@@ -149,7 +250,8 @@ class DatabaseTestHelper {
   
   /// Quick setup helper for memory database tests
   /// 
-  /// Use this as a shortcut when you know you want memory database
+  /// Use this as a shortcut when you know you want memory database.
+  /// Returns the singleton memory database instance.
   static AppDatabase createMemoryTestDatabase() {
     return createTestDatabase(TestDatabaseType.memory);
   }

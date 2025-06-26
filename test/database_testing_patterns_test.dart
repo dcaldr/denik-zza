@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:denik_zza/database/drift_database/database.dart';
+import '../lib/database/drift_database/database.dart';
 import 'helpers/database_test_helper.dart';
 
 /// Proof of Concept: Database Testing Patterns
@@ -19,7 +19,7 @@ void main() {
     });
     
     tearDown(() async {
-      await database.close();
+      await DatabaseTestHelper.closeTestDatabase(database);
     });
     
     test('can create and retrieve insurance company', () async {
@@ -78,7 +78,7 @@ void main() {
     });
     
     tearDown(() async {
-      await DatabaseTestHelper.cleanupTestDatabaseFile(database);
+      await DatabaseTestHelper.closeTestDatabase(database);
     });
     
     test('file database persists data (proof of concept)', () async {
@@ -132,7 +132,7 @@ void main() {
     });
     
     tearDown(() async {
-      await database.close();
+      await DatabaseTestHelper.closeTestDatabase(database);
     });
     
     test('setNoteValue updates participant note correctly', () async {

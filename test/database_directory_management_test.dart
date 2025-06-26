@@ -18,7 +18,7 @@ void main() {
 
     tearDownAll(() async {
       // Clean up all test databases after running all tests
-      await DatabaseTestHelper.cleanupAllTestDatabaseFiles();
+      await DatabaseTestHelper.cleanupTestDatabaseDirectory();
     });
 
     test('should create test databases in dedicated directory', () async {
@@ -111,7 +111,7 @@ void main() {
       }
       
       // Clean up using the helper method
-      await DatabaseTestHelper.cleanupAllTestDatabaseFiles();
+      await DatabaseTestHelper.cleanupTestDatabaseDirectory();
       
       // Verify cleanup worked (directory might still exist but should have fewer or no test files)
       final dir = Directory(testDbDir);

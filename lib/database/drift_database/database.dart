@@ -197,9 +197,8 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<bool> setNoteValue(int personId, String value) { //FIXME: 100% make tests for this
-    Future<bool> answer = (update(participants)..where((p) =>
-    p.id.equals(personId))).replace(ParticipantsCompanion(note: Value(value)));
-    return answer;
+    return (update(participants)..where((p) =>
+    p.id.equals(personId))).write(ParticipantsCompanion(note: Value(value))).then((rowsUpdated) => rowsUpdated > 0);
   }
 
   Future<int> updateParticipant(int id, ParticipantsCompanion osoba) {

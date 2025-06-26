@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/database/database_wrapper.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
 
 /// Simple proof-of-concept test to verify the robust database mode system works.
 /// This test verifies the core safety features without relying on complex interfaces.

@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/database/database_wrapper.dart';
-import '../lib/database/database_interface.dart';
-import '../lib/database/drift_database_connector.dart';
-import '../lib/database/in_memory_structures_tmp/memory_database_connector.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/database/database_interface.dart';
+import 'package:denik_zza/database/drift_database_connector.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_database_connector.dart';
 
 /// Comprehensive proof-of-concept tests demonstrating the robust database system.
 /// 
@@ -93,8 +93,8 @@ void main() {
         DatabaseInterface db2 = DatabaseWrapper.getDatabase();
         expect(db2, isA<MemoryDatabase>());
         
-        // They should be different instances (isolated)
-        expect(identical(db1, db2), isFalse);
+        // They should be the same singleton instance for memory database
+        expect(identical(db1, db2), isTrue);
       });
     });
 

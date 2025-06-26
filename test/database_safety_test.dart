@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/database/database_wrapper.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
 
 /// Test database safety mechanisms
 void main() {
