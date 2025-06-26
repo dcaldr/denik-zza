@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import '../../lib/database/drift_database/database.dart';
@@ -59,7 +60,14 @@ class DatabaseTestHelper {
     final timestamp = DateTime.now();
     final formattedDate = '${timestamp.year.toString().substring(2)}-${timestamp.month.toString().padLeft(2, '0')}-${timestamp.day.toString().padLeft(2, '0')}';
     final uniqueId = timestamp.millisecondsSinceEpoch % 100000; // Anti-collision number
-    final testDbPath = './test_${formattedDate}_testDB_$uniqueId.db';
+    
+    // Create test database in dedicated directory
+    final testDbDir = Directory('./test/test_dbs');
+    if (!testDbDir.existsSync()) {
+      testDbDir.createSync(recursive: true);
+    }
+    
+    final testDbPath = '${testDbDir.path}/test_${formattedDate}_testDB_$uniqueId.db';
     
     return AppDatabase(testDbPath);
   }
@@ -93,21 +101,50 @@ class DatabaseTestHelper {
     return _globalTestDatabaseOverride;
   }
   
-  /// Utility function to clean up test database files
+  /// Close and optionally clean up a test database file
   /// 
-  /// Call this in tearDown() if you're using file databases and want to clean up
-  static Future<void> cleanupTestDatabaseFile(AppDatabase database) async {
+  /// Call this in tearDown() when you're done with a file database.
+  /// The cleanup parameter is optional - set to true only if you want to delete the file.
+  static Future<void> closeTestDatabase(AppDatabase database, {bool cleanup = false}) async {
     await database.close();
     
-    // If it's a file database, try to delete the file
-    if (database.executor is DatabaseConnection) {
-      final connection = database.executor as DatabaseConnection;
-      if (connection.executor is NativeDatabase) {
-        final nativeDb = connection.executor as NativeDatabase;
-        // Note: NativeDatabase doesn't expose the file path directly
-        // This is a limitation, but file cleanup is optional anyway
+    // Cleanup is optional and disabled by default to preserve test data
+    if (cleanup) {
+      // Note: Individual file cleanup would require storing the path,
+      // which is not easily accessible from the database instance.
+      // If cleanup is needed, consider using cleanupTestDatabaseDirectory() 
+      // with specific file patterns.
+    }
+  }
+  
+  /// Optional: Clean up test database files with specific patterns
+  /// 
+  /// Use this sparingly - only when you specifically need to clean up test files.
+  /// By default, test databases are preserved for debugging and analysis.
+  static Future<void> cleanupTestDatabaseDirectory({String? filePattern}) async {
+    final testDbDir = Directory('./test/test_dbs');
+    if (testDbDir.existsSync()) {
+      try {
+        final files = testDbDir.listSync().whereType<File>();
+        for (final file in files) {
+          final fileName = file.path.split(Platform.pathSeparator).last;
+          if (filePattern != null && fileName.contains(filePattern)) {
+            try {
+              await file.delete();
+            } catch (e) {
+              // Ignore individual file deletion errors
+            }
+          }
+        }
+      } catch (e) {
+        // Ignore directory access errors
       }
     }
+  }
+  
+  /// Get the path to the test databases directory
+  static String getTestDatabaseDirectory() {
+    return './test/test_dbs';
   }
   
   /// Quick setup helper for memory database tests

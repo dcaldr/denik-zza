@@ -4,6 +4,10 @@
 db.sqlite
 /test/rodne_cislo_hidden_test.dart
 lib/input/scratchpad.dart
+
+# Test database files
+/test/test_dbs/
+*.testDB*.db
 # generated files - build_runner
 # *.g.dart
 *.freezed.dart

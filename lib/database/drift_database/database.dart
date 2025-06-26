@@ -233,6 +233,22 @@ LazyDatabase _openConnection([String? path]) {
       return NativeDatabase.memory();
     }
     
+    // Special case for test database files (paths containing 'testDB')
+    if (path != null && path.contains('testDB')) {
+      final dbFile = File(path);
+      // Create directory if it doesn't exist
+      final directory = dbFile.parent;
+      if (!directory.existsSync()) {
+        directory.createSync(recursive: true);
+      }
+      
+      if (Platform.isAndroid) {
+        await applyWorkaroundToOpenSqlite3OnOldAndroidVersions();
+      }
+      
+      return NativeDatabase.createInBackground(dbFile);
+    }
+    
     // Use FileManager to get the database path
     final fileManager = FileManager();
     /// makes path to the database file if null or misssing use current directory;

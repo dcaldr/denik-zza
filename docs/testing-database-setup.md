@@ -215,10 +215,13 @@ DatabaseMode mode = DatabaseWrapper.getCurrentMode();
 
 When using `TestDatabaseType.file`, test databases get unique filenames:
 
+- Location: `test/test_dbs/` directory (automatically created)
 - Format: `test_YY-MM-DD_testDB_NNNNN.db`
-- Example: `test_24-01-15_testDB_42837.db`
-- Automatic cleanup prevents accumulation
-- Human-readable for debugging
+- Example: `test/test_dbs/test_24-01-15_testDB_42837.db`
+- **Files are preserved by default** for debugging and analysis
+- Human-readable timestamps for easy identification
+- Not committed to version control (in `.gitignore`)
+- Optional cleanup methods available if needed
 
 ## Migration from Old System
 
@@ -377,12 +380,22 @@ test('example test', () async {
 
 ### File Database Cleanup
 
-For file databases, optionally clean up test files:
+For file databases, you have several cleanup options:
 
 ```dart
+// Option 1: Individual database cleanup (in tearDown)
 tearDown(() async {
   await DatabaseTestHelper.cleanupTestDatabaseFile(database);
 });
+
+// Option 2: Clean up all test databases (in tearDownAll)
+tearDownAll(() async {
+  await DatabaseTestHelper.cleanupAllTestDatabaseFiles();
+});
+
+// Option 3: Manual cleanup (if needed)
+// All test database files are located in: test/test_dbs/
+// They follow the pattern: test_YY-MM-DD_testDB_NNNNN.db
 ```
 
 ## When to Use Each Database Type
