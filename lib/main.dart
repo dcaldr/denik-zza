@@ -1,8 +1,12 @@
 import 'package:denik_zza/screens/login/login_page.dart';
 import 'package:flutter/material.dart';
-
+import 'package:denik_zza/database/database_wrapper.dart';
 
 void main() {
+  // PRODUCTION SAFETY: Ensure the app uses persistent database storage
+  // This validates that the app will never accidentally use non-persistent storage
+  DatabaseWrapper.ensureProductionMode();
+  
   runApp(const MyApp());
 }
 

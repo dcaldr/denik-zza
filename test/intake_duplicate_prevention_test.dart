@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/controllers/intake_controller.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
+import 'package:drift/drift.dart';
 import 'helpers/database_test_helper.dart';
 
 void main() {

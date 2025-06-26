@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
+import 'package:drift/drift.dart';
 import 'helpers/database_test_helper.dart';
 
 void main() {
@@ -95,11 +96,13 @@ void main() {
         title: 'First Record',
         description: 'First medical record',
         participantFK: participantId,
+        paramedicFK: 1, // Add required paramedicFK
       );
       final record2 = TestDatabaseUtils.createSampleRecord(
         title: 'Second Record', 
         description: 'Second medical record',
         participantFK: participantId,
+        paramedicFK: 1, // Add required paramedicFK
       );
       
       await database.addRecord(record1);

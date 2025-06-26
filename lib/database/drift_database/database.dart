@@ -228,6 +228,11 @@ Future<int> updateEvent(int id, ZzaActionsCompanion action) {
 
 LazyDatabase _openConnection([String? path]) {
   return LazyDatabase(() async {
+    // Special case for in-memory database (commonly used in tests)
+    if (path == ':memory:') {
+      return NativeDatabase.memory();
+    }
+    
     // Use FileManager to get the database path
     final fileManager = FileManager();
     /// makes path to the database file if null or misssing use current directory;

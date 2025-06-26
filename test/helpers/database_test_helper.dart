@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import '../../lib/database/drift_database/database.dart';
@@ -51,21 +50,18 @@ class DatabaseTestHelper {
   
   /// Create an in-memory test database (fast, isolated)
   static AppDatabase _createMemoryDatabase() {
-    return AppDatabase(DatabaseConnection(
-      NativeDatabase.memory(),
-      closeStreamsSynchronously: true, // Required for Flutter tests!
-    ));
+    return AppDatabase(':memory:');
   }
   
   /// Create a file-based test database (persistent, real SQLite file)
   static AppDatabase _createFileDatabase() {
-    // Create unique test database file
-    final testDbFile = File('test_${DateTime.now().millisecondsSinceEpoch}.db');
+    // Create unique test database file with human-readable timestamp + counter
+    final timestamp = DateTime.now();
+    final formattedDate = '${timestamp.year.toString().substring(2)}-${timestamp.month.toString().padLeft(2, '0')}-${timestamp.day.toString().padLeft(2, '0')}';
+    final uniqueId = timestamp.millisecondsSinceEpoch % 100000; // Anti-collision number
+    final testDbPath = './test_${formattedDate}_testDB_$uniqueId.db';
     
-    return AppDatabase(DatabaseConnection(
-      NativeDatabase(testDbFile),
-      closeStreamsSynchronously: true, // Required for Flutter tests!
-    ));
+    return AppDatabase(testDbPath);
   }
   
   /// Set global override - forces ALL tests to use specified database type
@@ -149,22 +145,22 @@ class TestDatabaseUtils {
     return ParticipantsCompanion.insert(
       firstName: firstName,
       lastName: lastName,
-      zzaActionFK: Value(zzaActionFK),
-      insuranceCompanyFK: Value(insuranceCompanyFK),
+      zzaActionFK: zzaActionFK ?? 1, // Default to action ID 1 if not specified
+      insuranceCompanyFK: insuranceCompanyFK != null ? Value(insuranceCompanyFK) : const Value.absent(),
     );
   }
   
   /// Create sample action for testing
   static ZzaActionsCompanion createSampleAction({
-    String name = 'Test Action',
+    String actionTitle = 'Test Action',
     DateTime? dateFrom,
     DateTime? dateTo,
   }) {
     final now = DateTime.now();
     return ZzaActionsCompanion.insert(
-      name: name,
+      actionTitle: actionTitle,
       dateFrom: dateFrom ?? now,
-      dateTo: Value(dateTo ?? now.add(const Duration(days: 7))),
+      dateTo: dateTo ?? now.add(const Duration(days: 7)),
     );
   }
   
@@ -173,13 +169,15 @@ class TestDatabaseUtils {
     String title = 'Test Record',
     String description = 'Test Description',
     required int participantFK,
-    int? paramedicFK,
+    required int paramedicFK,
+    DateTime? dateAndTime,
   }) {
     return RecordsCompanion.insert(
       title: title,
       description: description,
       participantFK: participantFK,
-      paramedicFK: Value(paramedicFK),
+      paramedicFK: paramedicFK,
+      dateAndTime: dateAndTime ?? DateTime.now(),
     );
   }
 }
