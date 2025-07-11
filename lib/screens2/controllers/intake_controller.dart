@@ -22,6 +22,13 @@ class IntakeController extends ChangeNotifier {
     /// Initialize the controller
   Future<void> initialize() async {
     zpusobilostFolder = await FileManager().getZpusobilostFolder();
+    
+    // Start with a new empty person
+    if (selectedPerson == null) {
+      selectedPerson = MemoryOsoba.basic('', '');
+      selectedPerson!.id = -1; // -1 indicates this is a new person
+    }
+    
     notifyListeners();
   }
   
@@ -43,6 +50,12 @@ class IntakeController extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Update selected person data (called from form)
+  void updatePersonData(MemoryOsoba updatedPerson) {
+    selectedPerson = updatedPerson;
+    notifyListeners();
+  }
     /// Handle save operation
   Future<bool> saveData(bool markAsArrived) async {
     if (_validateParticipantForm?.call() ?? false) {
@@ -60,23 +73,33 @@ class IntakeController extends ChangeNotifier {
           selectedPerson!.prisel = true;
         }
         
+        bool success = false;
         // Distinguish between new and existing persons
         if (selectedPerson!.id == -1) {
           // New person - use addOsoba
-          final success = await DatabaseWrapper.getDatabase().addOsoba(selectedPerson!);
-          return success;
+          success = await DatabaseWrapper.getDatabase().addOsoba(selectedPerson!);
         } else {
           // Existing person - use updateParticipant
           final updateResult = await DatabaseWrapper.getDatabase().updateParticipant(osoba: selectedPerson!);
-          return updateResult > 0;
+          success = updateResult > 0;
         }
+        
+        // If successful, automatically reset state for next person
+        if (success) {
+          reset();
+        }
+        
+        return success;
       }
     }
     return false;
   }
     /// Reset controller state
   void reset() {
-    selectedPerson = null;
+    // Create a new empty person for the form
+    selectedPerson = MemoryOsoba.basic('', '');
+    selectedPerson!.id = -1; // -1 indicates this is a new person
+    
     _omezeniLogic.reset();
     _lekLogic.reset();
     notifyListeners();
@@ -90,9 +113,17 @@ class IntakeController extends ChangeNotifier {
   bool get hasValidationFunction => _validateParticipantForm != null;
   bool get hasZpusobilostFolder => zpusobilostFolder != null;
   
+  /// Check if there are unsaved changes (basic implementation)
+  bool get hasUnsavedChanges => 
+    selectedPerson != null && 
+    (selectedPerson!.jmeno.isNotEmpty || selectedPerson!.prijmeni.isNotEmpty);
+  
   /// Get display name for selected person
   String get selectedPersonDisplayName {
     if (selectedPerson == null) return '';
     return '${selectedPerson!.jmeno} ${selectedPerson!.prijmeni}';
   }
+  
+  /// Check if current person is new (not yet saved)
+  bool get isNewPerson => selectedPerson?.id == -1;
 }

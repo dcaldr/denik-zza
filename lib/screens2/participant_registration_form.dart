@@ -55,7 +55,11 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
   @override
   void initState() {
     super.initState();
-    if (widget.osoba != null) {
+    if (widget.osoba == null || (widget.osoba!.id == -1 && widget.osoba!.jmeno.isEmpty && widget.osoba!.prijmeni.isEmpty)) {
+      // Start with clear fields for new person
+      clearFields();
+    } else {
+      // Populate fields for existing person
       _populateFields(widget.osoba!);
     }
     _controllers['cisloPojisteni']!.addListener(() {
@@ -74,20 +78,19 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
   @override
   void didUpdateWidget(covariant ParticipantRegistrationForm oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if(widget.osoba == null) {
-      return;
-    }
     if (widget.osoba != oldWidget.osoba) {
-      _populateFields(widget.osoba!);
+      if (widget.osoba == null || (widget.osoba!.id == -1 && widget.osoba!.jmeno.isEmpty && widget.osoba!.prijmeni.isEmpty)) {
+        // Clear fields for new person
+        clearFields();
+      } else {
+        // Populate fields for existing person
+        _populateFields(widget.osoba!);
+      }
     }
   }
 
  bool validateForm() {
-  if (_formKey.currentState?.validate() ?? false) {
-    _submitForm();
-    return true;
-  }
-  return false;
+  return _formKey.currentState?.validate() ?? false;
 }
 
   void _populateFields(MemoryOsoba osoba) {
@@ -112,6 +115,7 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     super.dispose();
   }
 
+  // This method should only be called for standalone usage (not from intake form)
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       MemoryOsoba osoba = createMemoryOsoba();
@@ -183,27 +187,6 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
         _controllers['pohlavi']!.text = pohlavi.toString();
       }
     }
-  }
-
-  void _showPersonDetails(MemoryOsoba osoba) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Person Details'),
-          content: Text(
-              'Name: ${osoba.jmeno} ${osoba.prijmeni}\nDate of Birth: ${osoba.datumNarozeni}\nGender: ${osoba.pohlavi}\nAddress: ${osoba.adresa}\nInsurance Number: ${osoba.cisloPojisteni}\nParent Name: ${osoba.jmenoRodice}\nParent Phone: ${osoba.telefonRodice}\nParent Email: ${osoba.emailRodice}\nHealth Insurance: ${osoba.zdravotniPojistovna}\nNote: ${osoba.poznamka}'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Close'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override

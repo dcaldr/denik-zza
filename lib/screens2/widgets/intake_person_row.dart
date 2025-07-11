@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../shared/intake_types.dart';
 import 'person_autocomplete.dart';
-import '../../database/in_memory_structures_tmp/memory_osoba.dart';
 
 class IntakePersonRow extends StatelessWidget {
   final PersonSelectedCallback onPersonSelected;
@@ -12,13 +11,6 @@ class IntakePersonRow extends StatelessWidget {
     required this.onPersonSelected, 
     required this.onRefresh,
   });
-
-  void _createNewPerson() {
-    // Create a new empty person with null ID
-    final newPerson = MemoryOsoba.basic('', '');
-    newPerson.id = -1; // -1 indicates this is a new person (as per the comment in MemoryOsoba)
-    onPersonSelected(newPerson);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,11 +27,6 @@ class IntakePersonRow extends StatelessWidget {
                 onRefresh: onRefresh
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            onPressed: _createNewPerson,
-            child: const Text('New Person'),
           ),
         ],
       ),

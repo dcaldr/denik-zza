@@ -128,7 +128,8 @@ class _IntakeFormState extends State<IntakeForm> {
                       minHeight: MediaQuery.of(context).size.height
                     ),
                     child: Column(
-                      children: [                        IntakePersonRow(
+                      children: [          
+                             IntakePersonRow(
                           onPersonSelected: _onPersonSelected, 
                           onRefresh: _refreshPage,
                         ),

@@ -24,6 +24,9 @@ class _TmpIntakeFormImprovedState extends State<TmpIntakeFormImproved> {
   
   // Widget instances
   ParticipantRegistrationForm? _participantRegistrationForm;
+  
+  // Key for PersonAutocomplete to force rebuild
+  Key _personAutocompleteKey = UniqueKey();
 
   @override
   void initState() {
@@ -46,6 +49,13 @@ class _TmpIntakeFormImprovedState extends State<TmpIntakeFormImproved> {
     setState(() {
       // Rebuild participant form when person changes (always show form)
       _participantRegistrationForm = _createParticipantForm();
+      
+      // If the controller was reset, also clear the autocomplete
+      if (_controller.isNewPerson && 
+          _controller.selectedPerson!.jmeno.isEmpty && 
+          _controller.selectedPerson!.prijmeni.isEmpty) {
+        _personAutocompleteKey = UniqueKey();
+      }
     });
   }
 
@@ -61,14 +71,16 @@ class _TmpIntakeFormImprovedState extends State<TmpIntakeFormImproved> {
     return ParticipantRegistrationForm(
       osoba: _controller.selectedPerson,
       onValidate: (validate) => _controller.setValidationFunction(validate),
-      onOsobaEdited: (osoba) => _controller.selectedPerson = osoba,
+      onOsobaEdited: (osoba) => _controller.updatePersonData(osoba),
       onRefresh: _refreshPage,
     );
   }
 
   void _refreshPage() {
     _controller.reset();
-    _initializeWidgets();
+    // Force rebuild of PersonAutocomplete to clear search field
+    _personAutocompleteKey = UniqueKey();
+    // The form will be recreated automatically due to the listener
   }
   void _onPersonSelected(MemoryOsoba person) async {
     await _controller.selectPerson(person);
@@ -86,7 +98,7 @@ class _TmpIntakeFormImprovedState extends State<TmpIntakeFormImproved> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(markAsArrived ? 'uložit a přišel' : 'uložit')),
         );
-        _refreshPage();
+        // No need to call _refreshPage() - controller automatically resets state
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('něco nedopadlo')),
@@ -108,30 +120,31 @@ class _TmpIntakeFormImprovedState extends State<TmpIntakeFormImproved> {
           child: Column(
             children: [
               IntakePersonRow(
+                key: _personAutocompleteKey,
                 onPersonSelected: _onPersonSelected, 
                 onRefresh: _refreshPage,
               ),
-              if (_participantRegistrationForm != null)
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: IntakeMainContent(
-                      selectedPerson: _controller.selectedPerson,
-                      onFileUploaded: _onFileUploaded,
-                      zpusobilostFolder: _controller.zpusobilostFolder,
-                      omezeniLogic: _controller.omezeniLogic,
-                      lekLogic: _controller.lekLogic,
-                      participantRegistrationForm: _participantRegistrationForm!,
-                    ),
+              // Always show the form since we always have a person (even if new)
+              Expanded(
+                child: SingleChildScrollView(
+                  child: IntakeMainContent(
+                    selectedPerson: _controller.selectedPerson,
+                    onFileUploaded: _onFileUploaded,
+                    zpusobilostFolder: _controller.zpusobilostFolder,
+                    omezeniLogic: _controller.omezeniLogic,
+                    lekLogic: _controller.lekLogic,
+                    participantRegistrationForm: _participantRegistrationForm!,
                   ),
                 ),
-              if (_participantRegistrationForm != null)
-                IntakeBottomRow(
-                  formKey: _formKey,
-                  selectedPerson: _controller.selectedPerson,
-                  onFileUploaded: _onFileUploaded,
-                  handleSave: _handleSave,
-                  participantRegistrationForm: _participantRegistrationForm!,
-                ),
+              ),
+              // Always show the bottom row since we always have a form
+              IntakeBottomRow(
+                formKey: _formKey,
+                selectedPerson: _controller.selectedPerson,
+                onFileUploaded: _onFileUploaded,
+                handleSave: _handleSave,
+                participantRegistrationForm: _participantRegistrationForm!,
+              ),
             ],
           ),
         ),

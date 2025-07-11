@@ -38,6 +38,10 @@ class _PersonAutocompleteState extends State<PersonAutocomplete> {
     _fetchPersons();
   }
 
+  void clearSearchField() {
+    _controller.clear();
+  }
+
   static String _displayStringForOption(MemoryOsoba option) => '${option.jmeno} ${option.prijmeni} ${option.id}';
   @override
   Widget build(BuildContext context) {
