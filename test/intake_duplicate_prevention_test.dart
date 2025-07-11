@@ -1,8 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
-import 'package:denik_zza/screens2/controllers/intake_controller.dart';
-import 'package:denik_zza/database/drift_database/database.dart';
-import 'package:drift/drift.dart';
+import '../lib/database/drift_database/database.dart';
+import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'helpers/database_test_helper.dart';
 
 void main() {
@@ -57,8 +56,8 @@ void main() {
     late AppDatabase database;
     
     setUp(() {
-      // Use memory database for fast testing
-      database = DatabaseTestHelper.createTestDatabase(TestDatabaseType.memory);
+      // Use memory database for fast testing - each test gets fresh database
+      database = AppDatabase(':memory:');
     });
     
     tearDown(() async {
@@ -126,6 +125,7 @@ void main() {
     });
   });
 
+  group('Additional Memory Object Tests', () {
     test('Insurance company creation logic with valid name', () async {
       // Arrange
       final person = MemoryOsoba.basic('Test', 'Person');

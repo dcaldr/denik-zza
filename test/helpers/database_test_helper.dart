@@ -70,16 +70,11 @@ class DatabaseTestHelper {
     }
   }
   
-  /// Get or create a singleton memory database instance
+  /// Get or create a fresh memory database instance
+  /// Note: For tests, we create a new instance each time to avoid connection reuse issues
   static AppDatabase _getOrCreateMemoryDatabase() {
-    const key = 'memory';
-    if (_databaseInstances.containsKey(key)) {
-      return _databaseInstances[key]!;
-    }
-    
-    final database = AppDatabase(':memory:');
-    _databaseInstances[key] = database;
-    return database;
+    // Always create a new memory database for tests to avoid connection reuse
+    return AppDatabase(':memory:');
   }
   
   /// Create a file-based test database (persistent, real SQLite file)

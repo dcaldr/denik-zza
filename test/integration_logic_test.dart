@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
-import 'package:denik_zza/database/drift_database/database.dart';
-import 'package:drift/drift.dart';
+import '../lib/database/drift_database/database.dart';
+import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'helpers/database_test_helper.dart';
 
 void main() {
@@ -50,8 +50,8 @@ void main() {
     late AppDatabase database;
     
     setUp(() {
-      // Use memory database for fast integration testing
-      database = DatabaseTestHelper.createTestDatabase(TestDatabaseType.memory);
+      // Create a fresh database for each test to avoid connection reuse issues
+      database = AppDatabase(':memory:');
     });
     
     tearDown(() async {
