@@ -3,6 +3,13 @@ import 'package:denik_zza/database/database_interface.dart';
 import 'helpers/database_test_helper.dart';
 import 'setup_templates/hardcoded_setup.dart';
 
+/// Demonstration of HardcodedTestSetup with different database types
+/// 
+/// 📖 This file demonstrates the flexibility of the test database system:
+///   - TestDatabaseType.memory: Fast in-memory testing (no files created)
+///   - TestDatabaseType.file: Persistent test files for manual inspection  
+///   - Files are saved in test/test_dbs/ directory with timestamps
+///   - Useful for debugging complex test scenarios
 void main() {
   group('Hardcoded Setup Demo', () {
     test('should create setup with memory database', () async {

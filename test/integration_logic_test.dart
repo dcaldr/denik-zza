@@ -4,6 +4,15 @@ import '../lib/database/drift_database/database.dart';
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'helpers/database_test_helper.dart';
 
+/// Integration Logic Test - Mixed memory objects and database operations
+/// 
+/// This test demonstrates both:
+/// 1. Memory object unit testing (no database needed)
+/// 2. Database integration testing (uses proper test database setup)
+/// 
+/// 📖 Available Database Types:
+///   - TestDatabaseType.memory: Fast in-memory testing (used here for unit tests)
+///   - TestDatabaseType.file: Persistent test files in test/test_dbs/ (for integration tests)
 void main() {
   group('Integration Logic Test - Memory Objects', () {
     test('Verify MemoryOsoba constructor behavior', () {
@@ -50,12 +59,13 @@ void main() {
     late AppDatabase database;
     
     setUp(() {
-      // Create a fresh database for each test to avoid connection reuse issues
-      database = AppDatabase(':memory:');
+      // Use proper test database helper for consistent, isolated testing
+      // Memory database chosen for fast unit testing of integration logic
+      database = DatabaseTestHelper.createTestDatabase(TestDatabaseType.memory);
     });
     
     tearDown(() async {
-      await database.close();
+      await DatabaseTestHelper.closeTestDatabase(database);
     });
     
     test('End-to-end participant creation with insurance company', () async {

@@ -9,6 +9,10 @@ import '../helpers/database_test_helper.dart';
 /// and 10 participants with various test data configurations.
 /// Automatically sets the database to test mode for safety.
 /// 
+/// 📖 Database Type Options:
+///   - TestDatabaseType.memory (default): Fast in-memory testing, no files created
+///   - TestDatabaseType.file: Persistent files in test/test_dbs/ for manual inspection
+/// 
 /// Usage:
 /// ```dart
 /// setUp(() async {

@@ -17,10 +17,22 @@ bool _driftWarningsDisabled = false;
 
 /// Database Test Helper for Drift Database Testing
 /// 
+/// 🎯 NEW PROGRAMMER NOTICE: Use this helper for ALL database tests!
+/// 
 /// Provides flexible test database creation with three modes:
 /// 1. Per-test-suite choice (memory or file)
 /// 2. Global force all-memory 
 /// 3. Global force all-file
+/// 
+/// 📖 Quick Start:
+/// ```dart
+/// setUp(() {
+///   database = DatabaseTestHelper.createTestDatabase(TestDatabaseType.memory);
+/// });
+/// tearDown(() async {
+///   await DatabaseTestHelper.closeTestDatabase(database);
+/// });
+/// ```
 /// 
 /// This helper manages database instances as singletons to prevent
 /// Drift's "multiple database instances" warnings.

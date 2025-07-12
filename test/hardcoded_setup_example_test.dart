@@ -3,7 +3,12 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import 'setup_templates/hardcoded_setup.dart';
 
 /// Example test demonstrating the usage of HardcodedTestSetup
-/// This creates a Czech test environment with cultural references
+/// This creates a test environment with pre-populated data for testing.
+/// 
+/// 📖 HardcodedTestSetup Options:
+///   - setupTestData() - Uses memory database (default)
+///   - setupTestData(databaseType: TestDatabaseType.file) - Uses persistent test files
+///   - Files are saved in test/test_dbs/ directory for manual inspection
 void main() {
   group('Hardcoded Setup Example Tests', () {
     

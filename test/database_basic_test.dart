@@ -1,7 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
 import '../lib/database/drift_database/database.dart';
+import 'helpers/database_test_helper.dart';
 
 /// Basic database functionality test
+/// 
+/// Tests core database operations using the proper test database system.
+/// Uses memory database for fast unit testing of basic database operations.
+/// 
+/// 📖 Available Database Types:
+///   - TestDatabaseType.memory: Fast in-memory testing (recommended for unit tests)
+///   - TestDatabaseType.file: Persistent test files in test/test_dbs/ (for integration tests)
 void main() {
   // Initialize Flutter binding for tests that might use Flutter services
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -10,12 +18,13 @@ void main() {
     late AppDatabase database;
 
     setUp(() {
-      // Create in-memory database for testing
-      database = AppDatabase(':memory:');
+      // Use proper test database helper for consistent test database setup
+      // Memory database chosen for fast unit testing of basic database operations
+      database = DatabaseTestHelper.createTestDatabase(TestDatabaseType.memory);
     });
 
     tearDown(() async {
-      await database.close();
+      await DatabaseTestHelper.closeTestDatabase(database);
     });
 
     test('can create and connect to database', () async {
