@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
-import '../../lib/database/database_wrapper.dart';
-import '../../lib/database/drift_database/database.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/database/drift_database/database.dart';
 import '../helpers/database_test_helper.dart';
 
 /// Hardcoded setup for testing with predefined test data
@@ -26,11 +26,11 @@ import '../helpers/database_test_helper.dart';
 /// ```
 class HardcodedTestSetup {
   
-  /// Sets up the database with test data and returns the event ID
+  /// Sets up the database with test data and returns the database instance
   /// 
   /// [databaseType] - Whether to use memory (fast) or file (persistent) database
   /// [useWrapper] - Whether to use DatabaseWrapper (app-level) or direct database (unit tests)
-  static Future<int> setupTestData({
+  static Future<AppDatabase> setupTestData({
     TestDatabaseType databaseType = TestDatabaseType.memory,
     bool useWrapper = false,
   }) async {
@@ -77,7 +77,7 @@ class HardcodedTestSetup {
           lastName: 'Zdravotník',
           address: 'Wenceslas Square 1, Praha',
           birthDate: DateTime(1985, 3, 15),
-          phoneNumber: '+420 777 123 456',
+          phoneNumber: '+420777123456',
           username: 'dr.zdravotnik',
         )
       );
@@ -88,7 +88,7 @@ class HardcodedTestSetup {
       // 5. Create some medical records with Czech cultural easter eggs
       await _createCzechMedicalRecords(database, participants, paramedicId);
       
-      return eventId;
+      return database;
       
     } catch (e) {
       print('❌ Error setting up test data: $e');

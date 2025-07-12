@@ -1,10 +1,10 @@
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_akce.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_lek.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 
-import '../database_interface.dart';
-import 'memory_osoba.dart';
-import 'memory_zaznam.dart';
+import 'package:denik_zza/database/database_interface.dart';
 
 /// in-memory Singleton representation of database for deveping app
 ///

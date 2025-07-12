@@ -1,9 +1,8 @@
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_akce.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_lek.dart';
-
-import 'in_memory_structures_tmp/memory_akce.dart';
-import 'in_memory_structures_tmp/memory_omezeni.dart';
-import 'in_memory_structures_tmp/memory_osoba.dart';
-import 'in_memory_structures_tmp/memory_zaznam.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 /// interface between database and app
 ///
 /// creates standards for databases to fulfil to be successfully used by the app

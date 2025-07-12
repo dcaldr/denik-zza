@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:denik_zza/database/database_interface.dart';
+import 'package:denik_zza/database/drift_database/database.dart';
 import 'helpers/database_test_helper.dart';
 import 'setup_templates/hardcoded_setup.dart';
 
@@ -18,7 +18,7 @@ void main() {
       
       // Verify database was created
       expect(database, isNotNull);
-      expect(database, isA<DatabaseInterface>());
+      expect(database, isA<AppDatabase>());
       print('✓ Memory database setup completed successfully');
     });
 
@@ -28,7 +28,7 @@ void main() {
       
       // Verify database was created  
       expect(database, isNotNull);
-      expect(database, isA<DatabaseInterface>());
+      expect(database, isA<AppDatabase>());
       print('✓ File database setup completed successfully');
       print('📁 File database persists in test/test_dbs/ directory for manual inspection');
     });
@@ -39,7 +39,7 @@ void main() {
       
       // Verify database was created
       expect(database, isNotNull);
-      expect(database, isA<DatabaseInterface>());
+      expect(database, isA<AppDatabase>());
       print('✓ Default (memory) database setup completed successfully');
     });
   });

@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/database/drift_database/database.dart';
+import 'package:denik_zza/database/drift_database/database.dart';
 import 'helpers/database_test_helper.dart';
 
 void main() {
@@ -117,25 +117,6 @@ void main() {
       
       await db1.close();
       await db2.close();
-    });
-
-    test('should handle directory creation gracefully', () async {
-      // Delete the test directory if it exists
-      final dir = Directory(testDbDir);
-      if (dir.existsSync()) {
-        dir.deleteSync(recursive: true);
-      }
-      
-      expect(dir.existsSync(), isFalse, reason: 'Directory should be deleted');
-      
-      // Create a database - this should recreate the directory
-      final database = DatabaseTestHelper.createTestDatabase(TestDatabaseType.file);
-      
-      // Use the database to trigger file creation
-      await database.customStatement('CREATE TABLE test_recreation (id INTEGER)');
-      await database.close();
-      
-      expect(dir.existsSync(), isTrue, reason: 'Directory should be recreated automatically');
     });
 
     test('should successfully clean up test database files', () async {

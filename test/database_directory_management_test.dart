@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:drift/drift.dart';
-import '../lib/database/drift_database/database.dart';
+import 'package:denik_zza/database/drift_database/database.dart';
 import 'helpers/database_test_helper.dart';
 
 void main() {

@@ -1,6 +1,6 @@
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/drift_database_connector.dart';
-import 'database_interface.dart';
+import 'package:denik_zza/database/database_interface.dart';
 import 'in_memory_structures_tmp/memory_database_connector.dart';
 
 

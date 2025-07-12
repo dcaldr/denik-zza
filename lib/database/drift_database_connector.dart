@@ -5,7 +5,7 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:drift/drift.dart';
 import '../input/file_manager.dart';
-import 'database_interface.dart';
+import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 
 /// Singleton Connector to Drift database

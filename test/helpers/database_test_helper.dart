@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
-import '../../lib/database/drift_database/database.dart';
+import 'package:denik_zza/database/drift_database/database.dart';
 
 /// Test database type selection
 enum TestDatabaseType { memory, file }
