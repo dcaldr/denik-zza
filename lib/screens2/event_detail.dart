@@ -1,5 +1,4 @@
 ///FIXME: Right now it "just works"  but needs to be heavily refactored
-library;
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/screens/participants/add_participant_page.dart';
 import 'package:denik_zza/screens/participants/participant_detail_page.dart';
