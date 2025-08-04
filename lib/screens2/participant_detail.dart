@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
-import 'package:denik_zza/screens2/state/participant_notifier.dart';
-import 'package:provider/provider.dart';
+import 'package:denik_zza/screens2/services/participant_service.dart';
 import 'package:denik_zza/print_ops/confirm_print.dart';
 import 'package:denik_zza/print_ops/printer_woodoo.dart';
 
 import 'new_record_page.dart';
+import 'participant_edit_page.dart';
 
 class ParticipantDetailPage extends StatefulWidget {
   final MemoryOsoba participant;
@@ -18,12 +18,34 @@ class ParticipantDetailPage extends StatefulWidget {
 }
 
 class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
+  final ParticipantService _participantService = ParticipantService();
+  List<MemoryZaznam> _records = [];
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
     // Fetch records when the widget is initialized
-    Provider.of<ParticipantNotifier>(context, listen: false)
-        .fetchRecords(widget.participant.id);
+    _fetchRecords();
+  }
+
+  Future<void> _fetchRecords() async {
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      final records = await _participantService.getParticipantRecords(widget.participant.id);
+      setState(() {
+        _records = records;
+        _isLoading = false;
+      });
+    } catch (error) {
+      setState(() {
+        _isLoading = false;
+      });
+      // Handle error if needed
+    }
   }
 
   @override
@@ -34,8 +56,16 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
-            onPressed: () {
-              // TODO: Implement edit functionality
+            onPressed: () async {
+              final result = await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => ParticipantEditPage(participant: widget.participant),
+                ),
+              );
+              // If participant was edited, refresh the data
+              if (result == true && context.mounted) {
+                _fetchRecords(); // This also refreshes participant data
+              }
             },
           ),
         ],
@@ -44,22 +74,22 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-            _buildInfoCard('Personal Information', [
-              _buildInfoRow('Datum Narození:', '${widget.participant.datumNarozeni?.day.toString().padLeft(2, '0')}.${widget.participant.datumNarozeni?.month.toString().padLeft(2, '0')}.${widget.participant.datumNarozeni?.year}'), //TODO: TD2
+            _buildInfoCard('Osobní údaje', [
+              _buildInfoRow('Datum narození:', '${widget.participant.datumNarozeni?.day.toString().padLeft(2, '0')}.${widget.participant.datumNarozeni?.month.toString().padLeft(2, '0')}.${widget.participant.datumNarozeni?.year}'), //TODO: TD2
               _buildInfoRow('Pohlaví:', widget.participant.pohlavi == 1 ? 'Muž' : 'Žena'),
               _buildInfoRow('Adresa:', widget.participant.adresa ?? 'N/A'),
             ]),
-            _buildInfoCard('Insurance Information', [
+            _buildInfoCard('Pojišťovací údaje', [
               _buildInfoRow('Pojišťovna:', widget.participant.zdravotniPojistovna ?? 'N/A'),
               _buildInfoRow('Rodné číslo:', widget.participant.cisloPojisteni ?? 'N/A'),
             ]),
-            _buildInfoCard('Confirmations', [
+            _buildInfoCard('Potvrzení', [
                 _buildInfoRow('Bezinfekčnost:', widget.participant.bezinfekcnost == true ? 'Ano' : 'Ne'),
                 _buildInfoRow('Způsobilost:', widget.participant.zpusobilost == true ? 'Ano' : 'Ne'),
             ]),
             const SizedBox(height: 16),
             Text(
-              'Medical Records',
+              'Lékařské záznamy',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             _buildMedicalRecords(),
@@ -68,25 +98,31 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
+                  onPressed: () async {
+                    final result = await Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => NewRecordPage(participant: widget.participant),
                       ),
                     );
+                    // If a record was added, refresh the records list
+                    if (result == true && context.mounted) {
+                      _fetchRecords();
+                    }
                   },
                   icon: const Icon(Icons.add),
-                  label: const Text('New Record'),
+                  label: const Text('Nový záznam'),
                 ),
                 ElevatedButton.icon(
                   onPressed: () async {
                     // TODO: This should be moved to a service/controller
                     final woodoo = PrinterWoodoo();
                     final packedPdf = await woodoo.printSelected([widget.participant]);
-                    ConfirmPrint().showConfirmPrintDialog(context, packedPdf);
+                    if (context.mounted) {
+                      ConfirmPrint().showConfirmPrintDialog(context, packedPdf);
+                    }
                   },
                   icon: const Icon(Icons.print),
-                  label: const Text('Print Record'),
+                  label: const Text('Tisknout záznamy'),
                 ),
               ],
             )
@@ -97,36 +133,32 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
   }
 
   Widget _buildMedicalRecords() {
-    return Consumer<ParticipantNotifier>(
-      builder: (context, notifier, child) {
-        if (notifier.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-        if (notifier.records.isEmpty) {
-          return const Card(
-            child: ListTile(
-              title: Text('No medical records yet.'),
-            ),
-          );
-        }
+    if (_records.isEmpty) {
+      return const Card(
+        child: ListTile(
+          title: Text('Zatím žádné lékařské záznamy.'),
+        ),
+      );
+    }
 
-        return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: notifier.records.length,
-          itemBuilder: (context, index) {
-            final record = notifier.records[index];
-            return Card(
-child: ListTile(
-                title: Text(record.nazev ?? 'Bez názvu'),
-                subtitle: Text(record.popis ?? 'Bez popisu'),
-                trailing: record.casZaznamu != null
-                    ? Text('${record.casZaznamu!.day}.${record.casZaznamu!.month}.${record.casZaznamu!.year}')
-                    : const Text('Neznámé datum'),
-              ),
-            );
-          },
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _records.length,
+      itemBuilder: (context, index) {
+        final record = _records[index];
+        return Card(
+          child: ListTile(
+            title: Text(record.nazev ?? 'Bez názvu'),
+            subtitle: Text(record.popis ?? 'Bez popisu'),
+            trailing: record.casZaznamu != null
+                ? Text('${record.casZaznamu!.day}.${record.casZaznamu!.month}.${record.casZaznamu!.year}')
+                : const Text('Neznámé datum'),
+          ),
         );
       },
     );

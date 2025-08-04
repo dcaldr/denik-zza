@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/screens2/services/record_service.dart';
-import 'package:denik_zza/screens2/state/participant_notifier.dart';
-import 'package:provider/provider.dart';
 
 class NewRecordPage extends StatefulWidget {
   final MemoryOsoba participant;
@@ -40,16 +38,14 @@ class _NewRecordPageState extends State<NewRecordPage> {
 
       try {
         await _recordService.addRecord(newRecord);
-        // Refresh the records list on the previous screen
-        Provider.of<ParticipantNotifier>(context, listen: false)
-            .fetchRecords(widget.participant.id);
-        Navigator.of(context).pop();
+        // Return success to refresh the previous screen
+        Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Record saved successfully!')),
+          const SnackBar(content: Text('Záznam byl úspěšně uložen!')),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save record: $e')),
+          SnackBar(content: Text('Nepodařilo se uložit záznam: $e')),
         );
       } finally {
         setState(() {
@@ -63,7 +59,7 @@ class _NewRecordPageState extends State<NewRecordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('New Medical Record'),
+        title: const Text('Nový zdravotní záznam'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -72,19 +68,19 @@ class _NewRecordPageState extends State<NewRecordPage> {
           child: ListView(
             children: [
               Text(
-                'Participant: ${widget.participant.jmeno} ${widget.participant.prijmeni}',
+                'Účastník: ${widget.participant.jmeno} ${widget.participant.prijmeni}',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(
-                  labelText: 'Title',
+                  labelText: 'Název',
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a title';
+                    return 'Prosím zadejte název';
                   }
                   return null;
                 },
@@ -93,13 +89,13 @@ class _NewRecordPageState extends State<NewRecordPage> {
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(
-                  labelText: 'Description',
+                  labelText: 'Popis',
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 5,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a description';
+                    return 'Prosím zadejte popis';
                   }
                   return null;
                 },
@@ -110,7 +106,7 @@ class _NewRecordPageState extends State<NewRecordPage> {
                   : ElevatedButton.icon(
                       onPressed: _saveRecord,
                       icon: const Icon(Icons.save),
-                      label: const Text('Save Record'),
+                      label: const Text('Uložit záznam'),
                     ),
             ],
           ),
