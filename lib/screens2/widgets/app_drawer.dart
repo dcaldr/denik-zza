@@ -1,7 +1,7 @@
 import 'package:denik_zza/screens2/event_list.dart';
 import 'package:denik_zza/screens2/event_registration_form.dart';
 import 'package:denik_zza/screens2/intake_form.dart';
-import 'package:denik_zza/screens2/tmp_intake_form_improved.dart';
+import 'package:denik_zza/screens2/intake_form_improved.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:flutter/material.dart';
 

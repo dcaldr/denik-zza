@@ -18,13 +18,13 @@ class TmpIntakeFormImproved extends StatefulWidget {
 
 class _TmpIntakeFormImprovedState extends State<TmpIntakeFormImproved> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  
+
   // Controller for business logic
   late final IntakeController _controller;
-  
+
   // Widget instances
   ParticipantRegistrationForm? _participantRegistrationForm;
-  
+
   // Key for PersonAutocomplete to force rebuild
   Key _personAutocompleteKey = UniqueKey();
 
@@ -49,12 +49,12 @@ class _TmpIntakeFormImprovedState extends State<TmpIntakeFormImproved> {
     setState(() {
       // Rebuild participant form when person changes (always show form)
       _participantRegistrationForm = _createParticipantForm();
-      
+
       // Only regenerate key for actual UI reset (when creating truly new person)
       // Add null safety check
-      if (_controller.isNewPerson && 
+      if (_controller.isNewPerson &&
           _controller.selectedPerson != null &&
-          _controller.selectedPerson!.jmeno.isEmpty && 
+          _controller.selectedPerson!.jmeno.isEmpty &&
           _controller.selectedPerson!.prijmeni.isEmpty) {
         _personAutocompleteKey = UniqueKey();
       }
@@ -84,6 +84,7 @@ class _TmpIntakeFormImprovedState extends State<TmpIntakeFormImproved> {
     _personAutocompleteKey = UniqueKey();
     // The form will be recreated automatically due to the listener
   }
+
   void _onPersonSelected(MemoryOsoba person) async {
     await _controller.selectPerson(person);
   }
@@ -94,7 +95,7 @@ class _TmpIntakeFormImprovedState extends State<TmpIntakeFormImproved> {
 
   Future<void> _handleSave(BuildContext context, bool markAsArrived) async {
     final success = await _controller.saveData(markAsArrived);
-    
+
     if (mounted) {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -115,7 +116,7 @@ class _TmpIntakeFormImprovedState extends State<TmpIntakeFormImproved> {
       appBar: AppBar(
         title: const Text('Intake Form (Improved)'),
       ),
-      drawer: const AppDrawer(),      
+      drawer: const AppDrawer(),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1600),
@@ -123,7 +124,7 @@ class _TmpIntakeFormImprovedState extends State<TmpIntakeFormImproved> {
             children: [
               IntakePersonRow(
                 key: _personAutocompleteKey,
-                onPersonSelected: _onPersonSelected, 
+                onPersonSelected: _onPersonSelected,
                 onRefresh: _refreshPage,
                 availablePersons: _controller.availablePersons,
               ),
