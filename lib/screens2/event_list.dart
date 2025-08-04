@@ -39,21 +39,19 @@ class _EventListState extends State<EventList> {
       body: _buildActionList(),
     );
   }
+
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
-      title: const Text(
-        EventListConstants.title, 
-        style: EventListConstants.titleStyle
-      ),
+      title: const Text(EventListConstants.title,
+          style: EventListConstants.titleStyle),
       actions: <Widget>[
         IconButton(
           icon: const Icon(Icons.add),
           onPressed: () => _navigateToEventRegistration(context),
         ),
         const IconButton(
-          icon: Icon(Icons.search), 
-          onPressed: null
-        ), // Placeholder for future search functionality
+            icon: Icon(Icons.search),
+            onPressed: null), // Placeholder for future search functionality
       ],
     );
   }
@@ -63,12 +61,14 @@ class _EventListState extends State<EventList> {
       future: widget.database.getAllZzaActions(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();        } else if (snapshot.hasError) {
+          return const CircularProgressIndicator();
+        } else if (snapshot.hasError) {
           return Text('${EventListConstants.errorPrefix}${snapshot.error}');
         } else {
           return ListView.builder(
             itemCount: snapshot.data!.length,
-            itemBuilder: (context, index) => _buildActionItem(context, snapshot.data![index]),
+            itemBuilder: (context, index) =>
+                _buildActionItem(context, snapshot.data![index]),
           );
         }
       },
@@ -77,19 +77,16 @@ class _EventListState extends State<EventList> {
 
   void _handlePinnedChanged(MemoryAction event) {
     setState(() {
-      if(event.idAkce == _currentEventID) {
+      if (event.idAkce == _currentEventID) {
         widget.database.updateCurrentEvent(null);
-      }
-      else {
+      } else {
         widget.database.updateCurrentEvent(event.idAkce);
       }
 
       _fetchCurrentEventID();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(EventListConstants.pinChangedMessage),
-        )
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text(EventListConstants.pinChangedMessage),
+      ));
     });
   }
 
@@ -105,14 +102,17 @@ class _EventListState extends State<EventList> {
         } else {
           return ListTile(
             title: Text(action.nadpis),
-            subtitle: Text('${dateFormat.format(action.odkdy)} - ${dateFormat.format(action.dokdy)}'),
+            subtitle: Text(
+                '${dateFormat.format(action.odkdy)} - ${dateFormat.format(action.dokdy)}'),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(participantSnapshot.data.toString()),
                 const Icon(Icons.people),
                 IconButton(
-                  icon: Icon(action.idAkce == _currentEventID ? Icons.push_pin : Icons.push_pin_outlined),
+                  icon: Icon(action.idAkce == _currentEventID
+                      ? Icons.push_pin
+                      : Icons.push_pin_outlined),
                   onPressed: () => _handlePinnedChanged(action),
                 ),
               ],
@@ -125,10 +125,8 @@ class _EventListState extends State<EventList> {
   }
 
   void _navigateToEventRegistration(BuildContext context) {
-    Navigator.push(
-      context, 
-      MaterialPageRoute(builder: (context) => const EventRegistrationForm())
-    );
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) => const EventRegistrationForm()));
   }
 
   void _navigateToActionDetail(BuildContext context, MemoryAction action) {

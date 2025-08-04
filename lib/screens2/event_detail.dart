@@ -1,7 +1,7 @@
 ///FIXME: Right now it "just works"  but needs to be heavily refactored
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/screens/participants/add_participant_page.dart';
-import 'package:denik_zza/screens/participants/participant_detail_page.dart';
+import 'package:denik_zza/screens2/participant_detail.dart';
 import 'package:flutter/material.dart';
 
 import '../../database/database_wrapper.dart';
@@ -12,19 +12,20 @@ import '../../database/in_memory_structures_tmp/memory_osoba.dart';
 class ActionDetail extends StatelessWidget {
   final MemoryAction action;
 
-   /// Database instance for interacting with the data.
+  /// Database instance for interacting with the data.
   final DatabaseInterface database = DatabaseWrapper.getDatabase();
 
   ActionDetail({super.key, required this.action});
 
-/// Constructor for the ActionDetail widget.
+  /// Constructor for the ActionDetail widget.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Detail Akce: ${action.nadpis}'),
         actions: const [
-          IconButton(   //TODO: could  be rewritten to prefill new action
+          IconButton(
+            //TODO: could  be rewritten to prefill new action
             icon: Icon(Icons.edit),
             onPressed: null,
             // onPressed: () {
@@ -40,7 +41,8 @@ class ActionDetail extends StatelessWidget {
       // Using FutureBuilder to asynchronously fetch and display a list of participants
       body: FutureBuilder<List<MemoryOsoba>>(
         future: database.getParticipantsByEvent(action.idAkce!),
-        builder: (BuildContext context, AsyncSnapshot<List<MemoryOsoba>> snapshot) {
+        builder:
+            (BuildContext context, AsyncSnapshot<List<MemoryOsoba>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const CircularProgressIndicator();
           } else if (snapshot.hasError) {
@@ -55,7 +57,8 @@ class ActionDetail extends StatelessWidget {
                     const SizedBox(height: 0),
                     Text(
                       action.nadpis,
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                     const Divider(),
                     Row(
@@ -67,7 +70,8 @@ class ActionDetail extends StatelessWidget {
                     Row(
                       children: [
                         const Icon(Icons.calendar_month, size: 50),
-                        Text('Datum: ${action.odkdy.day.toString().padLeft(2, '0')}.${action.odkdy.month.toString().padLeft(2, '0')}.${action.odkdy.year} - ${action.dokdy.day.toString().padLeft(2, '0')}.${action.dokdy.month.toString().padLeft(2, '0')}.${action.dokdy.year}'), //TODO: improve as mentioned in pdf.dart //DT1 //DT2
+                        Text(
+                            'Datum: ${action.odkdy.day.toString().padLeft(2, '0')}.${action.odkdy.month.toString().padLeft(2, '0')}.${action.odkdy.year} - ${action.dokdy.day.toString().padLeft(2, '0')}.${action.dokdy.month.toString().padLeft(2, '0')}.${action.dokdy.year}'), //TODO: improve as mentioned in pdf.dart //DT1 //DT2
                       ],
                     ),
                     const Divider(),
@@ -98,7 +102,9 @@ class ActionDetail extends StatelessWidget {
                             // and handle the logic for adding participants.
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const AddParticipantPage()),
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const AddParticipantPage()),
                             );
                           },
                         ),
@@ -106,9 +112,11 @@ class ActionDetail extends StatelessWidget {
                     ),
                     const Text(
                       'Účastníci',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                    ...snapshot.data!.map((osoba) => ParticipantItem(osoba: osoba)),
+                    ...snapshot.data!
+                        .map((osoba) => ParticipantItem(osoba: osoba)),
                   ],
                 ),
               ),
@@ -125,9 +133,8 @@ class ActionDetail extends StatelessWidget {
 class ParticipantItem extends StatelessWidget {
   final MemoryOsoba osoba;
 
-/// Constructor for the ParticipantItem widget.
-  const ParticipantItem({super.key,required this.osoba});
-
+  /// Constructor for the ParticipantItem widget.
+  const ParticipantItem({super.key, required this.osoba});
 
   /// Build method for rendering the UI of a ParticipantItem.
   @override
@@ -147,13 +154,17 @@ class ParticipantItem extends StatelessWidget {
               child: Text('${osoba.jmeno} ${osoba.prijmeni}'), // jméno
             ),
             Expanded(
-              child: Text('${osoba.datumNarozeni?.day.toString().padLeft(2, '0')}.${osoba.datumNarozeni?.month.toString().padLeft(2, '0')}.${osoba.datumNarozeni?.year}'), // date //TODO: improve as mentioned in pdf.dart //DT1)
+              child: Text(
+                  '${osoba.datumNarozeni?.day.toString().padLeft(2, '0')}.${osoba.datumNarozeni?.month.toString().padLeft(2, '0')}.${osoba.datumNarozeni?.year}'), // date //TODO: improve as mentioned in pdf.dart //DT1)
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ParticipantDetailPage( ucastnik: osoba,)),
+                  MaterialPageRoute(
+                      builder: (context) => ParticipantDetailPage(
+                            participant: osoba,
+                          )),
                 );
               },
               child: const Text('Detail'),
