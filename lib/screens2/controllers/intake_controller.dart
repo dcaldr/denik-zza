@@ -16,12 +16,16 @@ class IntakeController extends ChangeNotifier {
   // Current state
   MemoryOsoba? selectedPerson;
   Directory? zpusobilostFolder;
+  List<MemoryOsoba> _availablePersons = [];
   
   // Validation function reference
   bool Function()? _validateParticipantForm;
     /// Initialize the controller
   Future<void> initialize() async {
     zpusobilostFolder = await FileManager().getZpusobilostFolder();
+    
+    // Fetch available persons for autocomplete
+    await _fetchAvailablePersons();
     
     // Start with a new empty person
     if (selectedPerson == null) {
@@ -30,6 +34,15 @@ class IntakeController extends ChangeNotifier {
     }
     
     notifyListeners();
+  }
+  
+  /// Fetch available persons from database
+  Future<void> _fetchAvailablePersons() async {
+    try {
+      _availablePersons = await DatabaseWrapper.getDatabase().getParticipantsByCurrentEvent();
+    } catch (e) {
+      _availablePersons = [];
+    }
   }
   
   /// Set the validation function
@@ -41,6 +54,7 @@ class IntakeController extends ChangeNotifier {
     selectedPerson = person;
     await _omezeniLogic.fetchData(person.id);
     await _lekLogic.fetchData(person.id);
+    // Note: No need to refresh available persons when just selecting existing person
     notifyListeners();
   }
     /// Handle file upload
@@ -102,11 +116,20 @@ class IntakeController extends ChangeNotifier {
     
     _omezeniLogic.reset();
     _lekLogic.reset();
-    notifyListeners();
+    
+    // Refresh available persons after reset (async but don't await to avoid blocking)
+    _fetchAvailablePersons().then((_) {
+      // Notify listeners after data is refreshed
+      notifyListeners();
+    }).catchError((e) {
+      // Even if fetch fails, still notify for UI update
+      notifyListeners();
+    });
   }
-    // Getters for accessing logic instances
+    // Getters for accessing logic instances and data
   MemoryOmezeniLogic get omezeniLogic => _omezeniLogic;
   MemoryLekLogic get lekLogic => _lekLogic;
+  List<MemoryOsoba> get availablePersons => _availablePersons;
   
   // Convenience getters for UI state
   bool get hasSelectedPerson => selectedPerson != null;
@@ -126,4 +149,10 @@ class IntakeController extends ChangeNotifier {
   
   /// Check if current person is new (not yet saved)
   bool get isNewPerson => selectedPerson?.id == -1;
+  
+  @override
+  void dispose() {
+    // Clean up any resources if needed
+    super.dispose();
+  }
 }

@@ -50,8 +50,10 @@ class _TmpIntakeFormImprovedState extends State<TmpIntakeFormImproved> {
       // Rebuild participant form when person changes (always show form)
       _participantRegistrationForm = _createParticipantForm();
       
-      // If the controller was reset, also clear the autocomplete
+      // Only regenerate key for actual UI reset (when creating truly new person)
+      // Add null safety check
       if (_controller.isNewPerson && 
+          _controller.selectedPerson != null &&
           _controller.selectedPerson!.jmeno.isEmpty && 
           _controller.selectedPerson!.prijmeni.isEmpty) {
         _personAutocompleteKey = UniqueKey();
@@ -123,6 +125,7 @@ class _TmpIntakeFormImprovedState extends State<TmpIntakeFormImproved> {
                 key: _personAutocompleteKey,
                 onPersonSelected: _onPersonSelected, 
                 onRefresh: _refreshPage,
+                availablePersons: _controller.availablePersons,
               ),
               // Always show the form since we always have a person (even if new)
               Expanded(

@@ -34,11 +34,15 @@ class _IntakeFormState extends State<IntakeForm> {
   bool Function()? _validateParticipantForm;
     // Widget instances
   ParticipantRegistrationForm? _participantRegistrationForm;
+  
+  // Available persons for autocomplete (minimal implementation)
+  List<MemoryOsoba> _availablePersons = [];
 
   @override
   void initState() {
     super.initState();
     _loadZpusobilostFolder();
+    _loadAvailablePersons();
     _initializeWidgets();
   }
 
@@ -62,11 +66,24 @@ class _IntakeFormState extends State<IntakeForm> {
       _omezeniLogic.reset();
       _lekLogic.reset();
       // PersonAutocomplete will be rebuilt with new state
-    });  }
+    });
+    // Refresh available persons
+    _loadAvailablePersons();
+  }
 
   Future<void> _loadZpusobilostFolder() async {
     final folder = await FileManager().getZpusobilostFolder();
     setState(() => zpusobilostFolder = folder);  }
+
+  /// Load available persons for autocomplete (minimal implementation for compatibility)
+  Future<void> _loadAvailablePersons() async {
+    try {
+      final persons = await DatabaseWrapper.getDatabase().getParticipantsByCurrentEvent();
+      setState(() => _availablePersons = persons);
+    } catch (e) {
+      setState(() => _availablePersons = []);
+    }
+  }
 
   void _onPersonSelected(MemoryOsoba person) {
     setState(() {
@@ -132,6 +149,7 @@ class _IntakeFormState extends State<IntakeForm> {
                              IntakePersonRow(
                           onPersonSelected: _onPersonSelected, 
                           onRefresh: _refreshPage,
+                          availablePersons: _availablePersons,
                         ),
                         if (_participantRegistrationForm != null)
                           IntakeMainContent(
