@@ -22,7 +22,7 @@ class DriftDatabaseConnector implements DatabaseInterface {
   final _driftDatabase = AppDatabase();
 
   @override
-  Future<bool> addOsoba(MemoryOsoba osoba) async {
+  Future<int?> addOsobaAndReturnId(MemoryOsoba osoba) async {
     int? insCompId = await _driftDatabase.getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna);
 
     // Only create insurance company if the name is not empty/null
@@ -59,10 +59,14 @@ class DriftDatabaseConnector implements DatabaseInterface {
     //
     // );
     ParticipantsCompanion c2 = await _toParticipantsCompanion(osoba);
-    await _driftDatabase.addParticipant(c2);
+    int osobaID = await _driftDatabase.addParticipant(c2);
     //await _driftDatabase.addParticipant(c);
 
-    return true;
+    return osobaID;
+  }
+  @override
+  Future<bool> addOsoba(MemoryOsoba osoba){
+    return addOsobaAndReturnId(osoba).then((id) => id != null);
   }
 
   @override

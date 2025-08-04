@@ -27,6 +27,13 @@ Future <bool> quickAddNewZaznam(String popis, int idPacient);
 /// Returns `true` if the operation is successful.
 Future <bool> addOsoba(MemoryOsoba osoba);
 
+
+/// Adds a `MemoryOsoba` instance to the database and returns its ID. 
+/// 
+/// Basically a wrapper around old [addOsoba] but returing ID of the added participant. 
+/// todo: needs testing!!! 
+Future<int?> addOsobaAndReturnId(MemoryOsoba osoba);
+
 /// Prints all `MemoryOsoba` instances in the database. (for testing purposes)
 ///
 /// This method iterates over all `MemoryOsoba` instances in the database and prints their details.
