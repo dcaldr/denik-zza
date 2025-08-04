@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
-import '../main.dart';
+import '../main_old.dart';
 
 /// Widget that displays a PDF preview using the PdfPreview widget.
 class DevPdfView extends StatelessWidget {
