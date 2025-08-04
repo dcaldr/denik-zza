@@ -52,6 +52,10 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     'pohlavi': PohlaviHold(),
   };
 
+  // State variables for checkboxes
+  bool _zpusobilost = false;
+  bool _bezinfekcnost = false;
+
   @override
   void initState() {
     super.initState();
@@ -73,6 +77,10 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     _controllers.forEach((key, controller) {
       controller.clear();
     });
+    
+    // Reset checkbox values
+    _zpusobilost = false;
+    _bezinfekcnost = false;
   }
 
   @override
@@ -107,6 +115,10 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     _controllers['emailRodice']!.text = osoba.emailRodice ?? '';
     _controllers['telefonRodice']!.text = osoba.telefonRodice ?? '';
     _controllers['poznamka']!.text = osoba.poznamka ?? '';
+    
+    // Initialize checkbox values
+    _zpusobilost = osoba.zpusobilost ?? false;
+    _bezinfekcnost = osoba.bezinfekcnost ?? false;
   }
 
   @override
@@ -162,8 +174,8 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
       pohlavi: _controllers['pohlavi']!.text.isNotEmpty
           ? int.parse(_controllers['pohlavi']!.text)
           : widget.osoba?.pohlavi,
-      zpusobilost: widget.osoba?.zpusobilost ?? false,
-      bezinfekcnost: widget.osoba?.bezinfekcnost ?? false,
+      zpusobilost: _zpusobilost,
+      bezinfekcnost: _bezinfekcnost,
       wasPrinted: widget.osoba?.wasPrinted ?? false,
       oddil: widget.osoba?.oddil ?? '',
       prisel: widget.osoba?.prisel ?? false,
@@ -198,6 +210,9 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
           children: [
             _buildGridView(),
             _buildTextField('poznamka', 'Poznámka', 'Tento text se nebude tisknout', maxLines: 3, hintText: 'Tento text se nebude tisknout'),
+            const SizedBox(height: 16),
+            _buildCheckboxSection(),
+            const SizedBox(height: 16),
             ElevatedButton(onPressed: _submitForm, child: Text(widget.osoba == null ? 'Přidat' : 'Aktualizovat')),
           ],
         ),
@@ -252,6 +267,39 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
         return _validators[key]?.validator(value);
       },
       maxLines: maxLines,
+    );
+  }
+
+  Widget _buildCheckboxSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Potvrzení',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        CheckboxListTile(
+          title: const Text('Má bezinfekčnost'),
+          value: _bezinfekcnost,
+          onChanged: (bool? value) {
+            setState(() {
+              _bezinfekcnost = value ?? false;
+            });
+          },
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        CheckboxListTile(
+          title: const Text('Má potvrzení o způsobilosti'),
+          value: _zpusobilost,
+          onChanged: (bool? value) {
+            setState(() {
+              _zpusobilost = value ?? false;
+            });
+          },
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+      ],
     );
   }
 }
