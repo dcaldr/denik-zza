@@ -84,7 +84,8 @@ class _EventListState extends State<EventList> {
         widget.database.updateCurrentEvent(event.idAkce);
       }
 
-      _fetchCurrentEventID();      ScaffoldMessenger.of(context).showSnackBar(
+      _fetchCurrentEventID();
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(EventListConstants.pinChangedMessage),
         )

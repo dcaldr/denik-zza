@@ -40,7 +40,7 @@ class ActionDetail extends StatelessWidget {
 
       // Using FutureBuilder to asynchronously fetch and display a list of participants
       body: FutureBuilder<List<MemoryOsoba>>(
-        future: database.getParticipantsByCurrentEvent(),
+        future: database.getParticipantsByEvent(action.idAkce!),
         builder: (BuildContext context, AsyncSnapshot<List<MemoryOsoba>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const CircularProgressIndicator();
