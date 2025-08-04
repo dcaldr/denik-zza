@@ -10,6 +10,7 @@ import '../../database/in_memory_structures_tmp/memory_akce.dart';
 import '../../database/in_memory_structures_tmp/memory_osoba.dart';
 
 /// Widget of class ActionDetail.
+@Deprecated('uses old /screens folder instead of /screens2 folder. Use event_detail.dart instead')
 class ActionDetail extends StatelessWidget {
   final MemoryAction action;
 

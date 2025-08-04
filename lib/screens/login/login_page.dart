@@ -7,6 +7,7 @@ import 'package:denik_zza/screens/login/components/my_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/actions/all_actions.dart';
 
+@Deprecated('uses old /screens folder instead of /screens2 folder.')
 class Login extends StatelessWidget {
   Login({super.key});
 

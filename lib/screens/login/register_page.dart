@@ -5,6 +5,7 @@ import 'package:denik_zza/screens/login/components/my_button.dart';
 import 'package:denik_zza/screens/login/components/my_textfield.dart';
 import 'package:flutter/material.dart';
 
+@Deprecated('uses old /screens folder instead of /screens2 folder.')
 //Class for creating new account with needed textfields
 class RegisterScreen extends StatelessWidget {
   RegisterScreen({super.key});

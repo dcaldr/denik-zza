@@ -13,6 +13,7 @@ import 'package:denik_zza/screens/login/components/my_button.dart';
 /// TODO: Edit action page component
 ///
 /// needs hevy cleaning in the future
+@Deprecated('uses old /screens folder instead of /screens2 folder. Use event_registration_form.dart instead')
 class AddActionPage extends StatefulWidget {
    const AddActionPage({super.key});
 

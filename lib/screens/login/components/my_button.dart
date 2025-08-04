@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 
 /// Custom button widget with customizable text, padding, and onPressed callback.
+@Deprecated('uses old /screens folder instead of /screens2 folder.')
 class Button extends StatelessWidget {
   final String buttonText;
   final double verticalPadding;

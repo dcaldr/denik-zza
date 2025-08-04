@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../our_widgets/our_drawer.dart';
 
 /// Widget for displaying user profile information.
+@Deprecated('uses old /screens folder instead of /screens2 folder.')
 class Profile extends StatelessWidget {
   /// Constructor for initializing the Profile widget.
   //Profile({super.key, Key? key});
@@ -101,5 +102,3 @@ class Profile extends StatelessWidget {
     );
   }
 }
-
-

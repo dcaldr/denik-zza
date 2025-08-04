@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Widget for displaying details of a record.
+@Deprecated('uses old /screens folder instead of /screens2 folder.')
 class RecordDetailPage extends StatelessWidget {
   // Placeholder record data
   final String recordTitle = "Záznam 1";

@@ -1,6 +1,7 @@
 import 'package:denik_zza/screens/login/register_page.dart';
 import 'package:flutter/material.dart';
 
+@Deprecated('uses old /screens folder instead of /screens2 folder.')
 /// Widget representing a "Create Account" link.
 class CreateAccount extends StatelessWidget {
   const CreateAccount({super.key});

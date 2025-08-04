@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/login/components/my_textfield.dart';
 
 /// Widget for changing user profile information.
+@Deprecated('uses old /screens folder instead of /screens2 folder.')
 class ChangeProfile extends StatelessWidget {
   /// Constructor for initializing the ChangeProfile widget.
  // ChangeProfile({super.key, Key? key});

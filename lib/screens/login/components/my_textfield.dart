@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 
 /// Custom text field widget with customizable controller, hintText, and obscureText.
+@Deprecated('uses old /screens folder instead of /screens2 folder.')
 class MyTextField extends StatelessWidget {
   final controller;
   final String hintText;

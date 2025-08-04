@@ -1,4 +1,3 @@
-
 import 'package:denik_zza/screens/editing_actions/action_detail.dart';
 import 'package:denik_zza/screens/editing_actions/add_action.dart';
 import 'package:denik_zza/screens/our_widgets/our_drawer.dart';
@@ -10,6 +9,7 @@ import '../../database/in_memory_structures_tmp/memory_akce.dart';
 
 
 
+@Deprecated('uses old /screens folder instead of /screens2 folder. Use event_list.dart instead')
 class AllActions extends StatelessWidget {
   AllActions({super.key});
   final DatabaseInterface database = DatabaseWrapper.getDatabase();

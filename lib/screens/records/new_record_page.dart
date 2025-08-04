@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../participants/participant_detail_page.dart';
 
 /// Widget for creating a new record associated with a participant.
+@Deprecated('uses old /screens folder instead of /screens2 folder.')
 class NewRecordPage extends StatefulWidget {
   final MemoryOsoba osoba;
 
@@ -18,6 +19,7 @@ class NewRecordPage extends StatefulWidget {
 }
 
 /// State class for handling the state of [NewRecordPage].
+@Deprecated('uses old /screens folder instead of /screens2 folder.')
 class NewRecordPageState extends State<NewRecordPage> {
   final TextEditingController dateController = TextEditingController();
   final TextEditingController timeController = TextEditingController();

@@ -7,6 +7,7 @@ import '../actions/all_actions.dart';
 
 
 /// Widget representing a custom button.
+@Deprecated('Proč?!, stará screens složka')
 class MyButton extends StatelessWidget { //todo why?
   final VoidCallback onPressed;
   final String buttonText;
@@ -14,6 +15,7 @@ class MyButton extends StatelessWidget { //todo why?
   final double horizontalPadding;
 
  /// Constructor for initializing the MyButton widget.
+
   const MyButton({super.key, 
     required this.onPressed,
     required this.buttonText,
@@ -45,6 +47,7 @@ class MyButton extends StatelessWidget { //todo why?
 }
 
 /// Stateful widget for the 'Add Participant' page.
+@Deprecated('uses old /screens folder instead of /screens2 folder. Use participant_registration_form.dart instead')
 class AddParticipantPage extends StatefulWidget {
   /// Constructor for initializing the AddParticipantPage widget.
   const AddParticipantPage({super.key});
@@ -54,6 +57,7 @@ class AddParticipantPage extends StatefulWidget {
 }
 //todo: use forms in future
 class AddParticipantPageState extends State<AddParticipantPage> {
+  @Deprecated('Proč?!, stará screens složka')
   TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
   TextEditingController birthDateController = TextEditingController();

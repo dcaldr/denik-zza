@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:denik_zza/screens/login/components/my_button.dart';
 
 /// Widget for editing an existing action.
+@Deprecated('uses old /screens folder instead of /screens2 folder.')
 class EditActionPage extends StatefulWidget {
   /// Constructor for the EditActionPage widget.
   const EditActionPage({super.key});

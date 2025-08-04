@@ -1,5 +1,3 @@
-
-
 import 'package:denik_zza/print_ops/printer_ui.dart';
 import 'package:flutter/material.dart';
 
@@ -8,6 +6,7 @@ import '../actions/profile.dart';
 ///One place for Drawer if necessary
 ///
 /// Our version of drawer //TODO: add icons or something
+@Deprecated('uses old /screens folder instead of /screens2 folder.')
 class OurDrawer extends StatelessWidget {
   const OurDrawer({
     super.key,

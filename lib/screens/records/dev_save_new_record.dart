@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'new_record_page.dart';
 
+@Deprecated('uses old /screens folder instead of /screens2 folder.')
 /// State class for handling the state of the [NewRecordPage].
 class NewRecordPageState extends State<NewRecordPage> {
   final TextEditingController dateController = TextEditingController();

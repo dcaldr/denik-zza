@@ -1,3 +1,4 @@
+@Deprecated('uses old /screens folder instead of /screens2 folder. Use main_UI_dev.dart instead')
 import 'package:denik_zza/screens/login/login_page.dart';
 import 'package:denik_zza/screens/login/register_page.dart';
 import 'package:flutter/material.dart';

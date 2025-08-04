@@ -11,6 +11,7 @@ import '../../print_ops/confirm_print.dart';
 import '../../print_ops/zraneni_list_view.dart';
 
 /// Displays detailed information about a participant including personal details and health records.
+@Deprecated('uses old /screens folder instead of /screens2 folder.')
 class ParticipantDetailPage extends StatelessWidget {
   final MemoryOsoba ucastnik;
 
