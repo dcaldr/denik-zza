@@ -194,132 +194,178 @@ class _NewRecordPageState extends State<NewRecordPage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header with participant name (like old system)
-              Text(
-                '${widget.participant.jmeno} ${widget.participant.prijmeni}',
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              
-              // Display existing records (full width and scrollable)
-              Container(
-                height: 350,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(4.0),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // Adjust spacing and layout based on available height
+          final isCompact = constraints.maxHeight < 600;
+          final spacing = isCompact ? 4.0 : 8.0;
+          final titleSpacing = isCompact ? 4.0 : 6.0;
+          
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header with participant name (like old system)
+                Text(
+                  '${widget.participant.jmeno} ${widget.participant.prijmeni}',
+                  style: TextStyle(
+                    fontSize: isCompact ? 16 : 18, 
+                    fontWeight: FontWeight.bold
+                  ),
                 ),
-                child: RecordListWidget(
-                  key: ValueKey(_refreshCounter),
-                  participant: widget.participant,
-                  height: 350,
+                SizedBox(height: spacing),
+                
+                // Display existing records (compact viewing area)
+                Expanded(
+                  flex: isCompact ? 2 : 3,
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(4.0),
+                    ),
+                    child: RecordListWidget(
+                      key: ValueKey(_refreshCounter),
+                      participant: widget.participant,
+                    ),
+                  ),
                 ),
-              ),
-              
-              const SizedBox(height: 20),
-              
-              // Form for new record
-              Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Optional date and time selection (combined picker)
-                    Row(
+                
+                SizedBox(height: spacing),
+                
+                // Form for new record (prioritized input area)
+                Expanded(
+                  flex: isCompact ? 3 : 7,
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
-                          'Změnit čas záznamu (volitelné):',
-                          style: Theme.of(context).textTheme.bodyMedium,
+                        // Optional date and time selection (combined picker)
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                'Změnit čas záznamu (volitelné):',
+                                style: Theme.of(context).textTheme.bodySmall,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton.outlined(
+                              onPressed: _selectDateTime,
+                              icon: const Icon(Icons.schedule, size: 16),
+                              tooltip: _formatSelectedDateTime(),
+                              iconSize: 16,
+                            ),
+                          ],
                         ),
-                        const Spacer(),
-                        IconButton.outlined(
-                          onPressed: _selectDateTime,
-                          icon: const Icon(Icons.schedule, size: 18),
-                          tooltip: _formatSelectedDateTime(),
-                          iconSize: 18,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // Title field (matching old system terminology)
-                    TextFormField(
-                      controller: _titleController,
-                      maxLines: 1,
-                      decoration: const InputDecoration(
-                        labelText: 'Nadpis',
-                        hintText: 'pár slovný popis',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Prosím zadejte nadpis';
-                        }
-                        if (value.length > 200) {
-                          return 'Nadpis nesmí být delší než 200 znaků';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // Description field with character limit (like old system)
-                    TextFormField(
-                      controller: _descriptionController,
-                      maxLines: 5,
-                      maxLength: 1024, // Character limit from old system
-                      decoration: const InputDecoration(
-                        labelText: 'Rozsáhlejší popis',
-                        hintText: 'Maximálně 1024 znaků',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Prosím zadejte popis';
-                        }
-                        if (value.length > 1024) {
-                          return 'Popis nesmí být delší než 1024 znaků';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    // Action buttons (matching old system layout)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        // Save button (styled like old system)
-                        ElevatedButton(
-                          onPressed: _isSaving ? null : _saveRecord,
-                          child: _isSaving
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Text('Uložit'),
-                        ),
+                        SizedBox(height: titleSpacing),
                         
-                        // Cancel button (restored from old system)
-                        ElevatedButton(
-                          onPressed: _isSaving ? null : _cancelAndReturn,
-                          child: const Text('Zrušit'),
+                        // Title field (matching old system terminology)
+                        TextFormField(
+                          controller: _titleController,
+                          maxLines: 1,
+                          decoration: InputDecoration(
+                            labelText: 'Nadpis',
+                            hintText: 'pár slovný popis',
+                            border: const OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12, 
+                              vertical: isCompact ? 4 : 6
+                            ),
+                            errorMaxLines: 1,
+                            errorStyle: const TextStyle(fontSize: 11, height: 0.8),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Prosím zadejte nadpis';
+                            }
+                            if (value.length > 200) {
+                              return 'Nadpis nesmí být delší než 200 znaků';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: titleSpacing),
+                        
+                        // Description field with character limit (optimized for space)
+                        Expanded(
+                          child: TextFormField(
+                            controller: _descriptionController,
+                            maxLines: null,
+                            minLines: isCompact ? 2 : 3,
+                            maxLength: 1024, // Character limit from old system
+                            textAlignVertical: TextAlignVertical.top,
+                            decoration: InputDecoration(
+                              labelText: 'Rozsáhlejší popis',
+                              hintText: 'Maximálně 1024 znaků',
+                              border: const OutlineInputBorder(),
+                              contentPadding: EdgeInsets.all(isCompact ? 6 : 8),
+                              alignLabelWithHint: true,
+                              errorMaxLines: 1,
+                              errorStyle: const TextStyle(fontSize: 11, height: 0.8),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Prosím zadejte popis';
+                              }
+                              if (value.length > 1024) {
+                                return 'Popis nesmí být delší než 1024 znaků';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        SizedBox(height: titleSpacing),
+                        
+                        // Action buttons (compact layout)
+                        Row(
+                          children: [
+                            // Save button (styled like old system)
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: _isSaving ? null : _saveRecord,
+                                style: ElevatedButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: isCompact ? 6 : 8
+                                  ),
+                                ),
+                                child: _isSaving
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : const Text('Uložit'),
+                              ),
+                            ),
+                            
+                            const SizedBox(width: 8),
+                            
+                            // Cancel button (restored from old system)
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: _isSaving ? null : _cancelAndReturn,
+                                style: ElevatedButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: isCompact ? 6 : 8
+                                  ),
+                                ),
+                                child: const Text('Zrušit'),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
