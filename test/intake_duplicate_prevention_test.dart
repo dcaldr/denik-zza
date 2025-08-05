@@ -1,3 +1,5 @@
+//todo: rewrite to more closely match original logic 
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';

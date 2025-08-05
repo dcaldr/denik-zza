@@ -4,7 +4,6 @@ import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/widgets/intake_bottom_row.dart';
 import 'package:denik_zza/screens2/widgets/intake_main_content.dart';
 import 'package:denik_zza/screens2/widgets/intake_person_row.dart';
-import 'package:denik_zza/screens2/widgets/memory_restriction_widget.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 import '../database/database_wrapper.dart';
@@ -26,9 +25,9 @@ class _IntakeFormState extends State<IntakeForm> {
   MemoryOsoba? selectedPerson;
   Directory? zpusobilostFolder;
   
-  // Business logic instances
-  final MemoryOmezeniLogic _omezeniLogic = MemoryOmezeniLogic();
-  final MemoryLekLogic _lekLogic = MemoryLekLogic();
+  // Business logic instances (removed - now handled by ParticipantRegistrationForm)
+  // final MemoryOmezeniLogic _omezeniLogic = MemoryOmezeniLogic();
+  // final MemoryLekLogic _lekLogic = MemoryLekLogic();
   
   // Form validation function
   bool Function()? _validateParticipantForm;
@@ -63,8 +62,6 @@ class _IntakeFormState extends State<IntakeForm> {
     setState(() {
       selectedPerson = null;
       _participantRegistrationForm = _createParticipantForm();
-      _omezeniLogic.reset();
-      _lekLogic.reset();
       // PersonAutocomplete will be rebuilt with new state
     });
     // Refresh available persons
@@ -88,8 +85,6 @@ class _IntakeFormState extends State<IntakeForm> {
   void _onPersonSelected(MemoryOsoba person) {
     setState(() {
       selectedPerson = person;
-      _omezeniLogic.fetchData(person.id);
-      _lekLogic.fetchData(person.id);
       _participantRegistrationForm = _createParticipantForm();
     });  }
 
@@ -101,9 +96,8 @@ class _IntakeFormState extends State<IntakeForm> {
   Future<void> _handleSave(BuildContext context, bool markAsArrived) async {
     if (_validateParticipantForm?.call() ?? false) {
       if (selectedPerson != null) {
-        await _omezeniLogic.update();
-        await _lekLogic.update();
-
+        // Restrictions are now handled automatically by ParticipantRegistrationForm
+        // via its internal service, so we only need to handle file upload
         final filePath = selectedPerson?.potvrzeniPath;
         if (filePath != null && filePath.isNotEmpty) {
           selectedPerson?.potvrzeniPath = filePath;
@@ -156,8 +150,6 @@ class _IntakeFormState extends State<IntakeForm> {
                             selectedPerson: selectedPerson,
                             onFileUploaded: _onFileUploaded,
                             zpusobilostFolder: zpusobilostFolder,
-                            omezeniLogic: _omezeniLogic,
-                            lekLogic: _lekLogic,
                             participantRegistrationForm: _participantRegistrationForm!,
                           ),
                       ],

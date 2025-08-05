@@ -1,9 +1,11 @@
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/widgets/custom_date_picker.dart';
+import 'package:denik_zza/screens2/widgets/restrictions_widget.dart';
+import 'package:denik_zza/screens2/widgets/memory_restriction_widget.dart';
+import 'package:denik_zza/screens2/services/participant_registration_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
-import '../database/database_wrapper.dart';
 import '../input/input_hold.dart';
 import '../input/rodne_cislo.dart';
 
@@ -56,6 +58,11 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
   bool _zpusobilost = false;
   bool _bezinfekcnost = false;
 
+  // Restrictions and medications logic
+  final MemoryOmezeniLogic _omezeniLogic = MemoryOmezeniLogic();
+  final MemoryLekLogic _lekLogic = MemoryLekLogic();
+  final ParticipantRegistrationService _participantService = ParticipantRegistrationService();
+
   @override
   void initState() {
     super.initState();
@@ -65,6 +72,7 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     } else {
       // Populate fields for existing person
       _populateFields(widget.osoba!);
+      _loadRestrictionsForExistingPerson();
     }
     _controllers['cisloPojisteni']!.addListener(() {
       setState(() {
@@ -81,6 +89,24 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     // Reset checkbox values
     _zpusobilost = false;
     _bezinfekcnost = false;
+    
+    // Reset restrictions
+    _participantService.resetRestrictions(
+      omezeniLogic: _omezeniLogic,
+      lekLogic: _lekLogic,
+    );
+  }
+
+  /// Load restrictions for an existing person
+  Future<void> _loadRestrictionsForExistingPerson() async {
+    if (widget.osoba != null && widget.osoba!.id > 0) {
+      await _participantService.loadRestrictionsForParticipant(
+        participantId: widget.osoba!.id,
+        omezeniLogic: _omezeniLogic,
+        lekLogic: _lekLogic,
+      );
+      setState(() {}); // Refresh UI after loading restrictions
+    }
   }
 
   @override
@@ -93,6 +119,7 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
       } else {
         // Populate fields for existing person
         _populateFields(widget.osoba!);
+        _loadRestrictionsForExistingPerson();
       }
     }
   }
@@ -132,12 +159,23 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     if (_formKey.currentState!.validate()) {
       MemoryOsoba osoba = createMemoryOsoba();
       widget.onOsobaEdited?.call(osoba); // Ensure callback is called
-      if (widget.osoba == null) {
-        bool insertSuccess = await DatabaseWrapper.getDatabase().addOsoba(osoba);
-        _showSnackBar(insertSuccess ? 'Insert successful' : 'Insert failed');
+      
+      // Use the service to save participant with restrictions
+      final participantId = await _participantService.saveParticipantWithRestrictions(
+        osoba: osoba,
+        omezeniLogic: _omezeniLogic,
+        lekLogic: _lekLogic,
+      );
+      
+      if (participantId != null) {
+        _showSnackBar(widget.osoba == null ? 'Účastník úspěšně přidán' : 'Účastník aktualizován');
+        // Update the osoba with the new ID if it was a new participant
+        if (osoba.id == -1) {
+          osoba.id = participantId;
+          widget.onOsobaEdited?.call(osoba);
+        }
       } else {
-        int updateResult = await DatabaseWrapper.getDatabase().updateParticipant(osoba: osoba);
-        _showSnackBar(updateResult > 0 ? 'Update successful' : 'Update failed');
+        _showSnackBar('Chyba při ukládání účastníka');
       }
     }
   }
@@ -212,6 +250,8 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
             _buildTextField('poznamka', 'Poznámka', 'Tento text se nebude tisknout', maxLines: 3, hintText: 'Tento text se nebude tisknout'),
             const SizedBox(height: 16),
             _buildCheckboxSection(),
+            const SizedBox(height: 16),
+            _buildRestrictionsSection(),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: _submitForm, child: Text(widget.osoba == null ? 'Přidat' : 'Aktualizovat')),
           ],
@@ -298,6 +338,36 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
             });
           },
           controlAffinity: ListTileControlAffinity.leading,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRestrictionsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Omezení a léky',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: RestrictionsWidget(
+                logic: _omezeniLogic,
+                participantId: widget.osoba?.id,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: RestrictionsWidget(
+                logic: _lekLogic,
+                participantId: widget.osoba?.id,
+              ),
+            ),
+          ],
         ),
       ],
     );

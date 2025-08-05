@@ -57,6 +57,14 @@ class MemoryOmezeniLogic implements LogicInterface {
     _items.clear();
     _newOmezeni.clear();
   }
+
+  /// Update participant ID for all pending restrictions
+  void updateParticipantId(int participantId) {
+    pid = participantId;
+    for (var omezeni in _newOmezeni) {
+      omezeni.idOsoby = participantId;
+    }
+  }
 }
 
 
@@ -112,5 +120,13 @@ class MemoryLekLogic implements LogicInterface {
   void reset() {
     _items.clear();
     _newLeky.clear();
+  }
+
+  /// Update participant ID for all pending medications
+  void updateParticipantId(int participantId) {
+    pid = participantId;
+    for (var lek in _newLeky) {
+      lek.idOsoby = participantId;
+    }
   }
 }
