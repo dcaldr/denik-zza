@@ -150,13 +150,13 @@ class _NewRecordPageState extends State<NewRecordPage> {
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Záznam byl úspěšně uložen!')),
+            const SnackBar(content: Text('Záznam úrazu byl úspěšně uložen do deníku!')),
           );
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Nepodařilo se uložit záznam: $e')),
+            SnackBar(content: Text('Nepodařilo se uložit záznam úrazu: $e')),
           );
         }
       } finally {
@@ -175,7 +175,7 @@ class _NewRecordPageState extends State<NewRecordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nový záznam'),
+        title: const Text('Nový záznam úrazu'),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
@@ -206,28 +206,137 @@ class _NewRecordPageState extends State<NewRecordPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header with participant name (like old system)
-                Text(
-                  '${widget.participant.jmeno} ${widget.participant.prijmeni}',
-                  style: TextStyle(
-                    fontSize: isCompact ? 16 : 18, 
-                    fontWeight: FontWeight.bold
+                // Header with participant name (enhanced styling)
+                Container(
+                  padding: const EdgeInsets.all(12.0),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        Colors.blue.shade50,
+                        Colors.blue.shade50.withOpacity(0.5),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(8.0),
+                    border: Border.all(color: Colors.blue.shade200, width: 1),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade100,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Icon(
+                          Icons.person,
+                          color: Colors.blue.shade700,
+                          size: isCompact ? 18 : 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Účastník',
+                              style: TextStyle(
+                                fontSize: isCompact ? 12 : 13,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.blue.shade700,
+                              ),
+                            ),
+                            Text(
+                              '${widget.participant.jmeno} ${widget.participant.prijmeni}',
+                              style: TextStyle(
+                                fontSize: isCompact ? 16 : 18, 
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 SizedBox(height: spacing),
                 
-                // Display existing records (compact viewing area)
+                // Display existing records (enhanced professional container styling)
                 Expanded(
                   flex: isCompact ? 2 : 3,
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(4.0),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.grey.shade50,
+                          Colors.white,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(8.0),
+                      border: Border.all(color: Colors.grey.shade300, width: 1),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.shade200,
+                          blurRadius: 3,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    child: RecordListWidget(
-                      key: ValueKey(_refreshCounter),
-                      participant: widget.participant,
+                    child: Column(
+                      children: [
+                        // Header for records list
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(7.0),
+                              topRight: Radius.circular(7.0),
+                            ),
+                            border: Border(
+                              bottom: BorderSide(color: Colors.grey.shade300),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade200,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Icon(
+                                  Icons.history,
+                                  color: Colors.grey.shade700,
+                                  size: isCompact ? 14 : 16,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Historie úrazů',
+                                style: TextStyle(
+                                  fontSize: isCompact ? 12 : 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Records list content
+                        Expanded(
+                          child: RecordListWidget(
+                            key: ValueKey(_refreshCounter),
+                            participant: widget.participant,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -242,74 +351,214 @@ class _NewRecordPageState extends State<NewRecordPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Optional date and time selection (combined picker)
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                'Změnit čas záznamu (volitelné):',
-                                style: Theme.of(context).textTheme.bodySmall,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton.outlined(
-                              onPressed: _selectDateTime,
-                              icon: const Icon(Icons.schedule, size: 16),
-                              tooltip: _formatSelectedDateTime(),
-                              iconSize: 16,
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: titleSpacing),
-                        
-                        // Title field (matching old system terminology)
-                        TextFormField(
-                          controller: _titleController,
-                          maxLines: 1,
-                          decoration: InputDecoration(
-                            labelText: 'Nadpis',
-                            hintText: 'pár slovný popis',
-                            border: const OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12, 
-                              vertical: isCompact ? 4 : 6
-                            ),
-                            errorMaxLines: 1,
-                            errorStyle: const TextStyle(fontSize: 11, height: 0.8),
+                        // Optional date and time selection (enhanced professional styling)
+                        Container(
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(color: Colors.blue.shade200.withOpacity(0.5), width: 1),
                           ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Prosím zadejte nadpis';
-                            }
-                            if (value.length > 200) {
-                              return 'Nadpis nesmí být delší než 200 znaků';
-                            }
-                            return null;
-                          },
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade100,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Icon(
+                                  Icons.schedule,
+                                  color: Colors.blue.shade700,
+                                  size: isCompact ? 14 : 16,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Čas záznamu',
+                                      style: TextStyle(
+                                        fontSize: isCompact ? 11 : 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.blue.shade700,
+                                      ),
+                                    ),
+                                    Text(
+                                      _formatSelectedDateTime(),
+                                      style: TextStyle(
+                                        fontSize: isCompact ? 13 : 14,
+                                        fontWeight: FontWeight.w400,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              FilledButton.tonal(
+                                onPressed: _selectDateTime,
+                                style: FilledButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isCompact ? 8 : 12,
+                                    vertical: isCompact ? 4 : 6,
+                                  ),
+                                  minimumSize: Size.zero,
+                                  backgroundColor: Colors.blue.shade100,
+                                  foregroundColor: Colors.blue.shade700,
+                                ),
+                                child: Text(
+                                  'Změnit',
+                                  style: TextStyle(
+                                    fontSize: isCompact ? 11 : 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         SizedBox(height: titleSpacing),
                         
-                        // Description field with character limit (optimized for space)
-                        Expanded(
+                        // Title field (enhanced professional styling)
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.blue.shade100.withOpacity(0.3),
+                                blurRadius: 2,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
+                          ),
                           child: TextFormField(
-                            controller: _descriptionController,
-                            maxLines: null,
-                            minLines: isCompact ? 2 : 3,
-                            maxLength: 1024, // Character limit from old system
-                            textAlignVertical: TextAlignVertical.top,
+                            controller: _titleController,
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontSize: isCompact ? 14 : 15,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black87,
+                            ),
                             decoration: InputDecoration(
-                              labelText: 'Rozsáhlejší popis',
-                              hintText: 'Maximálně 1024 znaků',
-                              border: const OutlineInputBorder(),
-                              contentPadding: EdgeInsets.all(isCompact ? 6 : 8),
-                              alignLabelWithHint: true,
+                              labelText: 'Nadpis',
+                              labelStyle: TextStyle(
+                                color: Colors.blue.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              hintText: 'Typ úrazu nebo stížnosti (např. "Odřenina kolena", "Bolest hlavy")',
+                              hintStyle: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(color: Colors.blue.shade200),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(color: Colors.blue.shade200),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: const BorderSide(color: Colors.red, width: 2),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: isCompact ? 12 : 16, 
+                                vertical: isCompact ? 8 : 12
+                              ),
+                              prefixIcon: Container(
+                                margin: const EdgeInsets.all(8.0),
+                                padding: const EdgeInsets.all(6.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Icon(
+                                  Icons.title,
+                                  color: Colors.blue.shade700,
+                                  size: isCompact ? 16 : 18,
+                                ),
+                              ),
                               errorMaxLines: 1,
                               errorStyle: const TextStyle(fontSize: 11, height: 0.8),
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Prosím zadejte popis';
+                                return 'Prosím zadejte nadpis';
+                              }
+                              if (value.length > 200) {
+                                return 'Nadpis nesmí být delší než 200 znaků';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        SizedBox(height: titleSpacing),
+                        
+                        // Description field (simplified for better layout)
+                        Expanded(
+                          child: TextFormField(
+                            controller: _descriptionController,
+                            maxLines: null,
+                            minLines: isCompact ? 3 : 4,
+                            maxLength: 1024,
+                            textAlignVertical: TextAlignVertical.top,
+                            style: TextStyle(
+                              fontSize: isCompact ? 13 : 14,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.black87,
+                              height: 1.4,
+                            ),
+                            decoration: InputDecoration(
+                              labelText: 'Popis úrazu a ošetření',
+                              labelStyle: TextStyle(
+                                color: Colors.blue.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              hintText: 'Co se stalo, jak k úrazu došlo, jaké ošetření bylo poskytnuto...',
+                              hintStyle: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(color: Colors.blue.shade200),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(color: Colors.blue.shade200),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: const BorderSide(color: Colors.red, width: 2),
+                              ),
+                              contentPadding: EdgeInsets.all(isCompact ? 12 : 16),
+                              alignLabelWithHint: true,
+                              counterStyle: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 11,
+                              ),
+                              errorMaxLines: 1,
+                              errorStyle: const TextStyle(fontSize: 11, height: 0.8),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Prosím zadejte popis úrazu';
                               }
                               if (value.length > 1024) {
                                 return 'Popis nesmí být delší než 1024 znaků';
@@ -320,43 +569,89 @@ class _NewRecordPageState extends State<NewRecordPage> {
                         ),
                         SizedBox(height: titleSpacing),
                         
-                        // Action buttons (compact layout)
-                        Row(
-                          children: [
-                            // Save button (styled like old system)
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: _isSaving ? null : _saveRecord,
-                                style: ElevatedButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: isCompact ? 6 : 8
+                        // Action buttons (enhanced professional styling)
+                        Container(
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(color: Colors.grey.shade200, width: 1),
+                          ),
+                          child: Row(
+                            children: [
+                              // Save button (primary action)
+                              Expanded(
+                                flex: 3,
+                                child: FilledButton.icon(
+                                  onPressed: _isSaving ? null : _saveRecord,
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: Colors.blue.shade600,
+                                    foregroundColor: Colors.white,
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: isCompact ? 8 : 12,
+                                      horizontal: isCompact ? 12 : 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6.0),
+                                    ),
+                                    elevation: 2,
+                                  ),
+                                  icon: _isSaving
+                                      ? SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                          ),
+                                        )
+                                      : Icon(
+                                          Icons.save,
+                                          size: isCompact ? 16 : 18,
+                                        ),
+                                  label: Text(
+                                    _isSaving ? 'Ukládání...' : 'Uložit do deníku',
+                                    style: TextStyle(
+                                      fontSize: isCompact ? 13 : 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
-                                child: _isSaving
-                                    ? const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
-                                      )
-                                    : const Text('Uložit'),
                               ),
-                            ),
-                            
-                            const SizedBox(width: 8),
-                            
-                            // Cancel button (restored from old system)
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: _isSaving ? null : _cancelAndReturn,
-                                style: ElevatedButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: isCompact ? 6 : 8
+                              
+                              const SizedBox(width: 12),
+                              
+                              // Cancel button (secondary action)
+                              Expanded(
+                                flex: 2,
+                                child: OutlinedButton.icon(
+                                  onPressed: _isSaving ? null : _cancelAndReturn,
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.grey.shade700,
+                                    side: BorderSide(color: Colors.grey.shade400, width: 1.5),
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: isCompact ? 8 : 12,
+                                      horizontal: isCompact ? 8 : 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6.0),
+                                    ),
+                                  ),
+                                  icon: Icon(
+                                    Icons.close,
+                                    size: isCompact ? 16 : 18,
+                                  ),
+                                  label: Text(
+                                    'Zrušit',
+                                    style: TextStyle(
+                                      fontSize: isCompact ? 13 : 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
                                 ),
-                                child: const Text('Zrušit'),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),

@@ -67,20 +67,6 @@ class _RecordListWidgetState extends State<RecordListWidget> {
   Widget build(BuildContext context) {
     Widget content = _buildRecordsList();
     
-    // Apply height constraint if specified, otherwise expand
-    if (widget.height != null) {
-      content = SizedBox(
-        height: widget.height,
-        width: double.infinity, // Ensure full width
-        child: content,
-      );
-    } else {
-      content = SizedBox(
-        width: double.infinity, // Ensure full width
-        child: content,
-      );
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch, // Full width
       children: [
@@ -102,7 +88,15 @@ class _RecordListWidgetState extends State<RecordListWidget> {
               ],
             ),
           ),
-        widget.height != null ? Expanded(child: content) : content,
+        Expanded(
+          child: widget.height != null 
+            ? SizedBox(
+                height: widget.height,
+                width: double.infinity,
+                child: content,
+              )
+            : content,
+        ),
       ],
     );
   }
@@ -125,6 +119,8 @@ class _RecordListWidgetState extends State<RecordListWidget> {
     }
 
     return ListView.builder(
+      shrinkWrap: true, // Important: Allow ListView to size itself
+      physics: const ClampingScrollPhysics(), // Prevent scrolling conflicts
       itemCount: _records.length,
       itemBuilder: (context, index) {
         final record = _records[index];
@@ -144,47 +140,89 @@ class RecordListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 4.0),
-      child: Container(
+      elevation: 2,
+      child: SizedBox(
         width: double.infinity, // Ensure full width
         child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-          title: Row(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+          title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Date and time column (similar to old system)
-              SizedBox(
-                width: 80,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(_formatDate(record.casZaznamu)),
-                    Text(_formatTime(record.casZaznamu)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              // Content column
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(record.nazev ?? 'Bez nadpisu'),
-                    Text(
-                      record.popis ?? '--',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+              // Header row with title and date/time
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title with improved styling
+                  Expanded(
+                    child: Text(
+                      record.nazev ?? 'Bez nadpisu',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        color: Colors.black87,
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Date and time on one line with icon
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.blue.shade200, width: 1),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          size: 14,
+                          color: Colors.blue.shade700,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${_formatDate(record.casZaznamu)} ${_formatTime(record.casZaznamu)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.blue.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              // Print status icon
-              if (record.isPrinted)
-                const Padding(
-                  padding: EdgeInsets.only(left: 8.0),
-                  child: Icon(Icons.print, size: 16),
+              const SizedBox(height: 8),
+              // Description with better formatting
+              Text(
+                record.popis ?? '--',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black54,
+                  height: 1.3,
                 ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
+          // Print status icon in trailing position
+          trailing: record.isPrinted
+              ? Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.print,
+                    size: 18,
+                    color: Colors.green.shade600,
+                  ),
+                )
+              : null,
         ),
       ),
     );
