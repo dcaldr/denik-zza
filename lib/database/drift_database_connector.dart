@@ -370,6 +370,29 @@ return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergies
   return _driftDatabase.getParticipantByID(id).then((participant) async => await _toMemoryOsoba(participant!));
   }
 
+  @override
+  Stream<List<MemoryOsoba>> watchParticipantsByEvent(int idAction) {
+    return _driftDatabase.watchParticipantsByAction(idAction).asyncMap((participants) async {
+      List<MemoryOsoba> memoryParticipants = [];
+      for (Participant p in participants) {
+        memoryParticipants.add(await _toMemoryOsoba(p));
+      }
+      return memoryParticipants;
+    });
+  }
+
+  /// Watch participants by current event with real-time updates
+  Stream<List<MemoryOsoba>> watchParticipantsByCurrentEvent() {
+    return _driftDatabase.select(_driftDatabase.cache).watchSingle().asyncExpand((cache) {
+      final currentEvent = cache.currentActionID;
+      if (currentEvent != null) {
+        return watchParticipantsByEvent(currentEvent);
+      } else {
+        return Stream.value(<MemoryOsoba>[]);
+      }
+    });
+  }
+
 
  /// Translators from MemoryOsoba, MemoryZaznam, MemoryAction to Drift Companions
   /// TODO: rewrite to use MemoryX directly as db companion (
@@ -523,6 +546,8 @@ MemoryOmezeni  _toMemoryOmezeni(AllergiesLimitation omezeni) {
       wasPrinted: omezeni.wasPrinted,
     );
   }
+
+
 
 
 

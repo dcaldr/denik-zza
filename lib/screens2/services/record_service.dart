@@ -30,10 +30,6 @@ class RecordService {
       return 'Název nesmí být delší než 200 znaků';
     }
     
-    if (description.trim().isEmpty) {
-      return 'Popis je povinný';
-    }
-    
     if (description.length > 1024) {
       return 'Popis nesmí být delší než 1024 znaků';
     }

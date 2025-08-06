@@ -242,4 +242,16 @@ Future<int?> getCurrentEventID() {
     // TODO: implement addOsobaAndReturnId
     throw UnimplementedError();
   }
+
+  @override
+  Stream<List<MemoryOsoba>> watchParticipantsByEvent(int idAction) {
+    // TODO: implement watchParticipantsByAction
+    throw UnimplementedError();
+  }
+
+  @override
+  Stream<List<MemoryOsoba>> watchParticipantsByCurrentEvent() {
+    // TODO: implement watchParticipantsByCurrentEvent
+    throw UnimplementedError();
+  }
 }

@@ -177,5 +177,11 @@ Future<bool> addOmezeni(MemoryOmezeni omezeni);
   Future<MemoryOsoba> getOsobaById(int id);
 
 
+  /// get autoupdated changes by drift stream feature
+  Stream<List<MemoryOsoba>> watchParticipantsByEvent(int idAction);
+
+  /// get autoupdated changes for current event by drift stream feature  
+  Stream<List<MemoryOsoba>> watchParticipantsByCurrentEvent();
+
 
 }

@@ -113,6 +113,21 @@ class AppDatabase extends _$AppDatabase {
         OrderingTerm(expression: p.lastName)])).get();
   }
 
+  /// Watch list of participants assigned to a zza action (Stream for real-time updates)
+  Stream<List<Participant>> watchParticipantsByAction(int idAction) {
+    return (select(participants)..where((p) =>
+        p.zzaActionFK.equals(idAction))..orderBy([(p) =>
+        OrderingTerm(expression: p.firstName), (p) =>
+        OrderingTerm(expression: p.lastName)])).watch();
+  }
+
+  /// Watch records based on participant ID (Stream for real-time updates)
+  Stream<List<Record>> watchRecordsByParticipantID(int id) {
+    return (select(records)..where((r) =>
+        r.participantFK.equals(id))..orderBy([(r) =>
+        OrderingTerm(expression: r.dateAndTime)])).watch();
+  }
+
   /// Get participant based on ID
   Future<Participant?> getParticipantByID(int id) async {
     return await (select(participants)..where((p) =>

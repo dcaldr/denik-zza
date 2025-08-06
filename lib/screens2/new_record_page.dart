@@ -3,13 +3,15 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/screens2/services/record_service.dart';
 import 'package:denik_zza/screens2/widgets/record_list_widget.dart';
+import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
+import 'package:denik_zza/database/drift_database_connector.dart';
 
 /// Enhanced new record page that matches the old system functionality
 /// but with improved architecture and validation
 class NewRecordPage extends StatefulWidget {
-  final MemoryOsoba participant;
+  final MemoryOsoba? participant;
 
-  const NewRecordPage({super.key, required this.participant});
+  const NewRecordPage({super.key, this.participant});
 
   @override
   _NewRecordPageState createState() => _NewRecordPageState();
@@ -25,6 +27,63 @@ class _NewRecordPageState extends State<NewRecordPage> {
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   int _refreshCounter = 0; // For forcing widget refresh
+  MemoryOsoba? _selectedParticipant;
+  bool _hasUnsavedChanges = false;
+  List<MemoryOsoba> _availableParticipants = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedParticipant = widget.participant;
+    
+    // Track unsaved changes
+    _titleController.addListener(_trackChanges);
+    _descriptionController.addListener(_trackChanges);
+    
+    // Load available participants
+    _loadAvailableParticipants();
+    
+    // If no participant provided, search interface will be shown automatically
+  }
+
+  void _trackChanges() {
+    setState(() {
+      _hasUnsavedChanges = _titleController.text.trim().isNotEmpty || 
+                          _descriptionController.text.trim().isNotEmpty;
+    });
+  }
+
+  Future<void> _loadAvailableParticipants() async {
+    try {
+      final databaseConnector = DriftDatabaseConnector();
+      final participants = await databaseConnector.watchParticipantsByCurrentEvent().first;
+      setState(() {
+        _availableParticipants = participants;
+      });
+    } catch (e) {
+      // Handle error silently or show a message
+      print('Error loading participants: $e');
+    }
+  }
+
+  void _onParticipantSelected(MemoryOsoba participant) async {
+    // Guard against accidental data override
+    if (_selectedParticipant != null && _hasUnsavedChanges) {
+      final confirmed = await _confirmParticipantChange();
+      if (confirmed != true) return; // User cancelled the change
+    }
+
+    setState(() {
+      _selectedParticipant = participant;
+      _refreshCounter++;
+      // Clear unsaved changes flag since we're starting fresh with new participant
+      _hasUnsavedChanges = false;
+    });
+  }
+
+  void _onRefresh() {
+    _loadAvailableParticipants();
+  }
 
   @override
   void dispose() {
@@ -101,6 +160,16 @@ class _NewRecordPageState extends State<NewRecordPage> {
   }
 
   Future<void> _saveRecord() async {
+    if (_selectedParticipant == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nejprve vyberte účastníka'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isSaving = true;
@@ -125,7 +194,7 @@ class _NewRecordPageState extends State<NewRecordPage> {
       final newRecord = MemoryZaznam.oldUI(
         nazev: _titleController.text.trim(),
         popis: _descriptionController.text.trim(),
-        idPacient: widget.participant.id,
+        idPacient: _selectedParticipant!.id,
         idZaznamu: -1, // DB will assign ID
         casZaznamu: _getFinalDateTime(),
         isPrinted: false,
@@ -140,12 +209,13 @@ class _NewRecordPageState extends State<NewRecordPage> {
           _refreshCounter++;
         });
         
-        // Clear the form
+        // Clear the form after successful save
         _titleController.clear();
         _descriptionController.clear();
         setState(() {
           _selectedDate = null;
           _selectedTime = null;
+          _hasUnsavedChanges = false; // Reset unsaved changes flag
         });
         
         if (mounted) {
@@ -171,28 +241,40 @@ class _NewRecordPageState extends State<NewRecordPage> {
     Navigator.of(context).pop(false);
   }
 
+  Future<bool?> _confirmParticipantChange() async {
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Změnit účastníka?'),
+          content: const Text(
+            'Změnou účastníka se ztratí neuložené změny v formuláři. '
+            'Chcete pokračovat?'
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Zrušit'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.orange,
+              ),
+              child: const Text('Změnit účastníka'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Nový záznam úrazu'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: null, // Disabled for now as requested
-            tooltip: 'Úpravy (zatím nedostupné)',
-          ),
-          IconButton(
-            icon: const Icon(Icons.info),
-            onPressed: () {
-              // Placeholder for info functionality
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Informace o záznamu')),
-              );
-            },
-            tooltip: 'Informace',
-          ),
-        ],
+        // Removed disabled edit button and placeholder info button for cleaner interface
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -206,7 +288,7 @@ class _NewRecordPageState extends State<NewRecordPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header with participant name (enhanced styling)
+                // Compact horizontal participant selection with inline search
                 Container(
                   padding: const EdgeInsets.all(12.0),
                   decoration: BoxDecoration(
@@ -223,6 +305,7 @@ class _NewRecordPageState extends State<NewRecordPage> {
                   ),
                   child: Row(
                     children: [
+                      // Participant icon
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
@@ -230,31 +313,109 @@ class _NewRecordPageState extends State<NewRecordPage> {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Icon(
-                          Icons.person,
+                          _selectedParticipant != null ? Icons.person : Icons.person_search,
                           color: Colors.blue.shade700,
                           size: isCompact ? 18 : 20,
                         ),
                       ),
+                      
                       const SizedBox(width: 12),
+                      
+                      // Participant info (takes most space)
                       Expanded(
+                        flex: 2,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Účastník',
-                              style: TextStyle(
-                                fontSize: isCompact ? 12 : 13,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.blue.shade700,
-                              ),
+                            Row(
+                              children: [
+                                Text(
+                                  'Účastník',
+                                  style: TextStyle(
+                                    fontSize: isCompact ? 12 : 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.blue.shade700,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                // Unsaved changes warning badge
+                                if (_hasUnsavedChanges)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.shade100,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: Colors.orange.shade300, width: 1),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.warning_amber,
+                                          size: 10,
+                                          color: Colors.orange.shade600,
+                                        ),
+                                        const SizedBox(width: 2),
+                                        Text(
+                                          'Neuloženo',
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.orange.shade600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
                             ),
                             Text(
-                              '${widget.participant.jmeno} ${widget.participant.prijmeni}',
+                              _selectedParticipant != null
+                                  ? '${_selectedParticipant!.jmeno} ${_selectedParticipant!.prijmeni}'
+                                  : 'Vyberte účastníka...',
                               style: TextStyle(
-                                fontSize: isCompact ? 16 : 18, 
+                                fontSize: isCompact ? 15 : 16, 
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black87,
+                                color: _selectedParticipant != null ? Colors.black87 : Colors.grey.shade600,
                               ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(width: 12),
+                      
+                      // Inline search (compact on the right)
+                      Expanded(
+                        flex: 1,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.search,
+                                  color: Colors.blue.shade600,
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    'Vyhledat',
+                                    style: TextStyle(
+                                      fontSize: isCompact ? 11 : 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.blue.shade600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            PersonAutocomplete(
+                              onPersonSelected: _onParticipantSelected,
+                              onRefresh: _onRefresh,
+                              availablePersons: _availableParticipants,
                             ),
                           ],
                         ),
@@ -331,10 +492,42 @@ class _NewRecordPageState extends State<NewRecordPage> {
                         ),
                         // Records list content
                         Expanded(
-                          child: RecordListWidget(
-                            key: ValueKey(_refreshCounter),
-                            participant: widget.participant,
-                          ),
+                          child: _selectedParticipant != null
+                              ? RecordListWidget(
+                                  key: ValueKey(_refreshCounter),
+                                  participant: _selectedParticipant!,
+                                )
+                              : Container(
+                                  alignment: Alignment.center,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.person_search,
+                                        size: 48,
+                                        color: Colors.grey.shade400,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'Nejprve vyberte účastníka',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey.shade600,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Po výběru účastníka se zde zobrazí\njejí historie úrazů',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey.shade500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                         ),
                       ],
                     ),
@@ -346,9 +539,11 @@ class _NewRecordPageState extends State<NewRecordPage> {
                 // Form for new record (prioritized input area)
                 Expanded(
                   flex: isCompact ? 3 : 7,
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
+                  child: Opacity(
+                    opacity: _selectedParticipant != null ? 1.0 : 0.4,
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         // Optional date and time selection (enhanced professional styling)
@@ -399,7 +594,7 @@ class _NewRecordPageState extends State<NewRecordPage> {
                               ),
                               const SizedBox(width: 8),
                               FilledButton.tonal(
-                                onPressed: _selectDateTime,
+                                onPressed: _selectedParticipant != null ? _selectDateTime : null,
                                 style: FilledButton.styleFrom(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: isCompact ? 8 : 12,
@@ -436,7 +631,9 @@ class _NewRecordPageState extends State<NewRecordPage> {
                           ),
                           child: TextFormField(
                             controller: _titleController,
+                            enabled: _selectedParticipant != null,
                             maxLines: 1,
+                            maxLength: 200,
                             style: TextStyle(
                               fontSize: isCompact ? 14 : 15,
                               fontWeight: FontWeight.w500,
@@ -448,7 +645,9 @@ class _NewRecordPageState extends State<NewRecordPage> {
                                 color: Colors.blue.shade700,
                                 fontWeight: FontWeight.w500,
                               ),
-                              hintText: 'Typ úrazu nebo stížnosti (např. "Odřenina kolena", "Bolest hlavy")',
+                              hintText: _selectedParticipant != null 
+                                  ? 'Typ úrazu nebo stížnosti (např. "Odřenina kolena", "Bolest hlavy")'
+                                  : 'Nejprve vyberte účastníka',
                               hintStyle: TextStyle(
                                 color: Colors.grey.shade500,
                                 fontStyle: FontStyle.italic,
@@ -508,6 +707,7 @@ class _NewRecordPageState extends State<NewRecordPage> {
                         Expanded(
                           child: TextFormField(
                             controller: _descriptionController,
+                            enabled: _selectedParticipant != null,
                             maxLines: null,
                             minLines: isCompact ? 3 : 4,
                             maxLength: 1024,
@@ -557,10 +757,7 @@ class _NewRecordPageState extends State<NewRecordPage> {
                               errorStyle: const TextStyle(fontSize: 11, height: 0.8),
                             ),
                             validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Prosím zadejte popis úrazu';
-                              }
-                              if (value.length > 1024) {
+                              if (value != null && value.length > 1024) {
                                 return 'Popis nesmí být delší než 1024 znaků';
                               }
                               return null;
@@ -656,7 +853,8 @@ class _NewRecordPageState extends State<NewRecordPage> {
                       ],
                     ),
                   ),
-                ),
+                ), // Close Form widget
+              ), // Close Opacity widget
               ],
             ),
           );
