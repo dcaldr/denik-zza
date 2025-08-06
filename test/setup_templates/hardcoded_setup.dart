@@ -26,6 +26,13 @@ import '../helpers/database_test_helper.dart';
 /// ```
 class HardcodedTestSetup {
   
+  // Static variables to track selected event
+  static int? _selectedEventId;
+  static AppDatabase? _currentDatabase;
+
+  /// Gets the ID of the currently selected test event
+  static int? get selectedEventId => _selectedEventId;
+
   /// Sets up the database with test data and returns the database instance
   /// 
   /// [databaseType] - Whether to use memory (fast) or file (persistent) database
@@ -70,6 +77,10 @@ class HardcodedTestSetup {
         )
       );
       
+      // Store the created event as selected for easy access in tests
+      _selectedEventId = eventId;
+      _currentDatabase = database;
+
       // 3. Create a paramedic (required for records)
       final paramedicId = await database.addParamedic(
         ParamedicsCompanion.insert(
