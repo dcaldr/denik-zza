@@ -1,5 +1,4 @@
 # custom rules
-/dan_bez_hlavy.pdf
 #!/lib/print_ops/mainPDF.dart
 db.sqlite
 /test/rodne_cislo_hidden_test.dart
@@ -122,8 +121,11 @@ app.*.map.json
 build
 coverage
 
+# Windows-specific ephemeral files
+**/windows/flutter/ephemeral/
 
 
 /lib/screens2/main_intake_dev.dart
 docs/reports/
 docs/reports/**
+/desktop.ini

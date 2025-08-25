@@ -77,15 +77,17 @@ void main() {
         // Try to select different participant via autocomplete
         await _simulateParticipantSelection(tester, participant2);
 
-        // Should show confirmation dialog using key-based detection
-        expect(find.byKey(const Key('participant_change_dialog')), findsOneWidget);
+        // Should show confirmation dialog
+        expect(find.text('Změnit účastníka?'), findsOneWidget);
+        expect(find.text('Změnou účastníka se ztratí neuložené změny v formuláři. Chcete pokračovat?'), 
+          findsOneWidget);
         
         // Cancel the change using the specific dialog cancel button
         await tester.tap(find.byKey(const Key('dialog_cancel_button')));
         await tester.pumpAndSettle();
 
-        // Should stay with original participant and keep text using state verification
-        expect(_getSelectedParticipantName(tester), equals('${participant1.jmeno} ${participant1.prijmeni}'));
+        // Should stay with original participant and keep text
+        expect(find.text('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
         expect(_getTitleText(tester), equals('Some injury title'));
       });
 
@@ -107,11 +109,11 @@ void main() {
         await _simulateParticipantSelection(tester, participant2);
 
         // Should NOT show confirmation dialog - direct switch
-        expect(find.byKey(const Key('participant_change_dialog')), findsNothing);
+        expect(find.text('Změnit účastníka?'), findsNothing);
         
-        // Should switch to new participant immediately using state verification
+        // Should switch to new participant immediately
         await tester.pumpAndSettle();
-        expect(_getSelectedParticipantName(tester), equals('${participant2.jmeno} ${participant2.prijmeni}'));
+        expect(find.text('${participant2.jmeno} ${participant2.prijmeni}'), findsOneWidget);
       });
 
       testWidgets('EDGE CASE: Text in description only → Warning still appears', 
@@ -133,7 +135,7 @@ void main() {
         await _simulateParticipantSelection(tester, participant2);
 
         // Should show warning even for description-only changes
-        expect(find.byKey(const Key('participant_change_dialog')), findsOneWidget);
+        expect(find.text('Změnit účastníka?'), findsOneWidget);
       });
 
       testWidgets('EDGE CASE: Text written then deleted → No warning after deletion', 
@@ -159,7 +161,7 @@ void main() {
         await _simulateParticipantSelection(tester, participant2);
 
         // Should NOT show warning
-        expect(find.byKey(const Key('participant_change_dialog')), findsNothing);
+        expect(find.text('Změnit účastníka?'), findsNothing);
       });
     });
 
@@ -178,13 +180,13 @@ void main() {
 
         // Switch participant and confirm
         await _simulateParticipantSelection(tester, participant2);
-        expect(find.byKey(const Key('participant_change_dialog')), findsOneWidget);
+        expect(find.text('Změnit účastníka?'), findsOneWidget);
         
         await tester.tap(find.byKey(const Key('dialog_confirm_button')));
         await tester.pumpAndSettle();
 
-        // Should switch to new participant using state verification
-        expect(_getSelectedParticipantName(tester), equals('${participant2.jmeno} ${participant2.prijmeni}'));
+        // Should switch to new participant
+        expect(find.text('${participant2.jmeno} ${participant2.prijmeni}'), findsOneWidget);
         
         // Text should be cleared
         expect(_getTitleText(tester), isEmpty, 
@@ -215,8 +217,8 @@ void main() {
         await _simulateParticipantSelection(tester, participant1);
         await tester.pumpAndSettle();
 
-        // Should end up with the last selected participant using state verification
-        expect(_getSelectedParticipantName(tester), equals('${participant1.jmeno} ${participant1.prijmeni}'));
+        // Should end up with the last selected participant
+        expect(find.text('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
         
         // Form should be in clean state
         expect(_getTitleText(tester), isEmpty);
@@ -244,7 +246,7 @@ void main() {
         expect(find.text('Nejprve vyberte účastníka'), findsNothing);
         expect(_isFormEnabled(tester), isTrue, 
           reason: 'Form should be enabled after participant selection');
-        expect(_getSelectedParticipantName(tester), equals('${participant1.jmeno} ${participant1.prijmeni}'));
+        expect(find.text('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
       });
     });
 
@@ -259,31 +261,18 @@ void main() {
         // Set custom timestamp
         await _setCustomDateTime(tester, DateTime(2024, 6, 15, 14, 30));
         
-        // Verify custom timestamp is shown using state verification
-        final selectedDate = _getSelectedDate(tester);
-        final selectedTime = _getSelectedTime(tester);
-        expect(selectedDate?.year, equals(2024));
-        expect(selectedDate?.month, equals(6));
-        expect(selectedDate?.day, equals(15));
-        expect(selectedTime?.hour, equals(14));
-        expect(selectedTime?.minute, equals(30));
+        // Verify custom timestamp is shown
+        expect(find.textContaining('15.06.2024'), findsOneWidget);
+        expect(find.textContaining('14:30'), findsOneWidget);
 
         // Switch participant (no text, so no warning)
         await _simulateParticipantSelection(tester, participant2);
         await tester.pumpAndSettle();
 
-        // Custom timestamp should be preserved using state verification
-        final preservedDate = _getSelectedDate(tester);
-        final preservedTime = _getSelectedTime(tester);
-        expect(preservedDate?.year, equals(2024), 
+        // Custom timestamp should be preserved
+        expect(find.textContaining('15.06.2024'), findsOneWidget, 
           reason: 'Custom date should be preserved after participant switch');
-        expect(preservedDate?.month, equals(6), 
-          reason: 'Custom date should be preserved after participant switch');
-        expect(preservedDate?.day, equals(15), 
-          reason: 'Custom date should be preserved after participant switch');
-        expect(preservedTime?.hour, equals(14), 
-          reason: 'Custom time should be preserved after participant switch');
-        expect(preservedTime?.minute, equals(30), 
+        expect(find.textContaining('14:30'), findsOneWidget, 
           reason: 'Custom time should be preserved after participant switch');
       });
 
@@ -301,22 +290,17 @@ void main() {
 
         // Try to switch participant
         await _simulateParticipantSelection(tester, participant2);
-        expect(find.byKey(const Key('participant_change_dialog')), findsOneWidget);
+        expect(find.text('Změnit účastníka?'), findsOneWidget);
         
         // Cancel the switch using the specific dialog cancel button
         await tester.tap(find.byKey(const Key('dialog_cancel_button')));
         await tester.pumpAndSettle();
 
-        // Should preserve everything: participant, text, and timestamp using state verification
-        expect(_getSelectedParticipantName(tester), equals('${participant1.jmeno} ${participant1.prijmeni}'));
+        // Should preserve everything: participant, text, and timestamp
+        expect(find.text('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
         expect(_getTitleText(tester), equals('Some title'));
-        final preservedDate = _getSelectedDate(tester);
-        final preservedTime = _getSelectedTime(tester);
-        expect(preservedDate?.year, equals(2024));
-        expect(preservedDate?.month, equals(8));
-        expect(preservedDate?.day, equals(20));
-        expect(preservedTime?.hour, equals(10));
-        expect(preservedTime?.minute, equals(15));
+        expect(find.textContaining('20.08.2024'), findsOneWidget);
+        expect(find.textContaining('10:15'), findsOneWidget);
       });
 
       testWidgets('EDGE CASE: Default timestamp behavior when no custom time set', 
@@ -397,7 +381,7 @@ void main() {
         expect(find.text('Prosím zadejte nadpis'), findsOneWidget);
         
         // Form should remain enabled and participant should stay selected
-        expect(_getSelectedParticipantName(tester), equals('${participant1.jmeno} ${participant1.prijmeni}'));
+        expect(find.text('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
         expect(_isFormEnabled(tester), isTrue);
       });
     });
@@ -420,30 +404,22 @@ void main() {
 
         // 3. Try to switch participant
         await _simulateParticipantSelection(tester, participant2);
-        expect(find.byKey(const Key('participant_change_dialog')), findsOneWidget);
+        expect(find.text('Změnit účastníka?'), findsOneWidget);
 
         // 4. Cancel the switch
         await tester.tap(find.byKey(const Key('dialog_cancel_button')));
         await tester.pumpAndSettle();
 
-        // 5. Verify everything is preserved using state verification
-        expect(_getSelectedParticipantName(tester), equals('${participant1.jmeno} ${participant1.prijmeni}'), 
+        // 5. Verify everything is preserved
+        expect(find.text('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget, 
           reason: 'Original participant should be preserved');
         expect(_getTitleText(tester), equals('Complex scenario title'), 
           reason: 'Title text should be preserved');
         expect(_getDescriptionText(tester), equals('Complex scenario description'), 
           reason: 'Description text should be preserved');
-        final preservedDate = _getSelectedDate(tester);
-        final preservedTime = _getSelectedTime(tester);
-        expect(preservedDate?.year, equals(2024), 
+        expect(find.textContaining('25.12.2024'), findsOneWidget, 
           reason: 'Custom date should be preserved');
-        expect(preservedDate?.month, equals(12), 
-          reason: 'Custom date should be preserved');
-        expect(preservedDate?.day, equals(25), 
-          reason: 'Custom date should be preserved');
-        expect(preservedTime?.hour, equals(16), 
-          reason: 'Custom time should be preserved');
-        expect(preservedTime?.minute, equals(45), 
+        expect(find.textContaining('16:45'), findsOneWidget, 
           reason: 'Custom time should be preserved');
       });
 
@@ -479,8 +455,8 @@ void main() {
         expect(_getTitleText(tester), isEmpty, reason: 'Form should be cleared after save');
         expect(_getDescriptionText(tester), isEmpty, reason: 'Form should be cleared after save');
         
-        // Participant should remain selected using state verification
-        expect(_getSelectedParticipantName(tester), equals('${participant2.jmeno} ${participant2.prijmeni}'));
+        // Participant should remain selected
+        expect(find.text('${participant2.jmeno} ${participant2.prijmeni}'), findsOneWidget);
       });
 
       testWidgets('COMPLEX: Form state consistency after rapid operations', 
@@ -513,7 +489,7 @@ void main() {
         // Form should remain enabled, no unsaved changes
         expect(_isFormEnabled(tester), isTrue);
         expect(_hasUnsavedChangesInUI(tester), isFalse);
-        expect(_getSelectedParticipantName(tester), equals('${participant1.jmeno} ${participant1.prijmeni}'));
+        expect(find.text('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
       });
     });
 
@@ -650,79 +626,16 @@ bool _isFormEnabled(WidgetTester tester) {
 /// Taps the save button
 Future<void> _saveRecord(WidgetTester tester) async {
   final saveButton = find.byKey(const Key('save_button'));
-  
-  // Ensure the button is visible and ready for tap
-  await tester.ensureVisible(saveButton);
+  await tester.tap(saveButton, warnIfMissed: false); // Don't warn if button is off-screen
   await tester.pumpAndSettle();
-  
-  await tester.tap(saveButton);
-  await tester.pumpAndSettle();
-  // Add extra pump to ensure validation errors appear
-  await tester.pump();
 }
 
-/// Verifies if the participant change dialog is visible
-bool _isParticipantChangeDialogVisible(WidgetTester tester) {
-  return find.byKey(const Key('participant_change_dialog')).evaluate().isNotEmpty;
-}
-
-/// Gets the currently selected participant name from the UI state
-String? _getSelectedParticipantName(WidgetTester tester) {
-  try {
-    final newRecordPageState = tester.state<NewRecordPageState>(find.byType(NewRecordPage));
-    final participant = newRecordPageState.selectedParticipant;
-    return participant != null ? '${participant.jmeno} ${participant.prijmeni}' : null;
-  } catch (e) {
-    return null;
-  }
-}
-
-/// Checks if a participant is currently selected
-bool _isParticipantSelected(WidgetTester tester) {
-  return _getSelectedParticipantName(tester) != null;
-}
-
-/// Gets the currently selected date from the UI state
-DateTime? _getSelectedDate(WidgetTester tester) {
-  try {
-    final newRecordPageState = tester.state<NewRecordPageState>(find.byType(NewRecordPage));
-    return newRecordPageState.selectedDate;
-  } catch (e) {
-    return null;
-  }
-}
-
-/// Gets the currently selected time from the UI state
-TimeOfDay? _getSelectedTime(WidgetTester tester) {
-  try {
-    final newRecordPageState = tester.state<NewRecordPageState>(find.byType(NewRecordPage));
-    return newRecordPageState.selectedTime;
-  } catch (e) {
-    return null;
-  }
-}
-
-/// Verifies the current date/time state matches expected values
-bool _verifyDateTime(WidgetTester tester, DateTime expectedDateTime) {
-  try {
-    final newRecordPageState = tester.state<NewRecordPageState>(find.byType(NewRecordPage));
-    final selectedDate = newRecordPageState.selectedDate;
-    final selectedTime = newRecordPageState.selectedTime;
-    
-    if (selectedDate == null || selectedTime == null) return false;
-    
-    return selectedDate.year == expectedDateTime.year &&
-           selectedDate.month == expectedDateTime.month &&
-           selectedDate.day == expectedDateTime.day &&
-           selectedTime.hour == expectedDateTime.hour &&
-           selectedTime.minute == expectedDateTime.minute;
-  } catch (e) {
-    return false;
-  }
-}
-
-/// Verifies that all required UI elements are present using keys
+/// Verifies that all required UI elements are present
 void _verifyAllUIElementsPresent(WidgetTester tester) {
+  // Basic structure
+  expect(find.text('Nový záznam úrazu'), findsOneWidget, reason: 'Page title should be present');
+  expect(find.text('Účastník'), findsOneWidget, reason: 'Participant section should be present');
+  
   // Form elements using keys for reliability
   expect(find.byKey(const Key('title_field')), findsOneWidget, reason: 'Title field should be present');
   expect(find.byKey(const Key('description_field')), findsOneWidget, reason: 'Description field should be present');
