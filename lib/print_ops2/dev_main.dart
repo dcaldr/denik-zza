@@ -8,23 +8,77 @@ import '../database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'generate_pdf_template.dart';
 import 'package:pdf/widgets.dart' as pw;
 
-MemoryOsoba historicalFigure = MemoryOsoba.fullNamed(
-  id: 1,
-  jmeno: 'Jan',
-  prijmeni: 'Hus',
-  pohlavi: 1,
-  adresa: 'Husinec, Česká Republika',
-  cisloPojisteni: '123456/7890',
-  datumNarozeni: DateTime(1369, 7, 6),
-  jmenoRodice: 'Pan Hus',
-  telefonRodice: '558977432',
-  emailRodice: 'velmi.dlouha.emailova.adresa@seznam.cz',
-  zpusobilost: true,
-  bezinfekcnost: true,
-  zdravotniPojistovna: 'Český Řízek',
-  poznamka: 'Měl moc rád český řízek',
-  wasPrinted: false, oddil: null, prisel: null, potvrzeniPath: null,
-);
+// Demo persons (Czech themed, subtle cultural nods)
+final List<MemoryOsoba> demoPersons = [
+  MemoryOsoba.fullNamed(
+    id: 1,
+    jmeno: 'Jan',
+    prijmeni: 'Novák',
+    pohlavi: 1,
+    adresa: 'Praha 1',
+    cisloPojisteni: '123456/0001',
+    datumNarozeni: DateTime(2008, 5, 14),
+    jmenoRodice: 'Petr',
+    telefonRodice: '777111222',
+    emailRodice: 'rodic.jan@example.cz',
+    zpusobilost: true,
+    bezinfekcnost: true,
+    zdravotniPojistovna: '111 VZP',
+    poznamka: 'Má rád turistické značky.',
+    wasPrinted: false, oddil: null, prisel: null, potvrzeniPath: null,
+  ),
+  MemoryOsoba.fullNamed(
+    id: 2,
+  jmeno: 'Karel',
+  prijmeni: 'Čapek', // jemný náznak nyní plné příjmení
+    pohlavi: 1,
+    adresa: 'Hradec Králové',
+    cisloPojisteni: '234567/0002',
+    datumNarozeni: DateTime(2007, 11, 2),
+    jmenoRodice: 'Alena',
+    telefonRodice: '777333444',
+    emailRodice: 'rodic.karel@example.cz',
+    zpusobilost: true,
+    bezinfekcnost: true,
+    zdravotniPojistovna: '207 OZP',
+    poznamka: 'Píše si krátké sloupky.',
+    wasPrinted: false, oddil: null, prisel: null, potvrzeniPath: null,
+  ),
+  MemoryOsoba.fullNamed(
+    id: 3,
+  jmeno: 'Božena',
+  prijmeni: 'Němcová', // nenápadný odkaz nyní plné příjmení
+    pohlavi: 2,
+    adresa: 'Litomyšl',
+    cisloPojisteni: '345678/0003',
+    datumNarozeni: DateTime(2006, 2, 9),
+    jmenoRodice: 'Ludmila',
+    telefonRodice: '777555666',
+    emailRodice: 'rodic.bozena@example.cz',
+    zpusobilost: true,
+    bezinfekcnost: true,
+    zdravotniPojistovna: '211 ZPMV',
+    poznamka: 'Sbírá lidové pověsti.',
+    wasPrinted: false, oddil: null, prisel: null, potvrzeniPath: null,
+  ),
+  MemoryOsoba.fullNamed(
+    id: 4,
+    jmeno: 'David',
+    prijmeni: 'Dvojstránka',
+    pohlavi: 1,
+    adresa: 'Brno',
+    cisloPojisteni: '456789/0004',
+    datumNarozeni: DateTime(2008, 9, 21),
+    jmenoRodice: 'Ivana',
+    telefonRodice: '777999888',
+    emailRodice: 'rodic.david@example.cz',
+    zpusobilost: true,
+    bezinfekcnost: true,
+    zdravotniPojistovna: '205 ČPZP',
+    poznamka: 'Má hodně záznamů k tisku.',
+    wasPrinted: false, oddil: null, prisel: null, potvrzeniPath: null,
+  ),
+];
 List<MemoryZaznam> historicalRecords = [
   MemoryZaznam.fullNamed(
     idZaznamu: 1,
@@ -91,6 +145,61 @@ List<MemoryZaznam> historicalRecords = [
     teplota: null,
     obrazekPath: null,
   ),
+  // Sample records for the other demo persons (minimal to show filtering)
+  MemoryZaznam.fullNamed(
+    idZaznamu: 6,
+    casZaznamu: DateTime(2024, 6, 1),
+    nazev: 'Trénink',
+    popis: ' absolvoval ranní běh a kontrolu dýchání.',
+    lecba: null,
+    isPrinted: false,
+    idAuthor: 1,
+    idPacient: 1,
+    poznamka: 'Bez komplikací',
+    teplota: null,
+    obrazekPath: null,
+  ),
+  MemoryZaznam.fullNamed(
+    idZaznamu: 7,
+    casZaznamu: DateTime(2024, 6, 2),
+    nazev: 'Poznámka',
+    popis: 'Karel si přinesl vlastní sešit, krátce psal.',
+    lecba: null,
+    isPrinted: false,
+    idAuthor: 2,
+    idPacient: 2,
+    poznamka: 'Klidný den',
+    teplota: null,
+    obrazekPath: null,
+  ),
+  MemoryZaznam.fullNamed(
+    idZaznamu: 8,
+    casZaznamu: DateTime(2024, 6, 3),
+    nazev: 'Setkání',
+    popis: 'Božena se účastnila čtení příběhů.',
+    lecba: null,
+    isPrinted: false,
+    idAuthor: 3,
+    idPacient: 3,
+    poznamka: 'Spolupráce s ostatními',
+    teplota: null,
+    obrazekPath: null,
+  ),
+  // Many records for David Dvojstránka to simulate multi-page scenario
+  for (int i = 0; i < 25; i++)
+    MemoryZaznam.fullNamed(
+      idZaznamu: 100 + i,
+      casZaznamu: DateTime(2024, 7, 1, 8 + (i % 10), (i * 7) % 60),
+      nazev: 'Aktivita ${i + 1}',
+      popis: 'David provedl aktivitu číslo ${i + 1} – krátký popis události s detaily pro test délky.',
+      lecba: null,
+      isPrinted: false,
+      idAuthor: 4,
+      idPacient: 4,
+      poznamka: 'Poznámka k aktivitě ${i + 1}',
+      teplota: null,
+      obrazekPath: null,
+    ),
 ];
 
 List<MemoryOmezeni> omezeniList = [
@@ -119,24 +228,118 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      home: PdfPreviewScreen(),
+      home: PrintDemoLandingScreen(),
     );
   }
 }
 
+// New landing page: only two buttons as requested.
+class PrintDemoLandingScreen extends StatelessWidget {
+  const PrintDemoLandingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Print Demo')),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const PersonSelectionScreen(),
+                  ),
+                );
+              },
+              child: const Text('Per Person'),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: null,
+              child: const Text('Per Event (soon)'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// First screen: list of demo persons, each with two buttons:
+// 1) Per Person (active) -> navigates to PDF preview for that person
+// 2) Per Event (disabled placeholder)
+class PersonSelectionScreen extends StatelessWidget {
+  const PersonSelectionScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Select Person to Print')),
+      body: ListView.separated(
+        padding: const EdgeInsets.all(4),
+        itemCount: demoPersons.length,
+        separatorBuilder: (_, __) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final person = demoPersons[index];
+          return ListTile(
+            title: Text('${person.jmeno} ${person.prijmeni}'),
+            subtitle: Text(person.poznamka ?? ''),
+            leading: CircleAvatar(child: Text(person.jmeno.substring(0,1))),
+            trailing: const Icon(Icons.picture_as_pdf),
+            onTap: () {
+              final filteredRecords = historicalRecords.where((r) => r.idPacient == person.id).toList();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => PdfPreviewScreen(
+                    osoba: person,
+                    omezeni: omezeniList,
+                    leky: lekList,
+                    zaznamy: filteredRecords,
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+
 class PdfPreviewScreen extends StatelessWidget {
-  const PdfPreviewScreen({super.key});
+  final MemoryOsoba osoba;
+  final List<MemoryOmezeni> omezeni;
+  final List<MemoryLek> leky;
+  final List<MemoryZaznam> zaznamy;
+
+  const PdfPreviewScreen({
+    super.key,
+    required this.osoba,
+    required this.omezeni,
+    required this.leky,
+    required this.zaznamy,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PDF Preview'),
+        title: Text('PDF Preview - ${osoba.jmeno} ${osoba.prijmeni}'),
       ),
       body: PdfPreview(
         build: (format) async {
           final template = GeneratePdfTemplate();
-          final pdfPages = await template.getPdfPages(osoba: historicalFigure, omezeniList: omezeniList, lekList: lekList, zaznamList: historicalRecords);
+          // Work on cloned lists to avoid side-effects downstream
+          final clonedRecords = List<MemoryZaznam>.from(zaznamy);
+          final pdfPages = await template.getPdfPages(
+            osoba: osoba,
+            omezeniList: omezeni,
+            lekList: leky,
+            zaznamList: clonedRecords,
+          );
           final pdf = pw.Document();
           for (var page in pdfPages) {
             pdf.addPage(page);
@@ -144,8 +347,9 @@ class PdfPreviewScreen extends StatelessWidget {
           return pdf.save();
         },
         initialPageFormat: PdfPageFormat.a4,
-        maxPageWidth: MediaQuery.of(context).size.height / 1.6, // hard coded -by hand
-        pdfFileName: "sample.pdf",
+        // Keep a simpler heuristic for preview width
+        maxPageWidth: 600,
+        pdfFileName: 'person_${osoba.id}.pdf',
       ),
     );
   }

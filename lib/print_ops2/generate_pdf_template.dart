@@ -1,5 +1,7 @@
 import 'package:denik_zza/print_ops2/print_pdf_header.dart';
 import 'package:denik_zza/print_ops2/print_pdf_records.dart';
+import 'package:denik_zza/print_ops2/pdf_record_row.dart';
+import 'package:denik_zza/print_ops2/pdf_header_section.dart';
 import 'package:denik_zza/print_ops2/print_pdf_restrictions.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:logger/logger.dart';
@@ -160,9 +162,8 @@ class GeneratePdfTemplate {
 
 
 
-    /// after finding first true all the rest should be true or its broken
-    bool start = _zaznamList!.first.isPrinted;
-    bool prevItem = _zaznamList!.first.isPrinted;
+  /// after finding first true all the rest should be true or its broken
+  bool prevItem = _zaznamList!.first.isPrinted;
     for (var item in _zaznamList!) {
       // if isPrinted after some that wasn't printed
       if(item.isPrinted && !prevItem){
@@ -185,8 +186,13 @@ class GeneratePdfTemplate {
     List<MemoryLek>? lekList,
     List<MemoryZaznam>? zaznamList,
   }) async {
-    header = PrintPdfHeader().buildHeader(osoba);
+    // Use new abstractions
+    final headerSection = PersonPdfHeaderSection(osoba);
+    header = PrintPdfHeader(headerSection).buildHeader();
     final restrictions = _buildRestrictions(omezeniList, lekList);
+
+    // Convert MemoryZaznam to PersonPdfRecordRow
+    final recordRows = zaznamList?.map((z) => PersonPdfRecordRow(z)).toList();
 
     return [
       pw.Page(
@@ -198,7 +204,7 @@ class GeneratePdfTemplate {
               pw.SizedBox(height: 5),
               if (restrictions != null) restrictions,
               if (restrictions != null) pw.SizedBox(height: 5),
-              if (zaznamList != null) PrintPdfRecords().buildRecordsList(zaznamList),
+              if (recordRows != null) PrintPdfRecords(recordRows: recordRows).buildRecordsList(recordRows),
             ],
           );
         },

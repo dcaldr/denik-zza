@@ -1,15 +1,16 @@
 import 'package:denik_zza/print_ops2/generate_pdf_template.dart';
 import 'package:pdf/widgets.dart' as pw;
 
-import '../database/in_memory_structures_tmp/memory_zaznam.dart';
+
+import 'pdf_record_row.dart';
 
 class PrintPdfRecords implements PdfSection {
-  final List<MemoryZaznam>? records;
+  final List<PdfRecordRow>? recordRows;
 
-  PrintPdfRecords({this.records});
+  PrintPdfRecords({this.recordRows});
 
-  pw.Widget buildRecordsList(List<MemoryZaznam>? zaznamList) {
-    if (zaznamList == null || zaznamList.isEmpty) {
+  pw.Widget buildRecordsList(List<PdfRecordRow>? rows) {
+    if (rows == null || rows.isEmpty) {
       return pw.Container();
     }
     return pw.Expanded(
@@ -22,8 +23,8 @@ class PrintPdfRecords implements PdfSection {
         ),
         padding: const pw.EdgeInsets.all(8.0),
         child: pw.Column(
-          children: zaznamList.expand((record) => [
-            _noteItem(record),
+          children: rows.expand((row) => [
+            row.buildRow(),
             pw.SizedBox(height: 5),
           ]).toList(),
         ),
@@ -31,47 +32,8 @@ class PrintPdfRecords implements PdfSection {
     );
   }
 
-  pw.Widget _noteItem(MemoryZaznam note) {
-    return pw.Row(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Align(
-          alignment: pw.Alignment.topLeft,
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                '${note.casZaznamu?.day.toString().padLeft(2, '0')}.${note.casZaznamu?.month.toString().padLeft(2, '0')}.${note.casZaznamu?.year}',
-                style: const pw.TextStyle(fontSize: 8.0),
-              ),
-              pw.Text(
-                '${note.casZaznamu?.hour.toString().padLeft(2, '0')}:${note.casZaznamu?.minute.toString().padLeft(2, '0')}',
-                style: const pw.TextStyle(fontSize: 9.0),
-              ),
-            ],
-          ),
-        ),
-        pw.SizedBox(width: 20),
-        pw.Flexible(
-          child: pw.RichText(
-            text: pw.TextSpan(
-              text: note.nazev != null ? '${note.nazev} - ' : ' ',
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-              children: <pw.TextSpan>[
-                pw.TextSpan(
-                  text: note.popis,
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.normal),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   @override
   pw.Widget buildSection(bool append) {
-    return buildRecordsList(records);
+    return buildRecordsList(recordRows);
   }
 }
