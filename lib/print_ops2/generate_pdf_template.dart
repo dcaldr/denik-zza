@@ -2,7 +2,6 @@ import 'package:denik_zza/print_ops2/print_pdf_header.dart';
 import 'package:denik_zza/print_ops2/print_pdf_records.dart';
 import 'package:denik_zza/print_ops2/pdf_record_row.dart';
 import 'package:denik_zza/print_ops2/pdf_header_section.dart';
-import 'package:denik_zza/print_ops2/print_pdf_restrictions.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:logger/logger.dart';
 import 'package:pdf/pdf.dart';
@@ -23,111 +22,43 @@ class GeneratePdfTemplate {
   static const hiddenColor = PdfColor(0, 0, 0, 0);
 
   MemoryOsoba? _osoba;
-  List<MemoryOmezeni>? _omezeniList;
-  List<MemoryLek>? _lekList;
   List<MemoryZaznam>? _zaznamList;
-  /// status for the restrictions
-  OkCodes _omezeniStatus =OkCodes.unset;
-  /// status for the medications
-  OkCodes _lekStatus = OkCodes.unset;
-  /// status for both restrictions and medications
-  OkCodes _allRestrictionsStatus = OkCodes.unset;
-/// status for the records
+  /// status for the records
   OkCodes _recordStatus = OkCodes.unset;
 
   set osoba (MemoryOsoba? inOsoba){
     if(inOsoba != _osoba){
-      _omezeniStatus = OkCodes.unset;
-      _lekStatus = OkCodes.unset;
-      _allRestrictionsStatus = OkCodes.unset;
       _recordStatus = OkCodes.unset;
     }
-    osoba = _osoba;
-  }
-  set omezeniList (List<MemoryOmezeni>? inOmezeniList){
-      _omezeniStatus = OkCodes.unset;
-      _allRestrictionsStatus = OkCodes.unset;
-    omezeniList = _omezeniList;
-  }
-  set lekList (List<MemoryLek>? inLekList){
-      _lekStatus = OkCodes.unset;
-      _allRestrictionsStatus = OkCodes.unset;
-    lekList = _lekList;
+    _osoba = inOsoba;
   }
 
   GeneratePdfTemplate();
 
   GeneratePdfTemplate.named({
     required MemoryOsoba? osoba,
-    List<MemoryOmezeni>? omezeniList,
-    List<MemoryLek>? lekList,
     List<MemoryZaznam>? zaznamList,
-  }) : _zaznamList = zaznamList, _lekList = lekList, _omezeniList = omezeniList, _osoba = osoba;
+  }) : _zaznamList = zaznamList, _osoba = osoba;
 
   /// tests if appending is possible or needs to be completely recreated
   ///
   /// returns true if the given wasPrinted flags are in good configuration
-  /// Header T -> Restrictions(all) T -> Records T(all but lasts) - ok
-  /// Header T -> Restrictions(all) F -> Records F - ok
-  /// Header T -> Restrictions(some) F -> Records T - not ok
+  /// Header T -> Records T(all but lasts) - ok
+  /// Header T -> Records F - ok
   bool canAppend(){
    if (_osoba == null || !(_osoba?.wasPrinted ?? false)) {
   return false;
 }
    // here osoba(header) always printed
-    isRestrictionsOk();
     isRecordsOk();
-    // if any is broken return false
-    if(_allRestrictionsStatus == OkCodes.broken || _recordStatus == OkCodes.broken){
+    // if records are broken return false
+    if(_recordStatus == OkCodes.broken){
       return false;
     }
 
-    // restriction block - false && records block - false --> ok
-    if(_allRestrictionsStatus == OkCodes.unprinted && _recordStatus == OkCodes.unprinted){
-      return true;
-    }
-    // restriction block - true && records block - true --> ok
-    if(_allRestrictionsStatus == OkCodes.printed && _recordStatus == OkCodes.printed){
-      return true;
-    }
-
-    return false;
+    return true;
   }
 
-
-/// tests if restrictions and medications aren't blocking appending
-  void isRestrictionsOk(){
-    // preventive
-    // if(_allRestrictionsStatus != OkCodes.unset){
-    //   return;
-    // }
-    if (_omezeniStatus == OkCodes.unset) {
-      bool start = _omezeniList!.first.wasPrinted;
-      for (var item in _omezeniList!) {
-        // if start changes value return broken
-        if(start != item.wasPrinted){
-          _omezeniStatus = OkCodes.broken;
-          return;
-        }
-      }
-       _omezeniStatus = start ? OkCodes.printed : OkCodes.unprinted;
-    }
-    if (_lekStatus == OkCodes.unset) {
-      bool start = _lekList!.first.wasPrinted;
-      for (var item in _lekList!) {
-        // if start changes value return broken
-        if(start != item.wasPrinted){
-          _lekStatus = OkCodes.broken;
-          return;
-        }
-      }
-       _lekStatus = start ? OkCodes.printed : OkCodes.unprinted;
-    }
-    /// either both are the same or are broken
-    _allRestrictionsStatus = _omezeniStatus == _lekStatus ? _omezeniStatus : OkCodes.broken;
-
-
-  }
 
   /// tests if records aren't blocking appending
   ///
@@ -186,10 +117,9 @@ class GeneratePdfTemplate {
     List<MemoryLek>? lekList,
     List<MemoryZaznam>? zaznamList,
   }) async {
-    // Use new abstractions
-    final headerSection = PersonPdfHeaderSection(osoba);
+    // Use new abstractions - header includes restrictions for person
+    final headerSection = PersonPdfHeaderSection(osoba, omezeniList: omezeniList, lekList: lekList);
     header = PrintPdfHeader(headerSection).buildHeader();
-    final restrictions = _buildRestrictions(omezeniList, lekList);
 
     // Convert MemoryZaznam to PersonPdfRecordRow
     final recordRows = zaznamList?.map((z) => PersonPdfRecordRow(z)).toList();
@@ -202,21 +132,12 @@ class GeneratePdfTemplate {
             children: [
               header,
               pw.SizedBox(height: 5),
-              if (restrictions != null) restrictions,
-              if (restrictions != null) pw.SizedBox(height: 5),
               if (recordRows != null) PrintPdfRecords(recordRows: recordRows).buildRecordsList(recordRows),
             ],
           );
         },
       ),
     ];
-  }
-
-  pw.Widget? _buildRestrictions(List<MemoryOmezeni>? omezeniList, List<MemoryLek>? lekList) {
-    if (omezeniList != null && lekList != null) {
-      return PrintPdfRestrictions().buildRestrictions(omezeniList, lekList);
-    }
-    return null;
   }
 
   Future<pw.ThemeData> _loadFonts() async {
