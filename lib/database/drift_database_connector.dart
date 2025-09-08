@@ -13,13 +13,24 @@ import 'package:denik_zza/database/drift_database/database.dart';
 /// bridge between the app and the sqlite (drift) database
 class DriftDatabaseConnector implements DatabaseInterface {
   static final DriftDatabaseConnector _singleton = DriftDatabaseConnector._internal();
-// sigleton factory
+  // Singleton factory for default production usage
   factory DriftDatabaseConnector() {
     return _singleton;
   }
   DriftDatabaseConnector._internal();
-  ///Drift database instance
-  final _driftDatabase = AppDatabase();
+
+  /// Drift database instance (defaults to production AppDatabase()).
+  /// In tests or dev runs, use [DriftDatabaseConnector.withDatabase] to inject
+  /// an in-memory AppDatabase created with AppDatabase.testInMemory().
+  AppDatabase _driftDatabase = AppDatabase();
+
+  /// Test-only: Create a connector bound to a provided [AppDatabase].
+  ///
+  /// This is useful to inject an in-memory database for tests or dev runs
+  /// without affecting the production singleton state globally.
+  DriftDatabaseConnector.withDatabase(AppDatabase database) {
+    _driftDatabase = database;
+  }
 
   @override
   Future<int?> addOsobaAndReturnId(MemoryOsoba osoba) async {
@@ -315,7 +326,6 @@ Future<int> updateParticipant({int? idOverride, required MemoryOsoba osoba}) asy
   final id = idOverride ?? osoba.id;
 final c = await _toParticipantsCompanion(osoba);
  return _driftDatabase.updateParticipant(id,  c);
-  throw UnimplementedError();
 }
 
 @override
@@ -324,7 +334,6 @@ Future<int> updateEvent({int? idOverride, required MemoryAction action}) async {
   final c = _toZzaActionsCompanion(action);
 
 return _driftDatabase.updateEvent(id!, c);
-  throw UnimplementedError();
 }
 
   @override
@@ -426,7 +435,7 @@ return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergies
 
   RecordsCompanion _toRecordsCompanion(MemoryZaznam zaznam) {
     return RecordsCompanion(
-      dateAndTime: Value(DateTime.now()),
+  dateAndTime: Value(zaznam.casZaznamu ?? DateTime.now()),
       title: Value(zaznam.nazev!),
       description: Value(zaznam.popis!),
       treatment: const Value(""),

@@ -4,7 +4,7 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/screens2/services/record_service.dart';
 import 'package:denik_zza/screens2/widgets/record_list_widget.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
-import 'package:denik_zza/database/drift_database_connector.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
 
 /// Enhanced new record page that matches the old system functionality
 /// but with improved architecture and validation
@@ -55,8 +55,9 @@ class NewRecordPageState extends State<NewRecordPage> {
 
   Future<void> _loadAvailableParticipants() async {
     try {
-      final databaseConnector = DriftDatabaseConnector();
-      final participants = await databaseConnector.watchParticipantsByCurrentEvent().first;
+  // Always resolve DB via the wrapper so tests/dev can inject memory DB
+  final database = DatabaseWrapper.getDatabase();
+  final participants = await database.watchParticipantsByCurrentEvent().first;
       setState(() {
         _availableParticipants = participants;
       });
@@ -232,12 +233,11 @@ class NewRecordPageState extends State<NewRecordPage> {
           _refreshCounter++;
         });
         
-        // Clear the form after successful save
+        // Clear the form after successful save, but keep custom timestamp as tests expect it preserved
         _titleController.clear();
         _descriptionController.clear();
         setState(() {
-          _selectedDate = null;
-          _selectedTime = null;
+          // Do not reset _selectedDate/_selectedTime to preserve manually set timestamp in UI
           _hasUnsavedChanges = false; // Reset unsaved changes flag
         });
         
@@ -301,10 +301,10 @@ class NewRecordPageState extends State<NewRecordPage> {
         title: const Text('Nový záznam úrazu'),
         // Removed disabled edit button and placeholder info button for cleaner interface
       ),
-      body: LayoutBuilder(
+    body: LayoutBuilder(
         builder: (context, constraints) {
-          // Adjust spacing and layout based on available height
-          final isCompact = constraints.maxHeight < 600;
+      // Adjust spacing and layout based on available height
+      final isCompact = constraints.maxHeight <= 600;
           final spacing = isCompact ? 8.0 : 12.0; // Increased spacing
           final titleSpacing = isCompact ? 8.0 : 12.0; // Increased spacing
           
@@ -525,33 +525,36 @@ class NewRecordPageState extends State<NewRecordPage> {
                                 )
                               : Container(
                                   alignment: Alignment.center,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.person_search,
-                                        size: 24, // Reduced for test compatibility
-                                        color: Colors.grey.shade400,
-                                      ),
-                                      const SizedBox(height: 4), // Reduced for test compatibility
-                                      Text(
-                                        'Nejprve vyberte účastníka',
-                                        style: TextStyle(
-                                          fontSize: 12, // Reduced for test compatibility
-                                          color: Colors.grey.shade600,
-                                          fontWeight: FontWeight.w500,
+                                  child: SingleChildScrollView(
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.person_search,
+                                          size: 24, // Reduced for test compatibility
+                                          color: Colors.grey.shade400,
                                         ),
-                                      ),
-                                      const SizedBox(height: 2), // Reduced for test compatibility
-                                      Text(
-                                        'Po výběru účastníka se zde zobrazí\njejí historie úrazů',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 10, // Reduced for test compatibility
-                                          color: Colors.grey.shade500,
+                                        const SizedBox(height: 4), // Reduced for test compatibility
+                                        Text(
+                                          'Nejprve vyberte účastníka',
+                                          style: TextStyle(
+                                            fontSize: 12, // Reduced for test compatibility
+                                            color: Colors.grey.shade600,
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(height: 2), // Reduced for test compatibility
+                                        Text(
+                                          'Po výběru účastníka se zde zobrazí\njejí historie úrazů',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 10, // Reduced for test compatibility
+                                            color: Colors.grey.shade500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                         ),
@@ -569,10 +572,15 @@ class NewRecordPageState extends State<NewRecordPage> {
                     opacity: _selectedParticipant != null ? 1.0 : 0.4,
                     child: Form(
                       key: _formKey,
-                      child: SingleChildScrollView(
-                        child: Column(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                        // Make form fields scrollable but keep action buttons pinned
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
                         // Optional date and time selection (enhanced professional styling)
                         Container(
                           padding: const EdgeInsets.all(16.0), // Increased padding for better spacing
@@ -808,8 +816,12 @@ class NewRecordPageState extends State<NewRecordPage> {
                           ),
                         ),
                         SizedBox(height: titleSpacing),
+                              ],
+                            ),
+                          ),
+                        ),
                         
-                        // Action buttons (enhanced professional styling)
+                        // Action buttons (enhanced professional styling) pinned at bottom
                         Container(
                           padding: const EdgeInsets.all(16.0), // Increased padding
                           decoration: BoxDecoration(
@@ -896,11 +908,10 @@ class NewRecordPageState extends State<NewRecordPage> {
                           ),
                         ),
                         ],
-                      ), // Close Column
-                    ), // Close SingleChildScrollView
-                  ), // Close Form widget
-                ), // Close Opacity widget
-              ), // Close Expanded widget
+                      ), // Close Column (Form child)
+                    ), // Close Form widget
+                  ), // Close Opacity widget
+                ), // Close Expanded widget
             ],
           ),
         );

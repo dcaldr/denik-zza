@@ -23,6 +23,25 @@ part 'database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase([String? path]) : super(_openConnection(path));
 
+  /// Test / custom constructor: Create from a provided DatabaseConnection.
+  ///
+  /// Use this for in-memory databases in tests as recommended by Drift docs,
+  /// e.g. `AppDatabase.fromConnection(DatabaseConnection(NativeDatabase.memory(), closeStreamsSynchronously: true))`.
+  AppDatabase.fromConnection(DatabaseConnection connection) : super(connection);
+
+  /// Convenience: Create an in-memory database suitable for tests.
+  ///
+  /// This follows Drift's testing guidance by enabling closeStreamsSynchronously
+  /// to avoid open timers at the end of widget tests.
+  factory AppDatabase.testInMemory() {
+    return AppDatabase.fromConnection(
+      DatabaseConnection(
+        NativeDatabase.memory(),
+        closeStreamsSynchronously: true,
+      ),
+    );
+  }
+
   @override
   int get schemaVersion => 1;
 

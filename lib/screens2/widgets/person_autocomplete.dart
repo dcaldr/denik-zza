@@ -19,8 +19,12 @@ class PersonAutocomplete extends StatefulWidget {
 }
 
 class _PersonAutocompleteState extends State<PersonAutocomplete> {
+  // Keep references to clear field after selection
+  TextEditingController? _searchController;
+  FocusNode? _focusNode;
 
-  static String _displayStringForOption(MemoryOsoba option) => '${option.jmeno} ${option.prijmeni} ${option.id}';
+  // Show only first and last name to match test expectations
+  static String _displayStringForOption(MemoryOsoba option) => '${option.jmeno} ${option.prijmeni}';
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -46,8 +50,16 @@ class _PersonAutocompleteState extends State<PersonAutocomplete> {
           },
           onSelected: (MemoryOsoba person) {
             widget.onPersonSelected(person);
+            // Clear the search field to avoid duplicate text matches in tests
+            if (_searchController != null) {
+              _searchController!.clear();
+            }
+            // Dismiss keyboard / suggestions
+            _focusNode?.unfocus();
           },
           fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+            _searchController = textEditingController;
+            _focusNode = focusNode;
             return TextField(
               controller: textEditingController,
               focusNode: focusNode,

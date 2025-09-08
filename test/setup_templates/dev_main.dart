@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:denik_zza/screens2/event_list.dart';
 import 'hardcoded_setup.dart';
 import '../helpers/database_test_helper.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
 
 /// Development main that uses hardcoded test data
 /// 
@@ -29,7 +30,12 @@ void main() async {
   
   try {
     // Set up test database with pre-loaded data using memory database
-    await HardcodedTestSetup.setupTestData(databaseType: TestDatabaseType.memory);
+    final db = await HardcodedTestSetup.setupTestData(
+      databaseType: TestDatabaseType.memory,
+    );
+    // Route app database access through the injected in-memory DB
+    DatabaseWrapper.setTestMode();
+    DatabaseWrapper.useTestDriftDatabase(db);
     print('✅ Test data loaded successfully!');
     print('📊 Created: 1 event, 10 participants, 10 medical records');
     

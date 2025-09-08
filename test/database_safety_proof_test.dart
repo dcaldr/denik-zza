@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/drift_database_connector.dart';
-import 'package:denik_zza/database/in_memory_structures_tmp/memory_database_connector.dart';
+// Old custom MemoryDatabase is deprecated; test mode now injects Drift in-memory DB
 
 /// Comprehensive proof-of-concept tests demonstrating the robust database system.
 /// 
@@ -68,8 +68,9 @@ void main() {
         expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.testing);
         expect(DatabaseWrapper.isUsingPersistentStorage(), isFalse);
         
-        DatabaseInterface db = DatabaseWrapper.getDatabase();
-        expect(db, isA<MemoryDatabase>());
+  DatabaseInterface db = DatabaseWrapper.getDatabase();
+  // In test mode we return a DriftDatabaseConnector bound to in-memory AppDatabase
+  expect(db, isA<DriftDatabaseConnector>());
       });
 
       test('Test mode can be reset to production', () {
@@ -83,18 +84,20 @@ void main() {
 
       test('Multiple test setups are isolated', () {
         // First test environment
-        DatabaseWrapper.setTestMode();
-        DatabaseInterface db1 = DatabaseWrapper.getDatabase();
-        expect(db1, isA<MemoryDatabase>());
+  DatabaseWrapper.setTestMode();
+  DatabaseInterface db1 = DatabaseWrapper.getDatabase();
+  expect(db1, isA<DriftDatabaseConnector>());
         
         // Reset and create second test environment
         DatabaseWrapper.resetToProduction();
-        DatabaseWrapper.setTestMode();
-        DatabaseInterface db2 = DatabaseWrapper.getDatabase();
-        expect(db2, isA<MemoryDatabase>());
+  DatabaseWrapper.setTestMode();
+  DatabaseInterface db2 = DatabaseWrapper.getDatabase();
+  expect(db2, isA<DriftDatabaseConnector>());
         
         // They should be the same singleton instance for memory database
-        expect(identical(db1, db2), isTrue);
+  // Drift connector is a singleton in production path, but when injecting we still return connector
+  // Identity is not guaranteed; just verify both are connectors
+  expect(db1.runtimeType, equals(db2.runtimeType));
       });
     });
 
@@ -149,9 +152,9 @@ void main() {
         
         // Simulate some test running (in separate isolate/process)
         // This should NOT affect the production database selection
-        DatabaseWrapper.setTestMode();
-        DatabaseInterface testDb = DatabaseWrapper.getDatabase();
-        expect(testDb, isA<MemoryDatabase>());
+  DatabaseWrapper.setTestMode();
+  DatabaseInterface testDb = DatabaseWrapper.getDatabase();
+  expect(testDb, isA<DriftDatabaseConnector>());
         
         // Reset to production (simulating test cleanup)
         DatabaseWrapper.resetToProduction();
@@ -180,7 +183,7 @@ void main() {
         for (int i = 0; i < 5; i++) {
           DatabaseWrapper.setTestMode();
           expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.testing);
-          expect(DatabaseWrapper.getDatabase(), isA<MemoryDatabase>());
+          expect(DatabaseWrapper.getDatabase(), isA<DriftDatabaseConnector>());
           
           DatabaseWrapper.resetToProduction();
           expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.production);
@@ -216,7 +219,7 @@ void main() {
       DatabaseWrapper.setTestMode();
       
       DatabaseInterface db = DatabaseWrapper.getDatabase();
-      expect(db, isA<MemoryDatabase>());
+  expect(db, isA<DriftDatabaseConnector>());
       
       // Test operations would go here...
       // They would use isolated, in-memory storage

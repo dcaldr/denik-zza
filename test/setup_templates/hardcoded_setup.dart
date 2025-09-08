@@ -1,4 +1,5 @@
 import 'package:denik_zza/database/drift_database/database.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:drift/drift.dart';
 import '../helpers/database_test_helper.dart';
 
@@ -42,6 +43,10 @@ class HardcodedTestSetup {
     final AppDatabase database = DatabaseTestHelper.createTestDatabase(databaseType);
     
     try {
+  // Ensure the app uses this database instance (so UI + services see same data)
+  DatabaseWrapper.setTestMode();
+  DatabaseWrapper.useTestDriftDatabase(database);
+
       // 1. Create the test event using Drift database methods
       final now = DateTime.now();
       final eventCompanion = ZzaActionsCompanion(
@@ -53,9 +58,23 @@ class HardcodedTestSetup {
       final eventId = await database.addZzaAction(eventCompanion);
       _selectedEventId = eventId;
 
-      // ⚠️ TEST-ONLY: Use hardcoded paramedic ID since no front-facing creation method exists
-      // In real app, paramedics are likely setup data loaded differently
-      const int testParamedicId = 1; // Hardcoded for testing
+      // Persist selected event into cache so production code paths using
+      // getCurrentActionID/watchParticipantsByCurrentEvent work in tests/dev
+      await database.updateCache(CacheCompanion(
+        id: const Value(1),
+        currentActionID: Value(eventId),
+        pinnedActionID: const Value(null),
+      ));
+
+      // Create a test paramedic row to satisfy foreign key constraints on records
+      final testParamedicId = await database.addParamedic(ParamedicsCompanion(
+        firstName: const Value('Test'),
+        lastName: const Value('Paramedic'),
+        address: const Value('Test Address 1'),
+        birthDate: Value(DateTime(1990, 1, 1)),
+        phoneNumber: const Value('+420000000000'),
+        username: const Value('tester1'),
+      ));
       
       // 2. Create 10 Czech participants using Drift database methods
       // Insurance companies will be auto-created during participant addition

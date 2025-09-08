@@ -85,8 +85,9 @@ class DatabaseTestHelper {
   /// Get or create a fresh memory database instance
   /// Note: For tests, we create a new instance each time to avoid connection reuse issues
   static AppDatabase _getOrCreateMemoryDatabase() {
-    // Always create a new memory database for tests to avoid connection reuse
-    return AppDatabase(':memory:');
+  // Always create a new in-memory database following Drift testing guidance
+  // Uses closeStreamsSynchronously to avoid pending timers in widget tests
+  return AppDatabase.testInMemory();
   }
   
   /// Create a file-based test database (persistent, real SQLite file)

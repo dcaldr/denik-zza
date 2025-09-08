@@ -1,7 +1,6 @@
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/drift_database_connector.dart';
 import 'package:denik_zza/database/database_interface.dart';
-import 'in_memory_structures_tmp/memory_database_connector.dart';
 
 
 /// Database selection modes for better type safety and clarity
@@ -38,7 +37,7 @@ enum DatabaseMode {
 /// 
 /// test('my test', () {
 ///   DatabaseInterface db = DatabaseWrapper.getDatabase();
-///   // Returns MemoryDatabase for test isolation
+///   // Returns Drift in-memory database for test isolation
 /// });
 /// ```
 ///
@@ -52,7 +51,7 @@ enum DatabaseMode {
 ///
 /// ## Database Types:
 /// - **Production**: DriftDatabaseConnector (persistent SQLite file)
-/// - **Testing**: MemoryDatabase (in-memory, isolated, fast)
+/// - **Testing**: DriftDatabaseConnector bound to in-memory AppDatabase
 /// 
 /// ## Safety Features:
 /// - Compile-time and runtime checks prevent accidental data loss
@@ -81,83 +80,16 @@ static int databaseID = 0;
 /// NEW: Database mode selection (safer than int-based selection)
 static DatabaseMode _databaseMode = DatabaseMode.production;
 
-  @Deprecated("Remove when possible")
-  final MemoryDatabase _memoryDatabase = MemoryDatabase();
-  @Deprecated("Remove when possible")
-  final _driftDatabase = AppDatabase();
+/// Optional test database to use when in testing mode.
+static AppDatabase? _injectedTestDb;
 
-  /**===================== REMOVE WHEN POSSIBLE ↓ =========================== */
-/**
-  @override
-  Future<bool> addZaznam(MemoryZaznam zaznam) async => _memoryDatabase.addZaznam(zaznam);
-  @override
+/// Inject a specific Drift [AppDatabase] for tests / dev runs.
+/// If not provided, testing mode will default to an in-memory instance.
+static void useTestDriftDatabase(AppDatabase db) {
+  _injectedTestDb = db;
+}
 
-
-  @override
-  Future<bool> addOsoba(MemoryOsoba osoba) async {
-    return _memoryDatabase.addOsoba(osoba);
-  }
-
-  Future<bool> quickAddNewZaznam( String popis, int idPacient  ) async {
-    return _memoryDatabase.addZaznam(MemoryZaznam.short( popis,  idPacient));
-  }
-
-  @override
-  Future<void> quickPrintAllOsoby() async {
-    _memoryDatabase.quickPrintAllOsoby();
-  }
-  @override
-  String quickPrintZaznamyOsoby(int idOsoby) {
-    return _memoryDatabase.quickPrintZaznamyOsoby(idOsoby);
-  }
-
-  //========= Vojtovy přidané metody ===========================================
-
-  @override
-  Future<List<MemoryZaznam>> getRecordsByParticipantID(int id) async {
-    List<Record> records = await _driftDatabase.getRecordsByParticipantID(id);
-    List<MemoryZaznam> memoryRecords = [];
-    
-    for(Record r in records) {
-      memoryRecords.add(MemoryZaznam.complete(r.id, r.dateAndTime, r.title,
-          r.description, r.treatment, r.wasPrinted,
-          r.paramedicFK, r.participantFK));
-    }
-    
-    return memoryRecords;
-  }
-
-  @override
-  Future<List<MemoryOsoba>> getParticipantsByAction(int idAction) async {
-    List<Participant> participants = await
-    _driftDatabase.getParticipantsByAction(idAction);
-
-    List<MemoryOsoba> memoryParticipants = [];
-
-    for(Participant p in participants) {
-      memoryParticipants.add(MemoryOsoba.complete(p.id, p.firstName, p.lastName,
-        p.address, p.birthNumber, p.birthDate, p.parentPhoneNumber,
-        p.eligibleConfirmation, p.nonInfectiousConfirmation, p.wasPrinted,
-        p.insuranceCompanyFK, p.zzaActionFK));
-    }
-
-    return memoryParticipants;
-  }
-
-  @override
-  Future<int> updateCache(int? pinnedActionID) async {
-    return _driftDatabase.updateCache(CacheCompanion(
-      id: Value(1),
-      pinnedActionID: Value(pinnedActionID)
-    ));
-  }
-
-  @override
-  Future<int?> getPinnedActionID() async {
-    return _driftDatabase.getPinnedActionID();
-  }
-*/
-  /**===================== REMOVE WHEN POSSIBLE ↑ ============================*/
+  // Cleaned legacy unused fields and methods
 
   /// Set database mode for testing purposes.
   /// 
@@ -190,6 +122,7 @@ static DatabaseMode _databaseMode = DatabaseMode.production;
   /// Also useful for ensuring production mode is active.
   static void resetToProduction() {
     _databaseMode = DatabaseMode.production;
+  _injectedTestDb = null;
   }
   
   /// Get current database mode (for debugging/testing purposes)
@@ -246,13 +179,17 @@ static DatabaseMode _databaseMode = DatabaseMode.production;
     
     // New mode-based selection (preferred and safer)
     if (_databaseMode == DatabaseMode.testing) {
-      return MemoryDatabase();
+      // Prefer injected AppDatabase, fallback to in-memory Drift
+      final db = _injectedTestDb ?? AppDatabase.testInMemory();
+      return DriftDatabaseConnector.withDatabase(db);
     }
     
     // Legacy int-based selection (maintained for compatibility)
     // Note: The assert above prevents dangerous combinations
     if (databaseID == 1) {
-      return MemoryDatabase();
+  // Legacy switch maps to testing behavior: use in-memory Drift (custom MemoryDatabase deprecated)
+      final db = _injectedTestDb ?? AppDatabase.testInMemory();
+      return DriftDatabaseConnector.withDatabase(db);
     }
     
     // Default: Production database with persistent storage

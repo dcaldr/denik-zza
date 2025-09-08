@@ -24,7 +24,7 @@ This guide explains the robust, non-breaking database system for both production
    - Used by the real app
    - Default and heavily protected
 
-2. **Test Database** (`MemoryDatabase` or file-based)
+2. **Test Database** (Drift in-memory or file-based)
    - In-memory or temporary file storage
    - Isolated between tests
    - Fast and safe for testing
@@ -43,7 +43,7 @@ import 'package:denik_zza/database/database_wrapper.dart';
 
 void main() {
   setUp(() {
-    DatabaseWrapper.setTestMode(); // Switch to in-memory database
+  DatabaseWrapper.setTestMode(); // Switch to in-memory Drift database
   });
   
   tearDown(() {
@@ -51,7 +51,7 @@ void main() {
   });
   
   test('app-level database test', () {
-    // This will use MemoryDatabase for test isolation
+  // This will use a Drift in-memory database for test isolation
     DatabaseInterface db = DatabaseWrapper.getDatabase();
     // ... your test code
   });
@@ -110,7 +110,7 @@ import 'package:denik_zza/database/database_wrapper.dart';
 void main() {
   group('My App Tests', () {
     setUp(() {
-      DatabaseWrapper.setTestMode(); // Use isolated in-memory DB
+  DatabaseWrapper.setTestMode(); // Use isolated in-memory Drift DB
     });
     
     tearDown(() {
@@ -119,7 +119,7 @@ void main() {
     
     test('my test', () {
       DatabaseInterface db = DatabaseWrapper.getDatabase();
-      // Test your app logic - uses isolated MemoryDatabase
+  // Test your app logic - uses isolated Drift in-memory DB
     });
   });
 }
@@ -255,7 +255,7 @@ group('Fast Unit Tests', () {
   
   test('business logic test', () {
     DatabaseInterface db = DatabaseWrapper.getDatabase();
-    // Fast in-memory testing
+  // Fast Drift in-memory testing
   });
 });
 ```

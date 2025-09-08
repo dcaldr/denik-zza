@@ -7,5 +7,5 @@ It is just to remember what needs to be done before using GH isssues.
     - [ ] ref: MemoryAction -> MemoryEvent (and all subsequent naming)
     - [ ] revisit database_interface and standardize naming + outputs
       -  [ ] reflect changes in app
-      -  [ ] reorder methods (also in memory_database_connector)
+  -  [ ] reorder methods (also in drift_database_connector)
 - [ ] make backup branch, than kill dead code/classes/files etc.
