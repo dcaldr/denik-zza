@@ -31,8 +31,9 @@ class AppDatabase extends _$AppDatabase {
 
   /// Convenience: Create an in-memory database suitable for tests.
   ///
-  /// This follows Drift's testing guidance by enabling closeStreamsSynchronously
+  /// This follows Drift's official testing guidance by enabling closeStreamsSynchronously
   /// to avoid open timers at the end of widget tests.
+  /// See: https://drift.simonbinder.eu/testing/#writing-tests
   factory AppDatabase.testInMemory() {
     return AppDatabase.fromConnection(
       DatabaseConnection(
