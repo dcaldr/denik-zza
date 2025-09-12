@@ -46,10 +46,21 @@ class GeneratePdfTemplate {
   /// Header T -> Records T(all but lasts) - ok
   /// Header T -> Records F - ok
   bool canAppend(){
-   if (_osoba == null || !(_osoba?.wasPrinted ?? false)) {
-  return false;
-}
-   // here osoba(header) always printed
+    // Check if osoba exists and was printed
+    if (_osoba == null || !(_osoba?.wasPrinted ?? false)) {
+      return false;
+    }
+    
+    // Special case: If there are no records at all, don't allow append
+    // This is because append mode is designed to add new records to existing ones,
+    // but without any records (even if the header exists), a full print makes more sense
+    if (_zaznamList == null || _zaznamList!.isEmpty) {
+      // TODO: In the future, this could be configurable if append for empty lists
+      // becomes a valid use case, but for now, we explicitly disallow it
+      return false;
+    }
+    
+    // here osoba(header) always printed
     isRecordsOk();
     // if records are broken return false
     if(_recordStatus == OkCodes.broken){

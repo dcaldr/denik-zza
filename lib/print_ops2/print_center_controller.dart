@@ -159,7 +159,7 @@ class PrintCenterController extends ChangeNotifier {
         final r = await _service.getRecords(id);
         all.addAll(r);
       } catch (_) {
-  // Ignore individual failures; TODO add logging
+        // Ignore individual failures; TODO add logging
       }
     }
     all.sort((a,b){
@@ -171,6 +171,60 @@ class PrintCenterController extends ChangeNotifier {
       return ad.compareTo(bd);
     });
     return all;
+  }
+  
+  /// Check which participants have records to print
+  Future<Map<int, bool>> checkParticipantsWithRecords(List<int> participantIds) async {
+    final Map<int, bool> result = {};
+    for (final id in participantIds) {
+      try {
+        final records = await _service.getRecords(id);
+        result[id] = records.isNotEmpty;
+      } catch (_) {
+        result[id] = false; // Error occurred, consider as no records
+      }
+    }
+    return result;
+  }
+  
+  /// Fetch medications for a specific participant
+  Future<List<MemoryLek>> fetchMedicationsForParticipant(int participantId) async {
+    try {
+      return await _service.getLeky(participantId);
+    } catch (_) {
+      return []; // Return empty list on error
+    }
+  }
+  
+  /// Fetch restrictions for a specific participant
+  Future<List<MemoryOmezeni>> fetchRestrictionsForParticipant(int participantId) async {
+    try {
+      return await _service.getOmezeni(participantId);
+    } catch (_) {
+      return []; // Return empty list on error
+    }
+  }
+  
+  /// Fetch all data needed for generating PDF for a specific participant
+  Future<Map<String, dynamic>> fetchParticipantPdfData(int participantId) async {
+    try {
+      final records = await _service.getRecords(participantId);
+      final medications = await _service.getLeky(participantId);
+      final restrictions = await _service.getOmezeni(participantId);
+      
+      return {
+        'records': records,
+        'medications': medications,
+        'restrictions': restrictions,
+      };
+    } catch (e) {
+      return {
+        'records': <MemoryZaznam>[],
+        'medications': <MemoryLek>[],
+        'restrictions': <MemoryOmezeni>[],
+        'error': e.toString(),
+      };
+    }
   }
 
   Future<void> _evaluateAppend() async {

@@ -7,6 +7,9 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../database/in_memory_structures_tmp/memory_zaznam.dart';
+import '../database/in_memory_structures_tmp/memory_osoba.dart';
+import '../database/in_memory_structures_tmp/memory_lek.dart';
+import '../database/in_memory_structures_tmp/memory_omezeni.dart';
 
 /// NOVÉ TISK CENTRUM (UI ONLY) -------------------------------------------------
 /// Tento modul obsahuje pouze uživatelské rozhraní bez implementované logiky tisku.
@@ -722,7 +725,6 @@ class SelectedAggregatedPrintPage extends StatefulWidget {
 
 class _EventPrintFlowPageState extends State<SelectedAggregatedPrintPage> {
   final Set<int> _selectedIds = {};
-  bool _simulate = false;
   bool _loadingPdf = false;
 
   @override
@@ -763,25 +765,68 @@ class _EventPrintFlowPageState extends State<SelectedAggregatedPrintPage> {
             child: Row(
               children: [
                 Text('Vybráno: ${_selectedIds.length}'),
+                const SizedBox(width: 16),
+                const Text('Agregovaný tisk: záznamy budou řazeny podle času napříč osobami.', style: TextStyle(fontSize: 12, color: Colors.black54)),
                 const Spacer(),
                 OutlinedButton.icon(
                   onPressed: _selectedIds.isEmpty || _loadingPdf ? null : () async {
-                    setState(() { _simulate = true; _loadingPdf = true; });
-                    // Preload aggregated records (UI only for now)
-                    await ctrl.fetchAggregatedRecords(_selectedIds.toList());
-                    setState(() { _loadingPdf = false; });
+                    setState(() => _loadingPdf = true);
+                    try {
+                      if (_selectedIds.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Vyberte alespoň jednoho účastníka k tisku.'),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                        return;
+                      }
+                      
+                      if (context.mounted) {
+                        await showDialog(
+                          context: context,
+                          builder: (_) => _AggregatedPreviewDialog(ids: _selectedIds.toList(), controller: ctrl),
+                        );
+                      }
+                    } finally {
+                      if (mounted) {
+                        setState(() => _loadingPdf = false);
+                      }
+                    }
                   },
                   icon: const Icon(Icons.visibility),
-                  label: _loadingPdf ? const Text('Generuji…') : const Text('Náhled'),
+                  label: const Text('Náhled'),
                 ),
                 const SizedBox(width: 12),
                 FilledButton.icon(
-                  onPressed: _selectedIds.isEmpty || _loadingPdf ? null : () {
-                    setState(() { _simulate = true; });
-                    showDialog(
-                      context: context,
-                      builder: (_) => _AggregatedPreviewDialog(ids: _selectedIds.toList(), controller: ctrl),
-                    );
+                  onPressed: _selectedIds.isEmpty || _loadingPdf ? null : () async {
+                    setState(() => _loadingPdf = true);
+                    try {
+                      if (_selectedIds.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Vyberte alespoň jednoho účastníka k tisku.'),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                        return;
+                      }
+                      
+                      if (context.mounted) {
+                        await showDialog(
+                          context: context,
+                          builder: (_) => _AggregatedPreviewDialog(
+                            ids: _selectedIds.toList(),
+                            controller: ctrl,
+                            forceFullPrint: true,
+                          ),
+                        );
+                      }
+                    } finally {
+                      if (mounted) {
+                        setState(() => _loadingPdf = false);
+                      }
+                    }
                   },
                   icon: const Icon(Icons.print),
                   label: const Text('Vytisknout vybrané'),
@@ -789,23 +834,18 @@ class _EventPrintFlowPageState extends State<SelectedAggregatedPrintPage> {
               ],
             ),
           ),
-          if (_simulate)
-            Container(
-              padding: const EdgeInsets.all(12),
-              alignment: Alignment.centerLeft,
-              child: const Text('Agregovaný tisk: záznamy budou řazeny podle času napříč osobami.', style: TextStyle(fontSize: 12, color: Colors.black54)),
-            ),
         ],
       ),
     );
   }
 }
 
-// Dialog s agregovaným PDF náhledem (zatím jednoduchý lineární výpis)
+// Dialog s agregovaným PDF náhledem s použitím stejné šablony jako pro jednotlivé osoby
 class _AggregatedPreviewDialog extends StatelessWidget {
   final List<int> ids;
   final PrintCenterController controller;
-  const _AggregatedPreviewDialog({required this.ids, required this.controller});
+  final bool forceFullPrint;
+  const _AggregatedPreviewDialog({required this.ids, required this.controller, this.forceFullPrint = false});
 
   @override
   Widget build(BuildContext context) {
@@ -823,47 +863,49 @@ class _AggregatedPreviewDialog extends StatelessWidget {
               ],
             ),
             Expanded(
-              child: FutureBuilder<List<MemoryZaznam>>(
-                future: controller.fetchAggregatedRecords(ids),
-                builder: (c, snap) {
-                  if (!snap.hasData) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  final records = snap.data!;
-                  // Build PDF on the fly via PdfPreview
-                  return PdfPreview(
+              child: ids.isEmpty
+                ? const Center(child: Text('Není vybrána žádná osoba k tisku.'))
+                : PdfPreview(
                     build: (format) async {
                       final doc = pw.Document();
-                      doc.addPage(
-                        pw.MultiPage(
-                          pageFormat: PdfPageFormat.a4,
-                          build: (ctx) => [
-                            pw.Column(
-                              crossAxisAlignment: pw.CrossAxisAlignment.start,
-                              children: records.map((r) {
-                                final dt = r.casZaznamu; // may be null
-                                final timeStr = dt == null ? '?' : '${_two(dt.day)}.${_two(dt.month)}.${dt.year} ${_two(dt.hour)}:${_two(dt.minute)}';
-                                final pid = r.idPacient;
-                                final title = r.nazev ?? '';
-                                final desc = r.popis ?? '';
-                                return pw.Padding(
-                                  padding: const pw.EdgeInsets.only(bottom: 3),
-                                  child: pw.Text('$timeStr  (ID$pid)  $title  — $desc',
-                                    style: const pw.TextStyle(fontSize: 10),
-                                  ),
-                                );
-                              }).toList(),
-                            )
-                          ],
-                        ),
-                      );
+                      
+                      // Process each selected person
+                      for (final pid in ids) {
+                        MemoryOsoba? person;
+                        try {
+                          person = controller.participants.firstWhere((p) => p.id == pid);
+                        } catch (_) {
+                          continue; // Skip if person not found
+                        }
+                        
+                        // Fetch all data needed for this person's PDF
+                        final personData = await controller.fetchParticipantPdfData(pid);
+                        final personRecords = personData['records'] as List<MemoryZaznam>;
+                        final personMedications = personData['medications'] as List<MemoryLek>;
+                        final personRestrictions = personData['restrictions'] as List<MemoryOmezeni>;
+                        
+                        // Use the same template as single-person printing
+                        final template = GeneratePdfTemplate();
+                        final pages = await template.getPdfPages(
+                          osoba: person,
+                          omezeniList: personRestrictions,
+                          lekList: personMedications,
+                          zaznamList: personRecords,
+                        );
+                        
+                        // Add all pages for this person to the document
+                        for (final page in pages) {
+                          doc.addPage(page);
+                        }
+                      }
+                      
                       return doc.save();
                     },
+                    initialPageFormat: PdfPageFormat.a4,
+                    maxPageWidth: 600,
                     canChangeOrientation: false,
                     canChangePageFormat: false,
-                  );
-                },
-              ),
+                  ),
             ),
             const SizedBox(height: 4),
             Padding(
@@ -871,7 +913,7 @@ class _AggregatedPreviewDialog extends StatelessWidget {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Poznámka: Záznamy různých osob jsou lineárně seřazeny podle času. Hlavičky osob zatím nejsou zahrnuty.',
+                  'Poznámka: Pro každou vybranou osobu je vygenerována hlavička s kompletními informacemi, i když nemá žádné záznamy.',
                   style: const TextStyle(fontSize: 11, color: Colors.black54),
                 ),
               ),
@@ -882,8 +924,6 @@ class _AggregatedPreviewDialog extends StatelessWidget {
     );
   }
 }
-
-String _two(int v) => v.toString().padLeft(2, '0');
 
 class _AppendHintBox extends StatelessWidget {
   final PrintMode mode;
