@@ -3,6 +3,7 @@ import 'package:denik_zza/screens2/event_registration_form.dart';
 import 'package:denik_zza/screens2/intake_form.dart';
 import 'package:denik_zza/screens2/intake_form_improved.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
+import 'package:denik_zza/print_ops2/print_center.dart';
 import 'package:flutter/material.dart';
 
 
@@ -59,6 +60,18 @@ class AppDrawer extends StatelessWidget {
               );
             },
           )
+          ,
+          const Divider(),
+          ListTile(
+            title: const Text('Tisk Centrum (Nové)'),
+            subtitle: const Text('UI náhled'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PrintCenterPage()),
+              );
+            },
+          ),
 
         ],
       ),

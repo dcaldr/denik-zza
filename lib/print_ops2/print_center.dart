@@ -1,0 +1,943 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'print_center_controller.dart';
+import 'print_center_service.dart';
+import 'generate_pdf_template.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import '../database/in_memory_structures_tmp/memory_zaznam.dart';
+
+/// NOVÉ TISK CENTRUM (UI ONLY) -------------------------------------------------
+/// Tento modul obsahuje pouze uživatelské rozhraní bez implementované logiky tisku.
+/// Cíle:
+///  - Zlepšený rozcestník ("Print Center")
+///  - Základní flow: Vybrat osobu -> Režim tisku (Úplný / Dostisk) -> Náhled (stub) -> Potvrzení
+///  - Vizualizace budoucích funkcí (Historie, Správa stavu, Nastavení, Multi‑page) jako vypnuté prvky
+///  - Vše v češtině, jasně označit neimplementované části (ikona zámku + šedé)
+///  - Připravit komponenty pro snadné doplnění logiky později
+
+// -----------------------------------------------------------------------------
+// MALÉ DOPLŇKOVÉ WIDGETY
+// -----------------------------------------------------------------------------
+
+class FeatureCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback? onTap;
+  final bool implemented;
+  final bool emphasize;
+
+  const FeatureCard({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    this.onTap,
+    this.implemented = true,
+    this.emphasize = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final card = Card(
+      elevation: emphasize ? 4 : 1,
+      color: implemented ? null : Colors.grey.shade200,
+      child: InkWell(
+        onTap: implemented ? onTap : null,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, size: 32, color: implemented ? Theme.of(context).colorScheme.primary : Colors.grey),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(title,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: implemented ? null : Colors.grey.shade600,
+                                  )),
+                        ),
+                        if (!implemented)
+                          const Tooltip(
+                            message: 'Funkce zatím není implementována',
+                            child: Icon(Icons.lock, size: 18, color: Colors.grey),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(subtitle,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: implemented ? Colors.black87 : Colors.grey,
+                            )),
+                  ],
+                ),
+              ),
+              if (implemented)
+                const Icon(Icons.chevron_right)
+              else
+                const SizedBox(width: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    return implemented
+        ? card
+        : Opacity(
+            opacity: 0.75,
+            child: AbsorbPointer(child: card),
+          );
+  }
+}
+
+class StepBadge extends StatelessWidget {
+  final String text;
+  final bool active;
+  final bool done;
+  const StepBadge({super.key, required this.text, this.active = false, this.done = false});
+
+  @override
+  Widget build(BuildContext context) {
+    Color base;
+    if (active) {
+      base = Theme.of(context).colorScheme.primary;
+    } else if (done) {
+      base = Colors.green;
+    } else {
+      base = Colors.grey.shade400;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      margin: const EdgeInsets.only(right: 6, bottom: 6),
+      decoration: BoxDecoration(
+        color: base.withOpacity(active ? 0.18 : 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: base),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (done) const Icon(Icons.check, size: 14, color: Colors.green),
+          if (done) const SizedBox(width: 4),
+          Text(text, style: TextStyle(fontSize: 12, color: base.darken(0.2))),
+        ],
+      ),
+    );
+  }
+}
+
+extension _ColorShade on Color {
+  Color darken([double amount = .1]) {
+    assert(amount >= 0 && amount <= 1);
+    final hsl = HSLColor.fromColor(this);
+    final hslDark = hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
+    return hslDark.toColor();
+  }
+}
+
+// -----------------------------------------------------------------------------
+// HLAVNÍ ROZCESTNÍK
+// -----------------------------------------------------------------------------
+
+class PrintCenterPage extends StatelessWidget {
+  const PrintCenterPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) {
+        final c = PrintCenterController(PrintCenterService());
+        c.init();
+        return c;
+      },
+      child: Builder(
+        builder: (context) => Scaffold(
+          appBar: AppBar(title: const Text('Tisk Centrum – Nové')),
+          body: Consumer<PrintCenterController>(
+            builder: (context, ctrl, _) => ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Text('Rychlé volby', style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 8),
+                FeatureCard(
+                  title: 'Tisk osoby',
+                  subtitle: ctrl.loadingParticipants
+                      ? 'Načítám účastníky…'
+                      : (ctrl.participants.isEmpty
+                          ? 'Žádní účastníci v aktuální akci'
+                          : 'Vybrat osobu a pokračovat k náhledu. (Úplný / Dostisk)'),
+                  icon: Icons.picture_as_pdf,
+                  emphasize: true,
+                  implemented: !ctrl.loadingParticipants && ctrl.participants.isNotEmpty,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ChangeNotifierProvider.value(
+                        value: context.read<PrintCenterController>(),
+                        child: const PersonAndModeFlowPage(),
+                      ),
+                    ),
+                  ),
+                ),
+                FeatureCard(
+                  title: 'Tisk vybraných',
+                  subtitle: ctrl.participants.isEmpty
+                      ? 'Žádní účastníci – není co tisknout'
+                      : 'Vyber víc osob a vytiskni jejich záznamy v chronologickém sledu (agregace).',
+                  icon: Icons.playlist_add_check,
+                  implemented: ctrl.participants.isNotEmpty,
+                  onTap: ctrl.participants.isEmpty ? null : () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ChangeNotifierProvider.value(
+                        value: context.read<PrintCenterController>(),
+                        child: const SelectedAggregatedPrintPage(),
+                      ),
+                    ),
+                  ),
+                ),
+                FeatureCard(
+                  title: 'Správa stavu',
+                  subtitle: 'Ruční označení vytištěných (zatím neaktivní).',
+                  icon: Icons.rule_folder,
+                  implemented: false,
+                ),
+                // Multi‑page test do budoucna můžeme obnovit
+                const SizedBox(height: 24),
+                if (ctrl.participantError != null)
+                  _InfoBox(
+                    color: Colors.red.shade50,
+                    icon: Icons.error_outline,
+                    text: ctrl.participantError!,
+                  ),
+                const SizedBox(height: 12),
+                Text('Poznámka', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 4),
+                const Text(
+                  'Toto je UI náhled napojený na databázi (read‑only). Skutečné operace tisku a update printed flagů budou doplněny později.',
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// FLOW: OSOBNÍ TISK (VÝBĚR OSOBY -> REŽIM -> NÁHLED -> POTVRZENÍ)
+// -----------------------------------------------------------------------------
+
+class PersonAndModeFlowPage extends StatefulWidget {
+  const PersonAndModeFlowPage({super.key});
+
+  @override
+  State<PersonAndModeFlowPage> createState() => _PersonAndModeFlowPageState();
+}
+
+class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
+
+  @override
+  Widget build(BuildContext context) {
+    final ctrl = context.watch<PrintCenterController>();
+    final steps = [
+      StepBadge(text: '1 Osoba', active: ctrl.selected == null, done: ctrl.selected != null),
+      StepBadge(text: '2 Režim', active: ctrl.selected != null && !ctrl.simulatedPrinted, done: ctrl.simulatedPrinted),
+      StepBadge(text: '3 Náhled', active: ctrl.selected != null && !ctrl.simulatedPrinted),
+      StepBadge(text: '4 Potvrzení', active: ctrl.simulatedPrinted),
+    ];
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Tisk osoby – krokový průvodce')),
+      body: Column(
+        children: [
+          // Steps row
+            SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(children: steps),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: _buildStage(context, ctrl),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _buildStage(BuildContext context, PrintCenterController ctrl) {
+    if (ctrl.selected == null) return _buildSelectPerson(context, ctrl);
+    if (!ctrl.simulatedPrinted) return _buildModeAndPreview(context, ctrl);
+    return _buildPostConfirmation(context, ctrl);
+  }
+
+  Widget _buildSelectPerson(BuildContext context, PrintCenterController ctrl) {
+    if (ctrl.loadingParticipants) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (ctrl.participants.isEmpty) {
+      return Center(
+        child: _InfoBox(
+          color: Colors.orange.shade50,
+          icon: Icons.info_outline,
+          text: 'Žádní účastníci v aktuální akci – přidejte účastníky a vraťte se.',
+        ),
+      );
+    }
+    return ListView.separated(
+      key: const ValueKey('select-person'),
+      padding: const EdgeInsets.all(8),
+      itemBuilder: (c, i) {
+        final p = ctrl.participants[i];
+        return ListTile(
+          leading: CircleAvatar(child: Text(p.jmeno.substring(0, 1))),
+          title: Text('${p.jmeno} ${p.prijmeni}'),
+          subtitle: Text(p.poznamka ?? ''),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => ctrl.selectParticipant(p),
+        );
+      },
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemCount: ctrl.participants.length,
+    );
+  }
+
+  Widget _buildModeAndPreview(BuildContext context, PrintCenterController ctrl) {
+  final canAppendPlaceholder = ctrl.canAppendPlaceholder; // fallback logic
+    return LayoutBuilder(
+      key: const ValueKey('mode-preview'),
+      builder: (context, constraints) {
+        final vertical = constraints.maxWidth < 700;
+        final left = Expanded(
+          flex: 3,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Osoba', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Card(
+                  child: ListTile(
+                    title: Text('${ctrl.selected!.jmeno} ${ctrl.selected!.prijmeni}'),
+                    subtitle: Text('ID: ${ctrl.selected!.id} – databáze'),
+                    trailing: TextButton.icon(
+                      onPressed: () => ctrl.resetFlow(),
+                      icon: const Icon(Icons.swap_horiz),
+                      label: const Text('Změnit'),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text('Režim tisku', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                RadioListTile<PrintMode>(
+                  value: PrintMode.full,
+                  groupValue: ctrl.mode,
+                  title: const Text('Úplný tisk'),
+                  subtitle: const Text('Vygeneruje celý dokument od začátku (reset).'),
+                  onChanged: (v) => ctrl.changeMode(v!),
+                ),
+                RadioListTile<PrintMode>(
+                  value: PrintMode.append,
+                  groupValue: ctrl.mode,
+                  title: Row(
+                    children: const [
+                      Text('Dostisk (append)'),
+                      SizedBox(width: 6),
+                      Tooltip(message: 'Pouze nové záznamy, ostatní průhledně', child: Icon(Icons.info_outline, size: 16)),
+                    ],
+                  ),
+                  subtitle: _appendSubtitle(ctrl, canAppendPlaceholder),
+                  onChanged: (ctrl.appendPossible == false) ? null : (v) => ctrl.changeMode(v!),
+                  secondary: (ctrl.appendPossible == false)
+                      ? const Tooltip(message: 'Nelze použít – pořadí nebo stav neumožňuje dostisk', child: Icon(Icons.block, color: Colors.red))
+                      : null,
+                ),
+                const SizedBox(height: 12),
+                _AppendHintBox(mode: ctrl.mode, canAppend: canAppendPlaceholder),
+                const SizedBox(height: 24),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton.icon(
+                    icon: const Icon(Icons.print),
+                    label: const Text('Simulovat tisk'),
+                    onPressed: () => _showConfirmDialog(context, ctrl),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Text('TODO poznámky', style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 4),
+                const Text('''
+- Reálné ověření append režimu
+- Vázání na GeneratePdfTemplate
+- Přidat reálný PdfPreview (výkonnostně oddělit)
+- Správa stavových příznaků isPrinted / wasPrinted
+'''),
+              ],
+            ),
+          ),
+        );
+
+        final right = Expanded(
+          flex: 4,
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: _PersonPdfPreviewPane(controller: ctrl),
+          ),
+        );
+
+        if (vertical) {
+          return Column(
+            children: [left, right],
+          );
+        }
+        return Row(children: [left, right]);
+      },
+    );
+  }
+
+  Widget _appendSubtitle(PrintCenterController ctrl, bool fallback) {
+    if (ctrl.appendChecking) {
+      return const Text('Ověřuji podmínky…');
+    }
+    if (ctrl.appendError != null) {
+      return Text('Chyba: ${ctrl.appendError}', style: const TextStyle(color: Colors.red));
+    }
+    if (ctrl.appendPossible != null) {
+      return Text(ctrl.appendPossible! ? 'Append je možný (validováno).' : 'Append není možný.');
+    }
+    // fallback (před validací)
+    return Text(fallback ? 'Předběžně vypadá OK (čekám na validaci).' : 'Zatím nevypadá možné.');
+  }
+
+  Widget _buildPostConfirmation(BuildContext context, PrintCenterController ctrl) {
+    return Center(
+      key: const ValueKey('post-confirm'),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle, color: Colors.green, size: 64),
+            const SizedBox(height: 16),
+            Text('Tisk označen jako úspěšný (UI simulace).',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            const Text(
+              'Ve skutečné implementaci by zde proběhlo nastavení příznaků wasPrinted/isPrinted a uložení do DB.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: Colors.black54),
+            ),
+            const SizedBox(height: 24),
+            Wrap(
+              spacing: 12,
+              children: [
+                FilledButton.icon(
+                  icon: const Icon(Icons.home),
+                  label: const Text('Zpět na centrum'),
+                  onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
+                ),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.replay),
+                  label: const Text('Nový tisk'),
+                  onPressed: () => ctrl.resetFlow(),
+                ),
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+  Future<void> _showConfirmDialog(BuildContext context, PrintCenterController ctrl) async {
+    await showDialog<void>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Jak dopadl tisk?'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Zvolte hlavní výsledek. Sekce níže obsahuje méně časté případy.'),
+              const SizedBox(height: 12),
+              // Primární volby
+              Text('Hlavní volby', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              const _ConfirmOptionDescription(
+                icon: Icons.check_circle_outline,
+                title: 'Vše OK (úspěšný tisk)',
+                body: 'Označí (v budoucnu) nové záznamy/strany jako vytištěné. Pokud běží režim Dostisk, označí jen ty nové.',
+              ),
+              const _ConfirmOptionDescription(
+                icon: Icons.replay_circle_filled_outlined,
+                title: 'Zopakovat tisk',
+                body: 'Nic neoznačí – můžete hned zkusit znovu (např. zaseklá tiskárna).',
+              ),
+              const SizedBox(height: 16),
+              Text('Vedlejší & speciální', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              const _ConfirmOptionDescription(
+                icon: Icons.remove_done,
+                title: 'Neměnit označení',
+                body: 'Nechá vše tak, jak bylo před tiskem. Vhodné pokud jen testujete náhled nebo čekáte na potvrzení.',
+              ),
+              const _ConfirmOptionDescription(
+                icon: Icons.error_outline,
+                title: 'Rozbitý tisk (reset)',
+                body: 'Zruší označení vytištěného stavu (budoucí implementace). Po výběru Reset si ještě zvolíte zda rovnou spustit nový tisk.',
+              ),
+              const SizedBox(height: 16),
+              _AppendInfoBanner(appendActive: ctrl.mode == PrintMode.append, appendPossible: ctrl.appendPossible),
+              const SizedBox(height: 8),
+              const _ManualMarkingNote(),
+            ],
+          ),
+        ),
+        actions: [
+          // Sekundární: Neměnit (text), Reset (méně výrazný – text), primární: Zopakovat (outlined), Vše OK (filled)
+          TextButton.icon(
+            onPressed: () { Navigator.of(c).pop(); ctrl.simulateResult(PrintSimulationResult.noChange); },
+            icon: const Icon(Icons.remove_done),
+            label: const Text('Neměnit'),
+          ),
+          TextButton.icon(
+            onPressed: () async {
+              Navigator.of(c).pop();
+              await showDialog<void>(
+                context: context,
+                builder: (sc) => AlertDialog(
+                  title: const Text('Reset tisku'),
+                  content: const Text('Chcete pouze resetovat stav, nebo resetovat a ihned spustit nový tisk?'),
+                  actions: [
+                    TextButton.icon(
+                      onPressed: () { Navigator.of(sc).pop(); ctrl.simulateResult(PrintSimulationResult.reset); },
+                      icon: const Icon(Icons.restart_alt),
+                      label: const Text('Jen reset'),
+                    ),
+                    FilledButton.icon(
+                      onPressed: () { Navigator.of(sc).pop(); ctrl.simulateResult(PrintSimulationResult.resetAndReprint); /* TODO: trigger reprint flow */ },
+                      icon: const Icon(Icons.restart_alt),
+                      label: const Text('Reset + znovu'),
+                    ),
+                  ],
+                ),
+              );
+            },
+            icon: const Icon(Icons.restart_alt),
+            label: const Text('Reset'),
+          ),
+          OutlinedButton.icon(
+            onPressed: () { Navigator.of(c).pop(); ctrl.simulateResult(PrintSimulationResult.repeat); },
+            icon: const Icon(Icons.replay_circle_filled_outlined),
+            label: const Text('Zopakovat'),
+          ),
+          FilledButton.icon(
+            onPressed: () { Navigator.of(c).pop(); ctrl.simulateResult(PrintSimulationResult.success); },
+            icon: const Icon(Icons.check_circle),
+            label: const Text('Vše OK'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ConfirmOptionDescription extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String body;
+  const _ConfirmOptionDescription({required this.icon, required this.title, required this.body});
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height:4),
+                Text(body, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class _AppendInfoBanner extends StatelessWidget {
+  final bool appendActive;
+  final bool? appendPossible;
+  const _AppendInfoBanner({required this.appendActive, required this.appendPossible});
+  @override
+  Widget build(BuildContext context) {
+    ColorScheme cs = Theme.of(context).colorScheme;
+    final bool allowed = appendActive && (appendPossible == true);
+    final bool explicitlyBlocked = appendActive && appendPossible == false;
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: allowed ? cs.secondaryContainer : (explicitlyBlocked ? cs.errorContainer : cs.surfaceVariant),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: allowed ? cs.secondary : (explicitlyBlocked ? cs.error : cs.outlineVariant)),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(appendActive ? Icons.layers : Icons.layers_clear, color: allowed ? cs.onSecondaryContainer : (explicitlyBlocked ? cs.onErrorContainer : cs.onSurfaceVariant)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Režim Dostisk', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 4),
+                if (!appendActive)
+                  const Text('Aktuálně tisknete celý obsah. To je v pořádku – tím vytváříte referenční stav, aby pozdější Dostisk mohl bezpečně vytisknout jen nové záznamy. Přepněte na Dostisk jen pokud nyní opravdu doplňujete předchozí tisk.', style: TextStyle(fontSize: 12))
+                else if (allowed)
+                  const Text('Režim Dostisk: vytisknou se pouze nové záznamy od posledního plného tisku. Tím zachováte čistou historii a připravíte půdu pro další budoucí dostisky.', style: TextStyle(fontSize: 12))
+                else if (explicitlyBlocked)
+                  const Text('Dostisk teď nelze – nepřibyly nové záznamy, nebo sledované pořadí už není konzistentní. Pro opětovné využití dostisku udělejte nejprve plný tisk.', style: TextStyle(fontSize: 12))
+                else
+                  const Text('Kontroluji podmínky pro Dostisk (pořadí a nové záznamy)…', style: TextStyle(fontSize: 12)),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class _ManualMarkingNote extends StatelessWidget {
+  const _ManualMarkingNote();
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'Poznámka: Ruční označení záznamů a plná logika ukládání stavů budou doplněny později.',
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54),
+    );
+  }
+}
+
+// --------------------------- Person PDF Preview Pane -------------------------
+
+class _PersonPdfPreviewPane extends StatelessWidget {
+  final PrintCenterController controller;
+  const _PersonPdfPreviewPane({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    if (controller.selected == null) {
+      return const _InfoBox(
+        color: Colors.white,
+        icon: Icons.info_outline,
+        text: 'Vyberte osobu vlevo…',
+      );
+    }
+    return Card(
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(.1),
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(4), topRight: Radius.circular(4)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.picture_as_pdf),
+                const SizedBox(width: 8),
+                Text('Náhled PDF', style: Theme.of(context).textTheme.titleMedium),
+                const Spacer(),
+                if (controller.appendChecking) const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+                if (!controller.appendChecking && controller.appendPossible == true)
+                  const Icon(Icons.check_circle, color: Colors.green, size: 18),
+                if (!controller.appendChecking && controller.appendPossible == false)
+                  const Icon(Icons.block, color: Colors.red, size: 18),
+              ],
+            ),
+          ),
+          Expanded(
+            child: PdfPreview(
+              build: (format) async {
+                final template = GeneratePdfTemplate();
+                final pages = await template.getPdfPages(
+                  osoba: controller.selected!,
+                  omezeniList: controller.omezeni,
+                  lekList: controller.leky,
+                  zaznamList: controller.records,
+                );
+                final doc = pw.Document();
+                for (final p in pages) { doc.addPage(p); }
+                return doc.save();
+              },
+              initialPageFormat: PdfPageFormat.a4,
+              maxPageWidth: 600,
+              canChangeOrientation: false,
+              canChangePageFormat: false,
+              pdfFileName: 'osoba_${controller.selected!.id}.pdf',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// --------------------------- Event Print Flow Page ---------------------------
+
+class SelectedAggregatedPrintPage extends StatefulWidget {
+  const SelectedAggregatedPrintPage({super.key});
+
+  @override
+  State<SelectedAggregatedPrintPage> createState() => _EventPrintFlowPageState();
+}
+
+class _EventPrintFlowPageState extends State<SelectedAggregatedPrintPage> {
+  final Set<int> _selectedIds = {};
+  bool _simulate = false;
+  bool _loadingPdf = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final ctrl = context.watch<PrintCenterController>();
+    return Scaffold(
+      appBar: AppBar(title: const Text('Tisk vybraných – agregace')),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.all(8),
+              itemCount: ctrl.participants.length,
+              itemBuilder: (c, i) {
+                final p = ctrl.participants[i];
+                final sel = _selectedIds.contains(p.id);
+                return CheckboxListTile(
+                  value: sel,
+                  onChanged: (v) {
+                    setState(() {
+                      if (v == true) {
+                        _selectedIds.add(p.id);
+                      } else {
+                        _selectedIds.remove(p.id);
+                      }
+                    });
+                  },
+                  title: Text('${p.jmeno} ${p.prijmeni}'),
+                  subtitle: Text('ID: ${p.id}${p.wasPrinted == true ? ' • už tištěno' : ''}'),
+                );
+              },
+              separatorBuilder: (_, __) => const Divider(height: 1),
+            ),
+          ),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                Text('Vybráno: ${_selectedIds.length}'),
+                const Spacer(),
+                OutlinedButton.icon(
+                  onPressed: _selectedIds.isEmpty || _loadingPdf ? null : () async {
+                    setState(() { _simulate = true; _loadingPdf = true; });
+                    // Preload aggregated records (UI only for now)
+                    await ctrl.fetchAggregatedRecords(_selectedIds.toList());
+                    setState(() { _loadingPdf = false; });
+                  },
+                  icon: const Icon(Icons.visibility),
+                  label: _loadingPdf ? const Text('Generuji…') : const Text('Náhled'),
+                ),
+                const SizedBox(width: 12),
+                FilledButton.icon(
+                  onPressed: _selectedIds.isEmpty || _loadingPdf ? null : () {
+                    setState(() { _simulate = true; });
+                    showDialog(
+                      context: context,
+                      builder: (_) => _AggregatedPreviewDialog(ids: _selectedIds.toList(), controller: ctrl),
+                    );
+                  },
+                  icon: const Icon(Icons.print),
+                  label: const Text('Vytisknout vybrané'),
+                ),
+              ],
+            ),
+          ),
+          if (_simulate)
+            Container(
+              padding: const EdgeInsets.all(12),
+              alignment: Alignment.centerLeft,
+              child: const Text('Agregovaný tisk: záznamy budou řazeny podle času napříč osobami.', style: TextStyle(fontSize: 12, color: Colors.black54)),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// Dialog s agregovaným PDF náhledem (zatím jednoduchý lineární výpis)
+class _AggregatedPreviewDialog extends StatelessWidget {
+  final List<int> ids;
+  final PrintCenterController controller;
+  const _AggregatedPreviewDialog({required this.ids, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: SizedBox(
+        width: 720,
+        height: 640,
+        child: Column(
+          children: [
+            AppBar(
+              title: const Text('Náhled – Tisk vybraných'),
+              automaticallyImplyLeading: false,
+              actions: [
+                IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+              ],
+            ),
+            Expanded(
+              child: FutureBuilder<List<MemoryZaznam>>(
+                future: controller.fetchAggregatedRecords(ids),
+                builder: (c, snap) {
+                  if (!snap.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final records = snap.data!;
+                  // Build PDF on the fly via PdfPreview
+                  return PdfPreview(
+                    build: (format) async {
+                      final doc = pw.Document();
+                      doc.addPage(
+                        pw.MultiPage(
+                          pageFormat: PdfPageFormat.a4,
+                          build: (ctx) => [
+                            pw.Column(
+                              crossAxisAlignment: pw.CrossAxisAlignment.start,
+                              children: records.map((r) {
+                                final dt = r.casZaznamu; // may be null
+                                final timeStr = dt == null ? '?' : '${_two(dt.day)}.${_two(dt.month)}.${dt.year} ${_two(dt.hour)}:${_two(dt.minute)}';
+                                final pid = r.idPacient;
+                                final title = r.nazev ?? '';
+                                final desc = r.popis ?? '';
+                                return pw.Padding(
+                                  padding: const pw.EdgeInsets.only(bottom: 3),
+                                  child: pw.Text('$timeStr  (ID$pid)  $title  — $desc',
+                                    style: const pw.TextStyle(fontSize: 10),
+                                  ),
+                                );
+                              }).toList(),
+                            )
+                          ],
+                        ),
+                      );
+                      return doc.save();
+                    },
+                    canChangeOrientation: false,
+                    canChangePageFormat: false,
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Poznámka: Záznamy různých osob jsou lineárně seřazeny podle času. Hlavičky osob zatím nejsou zahrnuty.',
+                  style: const TextStyle(fontSize: 11, color: Colors.black54),
+                ),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _two(int v) => v.toString().padLeft(2, '0');
+
+class _AppendHintBox extends StatelessWidget {
+  final PrintMode mode;
+  final bool canAppend;
+  const _AppendHintBox({required this.mode, required this.canAppend});
+
+  @override
+  Widget build(BuildContext context) {
+    if (mode == PrintMode.full) {
+      return _InfoBox(
+        color: Colors.blue.shade50,
+        icon: Icons.info_outline,
+        text: 'Úplný tisk znovu vytiskne vše. Později zde bude možnost resetovat isPrinted příznaky.',
+      );
+    }
+    return _InfoBox(
+      color: canAppend ? Colors.green.shade50 : Colors.orange.shade50,
+      icon: canAppend ? Icons.check_circle_outline : Icons.warning_amber_outlined,
+      text: canAppend
+          ? 'Simulace: Dostisk je možný (placeholder logika).'
+          : 'Simulace: Podmínky dostisku nejsou splněny – UI jen náhled.',
+    );
+  }
+}
+
+class _InfoBox extends StatelessWidget {
+  final Color color;
+  final IconData icon;
+  final String text;
+  const _InfoBox({required this.color, required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.darken(0.1)),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: Colors.black54),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(text, style: const TextStyle(fontSize: 13)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// _PreviewStub removed – replaced with real PdfPreview for person flow
+
+// END -------------------------------------------------------------------------
