@@ -10,36 +10,36 @@
 ### **Phase 1: Data Preparation**
 
 #### ✅ **1.1 Get Person Data**
-- [ ] **IMPLEMENTED** - Retrieve `MemoryOsoba` from database
-- [ ] **IMPLEMENTED** - Person selection UI in `dev_main.dart`
+- [x] **IMPLEMENTED** - Retrieve `MemoryOsoba` from database
+- [x] **IMPLEMENTED** - Person selection UI in `dev_main.dart`
 - [ ] **PARTIALLY** - Person data validation (basic exists, needs comprehensive)
 
 #### ✅ **1.2 Get Restrictions/Medications Data**  
-- [ ] **IMPLEMENTED** - Retrieve `List<MemoryOmezeni>` (restrictions)
-- [ ] **IMPLEMENTED** - Retrieve `List<MemoryLek>` (medications)
-- [ ] **IMPLEMENTED** - Integration into unified header via `PersonPdfHeaderSection`
+- [x] **IMPLEMENTED** - Retrieve `List<MemoryOmezeni>` (restrictions)
+- [x] **IMPLEMENTED** - Retrieve `List<MemoryLek>` (medications)
+- [x] **IMPLEMENTED** - Integration into unified header via `PersonPdfHeaderSection`
 
 #### ✅ **1.3 Get Records Data**
-- [ ] **IMPLEMENTED** - Retrieve `List<MemoryZaznam>` for person
-- [ ] **IMPLEMENTED** - Record filtering by person ID in demo
+- [x] **IMPLEMENTED** - Retrieve `List<MemoryZaznam>` for person
+- [x] **IMPLEMENTED** - Record filtering by person ID in demo
 
 #### ✅ **1.4 Sort/Verify Chronological Order**
-- [ ] **IMPLEMENTED** - Chronological sorting by `casZaznamu`
-- [ ] **IMPLEMENTED** - Validation with warning if not pre-sorted
-- [ ] **IMPLEMENTED** - `isRecordsOk()` validation method
+- [x] **IMPLEMENTED** - Chronological sorting by `casZaznamu`
+- [x] **IMPLEMENTED** - Validation with warning if not pre-sorted
+- [x] **IMPLEMENTED** - `isRecordsOk()` validation method
 
 ---
 
 ### **Phase 2: Print Mode Decision**
 
 #### ⚡ **2.1 Full Print Mode**
-- [ ] **IMPLEMENTED** - Basic full print generation
+- [x] **IMPLEMENTED** - Basic full print generation
 - [ ] **MISSING** - Print mode selection UI
 - [ ] **MISSING** - State reset before printing (clear all `isPrinted` flags)
 
 #### ⚡ **2.2 Append Print Mode**  
-- [ ] **IMPLEMENTED** - `canAppend()` validation logic
-- [ ] **IMPLEMENTED** - Chronological integrity checking
+- [x] **IMPLEMENTED** - `canAppend()` validation logic
+- [x] **IMPLEMENTED** - Chronological integrity checking
 - [ ] **PARTIALLY** - Transparency logic (exists but needs testing)
 - [ ] **MISSING** - "Hide what needs to be hidden" implementation
 - [ ] **MISSING** - User instruction to insert correct paper
@@ -49,15 +49,15 @@
 ### **Phase 3: Print Execution**
 
 #### 🖨️ **3.1 PDF Generation**
-- [ ] **IMPLEMENTED** - Basic PDF generation with `GeneratePdfTemplate`
-- [ ] **IMPLEMENTED** - Unified header with restrictions (`PersonPdfHeaderSection`)
-- [ ] **IMPLEMENTED** - Record rows rendering (`PersonPdfRecordRow`)
+- [x] **IMPLEMENTED** - Basic PDF generation with `GeneratePdfTemplate`
+- [x] **IMPLEMENTED** - Unified header with restrictions (`PersonPdfHeaderSection`)
+- [x] **IMPLEMENTED** - Record rows rendering (`PersonPdfRecordRow`)
 - [ ] **MISSING** - Transparency rendering for append mode
 - [ ] **MISSING** - Multi-page support (future `pw.MultiPage` implementation)
 
 #### 🖨️ **3.2 Print Job Execution**
-- [ ] **IMPLEMENTED** - PDF preview via `PdfPreview` widget
-- [ ] **IMPLEMENTED** - Print trigger via Flutter printing package
+- [x] **IMPLEMENTED** - PDF preview via `PdfPreview` widget
+- [x] **IMPLEMENTED** - Print trigger via Flutter printing package
 - [ ] **MISSING** - Print job error handling
 - [ ] **MISSING** - Print queue management
 
