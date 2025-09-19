@@ -2,6 +2,9 @@ import 'package:denik_zza/print_ops2/print_pdf_header.dart';
 import 'package:denik_zza/print_ops2/print_pdf_records.dart';
 import 'package:denik_zza/print_ops2/pdf_record_row.dart';
 import 'package:denik_zza/print_ops2/pdf_header_section.dart';
+import 'package:denik_zza/print_ops2/models/append_analysis.dart';
+import 'package:denik_zza/print_ops2/models/append_build_result.dart';
+import 'package:denik_zza/print_ops2/models/doc_with_count.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:logger/logger.dart';
 import 'package:pdf/pdf.dart';
@@ -158,6 +161,203 @@ class GeneratePdfTemplate {
       italic: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Italic.ttf')),
       boldItalic: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-BoldItalic.ttf')),
     );
+  }
+
+  /// Three-pass algorithm for multi-page append analysis and PDF generation
+  Future<AppendBuildResult> analyzeAndBuildAppend({
+    required MemoryOsoba osoba,
+    List<MemoryOmezeni>? omezeniList,
+    List<MemoryLek>? lekList,
+    List<MemoryZaznam>? zaznamList,
+  }) async {
+    final logger = Logger();
+    
+    if (zaznamList == null || zaznamList.isEmpty) {
+      logger.w('analyzeAndBuildAppend called with empty records list');
+      // Generate as first print
+      final result = await _generateBasePdf(
+        osoba: osoba,
+        omezeniList: omezeniList,
+        lekList: lekList,
+        zaznamList: [],
+        hideHeaderOnPage: -1,
+      );
+      
+      final analysis = AppendAnalysis.fromPageCounts(
+        baselinePages: 0,
+        pagesAfterFirst: 0,
+        finalPages: result.pageCount,
+      );
+      
+      return AppendBuildResult(
+        analysis: analysis,
+        pdfBytes: result.bytes,
+        document: result.document,
+      );
+    }
+
+    // Split records into printed and unprinted
+    final printedRecords = zaznamList.where((z) => z.isPrinted).toList();
+    final unprintedRecords = zaznamList.where((z) => !z.isPrinted).toList();
+
+    // Pass 1: Generate baseline PDF with only printed content
+    final baselineResult = await _generateBasePdf(
+      osoba: osoba,
+      omezeniList: omezeniList,
+      lekList: lekList,
+      zaznamList: printedRecords,
+      hideHeaderOnPage: -1,
+    );
+    final baselinePages = baselineResult.pageCount;
+    logger.d('Baseline pages: $baselinePages');
+
+    // Pass 2: Add just the first unprinted record to detect page break
+    final probeRecords = [...printedRecords];
+    if (unprintedRecords.isNotEmpty) {
+      probeRecords.add(unprintedRecords.first);
+    }
+    
+    final probeResult = await _generateBasePdf(
+      osoba: osoba,
+      omezeniList: omezeniList,
+      lekList: lekList,
+      zaznamList: probeRecords,
+      hideHeaderOnPage: -1,
+    );
+    final pagesAfterFirst = probeResult.pageCount;
+    logger.d('Pages after first new record: $pagesAfterFirst');
+
+    // Pass 3: Generate final PDF with all content
+    final analysis = AppendAnalysis.fromPageCounts(
+      baselinePages: baselinePages,
+      pagesAfterFirst: pagesAfterFirst,
+      finalPages: 0, // Will be updated below
+    );
+
+    final finalResult = await _generateBasePdf(
+      osoba: osoba,
+      omezeniList: omezeniList,
+      lekList: lekList,
+      zaznamList: zaznamList,
+      hideHeaderOnPage: analysis.hideHeaderOnPage,
+    );
+    
+    // Update final analysis with actual final page count
+    final finalAnalysis = AppendAnalysis.fromPageCounts(
+      baselinePages: baselinePages,
+      pagesAfterFirst: pagesAfterFirst,
+      finalPages: finalResult.pageCount,
+    );
+    
+    logger.d('Final analysis: $finalAnalysis');
+
+    return AppendBuildResult(
+      analysis: finalAnalysis,
+      pdfBytes: finalResult.bytes,
+      document: finalResult.document,
+    );
+  }
+
+  /// Generates PDF using MultiPage with header/footer control
+  Future<DocWithCount> _generateBasePdf({
+    required MemoryOsoba osoba,
+    List<MemoryOmezeni>? omezeniList,
+    List<MemoryLek>? lekList,
+    required List<MemoryZaznam> zaznamList,
+    required int hideHeaderOnPage,
+  }) async {
+    final logger = Logger();
+    final theme = await _loadFonts();
+    final doc = pw.Document();
+    
+    // Track pages for counting (fallback strategy)
+    final Set<int> observedPages = <int>{};
+    
+    // Create header section
+    final headerSection = PersonPdfHeaderSection(osoba, omezeniList: omezeniList, lekList: lekList);
+    final headerWidget = PrintPdfHeader(headerSection).buildHeader();
+    
+    // Convert records to rows
+    final recordRows = zaznamList.map((z) => PersonPdfRecordRow(z)).toList();
+    
+    doc.addPage(
+      pw.MultiPage(
+        theme: theme,
+        build: (pw.Context context) {
+          final content = <pw.Widget>[];
+          
+          // Add header (with visibility control)
+          final currentPage = _getPageNumber(context, logger);
+          observedPages.add(currentPage);
+          
+          if (hideHeaderOnPage != currentPage) {
+            content.add(headerWidget);
+            content.add(pw.SizedBox(height: 5));
+          }
+          
+          // Add records (using forMultiPage=true)
+          if (recordRows.isNotEmpty) {
+            content.add(PrintPdfRecords(recordRows: recordRows).buildRecordsList(recordRows, forMultiPage: true));
+          }
+          
+          return content;
+        },
+        header: (pw.Context context) {
+          final currentPage = _getPageNumber(context, logger);
+          observedPages.add(currentPage);
+          
+          // Hide header on mixed content page
+          if (hideHeaderOnPage == currentPage) {
+            return pw.Container(); // Empty header
+          }
+          
+          return pw.Container(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Strana $currentPage',
+              style: pw.TextStyle(fontSize: 10),
+            ),
+          );
+        },
+        footer: (pw.Context context) {
+          final currentPage = _getPageNumber(context, logger);
+          observedPages.add(currentPage);
+          
+          return pw.Container(
+            alignment: pw.Alignment.center,
+            child: pw.Text(
+              'Deník ZZA - $currentPage',
+              style: pw.TextStyle(fontSize: 8),
+            ),
+          );
+        },
+      ),
+    );
+    
+    final bytes = await doc.save();
+    
+    // Determine page count using multiple strategies
+    int pageCount;
+    try {
+      pageCount = doc.document.pdfPageList.pages.length;
+      logger.d('Page count from pdfPageList: $pageCount');
+    } catch (e) {
+      pageCount = observedPages.isNotEmpty ? observedPages.length : 1;
+      logger.w('Page count fallback to observed pages: $pageCount');
+    }
+    
+    return DocWithCount(doc, pageCount, bytes);
+  }
+  
+  /// Safely get page number with fallback
+  int _getPageNumber(pw.Context context, Logger logger) {
+    try {
+      final pageNum = context.pageNumber;
+      return pageNum > 0 ? pageNum : 1;
+    } catch (e) {
+      logger.w('Failed to get page number, using fallback: $e');
+      return 1;
+    }
   }
 }
 

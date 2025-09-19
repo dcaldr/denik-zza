@@ -9,31 +9,38 @@ class PrintPdfRecords implements PdfSection {
 
   PrintPdfRecords({this.recordRows});
 
-  pw.Widget buildRecordsList(List<PdfRecordRow>? rows) {
+  pw.Widget buildRecordsList(List<PdfRecordRow>? rows, {bool forMultiPage = false}) {
     if (rows == null || rows.isEmpty) {
       return pw.Container();
     }
-    return pw.Expanded(
-      child: pw.Container(
-        decoration: pw.BoxDecoration(
-          border: pw.Border.all(
-            width: 2.0,
-            color: GeneratePdfTemplate.headerPrimaryColor,
-          ),
-        ),
-        padding: const pw.EdgeInsets.all(8.0),
-        child: pw.Column(
-          children: rows.expand((row) => [
-            row.buildRow(),
-            pw.SizedBox(height: 5),
-          ]).toList(),
+    
+    final container = pw.Container(
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(
+          width: 2.0,
+          color: GeneratePdfTemplate.headerPrimaryColor,
         ),
       ),
+      padding: const pw.EdgeInsets.all(8.0),
+      child: pw.Column(
+        children: rows.expand((row) => [
+          row.buildRow(),
+          pw.SizedBox(height: 5),
+        ]).toList(),
+      ),
     );
+    
+    // For MultiPage, return container directly (no Expanded wrapper)
+    if (forMultiPage) {
+      return container;
+    }
+    
+    // For single page, use Expanded as before
+    return pw.Expanded(child: container);
   }
 
   @override
   pw.Widget buildSection(bool append) {
-    return buildRecordsList(recordRows);
+    return buildRecordsList(recordRows, forMultiPage: append);
   }
 }

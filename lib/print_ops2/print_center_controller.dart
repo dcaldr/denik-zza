@@ -4,6 +4,7 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_lek.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart';
+import 'package:denik_zza/print_ops2/models/append_analysis.dart';
 import 'print_center_service.dart';
 import 'generate_pdf_template.dart';
 
@@ -44,6 +45,11 @@ class PrintCenterController extends ChangeNotifier {
   bool _appendChecking = false;
   String? _appendError;
 
+  // Append analysis state (for multi-page)
+  AppendAnalysis? _appendAnalysis;
+  bool _analysisInProgress = false;
+  String? _analysisError;
+
   // Gettery
   List<MemoryOsoba> get participants => _participants;
   bool get loadingParticipants => _loadingParticipants;
@@ -60,6 +66,11 @@ class PrintCenterController extends ChangeNotifier {
   bool? get appendPossible => _appendPossible;
   bool get appendChecking => _appendChecking;
   String? get appendError => _appendError;
+
+  // Append analysis getters
+  AppendAnalysis? get appendAnalysis => _appendAnalysis;
+  bool get analysisInProgress => _analysisInProgress;
+  String? get analysisError => _analysisError;
 
   /// Initialization – subscribe to participants stream.
   void init() {
@@ -86,6 +97,10 @@ class PrintCenterController extends ChangeNotifier {
     _mode = PrintMode.full; // reset
     _simulatedPrinted = false;
     _lastResult = null;
+    // Reset append analysis state
+    _appendAnalysis = null;
+    _analysisInProgress = false;
+    _analysisError = null;
     notifyListeners();
 
     try {
@@ -148,6 +163,10 @@ class PrintCenterController extends ChangeNotifier {
     _appendPossible = null;
     _appendChecking = false;
     _appendError = null;
+    // Reset append analysis state
+    _appendAnalysis = null;
+    _analysisInProgress = false;
+    _analysisError = null;
     notifyListeners();
   }
 
@@ -244,6 +263,34 @@ class PrintCenterController extends ChangeNotifier {
       _appendError = 'Nepodařilo se ověřit append: $e';
     } finally {
       _appendChecking = false;
+      notifyListeners();
+    }
+  }
+
+  /// Analyze append scenario using three-pass algorithm
+  Future<void> analyzeAppendScenario() async {
+    if (_selected == null) return;
+    
+    _analysisInProgress = true;
+    _appendAnalysis = null;
+    _analysisError = null;
+    notifyListeners();
+    
+    try {
+      final template = GeneratePdfTemplate();
+      
+      final result = await template.analyzeAndBuildAppend(
+        osoba: _selected!,
+        omezeniList: _omezeni,
+        lekList: _leky,
+        zaznamList: _records,
+      );
+      
+      _appendAnalysis = result.analysis;
+    } catch (e) {
+      _analysisError = 'Nepodařilo se analyzovat: $e';
+    } finally {
+      _analysisInProgress = false;
       notifyListeners();
     }
   }
