@@ -4,7 +4,6 @@ import 'package:drift/drift.dart' as drift;
 import 'package:denik_zza/screens2/new_record_page.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
-import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'helpers/database_test_helper.dart';
 import 'setup_templates/hardcoded_setup.dart';
 
@@ -121,7 +120,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Try to save without selecting participant
-        final saveButton = find.text('Uložit do deníku');
+  final saveButton = find.byKey(const Key('save_button'));
         await tester.tap(saveButton);
         await tester.pumpAndSettle();
 
@@ -139,7 +138,7 @@ void main() {
           await tester.pumpAndSettle();
 
           // Try to save without title
-          final saveButton = find.text('Uložit do deníku');
+          final saveButton = find.byKey(const Key('save_button'));
           await tester.tap(saveButton);
           await tester.pumpAndSettle();
 
@@ -166,7 +165,7 @@ void main() {
           expect(find.text('Test Injury Title'), findsOneWidget);
 
           // Try to save - should work (or at least not show validation errors)
-          final saveButton = find.text('Uložit do deníku');
+          final saveButton = find.byKey(const Key('save_button'));
           await tester.tap(saveButton);
           await tester.pumpAndSettle();
 
@@ -205,8 +204,8 @@ void main() {
         await tester.pumpAndSettle();
 
         // Should show datetime section
-        expect(find.text('Čas záznamu'), findsOneWidget);
-        expect(find.text('Změnit'), findsOneWidget);
+  expect(find.text('Čas záznamu'), findsOneWidget);
+  expect(find.byKey(const Key('datetime_change_button')), findsOneWidget);
         
         // Should show default text indicating current time
         expect(find.textContaining('aktuální'), findsOneWidget);
@@ -222,7 +221,7 @@ void main() {
           await tester.pumpAndSettle();
 
           // The "Změnit" button should be enabled
-          final changeButton = find.text('Změnit');
+          final changeButton = find.byKey(const Key('datetime_change_button'));
           expect(changeButton, findsOneWidget);
           
           // Button should be tappable (this will open date picker, but we'll just verify the button exists)
@@ -242,10 +241,9 @@ void main() {
         await tester.pumpAndSettle();
 
         // Should show search area
-        expect(find.text('Vyhledat'), findsOneWidget);
-        
-        // Should have autocomplete widget
-        expect(find.byType(PersonAutocomplete), findsOneWidget);
+  expect(find.text('Vyhledat'), findsOneWidget);
+  // Should have autocomplete widget (by key per conventions)
+  expect(find.byKey(const Key('participant_autocomplete')), findsOneWidget);
       });
     });
 
@@ -268,7 +266,7 @@ void main() {
           expect(find.text('Neuloženo'), findsOneWidget);
 
           // 3. Try to save (should work since we have title and participant)
-          final saveButton = find.text('Uložit do deníku');
+          final saveButton = find.byKey(const Key('save_button'));
           await tester.tap(saveButton);
           await tester.pumpAndSettle();
 

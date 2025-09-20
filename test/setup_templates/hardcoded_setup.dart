@@ -194,6 +194,7 @@ class HardcodedTestSetup {
         lastName: Value(participant['lastName'] as String),
         birthDate: Value(participant['birthDate'] as DateTime),
         address: Value(participant['address'] as String),
+        note: Value(participant['note'] as String),
         insuranceCompanyFK: Value(insuranceId),
         zzaActionFK: Value(eventId), // Link participant to the event
         eligibleConfirmation: const Value(true),

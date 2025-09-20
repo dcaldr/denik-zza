@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/screens2/new_record_page.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
-import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'helpers/database_test_helper.dart';
 import 'setup_templates/hardcoded_setup.dart';
 
@@ -86,7 +85,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Try to save
-        final saveButton = find.text('Uložit do deníku');
+  final saveButton = find.byKey(const Key('save_button'));
         await tester.tap(saveButton);
         await tester.pumpAndSettle();
 
@@ -106,8 +105,8 @@ void main() {
         await tester.pumpAndSettle();
 
         // Check that datetime section exists and shows current time
-        expect(find.text('Čas záznamu'), findsOneWidget);
-        expect(find.text('Změnit'), findsOneWidget);
+  expect(find.text('Čas záznamu'), findsOneWidget);
+  expect(find.byKey(const Key('datetime_change_button')), findsOneWidget);
         
         // Timestamp should be preserved between participant changes
         // (This is more of a state management test - the UI shows the controls)
@@ -125,7 +124,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Tap the change timestamp button
-        final changeButton = find.text('Změnit');
+  final changeButton = find.byKey(const Key('datetime_change_button'));
         await tester.tap(changeButton);
         await tester.pump(); // Start date picker opening
         
@@ -168,7 +167,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Try to save with empty form
-        final saveButton = find.text('Uložit do deníku');
+  final saveButton = find.byKey(const Key('save_button'));
         await tester.tap(saveButton);
         await tester.pumpAndSettle();
 
@@ -197,8 +196,8 @@ void main() {
           await tester.pumpAndSettle();
         }
 
-        // Try to save
-        final saveButton = find.text('Uložit do deníku');
+  // Try to save
+  final saveButton = find.byKey(const Key('save_button'));
         await tester.tap(saveButton);
         await tester.pumpAndSettle();
 
@@ -220,7 +219,7 @@ void main() {
         expect(find.text('Účastník'), findsOneWidget);
         expect(find.text('Vyhledat'), findsOneWidget);
         expect(find.text('Čas záznamu'), findsOneWidget);
-        expect(find.text('Uložit do deníku'), findsOneWidget);
+  expect(find.byKey(const Key('save_button')), findsOneWidget);
 
         // Test with participant
         final participant = testParticipants.first;
@@ -234,7 +233,7 @@ void main() {
         expect(find.text('Nadpis'), findsOneWidget);
         expect(find.text('Popis úrazu a ošetření'), findsOneWidget);
         expect(find.text('Čas záznamu'), findsOneWidget);
-        expect(find.text('Uložit do deníku'), findsOneWidget);
+  expect(find.byKey(const Key('save_button')), findsOneWidget);
       });
 
       testWidgets('SCENARIO: Search functionality is always available', 
@@ -244,9 +243,9 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Search should always be visible
-        expect(find.text('Vyhledat'), findsOneWidget);
-        expect(find.byType(PersonAutocomplete), findsOneWidget);
+  // Search should always be visible
+  expect(find.text('Vyhledat'), findsOneWidget);
+  expect(find.byKey(const Key('participant_autocomplete')), findsOneWidget);
       });
     });
 
@@ -261,8 +260,8 @@ void main() {
         // 1. Verify warning state
         expect(find.text('Nejprve vyberte účastníka'), findsWidgets);
 
-        // 2. Try to save anyway
-        final saveButton = find.text('Uložit do deníku');
+  // 2. Try to save anyway
+  final saveButton = find.byKey(const Key('save_button'));
         await tester.tap(saveButton);
         await tester.pumpAndSettle();
 
@@ -290,8 +289,8 @@ void main() {
         // 3. Should show unsaved changes
         expect(find.text('Neuloženo'), findsOneWidget);
 
-        // 4. Save should work (no validation errors)
-        final saveButton = find.text('Uložit do deníku');
+  // 4. Save should work (no validation errors)
+  final saveButton = find.byKey(const Key('save_button'));
         await tester.tap(saveButton);
         await tester.pumpAndSettle();
 

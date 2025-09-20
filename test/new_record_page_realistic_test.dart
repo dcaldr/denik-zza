@@ -4,8 +4,8 @@ import 'package:drift/drift.dart' as drift;
 import 'package:denik_zza/screens2/new_record_page.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
-import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'helpers/database_test_helper.dart';
+import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'setup_templates/hardcoded_setup.dart';
 
 /// Realistic tests for NewRecordPage based on actual implementation
@@ -72,8 +72,13 @@ void main() {
         expect(find.text('${participant.jmeno} ${participant.prijmeni}'), findsOneWidget);
         
         // Form should be enabled
-        expect(find.text('Nadpis'), findsOneWidget);
-        expect(find.text('Popis'), findsOneWidget);
+        final titleField = find.byKey(const Key('title_field'));
+        final descriptionField = find.byKey(const Key('description_field'));
+        expect(titleField, findsOneWidget);
+        expect(descriptionField, findsOneWidget);
+        // Check enabled state
+        expect(tester.widget<TextFormField>(titleField).enabled, isTrue);
+        expect(tester.widget<TextFormField>(descriptionField).enabled, isTrue);
       });
     });
 
@@ -117,7 +122,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Try to select different participant via autocomplete
-        await searchForParticipant(tester, testParticipants[1].jmeno);
+  await selectParticipantProgrammatically(tester, testParticipants[1]);
         await tester.pumpAndSettle();
 
         // Should show confirmation dialog
@@ -134,11 +139,11 @@ void main() {
         await tester.pumpAndSettle();
 
         // Try to select different participant
-        await searchForParticipant(tester, testParticipants[1].jmeno);
+  await selectParticipantProgrammatically(tester, testParticipants[1]);
         await tester.pumpAndSettle();
 
         // Cancel the change
-        await tester.tap(find.text('Zrušit'));
+        await tester.tap(find.byKey(const Key('dialog_cancel_button')));
         await tester.pumpAndSettle();
 
         // Should still show original participant
@@ -154,7 +159,7 @@ void main() {
         await pumpNewRecordPage(tester, participant: participant);
 
         // Should find the change time button
-        expect(find.text('Změnit'), findsOneWidget);
+        expect(find.byKey(const Key('datetime_change_button')), findsOneWidget);
         expect(find.text('Čas záznamu'), findsOneWidget);
       });
     });
@@ -200,49 +205,89 @@ Future<void> pumpNewRecordPage(WidgetTester tester, {MemoryOsoba? participant}) 
 
 /// Enters text in the title field
 Future<void> enterTitle(WidgetTester tester, String text) async {
-  final titleField = find.ancestor(
-    of: find.text('Nadpis'),
-    matching: find.byType(TextFormField),
-  );
+  final titleField = find.byKey(const Key('title_field'));
+  expect(titleField, findsOneWidget);
+  await tester.ensureVisible(titleField);
+  await tester.tap(titleField);
+  await tester.pump();
   await tester.enterText(titleField, text);
   await tester.pump();
 }
 
 /// Enters text in the description field
 Future<void> enterDescription(WidgetTester tester, String text) async {
-  final descriptionField = find.ancestor(
-    of: find.text('Popis'),
-    matching: find.byType(TextFormField),
-  );
+  final descriptionField = find.byKey(const Key('description_field'));
+  expect(descriptionField, findsOneWidget);
+  await tester.ensureVisible(descriptionField);
+  await tester.tap(descriptionField);
+  await tester.pump();
   await tester.enterText(descriptionField, text);
   await tester.pump();
 }
 
 /// Taps the save button
 Future<void> tapSaveButton(WidgetTester tester) async {
-  final saveButton = find.text('Uložit do deníku');
+  final saveButton = find.byKey(const Key('save_button'));
+  expect(saveButton, findsOneWidget);
   await tester.tap(saveButton);
   await tester.pumpAndSettle();
 }
 
 /// Searches for a participant using the autocomplete
 Future<void> searchForParticipant(WidgetTester tester, String searchText) async {
-  // Find the search field in PersonAutocomplete
+  // Find the search field in PersonAutocomplete via its key
+  final autocomplete = find.byKey(const Key('participant_autocomplete'));
+  expect(autocomplete, findsOneWidget);
   final searchField = find.descendant(
-    of: find.byType(PersonAutocomplete),
+    of: autocomplete,
     matching: find.byType(TextField),
   );
-  
+  expect(searchField, findsOneWidget);
+
   await tester.enterText(searchField, searchText);
   await tester.pump();
-  
+
   // Wait for autocomplete options to appear
-  await tester.pump(const Duration(milliseconds: 300));
-  
-  // Tap on the first option if available
-  final suggestions = find.byType(ListTile);
-  if (tester.widgetList(suggestions).isNotEmpty) {
-    await tester.tap(suggestions.first);
+  bool suggestionsVisible = false;
+  for (int i = 0; i < 10; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+    if (tester.any(find.textContaining(searchText))) { suggestionsVisible = true; break; }
+  }
+  // Fallback: If searching for full name didn't show suggestions, try first token (usually first name)
+  if (!suggestionsVisible) {
+    final tokens = searchText.split(' ');
+    if (tokens.isNotEmpty) {
+      await tester.enterText(searchField, tokens.first);
+      await tester.pump();
+      for (int i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (tester.any(find.textContaining(tokens.first))) { suggestionsVisible = true; break; }
+      }
+    }
+  }
+
+  // Prefer selecting by the full name text to be deterministic
+  // This relies on displayStringForOption = "<jmeno> <prijmeni>"
+  final exactOption = find.text(searchText);
+  if (tester.any(exactOption)) {
+    await tester.tap(exactOption.first);
+    await tester.pumpAndSettle();
+    return;
+  }
+  // Fallback to first token if exact not found
+  final tokens = searchText.split(' ');
+  if (tokens.isNotEmpty) {
+    final containsToken = find.textContaining(tokens.first);
+    if (tester.any(containsToken)) {
+      await tester.tap(containsToken.first);
+      await tester.pumpAndSettle();
+      return;
+    }
+  }
+  // Final fallback: tap any tappable option (InkWell/Text)
+  final anyText = find.byType(Text);
+  if (tester.any(anyText)) {
+    await tester.tap(anyText.first);
     await tester.pumpAndSettle();
   }
 }

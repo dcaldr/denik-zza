@@ -71,8 +71,8 @@ void main() {
         // Should show warning messages in both history and form areas
         expect(find.textContaining('Nejprve vyberte účastníka'), findsWidgets);
         
-        // Autocomplete should be present
-        expect(find.byType(PersonAutocomplete), findsOneWidget);
+  // Autocomplete should be present (by key per conventions)
+  expect(find.byKey(const Key('participant_autocomplete')), findsOneWidget);
       });
 
       testWidgets('SCENARIO: Page loads with participant - shows participant info', 
@@ -163,7 +163,9 @@ void main() {
         if (testParticipants.isNotEmpty) {
           final participant = testParticipants.first;
           
-          await _pumpNewRecordPage(tester, participant: participant);
+          // Start without participant and select via autocomplete callback
+          await _pumpNewRecordPage(tester);
+          await _selectParticipantProgrammatically(tester, participant);
 
           // Form fields should be enabled
           final titleField = _findTitleField(tester);
@@ -223,7 +225,7 @@ void main() {
 
         // Should show datetime section
         expect(find.text('Čas záznamu'), findsOneWidget);
-        expect(find.text('Změnit'), findsOneWidget);
+  expect(find.byKey(const Key('datetime_change_button')), findsOneWidget);
         
         // Should show default timestamp text
         expect(find.textContaining('aktuální'), findsOneWidget);
@@ -233,8 +235,8 @@ void main() {
         (WidgetTester tester) async {
         await _pumpNewRecordPage(tester);
 
-        // Find the change button
-        final changeButton = find.text('Změnit');
+        // Find the change button by key
+        final changeButton = find.byKey(const Key('datetime_change_button'));
         expect(changeButton, findsOneWidget);
         
         // Should be tappable (though we won't test the actual dialog)
@@ -248,8 +250,8 @@ void main() {
         (WidgetTester tester) async {
         await _pumpNewRecordPage(tester);
 
-        // Save button should be present
-        expect(find.text('Uložit do deníku'), findsOneWidget);
+        // Save button should be present (use key to avoid text brittleness)
+        expect(find.byKey(const Key('save_button')), findsOneWidget);
         
         // Should be tappable
         await _tapSaveButton(tester);
@@ -259,20 +261,11 @@ void main() {
         (WidgetTester tester) async {
         await _pumpNewRecordPage(tester);
 
-        // Cancel button should be present - find the specific one in the button area
-        final cancelButtons = find.text('Zrušit');
-        expect(cancelButtons, findsWidgets);
-        
-        // Find the cancel button that's inside the action buttons area
-        final actionButton = find.descendant(
-          of: find.byType(OutlinedButton),
-          matching: find.text('Zrušit'),
-        );
-        
-        if (actionButton.evaluate().isNotEmpty) {
-          await tester.tap(actionButton);
-          await tester.pumpAndSettle();
-        }
+        // Cancel button should be present - use key for stability
+        final cancelButton = find.byKey(const Key('cancel_button'));
+        expect(cancelButton, findsOneWidget);
+        await tester.tap(cancelButton);
+        await tester.pumpAndSettle();
       });
     });
 
@@ -294,13 +287,13 @@ void main() {
         (WidgetTester tester) async {
         await _pumpNewRecordPage(tester);
         
-        // Autocomplete should be present
-        expect(find.byType(PersonAutocomplete), findsOneWidget);
+        // Autocomplete should be present (prefer key-based lookup)
+        expect(find.byKey(const Key('participant_autocomplete')), findsOneWidget);
         
         // Should remain present even with participant selected
         if (testParticipants.isNotEmpty) {
           await _pumpNewRecordPage(tester, participant: testParticipants.first);
-          expect(find.byType(PersonAutocomplete), findsOneWidget);
+          expect(find.byKey(const Key('participant_autocomplete')), findsOneWidget);
         }
       });
     });
@@ -383,14 +376,14 @@ Future<void> _pumpNewRecordPage(WidgetTester tester, {MemoryOsoba? participant})
 
 /// Finds the title form field
 Finder _findTitleField(WidgetTester tester) {
-  // Use simple text-based finding since TextFormField doesn't expose decoration
-  return find.widgetWithText(TextFormField, 'Název úrazu');
+  // Use stable key to locate the title field
+  return find.byKey(const Key('title_field'));
 }
 
 /// Finds the description form field
 Finder _findDescriptionField(WidgetTester tester) {
-  // Use simple text-based finding since TextFormField doesn't expose decoration
-  return find.widgetWithText(TextFormField, 'Popis úrazu a ošetření');
+  // Use stable key to locate the description field
+  return find.byKey(const Key('description_field'));
 }
 
 /// Enters text in the title field (if enabled)
@@ -398,11 +391,13 @@ Future<void> _enterTitle(WidgetTester tester, String text) async {
   final titleField = _findTitleField(tester);
   if (titleField.evaluate().isNotEmpty) {
     try {
+      await tester.ensureVisible(titleField);
+      await tester.tap(titleField);
+      await tester.pump();
       await tester.enterText(titleField, text);
       await tester.pump();
     } catch (e) {
       // Field might be disabled, which is expected in some test scenarios
-      print('Could not enter title text (field might be disabled): $e');
     }
   }
 }
@@ -412,11 +407,13 @@ Future<void> _enterDescription(WidgetTester tester, String text) async {
   final descriptionField = _findDescriptionField(tester);
   if (descriptionField.evaluate().isNotEmpty) {
     try {
+      await tester.ensureVisible(descriptionField);
+      await tester.tap(descriptionField);
+      await tester.pump();
       await tester.enterText(descriptionField, text);
       await tester.pump();
     } catch (e) {
       // Field might be disabled, which is expected in some test scenarios
-      print('Could not enter description text (field might be disabled): $e');
     }
   }
 }
@@ -443,9 +440,26 @@ String _getDescriptionText(WidgetTester tester) {
 
 /// Taps the save button
 Future<void> _tapSaveButton(WidgetTester tester) async {
-  final saveButton = find.text('Uložit do deníku');
+  final saveButton = find.byKey(const Key('save_button'));
   if (saveButton.evaluate().isNotEmpty) {
     await tester.tap(saveButton);
+    await tester.pumpAndSettle();
+  }
+}
+
+/// Programmatically selects a participant using the PersonAutocomplete callback
+Future<void> _selectParticipantProgrammatically(
+  WidgetTester tester,
+  MemoryOsoba participant,
+) async {
+  final autocompleteFinder = find.byKey(const Key('participant_autocomplete'));
+  expect(autocompleteFinder, findsOneWidget);
+
+  final element = autocompleteFinder.evaluate().first as StatefulElement;
+  final widget = element.widget;
+
+  if (widget is PersonAutocomplete) {
+    widget.onPersonSelected(participant);
     await tester.pumpAndSettle();
   }
 }

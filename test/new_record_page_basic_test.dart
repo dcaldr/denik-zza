@@ -76,7 +76,7 @@ void main() {
       // Should have form fields
       expect(find.text('Nadpis'), findsOneWidget);
       expect(find.text('Popis úrazu a ošetření'), findsOneWidget);
-      expect(find.text('Uložit do deníku'), findsOneWidget);
+  expect(find.byKey(const Key('save_button')), findsOneWidget);
     });
 
     testWidgets('should show datetime section', (WidgetTester tester) async {
@@ -89,7 +89,7 @@ void main() {
 
       // Should have datetime section
       expect(find.text('Čas záznamu'), findsOneWidget);
-      expect(find.text('Změnit'), findsOneWidget);
+  expect(find.byKey(const Key('datetime_change_button')), findsOneWidget);
     });
 
     testWidgets('should validate title field when participant is selected', (WidgetTester tester) async {
@@ -104,7 +104,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Try to save without entering title
-        final saveButton = find.text('Uložit do deníku');
+  final saveButton = find.byKey(const Key('save_button'));
         await tester.tap(saveButton);
         await tester.pumpAndSettle();
 
@@ -122,7 +122,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Try to save without selecting participant
-      final saveButton = find.text('Uložit do deníku');
+  final saveButton = find.byKey(const Key('save_button'));
       await tester.tap(saveButton);
       await tester.pumpAndSettle();
 
