@@ -3,6 +3,8 @@
 db.sqlite
 /test/rodne_cislo_hidden_test.dart
 lib/input/scratchpad.dart
+pubspec.lock
+**/pubspec.lock
 
 # Test database files
 /test/test_dbs/
@@ -129,4 +131,3 @@ coverage
 docs/reports/
 docs/reports/**
 /desktop.ini
-pubspec.lock
