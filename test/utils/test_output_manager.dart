@@ -26,7 +26,8 @@ import 'test_configuration.dart';
 ///   global app state. It is safe to use in concurrent tests as long as the
 ///   same directory paths aren’t deleted mid-run.
 class TestOutputManager {
-  static const String _testOutputsDir = 'test_outputs';
+  // Base directory for all persistent test artifacts is now under test/ for clarity
+  static const String _testOutputsDir = 'test/test_outputs';
   static const String _persistDir = 'persist';
   static const String _productionDir = 'production';
   static String? _persistRunId;
@@ -35,8 +36,8 @@ class TestOutputManager {
   /// Initialize test output directories based on current test mode.
   ///
   /// inMemory: no directories are created.
-  /// persist: ensures `test_outputs/persist` exists (but does not clean it).
-  /// production: ensures `test_outputs/production` exists if `isProductionSafe`.
+  /// persist: ensures `test/test_outputs/persist` exists (but does not clean it).
+  /// production: ensures `test/test_outputs/production` exists if `isProductionSafe`.
   static Future<void> initialize() async {
     final testMode = TestConfiguration.getTestMode();
     
@@ -103,15 +104,15 @@ class TestOutputManager {
   /// Get database file path for current test mode.
   ///
   /// - inMemory: returns an empty string (no file path).
-  /// - persist: returns `<test_outputs>/persist/<filename>`.
-  /// - production: returns `<test_outputs>/production/<filename>`.
+  /// - persist: returns `<test/test_outputs>/persist/<filename>`.
+  /// - production: returns `<test/test_outputs>/production/<filename>`.
   ///
   /// Consumers like UnifiedTestSetup can pass the returned path to
   /// AppDatabase(). Paths ending with `.db` are treated as file paths by
   /// AppDatabase; directory paths will have `db.sqlite` appended internally.
   ///
   /// Optional: Set [useRunDir] to true to place the DB file under a per-run
-  /// directory (e.g., `test_outputs/persist/test_YYYY.../<filename>`).
+  /// directory (e.g., `test/test_outputs/persist/test_YYYY.../<filename>`).
   static Future<String> getDatabasePath(String filename, {bool useRunDir = false}) async {
     final testMode = TestConfiguration.getTestMode();
     

@@ -11,7 +11,7 @@ enum FileManagerMode {
   /// In-memory testing mode - no disk operations, compatible with existing isTesting=true
   inMemory('inMemory'),
   
-  /// Persistent testing mode - writes to test_outputs directory for debugging
+  /// Persistent testing mode - writes to test/test_outputs directory for debugging
   persist('persist'),
   
   /// Production mode - normal filesystem operations  
@@ -42,7 +42,7 @@ enum FileManagerMode {
 ///
 /// Enhanced with three-mode architecture for testing infrastructure:
 /// - inMemory: No disk operations (compatible with existing isTesting=true)
-/// - persist: Writes to test_outputs directory for debugging
+/// - persist: Writes to test/test_outputs directory for debugging
 /// - production: Normal filesystem operations
 class FileManager {
   //TODO: test if eventDir is updated and returned as is in db
@@ -104,8 +104,8 @@ class FileManager {
           }
           return testDir;
         }
-        // Fallback to default test outputs
-        const testOutputDir = 'test_outputs';
+  // Fallback to default test outputs (under test/)
+  const testOutputDir = 'test/test_outputs';
         final testDir = Directory(testOutputDir);
         if (!testDir.existsSync()) {
           await testDir.create(recursive: true);
@@ -228,7 +228,7 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
             return _testOutputPath;
           }
           // Fallback to a default test path if testOutputPath not provided
-          const testOutputDir = 'test_outputs/databases';
+          const testOutputDir = 'test/test_outputs/databases';
           final testDir = Directory(testOutputDir);
           if (!testDir.existsSync()) {
             await testDir.create(recursive: true);

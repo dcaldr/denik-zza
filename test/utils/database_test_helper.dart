@@ -290,7 +290,7 @@ class DatabaseTestHelper {
   /// This method integrates with the unified testing infrastructure and
   /// automatically selects the database type based on TestConfiguration mode:
   /// - inMemory mode: Uses in-memory database
-  /// - persist mode: Uses file database in test_outputs directory
+  /// - persist mode: Uses file database in test/test_outputs directory
   /// - production mode: Throws error (should not be used in tests)
   /// 
   /// Usage with --dart-define:
@@ -329,7 +329,7 @@ class DatabaseTestHelper {
     }
   }
   
-  /// Create a persistent test database in test_outputs directory
+  /// Create a persistent test database in test/test_outputs directory
   static Future<AppDatabase> _createPersistentTestDatabase() async {
     // Get database path from TestOutputManager (per-run by default)
     final dbPath = await TestOutputManager.getDatabasePath('test_database.db', useRunDir: true);

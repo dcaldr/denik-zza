@@ -9,7 +9,7 @@ pubspec.lock
 # Test database files
 /test/test_dbs/
 *.testDB*.db
-test_outputs/
+/test/test_outputs/
 # generated files - build_runner
 # *.g.dart
 *.freezed.dart

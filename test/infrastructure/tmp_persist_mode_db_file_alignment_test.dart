@@ -11,7 +11,7 @@ import '../utils/unified_test_setup.dart';
 /// Persist-mode integration: DB and FileManager should align to the same per-run directory.
 ///
 /// What this test verifies (only meaningful in persist mode):
-/// - Database file is created under test_outputs/persist/<runId>/
+/// - Database file is created under test/test_outputs/persist/<runId>/
 /// - FileManager writes into the SAME <runId> directory when wired via UnifiedTestSetup
 /// - Basic DB operation succeeds (insert + read) to ensure the db file materializes
 /// - A simple file write through FileManager lands under the same run directory
@@ -58,7 +58,7 @@ void main() {
         return;
       }
 
-      // 1) Verify DB file path under runDir after a simple write to materialize the file
+  // 1) Verify DB file path under runDir after a simple write to materialize the file
       final insertId = await database.addInsuranceCompany(
         InsuranceCompaniesCompanion.insert(name: 'Persist Check Company'),
       );
@@ -70,10 +70,10 @@ void main() {
       // Allow a short delay for filesystem to flush on Windows
       await Future.delayed(const Duration(milliseconds: 75));
 
-    // Database path expectations
+  // Database path expectations
     // createDatabase(useRunDir: true) uses TestOutputManager.getDatabasePath('test_database.db', useRunDir: true)
     // Internally AppDatabase treats explicit .db file path as a file and opens it directly
-    final dbFile = File('${runDir!}/test_database.db');
+  final dbFile = File('${runDir!}/test_database.db');
       expect(await dbFile.exists(), isTrue, reason: 'DB file should exist under per-run directory');
       expect(dbFile.path.replaceAll('\\', '/').startsWith(runDir!.replaceAll('\\', '/')), isTrue);
 

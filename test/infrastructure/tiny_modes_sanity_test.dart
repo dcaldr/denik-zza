@@ -18,7 +18,7 @@ void main() {
         // Ensure clean slate (only for in-memory mode to avoid interfering with other modes)
         await TestOutputManager.cleanup();
 
-        // Initialize (should not create any test_outputs directories)
+  // Initialize (should not create any test/test_outputs directories)
         await TestOutputManager.initialize();
 
         final dbPath = await TestOutputManager.getDatabasePath('tiny.db');
@@ -57,7 +57,7 @@ void main() {
         // Verify file exists where expected
         final file = File(dbPath);
         expect(await file.exists(), true);
-        expect(dbPath.contains('test_outputs'), true);
+  expect(dbPath.contains('test/test_outputs'), true);
         expect(dbPath.contains('persist'), true);
       });
     });
@@ -85,7 +85,7 @@ void main() {
         }
       });
 
-      test('with confirmation, uses production outputs but still isolated under test_outputs/production', () async {
+  test('with confirmation, uses production outputs but still isolated under test/test_outputs/production', () async {
         // This test only runs in production mode with CONFIRM_PRODUCTION_TESTING=yes
         if (!(TestConfiguration.isProduction && TestConfiguration.isProductionSafe)) {
           return;
@@ -93,7 +93,7 @@ void main() {
 
         await TestOutputManager.initialize();
         final dbPath = await TestOutputManager.getDatabasePath('tiny_production_test.db', useRunDir: true);
-        expect(dbPath.contains('test_outputs'), true);
+  expect(dbPath.contains('test/test_outputs'), true);
         expect(dbPath.contains('production'), true);
 
         // Sanity: open and close DB
