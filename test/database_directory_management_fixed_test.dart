@@ -53,45 +53,59 @@ void main() {
     });
 
     test('should create databases with unique filenames', () async {
+      // Snapshot files before this test creates anything
+      final dir = Directory(testDbDir);
+      final before = dir
+          .listSync()
+          .whereType<File>()
+          .map((f) => f.path)
+          .toSet();
+
       // Create multiple databases quickly
       final databases = <AppDatabase>[];
-      
+
       try {
         for (int i = 0; i < 3; i++) {
           final db = DatabaseTestHelper.createTestDatabase(TestDatabaseType.file);
           databases.add(db);
-          
-          // Small delay to ensure different timestamps
+          // Force file creation by performing a write on each DB
+          await db.customStatement('CREATE TABLE IF NOT EXISTS _unique_test_$i (id INTEGER)');
+          // Small delay to reduce timestamp collision chances on some filesystems
           await Future.delayed(const Duration(milliseconds: 10));
         }
-        
+
         // Close all databases first
         for (final db in databases) {
           await db.close();
         }
-        
-        // Give filesystem time to sync
-        await Future.delayed(const Duration(milliseconds: 100));
-        
-        // Check that test files exist and have unique names
-        final dir = Directory(testDbDir);
-        final files = dir.listSync().whereType<File>();
-        final testDbFiles = files.where((f) => f.path.contains('testDB') && f.path.endsWith('.db')).toList();
-        
-        expect(testDbFiles.length, greaterThanOrEqualTo(1), reason: 'Should have at least 1 test database file from this test');
-        
-        // Verify all filenames are unique
-        final filenames = testDbFiles.map((f) => f.path).toSet();
-        expect(filenames.length, equals(testDbFiles.length), reason: 'All database files should have unique names');
-        
+
+  // Give filesystem time to sync (slightly longer for Windows)
+  await Future.delayed(const Duration(milliseconds: 250));
+
+        // Identify only files created by THIS test
+        final after = dir
+            .listSync()
+            .whereType<File>()
+            .map((f) => f.path)
+            .toSet();
+        final newFiles = after.difference(before)
+            .where((p) => p.contains('testDB') && p.endsWith('.db'))
+            .toList();
+
+        // We expect at least 3 distinct new files (one per created database)
+        expect(newFiles.length, greaterThanOrEqualTo(3),
+            reason: 'Expected at least 3 new database files created by this test');
+
+        // Verify new filenames are unique (defensive check if helper ever reuses a path)
+        final unique = newFiles.toSet();
+        expect(unique.length, equals(newFiles.length),
+            reason: 'Newly created database files must have unique paths');
       } finally {
         // Ensure cleanup even if test fails
         for (final db in databases) {
           try {
             await db.close();
-          } catch (e) {
-            // Ignore errors on cleanup
-          }
+          } catch (_) {}
         }
       }
     });
@@ -107,7 +121,7 @@ void main() {
       
       // Verify db2 doesn't have db1's data
       try {
-        final result = await db2.customSelect('SELECT COUNT(*) as count FROM test_isolation').get();
+        await db2.customSelect('SELECT COUNT(*) as count FROM test_isolation').get();
         // This should fail because the table doesn't exist in db2
         fail('Should have thrown an exception - tables should not exist in new database');
       } catch (e) {
@@ -120,51 +134,72 @@ void main() {
     });
 
     test('should successfully clean up test database files', () async {
+      // Track files before this test
+      final dir = Directory(testDbDir);
+      final before = dir
+          .listSync()
+          .whereType<File>()
+          .map((f) => f.path)
+          .toSet();
+
       // Create some test databases
       final databases = <AppDatabase>[];
-      
+
       try {
         for (int i = 0; i < 2; i++) {
           databases.add(DatabaseTestHelper.createTestDatabase(TestDatabaseType.file));
           await Future.delayed(const Duration(milliseconds: 10));
         }
-        
+
         // Use the databases to ensure they're created
         for (int i = 0; i < databases.length; i++) {
           await databases[i].customStatement('CREATE TABLE test_cleanup_$i (id INTEGER)');
         }
-        
       } finally {
         // Close databases
         for (final db in databases) {
           await db.close();
         }
       }
-      
+
       // Give filesystem time to sync
-      await Future.delayed(const Duration(milliseconds: 100));
-      
-      // Verify files exist
-      final dir = Directory(testDbDir);
-      final filesBefore = dir.listSync().whereType<File>()
-          .where((f) => f.path.contains('testDB') && f.path.endsWith('.db'))
+      await Future.delayed(const Duration(milliseconds: 150));
+
+      // Identify only files created by THIS test
+      final after = dir
+          .listSync()
+          .whereType<File>()
+          .map((f) => f.path)
+          .toSet();
+      final createdByThisTest = after
+          .difference(before)
+          .where((p) => p.contains('testDB') && p.endsWith('.db'))
           .toList();
-      final initialCount = filesBefore.length;
-      
+
+      // Sanity: ensure we actually created some files to clean
+      expect(createdByThisTest, isNotEmpty,
+          reason: 'This test must create some test database files');
+
       // Clean up using the helper method
       await DatabaseTestHelper.cleanupTestDatabaseDirectory(filePattern: 'testDB');
-      
-      // Verify cleanup worked
-      if (dir.existsSync()) {
-        await Future.delayed(const Duration(milliseconds: 100));
-        final filesAfter = dir.listSync().whereType<File>()
-            .where((f) => f.path.contains('testDB') && f.path.endsWith('.db'))
-            .toList();
-        
-        // Files should be cleaned up
-        expect(filesAfter.length, lessThan(initialCount), 
-               reason: 'Should have fewer test database files after cleanup');
+
+      // Retry a few times to avoid Windows file-lock hiccups
+      Future<bool> _allDeleted() async {
+        final existing = createdByThisTest.where((p) => File(p).existsSync()).toList();
+        return existing.isEmpty;
       }
+
+      const totalWaitMs = 1500;
+      const stepMs = 150;
+      int waited = 0;
+      while (waited < totalWaitMs && !await _allDeleted()) {
+        await Future.delayed(const Duration(milliseconds: stepMs));
+        waited += stepMs;
+      }
+
+      // Verify the specific files created in this test are gone
+      final stillThere = createdByThisTest.where((p) => File(p).existsSync()).toList();
+      expect(stillThere, isEmpty, reason: 'Cleanup should delete files created by this test');
     });
   });
 }

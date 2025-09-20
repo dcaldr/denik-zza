@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:denik_zza/screens2/event_list.dart';
 import 'hardcoded_setup.dart';
-import '../utils/database_test_helper.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 
 /// Development main that uses hardcoded test data
@@ -30,9 +29,8 @@ void main() async {
   
   try {
     // Set up test database with pre-loaded data using memory database
-    final db = await HardcodedTestSetup.setupTestData(
-      databaseType: TestDatabaseType.memory,
-    );
+    // Use default (memory) database type to avoid cross-library enum conflicts
+    final db = await HardcodedTestSetup.setupTestData();
     // Route app database access through the injected in-memory DB
     DatabaseWrapper.setTestMode();
     DatabaseWrapper.useTestDriftDatabase(db);
