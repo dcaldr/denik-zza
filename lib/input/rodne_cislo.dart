@@ -1,9 +1,16 @@
+/// Czech national identification number (rodné číslo) validation and parsing class
+/// 
+/// Handles validation of Czech national ID format and checksum calculation
+/// according to Czech Republic regulations
 class RodneCislo {
-/// tested rc
+  /// Tested national ID number
   String _rc;
   bool hasValidFormat = false;
   bool hasValidSum = false;
 
+  /// Creates a new RodneCislo instance and validates the provided number
+  /// 
+  /// [_rc] - the national ID number to validate
   RodneCislo(this._rc) {
     _rc = formatRc(_rc);
     if (!_isValidFormat(_rc)) {
@@ -12,24 +19,29 @@ class RodneCislo {
       hasValidFormat = true;
     }
     hasValidSum = isValidSum();
-
   }
 
+  /// Formats the national ID number by removing separators
+  /// 
+  /// Removes dashes, slashes, spaces, and all whitespace characters
   String formatRc(String rcCandidate) {
-  // Removes dashes, slashes, spaces, and all whitespace characters
-  return rcCandidate.replaceAll(RegExp(r'[-/\s]'), '');
-}
+    return rcCandidate.replaceAll(RegExp(r'[-/\s]'), '');
+  }
 
+  /// Validates the format of the national ID number
+  /// 
+  /// Checks length and ensures it contains only digits
   bool _isValidFormat(String rc) {
-    // Kontrola délky a toho, zda obsahuje pouze číslice (kromě případného lomítka)
+    // Check length and that it contains only digits (except possible slash)
     if (rc.length == 10 || (rc.length == 11 && rc[6] == '/')) {
-     // String digits = rc.replaceAll('/', '');
       return RegExp(r'^\d{9,10}$').hasMatch(rc);
     }
     return false;
   }
-  /// modus 11 - check
-  bool isValidSum(){
+  /// Validates checksum using modulo 11 algorithm
+  /// 
+  /// Returns true if the checksum is valid according to Czech national ID rules
+  bool isValidSum() {
     if (!_isValidFormat(_rc)) {
       return false;
     }
@@ -40,21 +52,26 @@ class RodneCislo {
     return (modulo == 0) || (modulo == 1 && _rc.endsWith('0'));
   }
 
+  /// Determines gender from the national ID number
+  /// 
+  /// Returns 1 for male, 2 for female based on month field
   int getPohlavi() {
-    //int mesic = getHrubyMesic();
     if (getHrubyMesic() < 50) {
-      return 1;
+      return 1; // Male
     } else {
-      return 2;
+      return 2; // Female
     }
   }
 
+  /// Extracts birth date from the national ID number
+  /// 
+  /// Handles century determination and month adjustments for gender
   DateTime getDatumNarozeni() {
     int rok = getRok();
     int mesic = getHrubyMesic();
     int den = getDen();
 
-    // Úprava měsíce pro ženy a alternativní čísla
+    // Month adjustment for women and alternative numbers
     if (mesic > 50) {
       mesic -= 50;
     }
@@ -62,6 +79,7 @@ class RodneCislo {
       mesic -= 20;
     }
 
+    // Century determination
     if (rok < 54) {
       rok += 2000;
     } else {
@@ -71,30 +89,33 @@ class RodneCislo {
     return DateTime(rok, mesic, den);
   }
 
+  /// Extracts day from national ID number
   int getDen() {
     int den = int.parse(_rc.substring(4, 6));
     return den;
   }
 
+  /// Extracts raw month value from national ID number (before gender adjustment)
   int getHrubyMesic() {
     int mesic = int.parse(_rc.substring(2, 4));
     return mesic;
   }
 
+  /// Extracts year from national ID number
   int getRok() {
     int rok = int.parse(_rc.substring(0, 2));
     return rok;
   }
-/// returns [_rc] in format 123456/7890
-  ///
-  /// returns in human readable format
+  /// Returns the national ID number in human-readable format (123456/7890)
+  /// 
+  /// Adds slash separator if not already present
   String getRc() {
-  String outRc = _rc;
-  if (!_rc.contains('/')) {
-    outRc = '${_rc.substring(0, 6)}/${_rc.substring(6)}';
+    String outRc = _rc;
+    if (!_rc.contains('/')) {
+      outRc = '${_rc.substring(0, 6)}/${_rc.substring(6)}';
+    }
+    return outRc;
   }
-  return outRc;
-}
 
   @override
   String toString() {

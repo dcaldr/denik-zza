@@ -1,4 +1,7 @@
-/// MIght be subjected to change: rename refactor to different files:
+/// CSV Input parsing controller class
+/// 
+/// Handles CSV file loading and converts data into person objects
+/// Might be subject to change: rename/refactor to different files
 library;
 
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
@@ -7,8 +10,6 @@ import 'package:denik_zza/input/rodne_cislo.dart';
 import 'package:logger/logger.dart';
 import 'csv_definitions.dart';
 import 'csv_reader.dart';
-
-
 
 var logger = Logger(
   printer: PrettyPrinter(),
@@ -19,74 +20,78 @@ var loggerNoStack = Logger(
 );
 
 
-/// Controlling class (?)
+/// Controlling class for CSV parsing and data processing
 class InputParser {
-  late Future<List<
-      List<String>>?> loadedData; // note: this is like pointer magic in c++
-  String filePath = ''; //FIXME: change to Path object
+  late Future<List<List<String>>?> loadedData; // CSV data loaded from file
+  String filePath = ''; // FIXME: change to Path object
   List<InputHold> definition = CsvDefinitions().mainCsv;
   List<Answer> parsedData = [];
-   PersonResult? result;
+  PersonResult? result;
 
   /// Parses one line of data and returns the result as [Answer]
   Future<Answer> parseLine(List<String> line) async {
     Answer answer = Answer();
-    //basic check if both are same lengths
+    
+    // Basic check if both arrays have same lengths
     if (line.length != definition.length) {
-      //TODO: better handling of this
+      // TODO: better handling of column mismatch
       answer.error.errorMsg += 'řádek nemá požadovaný počet sloupců';
       answer.error.lineContents = line.toString();
       answer.lineStatus = ParseStatus.bad;
+      logger.w('Line length mismatch: expected ${definition.length}, got ${line.length}');
       return answer;
     }
-    // for each item parse with coresponding parser
+    
+    // For each item parse with corresponding parser
     for (int i = 0; i < line.length; i++) {
       InputHold hold = definition[i];
       hold.addInput(line[i]);
       answer.data.add(hold);
     }
-    /// TODO: Check errors from between lines
+    
+    // TODO: Check errors from between lines
     answer.lineStatus = ParseStatus.ok;
     return answer;
   }
 
-
-
-  ///Gets and loads data from file
-  /// also calls [parseData]
+  /// Gets and loads data from file
+  /// Also calls [parseData]
   Future<void> getFile() async {
     CsvReader reader = CsvReader(filePath);
     if (reader.canLoadFile()) {
       loadedData = reader.readData();
       await parseData();
+    } else {
+      logger.e('Cannot load file: $filePath');
     }
   }
-  /// Skip header line
 
-  /// converts loaded data into [parsedData]
-  /// also creates [PersonResult]
+  /// Converts loaded data into [parsedData]
+  /// Also creates [PersonResult]
   Future<void> parseData() async {
     loggerNoStack.i("Parsing data");
     List<List<String>>? data = await loadedData;
     if (data == null) {
-      //TODO: better handling of this
+      // TODO: better handling of this
       loggerNoStack.i("No data loaded.");
       return;
     }
-    // for each line - do async parseLine, capture results in a list
-    // when entire finishies
-try {
-  parsedData = await Future.wait(data.map(parseLine));
-} catch (e, stackTrace) {
-logger.e("An error occurred: $e", stackTrace:  stackTrace);
-}
+    
+    // For each line - do async parseLine, capture results in a list
+    try {
+      parsedData = await Future.wait(data.map(parseLine));
+    } catch (e, stackTrace) {
+      logger.e("An error occurred during parsing: $e", stackTrace: stackTrace);
+    }
     result = PersonResult(parsedData);
   }
-  Future<PersonResult?> getResult() async{
-    if (result == null){
+
+  /// Returns the parsing result, loading file if necessary
+  Future<PersonResult?> getResult() async {
+    if (result == null) {
       await getFile();
     }
-    return  result;
+    return result;
   }
 }
 

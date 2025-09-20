@@ -67,10 +67,10 @@ class FileManager {
     return thisDir;
   }
 
-  /// creates directory for each event
+  /// Creates directory for each event
   ///
   /// [eventFolderName] - name of the eventDirectory
-  /// returns [Directory] that doesn't collide with possible existing directories
+  /// Returns [Directory] that doesn't collide with possible existing directories
   Future<Directory?> createNewEventDataDir(String eventFolderName) async {
     if (isTesting) return null;
     Directory? currentDir = await getHomeDir();
@@ -143,7 +143,7 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
     return isTesting ? null : homeDir?.path;
   }
 
-  /// reflect changes in current event, than tests [eventDir] correct structure
+  /// Reflects changes in current event, then tests [eventDir] correct structure
   ///
   /// Should be explicitly called from UI to better handle possible errors
   /// TODO: create UI Popup for catching errors - with option to recreate event directory
@@ -177,7 +177,7 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
     eventDir = candidate;
   }
 
-  /// simple backup of the database
+  /// Simple backup of the database to event directory
   Future<void> backupDB() async {
     if (eventDir == null) {
       if (!isTesting) logger.e('Event directory is null');
@@ -206,10 +206,10 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
     }
   }
 
-  /// returns directory where zpusobilosti are for current event
+  /// Returns directory where zpusobilosti are stored for current event
   ///
   /// Use in cooperation when getting zpusobilost files from [MemoryOsoba] instances
-  /// if [eventDir] is null, returns null
+  /// If [eventDir] is null, throws an exception
   Future<Directory> getZpusobilostFolder() async {
     if (eventDir == null) {
       if (!isTesting) logger.e('Event directory is null', stackTrace: StackTrace.current);
@@ -246,15 +246,15 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
     }
   }
 
-  /// tests if [MemoryOsoba.zpusobilostPath] is valid (and readable)
+  /// Tests if [MemoryOsoba.zpusobilostPath] is valid (and readable)
   ///
-  /// [expectedFile] is the file that should be found in the directory
-  /// if not found it will null it inside [MemoryOsoba] and return false
+  /// [osoba] - the person object containing the zpusobilost file path
+  /// If file is not found, it will set the path to null and return false
   /// TODO: add to intake_form.dart
   Future<bool> validateZpusobilost(MemoryOsoba osoba) async {
     final zpusobilostDir = await getZpusobilostFolder();
     if (osoba.potvrzeniPath == null) {
-      return true; // really true - because it's not an error
+      return true; // Not an error - file is optional
     }
     final expectedFile = File('${zpusobilostDir.path}/${osoba.potvrzeniPath}');
     if (await expectedFile.exists()) {
@@ -274,7 +274,7 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
   Future<void> _checkEventDirectoryExists(Directory candidate) async {
     if (!await candidate.exists()) {
       logger.e('Event directory not found: ${candidate.path}');
-      throw FileSystemException('Domovský adresář nenalezen: ${candidate.path}');
+      throw FileSystemException('Event directory not found: ${candidate.path}');
     }
   }
 
@@ -283,7 +283,7 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
       Directory subDir = Directory('${candidate.path}/$subFolder');
       if (!await subDir.exists()) {
         logger.e('Subfolder not found: $subFolder');
-        throw FileSystemException('Podadresář nenalezen: $subFolder');
+        throw FileSystemException('Subfolder not found: $subFolder in ${candidate.path}');
       }
     }
   }
