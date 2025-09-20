@@ -157,6 +157,30 @@ void main() {
 ## Advanced Features
 
 ### Global Test Database Override
+### Three-Mode Testing via --dart-define
+
+You can switch test modes using compile-time flags:
+
+- Default (in-memory):
+  - Run: `flutter test`
+  - Behavior: No disk writes, fastest execution.
+- Persist mode (writes to disk for debugging):
+  - Run: `flutter test --dart-define=TEST_MODE=persist`
+  - Behavior: Database file is created on disk under `test_outputs/persist` (ignored by git).
+- Production validation (guarded):
+  - Run: `flutter test --dart-define=TEST_MODE=production --dart-define=CONFIRM_PRODUCTION_TESTING=yes`
+  - Behavior: Uses production-like persistent paths; only for special validation.
+
+Under the hood:
+- `test/utils/test_configuration.dart` reads `TEST_MODE` and applies safety checks.
+- `test/utils/test_output_manager.dart` creates and manages `test_outputs/*` directories.
+- `test/utils/unified_test_setup.dart` wires the environment and constructs the database.
+- `AppDatabase` treats a provided `path` ending with `.db` as a file path, or uses a directory path plus `db.sqlite` if a folder path (or no path) is provided. This enables clean control in persist mode.
+
+Recommended patterns:
+- Prefer the `TestingSetupHelper.setupGroup()` wrapper in tests for consistent setup/teardown across modes.
+- Persist artifacts are placed in `test_outputs/` and are ignored by git.
+
 
 Force all tests to use the same database type (useful for CI/CD):
 
@@ -310,6 +334,9 @@ void main() {
 **Issue**: Test database files accumulating
 **Solution**: File databases auto-generate unique names and should be cleaned up
 
+**Issue**: Persist mode created a directory named like a file (e.g., `foo.db/db.sqlite`)
+**Solution**: Fixed in `AppDatabase` — paths ending with `.db` are now treated as file paths. If you pass a directory, `db.sqlite` is added automatically.
+
 ### Debugging
 
 ```dart
@@ -334,7 +361,7 @@ print('Global override: ${DatabaseTestHelper.getGlobalTestDatabaseOverride()}');
 
 ## Examples
 
-See `test/database_safety_proof_test.dart` for comprehensive examples demonstrating:
+See `test/infrastructure/testing_infrastructure_test.dart` and `test/database_safety_proof_test.dart` for comprehensive examples demonstrating:
 - Production safety guarantees
 - Test isolation
 - Schema consistency  

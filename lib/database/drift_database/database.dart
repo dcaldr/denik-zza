@@ -266,26 +266,35 @@ LazyDatabase _openConnection([String? path]) {
     if (path == ':memory:') {
       return NativeDatabase.memory();
     }
-    
-    // Special case for test database files (paths containing 'testDB')
-    if (path != null && path.contains('testDB')) {
+    // If a concrete file path was provided (ends with .db), use it directly
+    if (path != null && path.toLowerCase().endsWith('.db')) {
       final dbFile = File(path);
-      // Create directory if it doesn't exist
       final directory = dbFile.parent;
       if (!directory.existsSync()) {
         directory.createSync(recursive: true);
       }
-      
       if (Platform.isAndroid) {
         await applyWorkaroundToOpenSqlite3OnOldAndroidVersions();
       }
-      
+      return NativeDatabase.createInBackground(dbFile);
+    }
+    
+    // Backward-compat: Special case for historic test file paths (contain 'testDB')
+    if (path != null && path.contains('testDB')) {
+      final dbFile = File(path);
+      final directory = dbFile.parent;
+      if (!directory.existsSync()) {
+        directory.createSync(recursive: true);
+      }
+      if (Platform.isAndroid) {
+        await applyWorkaroundToOpenSqlite3OnOldAndroidVersions();
+      }
       return NativeDatabase.createInBackground(dbFile);
     }
     
     // Use FileManager to get the database path
     final fileManager = FileManager();
-    /// makes path to the database file if null or misssing use current directory;
+  /// makes path to the database file if null or missing use current directory;
     final dbPath = path ?? await fileManager.getDbFilePath() ?? '.';
     final dbFile = File(p.join(dbPath, 'db.sqlite'));
 

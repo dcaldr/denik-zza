@@ -13,6 +13,8 @@ class UnifiedTestSetup {
         return AppDatabase.testInMemory();
       case TestMode.persist:
         await TestOutputManager.initialize();
+        // Persist mode: provide a concrete .db file path; AppDatabase will treat
+        // paths ending with .db as file paths and open them directly.
         final dbPath = TestOutputManager.getDatabasePath('test_database.db');
         return AppDatabase(dbPath);
       case TestMode.production:
