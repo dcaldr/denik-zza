@@ -291,3 +291,16 @@ Future<void> searchForParticipant(WidgetTester tester, String searchText) async 
     await tester.pumpAndSettle();
   }
 }
+
+/// Programmatically selects a participant by invoking the autocomplete's callback
+Future<void> selectParticipantProgrammatically(
+  WidgetTester tester,
+  MemoryOsoba participant,
+) async {
+  final autocompleteFinder = find.byKey(const Key('participant_autocomplete'));
+  expect(autocompleteFinder, findsOneWidget);
+  final autocompleteWidget = tester.widget<PersonAutocomplete>(autocompleteFinder);
+  // Deterministic selection without relying on overlay popups
+  autocompleteWidget.onPersonSelected(participant);
+  await tester.pumpAndSettle();
+}

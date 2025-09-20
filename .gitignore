@@ -129,3 +129,4 @@ coverage
 docs/reports/
 docs/reports/**
 /desktop.ini
+pubspec.lock
