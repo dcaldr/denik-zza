@@ -1,3 +1,5 @@
+import 'dart:math';
+
 /// Czech national identification number (rodné číslo) validation and parsing class
 /// 
 /// Handles validation of Czech national ID format and checksum calculation
@@ -21,11 +23,22 @@ class RodneCislo {
     hasValidSum = isValidSum();
   }
 
-  /// Formats the national ID number by removing separators
+  /// Formats the national ID number by removing separators and fixing Excel zero stripping
   /// 
-  /// Removes dashes, slashes, spaces, and all whitespace characters
+  /// Removes dashes, slashes, spaces, and all whitespace characters.
+  /// Fixes Excel's leading zero stripping by padding to current format length (10 digits).
   String formatRc(String rcCandidate) {
-    return rcCandidate.replaceAll(RegExp(r'[-/\s]'), '');
+    // Remove all separators
+    String cleaned = rcCandidate.replaceAll(RegExp(r'[-/\s]'), '');
+    
+    // Fix Excel leading zero stripping issue
+    // If the number is shorter than expected (10 digits for NEW format), pad with leading zeros
+    // Only pad if it's all digits and reasonable length (6-9 digits)
+    if (cleaned.length < 10 && cleaned.length >= 6 && RegExp(r'^\d+$').hasMatch(cleaned)) {
+      cleaned = cleaned.padLeft(10, '0');
+    }
+    
+    return cleaned;
   }
 
   /// Validates the format of the national ID number
@@ -117,8 +130,110 @@ class RodneCislo {
     return outRc;
   }
 
+  /// Returns the raw formatted national ID number without slash (for testing)
+  /// 
+  /// Used primarily for testing the formatRc method
+  String getRawRc() {
+    return _rc;
+  }
+
   @override
   String toString() {
     return getRc();
+  }
+
+  // =====================================================
+  // Generator Methods for Testing
+  // =====================================================
+
+  /// Generates a valid rodné číslo for a specific year
+  /// 
+  /// [year] - Birth year (1950-2030)
+  /// [isFemale] - Optional gender specification (random if null)
+  /// Returns a valid RodneCislo instance
+  static RodneCislo generateForYear(int year, {bool? isFemale}) {
+    final random = Random();
+    
+    // Generate random month and day
+    final month = 1 + random.nextInt(12);
+    final maxDay = DateTime(year, month + 1, 0).day;
+    final day = 1 + random.nextInt(maxDay);
+    
+    return generateForDate(DateTime(year, month, day), isFemale: isFemale);
+  }
+
+  /// Generates a valid rodné číslo for a specific date
+  /// 
+  /// [birthDate] - Exact birth date
+  /// [isFemale] - Optional gender specification (random if null)
+  /// Returns a valid RodneCislo instance
+  static RodneCislo generateForDate(DateTime birthDate, {bool? isFemale}) {
+    final random = Random();
+    
+    // Determine gender
+    final isActuallyFemale = isFemale ?? random.nextBool();
+    
+    // Convert year to 2-digit format
+    int yy = birthDate.year % 100;
+    
+    // Month with gender encoding
+    int month = birthDate.month;
+    if (isActuallyFemale) {
+      month += 50;
+    }
+    
+    // Format date part: YYMMDD
+    String datePart = '${yy.toString().padLeft(2, '0')}'
+                     '${month.toString().padLeft(2, '0')}'
+                     '${birthDate.day.toString().padLeft(2, '0')}';
+    
+    // Generate sequence number (100-999 for new format)
+    int sequence = 100 + random.nextInt(899);
+    
+    // Calculate checksum digit that satisfies existing validation
+    String nineDigits = datePart + sequence.toString();
+    int checksum = _calculateChecksum(nineDigits);
+    
+    // Create full 10-digit RC
+    String fullRc = nineDigits + checksum.toString();
+    
+    return RodneCislo(fullRc);
+  }
+
+  /// Generates a completely random valid rodné číslo
+  /// 
+  /// [isFemale] - Optional gender specification (random if null)
+  /// Returns a valid RodneCislo instance
+  static RodneCislo generateRandom({bool? isFemale}) {
+    final random = Random();
+    
+    // Generate random year between 1950-2030
+    final year = 1950 + random.nextInt(81);
+    
+    return generateForYear(year, isFemale: isFemale);
+  }
+
+  /// Calculates the checksum digit for Czech rodné číslo
+  /// 
+  /// Uses the same algorithm as the existing validation (modulo 11)
+  static int _calculateChecksum(String nineDigits) {
+    if (nineDigits.length != 9) {
+      throw ArgumentError('Expected exactly 9 digits for checksum calculation');
+    }
+    
+    // Find a checksum digit (0-9) that makes the whole 10-digit number
+    // satisfy the existing validation: (whole_number % 11 == 0) or (whole_number % 11 == 1 and ends with 0)
+    for (int checksum = 0; checksum <= 9; checksum++) {
+      String fullNumber = nineDigits + checksum.toString();
+      int fullAsInt = int.parse(fullNumber);
+      int modulo = fullAsInt % 11;
+      
+      if (modulo == 0 || (modulo == 1 && fullNumber.endsWith('0'))) {
+        return checksum;
+      }
+    }
+    
+    // If no valid checksum found, return 0 as fallback
+    return 0;
   }
 }
