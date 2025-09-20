@@ -7,10 +7,44 @@ import '../database/database_interface.dart';
 import '../database/database_wrapper.dart';
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
 
+/// File Manager Mode enumeration following DatabaseWrapper pattern
+enum FileManagerMode {
+  /// In-memory testing mode - no disk operations, compatible with existing isTesting=true
+  inMemory('inMemory'),
+  
+  /// Persistent testing mode - writes to test_outputs directory for debugging
+  persist('persist'),
+  
+  /// Production mode - normal filesystem operations  
+  production('production');
+
+  const FileManagerMode(this.value);
+  final String value;
+
+  /// Create FileManagerMode from string value
+  static FileManagerMode fromString(String value) {
+    switch (value.toLowerCase()) {
+      case 'inmemory':
+        return FileManagerMode.inMemory;
+      case 'persist':
+        return FileManagerMode.persist;
+      case 'production':
+        return FileManagerMode.production;
+      default:
+        throw ArgumentError('Invalid FileManager mode: $value');
+    }
+  }
+}
+
 /// Class to manage file operations - ie. "data directory"
 ///
 /// Provides db location, folder structure for each event, uploading file to each event
 /// Also handles possible same name errors
+///
+/// Enhanced with three-mode architecture for testing infrastructure:
+/// - inMemory: No disk operations (compatible with existing isTesting=true)
+/// - persist: Writes to test_outputs directory for debugging
+/// - production: Normal filesystem operations
 class FileManager {
   //TODO: test if eventDir is updated and returned as is in db
 
@@ -20,18 +54,37 @@ class FileManager {
   Directory? homeDir;
   Directory? eventDir;
   Logger logger = Logger();
+  
+  /// DEPRECATED: Use _mode instead. Maintained for backward compatibility.
   /// if true, [FileManager] is in testing mode and does not create directories
   bool isTesting;
+  
+  /// Current FileManager mode (inMemory, persist, production)
+  FileManagerMode _mode;
+  
+  /// Optional path for persistent testing mode
+  String? _testOutputPath;
+  
   List<String> subFolders = ['backup', 'zpusobilosti', 'vysetreni']; //FIXME - duplicate maybe keep only the one in factory
 
-  FileManager._internal() : isTesting = false;
+  FileManager._internal() : isTesting = false, _mode = FileManagerMode.production;
 
-  factory FileManager({Directory? homeDir, bool? isTesting}) {
+  factory FileManager({Directory? homeDir, bool? isTesting, String? testOutputPath}) {
+    // Handle backward compatibility for isTesting parameter
     if (isTesting != null) {
       _instance.isTesting = isTesting;
+      _instance._mode = isTesting ? FileManagerMode.inMemory : FileManagerMode.production;
     }
+    
+    // Handle testOutputPath parameter for persistent testing
+    if (testOutputPath != null) {
+      _instance._testOutputPath = testOutputPath;
+      _instance._mode = FileManagerMode.persist;
+      _instance.isTesting = false; // persist mode is not the old "isTesting" concept
+    }
+    
     _instance.homeDir = homeDir;
-    if (_instance.isTesting) {
+    if (_instance._mode == FileManagerMode.inMemory) {
       _instance.subFolders = [];
     } else {
       _instance.subFolders = ['backup', 'zpusobilosti', 'vysetreni']; //FIXME: dirt fix - duplicate code
@@ -40,14 +93,37 @@ class FileManager {
   }
 
   Future<Directory?> getHomeDir() async {
-    return isTesting ? null : (homeDir ?? await createHomeDataDir());
+    switch (_mode) {
+      case FileManagerMode.inMemory:
+        return null; // Backward compatible with isTesting behavior
+      case FileManagerMode.persist:
+        // For persistent testing, use test output path if available
+        if (_testOutputPath != null) {
+          final testDir = Directory(_testOutputPath!);
+          if (!testDir.existsSync()) {
+            await testDir.create(recursive: true);
+          }
+          return testDir;
+        }
+        // Fallback to default test outputs
+        const testOutputDir = 'test_outputs';
+        final testDir = Directory(testOutputDir);
+        if (!testDir.existsSync()) {
+          await testDir.create(recursive: true);
+        }
+        return testDir;
+      case FileManagerMode.production:
+        // Original production behavior
+        return homeDir ?? await createHomeDataDir();
+    }
   }
 
   /// creates home directory for entire app
   ///
   /// or changes the directory if [inputPath] is provided
   Future<Directory?> createHomeDataDir([String? inputPath]) async {
-    if (isTesting) return null;
+    if (_mode == FileManagerMode.inMemory) return null; // Backward compatible
+    
     if (homeDir != null && (inputPath == null || inputPath == homeDir?.path)) {
       return homeDir;
     }
@@ -72,7 +148,8 @@ class FileManager {
   /// [eventFolderName] - name of the eventDirectory
   /// Returns [Directory] that doesn't collide with possible existing directories
   Future<Directory?> createNewEventDataDir(String eventFolderName) async {
-    if (isTesting) return null;
+    if (_mode == FileManagerMode.inMemory) return null; // Backward compatible
+    
     Directory? currentDir = await getHomeDir();
     String? newName = await nameCollisionSolver(currentDir!, eventFolderName);
     if (newName == null) {
@@ -91,7 +168,8 @@ class FileManager {
   }
 
   Future<Directory?> createSubfolders(Directory baseDir) async {
-    if (isTesting) return null;
+    if (_mode == FileManagerMode.inMemory) return null; // Backward compatible
+    
     for (var subFolder in subFolders) {
       Directory subDir = Directory('${baseDir.path}/$subFolder');
       try {
@@ -105,7 +183,8 @@ class FileManager {
   }
 
 Future<String?> nameCollisionSolver(Directory base, String inName) async {
-  if (isTesting) return null;
+  if (_mode == FileManagerMode.inMemory) return null; // Backward compatible
+  
   if (!await base.exists()) {
     logger.e('Base directory does not exist: ${base.path}');
     return null;
@@ -133,14 +212,94 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
 }
 
   Future<String?> getDbFilePath() async {
-    if (isTesting) return null;
-    final homeDir = await getHomeDir();
-    return homeDir?.path;
+    switch (_mode) {
+      case FileManagerMode.inMemory:
+        return null; // Triggers in-memory database - backward compatible
+        
+      case FileManagerMode.persist:
+        // Use TestOutputManager for persistent testing paths
+        try {
+          // For persistent testing, we need a way to get the test database path
+          // This is a simplified approach - in a full implementation you'd integrate with TestOutputManager
+          if (_testOutputPath != null) {
+            final testDir = Directory(_testOutputPath!);
+            if (!testDir.existsSync()) {
+              await testDir.create(recursive: true);
+            }
+            return _testOutputPath;
+          }
+          // Fallback to a default test path if testOutputPath not provided
+          const testOutputDir = 'test_outputs/databases';
+          final testDir = Directory(testOutputDir);
+          if (!testDir.existsSync()) {
+            await testDir.create(recursive: true);
+          }
+          return testOutputDir;
+        } catch (e) {
+          logger.e('Error setting up persistent testing path: $e');
+          return null; // Fallback to in-memory
+        }
+        
+      case FileManagerMode.production:
+        // Original production behavior
+        final homeDir = await getHomeDir();
+        return homeDir?.path;
+    }
   }
 
   @Deprecated('Use getDbFilePath() instead')
   String? getDbFilePathSync() {
     return isTesting ? null : homeDir?.path;
+  }
+
+  // Enhanced FileManager methods following DatabaseWrapper pattern
+
+  /// Get current FileManager mode
+  FileManagerMode get currentMode => _mode;
+
+  /// Check if running in memory mode (no disk operations)
+  bool get isInMemoryMode => _mode == FileManagerMode.inMemory;
+
+  /// Check if running in persistent testing mode
+  bool get isPersistMode => _mode == FileManagerMode.persist;
+
+  /// Check if running in production mode
+  bool get isProductionMode => _mode == FileManagerMode.production;
+
+  /// Set FileManager to testing mode (in-memory, no disk operations)
+  /// Maintains backward compatibility with existing test patterns
+  void setTestMode() {
+    _mode = FileManagerMode.inMemory;
+    isTesting = true;
+    subFolders = [];
+  }
+
+  /// Set FileManager to persistent testing mode with specified output path
+  void setPersistentTestMode(String testOutputPath) {
+    _mode = FileManagerMode.persist;
+    _testOutputPath = testOutputPath;
+    isTesting = false; // persist mode is different from legacy isTesting
+    subFolders = ['backup', 'zpusobilosti', 'vysetreni'];
+  }
+
+  /// Reset FileManager to production mode
+  void resetToProduction() {
+    _mode = FileManagerMode.production;
+    _testOutputPath = null;
+    isTesting = false;
+    subFolders = ['backup', 'zpusobilosti', 'vysetreni'];
+  }
+
+  /// Get FileManager configuration summary for debugging
+  Map<String, dynamic> getConfigSummary() {
+    return {
+      'mode': _mode.value,
+      'isTesting': isTesting,
+      'testOutputPath': _testOutputPath,
+      'homeDir': homeDir?.path,
+      'eventDir': eventDir?.path,
+      'subFolders': subFolders,
+    };
   }
 
   /// Reflects changes in current event, then tests [eventDir] correct structure
@@ -180,7 +339,7 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
   /// Simple backup of the database to event directory
   Future<void> backupDB() async {
     if (eventDir == null) {
-      if (!isTesting) logger.e('Event directory is null');
+      if (_mode != FileManagerMode.inMemory) logger.e('Event directory is null');
       return;
     }
 
@@ -212,8 +371,8 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
   /// If [eventDir] is null, throws an exception
   Future<Directory> getZpusobilostFolder() async {
     if (eventDir == null) {
-      if (!isTesting) logger.e('Event directory is null', stackTrace: StackTrace.current);
-      logger.i('is testing set to $isTesting');
+      if (_mode != FileManagerMode.inMemory) logger.e('Event directory is null', stackTrace: StackTrace.current);
+      logger.i('FileManager mode: ${_mode.value}');
       return throw Exception('Event directory is null');
     }
     return Directory('${eventDir!.path}/zpusobilosti');
@@ -221,7 +380,7 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
 
   Future<String?> putZpusobilost(File pickedFile) async {
     if (eventDir == null) {
-      if (!isTesting) logger.e('Event directory is null');
+      if (_mode != FileManagerMode.inMemory) logger.e('Event directory is null');
       return null;
     }
 
