@@ -49,8 +49,8 @@ better way of handling file persistance in tests (now special way for db, fileMa
 ### cleanup 
 - find bad tests - fix unnecessary prints etc. 
 - remove unnecessary tests / obvious tests 
-- 
-
+- remove tests targeting print_ops (old version of print_ops2)
+- remove tests targeting screens (old versions of screens2)
 ### move 
 - ?? mirror /lib ?? 
 - but break into smaller somethings
