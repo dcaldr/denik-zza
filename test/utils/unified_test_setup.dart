@@ -1,11 +1,12 @@
 import '../../lib/database/drift_database/database.dart';
+import '../../lib/input/file_manager.dart';
 import 'test_configuration.dart';
 import 'test_output_manager.dart';
 
 /// Unified test setup coordinating all testing infrastructure components
 class UnifiedTestSetup {
   /// Create a test database with proper mode configuration
-  static Future<AppDatabase> createDatabase() async {
+  static Future<AppDatabase> createDatabase({bool useFileManagerPersist = false, bool useRunDir = true}) async {
     final testMode = TestConfiguration.getTestMode();
     
     switch (testMode) {
@@ -15,14 +16,19 @@ class UnifiedTestSetup {
         await TestOutputManager.initialize();
         // Persist mode: provide a concrete .db file path; AppDatabase will treat
         // paths ending with .db as file paths and open them directly.
-        final dbPath = TestOutputManager.getDatabasePath('test_database.db');
+        if (useFileManagerPersist) {
+          // Optionally configure FileManager to point to the per-run directory
+          final runDir = await TestOutputManager.getOrCreatePersistRunDirectory();
+          FileManager().setPersistentTestMode(runDir);
+        }
+        final dbPath = await TestOutputManager.getDatabasePath('test_database.db', useRunDir: useRunDir);
         return AppDatabase(dbPath);
       case TestMode.production:
         if (!TestConfiguration.isProductionSafe) {
           throw Exception('Production testing requires CONFIRM_PRODUCTION_TESTING=yes');
         }
         await TestOutputManager.initialize();
-        final dbPath = TestOutputManager.getDatabasePath('production_test_database.db');
+        final dbPath = await TestOutputManager.getDatabasePath('production_test_database.db', useRunDir: useRunDir);
         return AppDatabase(dbPath);
     }
   }

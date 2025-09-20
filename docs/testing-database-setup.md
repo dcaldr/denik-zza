@@ -160,7 +160,25 @@ void main() {
 ### Three-Mode Testing via --dart-define
 
 You can switch test modes using compile-time flags:
+### Per-run directories (isolation)
 
+Persistent tests now support per-run directories to keep artifacts grouped and avoid cross-run collisions when running tests in parallel:
+
+- TestOutputManager.getDatabasePath is async and accepts a named parameter `useRunDir` (default true in our helpers) to place the `.db` file under a per-run path like `test_outputs/persist/test_YYYYMMDD_HHMMSS_rand/<filename>`.
+- You can also access the run directory directly via `getOrCreatePersistRunDirectory()` and `getOrCreateProductionRunDirectory()`.
+
+Notes:
+- Do NOT delete per-run directories in per-test tearDown. Persist mode is meant to keep artifacts for the whole run and post-mortem debugging.
+- AppDatabase treats paths ending with `.db` as file paths; directory paths will get `db.sqlite` appended internally.
+
+### Optional FileManager wiring for persist runs
+
+For app-aligned tests where you also want FileManager to point to the same output directory, UnifiedTestSetup can configure FileManager to the current run directory:
+
+- Call `UnifiedTestSetup.createDatabase(useFileManagerPersist: true, useRunDir: true)` in your setup.
+- This sets `FileManager().setPersistentTestMode(<runDir>)` so any file operations use the same per-run folder.
+
+Default behavior for concurrency-heavy suites remains the direct `.db` path injection without altering FileManager.
 - Default (in-memory):
   - Run: `flutter test`
   - Behavior: No disk writes, fastest execution.

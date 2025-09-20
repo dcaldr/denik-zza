@@ -50,12 +50,12 @@ void main() {
         await TestOutputManager.cleanup();
       });
       
-      test('should handle inMemory mode (no directory creation)', () async {
+  test('should handle inMemory mode (no directory creation)', () async {
         // In inMemory mode, no directories should be created
         await TestOutputManager.initialize();
         
         // Directory might exist from previous runs, but shouldn't be created by inMemory mode
-        final dbPath = TestOutputManager.getDatabasePath('test.db');
+        final dbPath = await TestOutputManager.getDatabasePath('test.db');
         expect(dbPath, isEmpty); // inMemory mode returns empty path
       });
       

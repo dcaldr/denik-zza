@@ -1,11 +1,10 @@
 import 'dart:io';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_akce.dart';
+import 'package:denik_zza/database/database_interface.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
-
-import '../database/database_interface.dart';
-import '../database/database_wrapper.dart';
-import '../database/in_memory_structures_tmp/memory_osoba.dart';
 
 /// File Manager Mode enumeration following DatabaseWrapper pattern
 enum FileManagerMode {

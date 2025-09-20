@@ -330,12 +330,9 @@ class DatabaseTestHelper {
   }
   
   /// Create a persistent test database in test_outputs directory
-  static AppDatabase _createPersistentTestDatabase() {
-    // Get database path from TestOutputManager
-    final dbPath = TestOutputManager.getDatabasePath('test_database.db');
-    if (dbPath == null) {
-      throw StateError('Failed to get database path from TestOutputManager');
-    }
+  static Future<AppDatabase> _createPersistentTestDatabase() async {
+    // Get database path from TestOutputManager (per-run by default)
+    final dbPath = await TestOutputManager.getDatabasePath('test_database.db', useRunDir: true);
     
     // Check if we already have this instance cached
     if (_databaseInstances.containsKey(dbPath)) {

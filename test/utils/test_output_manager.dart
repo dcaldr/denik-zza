@@ -29,6 +29,8 @@ class TestOutputManager {
   static const String _testOutputsDir = 'test_outputs';
   static const String _persistDir = 'persist';
   static const String _productionDir = 'production';
+  static String? _persistRunId;
+  static String? _productionRunId;
   
   /// Initialize test output directories based on current test mode.
   ///
@@ -60,14 +62,42 @@ class TestOutputManager {
     return path.absolute(_testOutputsDir);
   }
   
-  /// Get directory for persist mode (absolute path).
+  /// Get base directory for persist mode (absolute path).
   static String _getPersistDir() {
     return path.join(getTestOutputsDir(), _persistDir);
   }
+
+  /// Generate a run id: test_YYYYMMDD_HHMMSS_rand5
+  static String _generateRunId() {
+    final now = DateTime.now();
+    final date = '${now.year.toString().padLeft(4, '0')}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+    final time = '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
+    final rand = (now.microsecondsSinceEpoch % 100000).toString().padLeft(5, '0');
+    return 'test_${date}_${time}_$rand';
+  }
+
+  /// Get or create a per-run directory for persist mode.
+  ///
+  /// WARNING: Do not delete this directory in per-test tearDown. Persist mode
+  /// is designed to preserve artifacts for the entire run.
+  static Future<String> getOrCreatePersistRunDirectory() async {
+    _persistRunId ??= _generateRunId();
+    final dir = path.join(_getPersistDir(), _persistRunId!);
+    await _ensureDirectoryExists(dir);
+    return dir;
+  }
   
-  /// Get directory for production mode (absolute path).
+  /// Get base directory for production mode (absolute path).
   static String _getProductionDir() {
     return path.join(getTestOutputsDir(), _productionDir);
+  }
+
+  /// Get or create a per-run directory for production mode (guarded elsewhere).
+  static Future<String> getOrCreateProductionRunDirectory() async {
+    _productionRunId ??= _generateRunId();
+    final dir = path.join(_getProductionDir(), _productionRunId!);
+    await _ensureDirectoryExists(dir);
+    return dir;
   }
   
   /// Get database file path for current test mode.
@@ -79,7 +109,10 @@ class TestOutputManager {
   /// Consumers like UnifiedTestSetup can pass the returned path to
   /// AppDatabase(). Paths ending with `.db` are treated as file paths by
   /// AppDatabase; directory paths will have `db.sqlite` appended internally.
-  static String getDatabasePath(String filename) {
+  ///
+  /// Optional: Set [useRunDir] to true to place the DB file under a per-run
+  /// directory (e.g., `test_outputs/persist/test_YYYY.../<filename>`).
+  static Future<String> getDatabasePath(String filename, {bool useRunDir = false}) async {
     final testMode = TestConfiguration.getTestMode();
     
     switch (testMode) {
@@ -87,8 +120,16 @@ class TestOutputManager {
         // Return empty string for in-memory databases
         return '';
       case TestMode.persist:
+        if (useRunDir) {
+          final runDir = await getOrCreatePersistRunDirectory();
+          return path.join(runDir, filename);
+        }
         return path.join(_getPersistDir(), filename);
       case TestMode.production:
+        if (useRunDir) {
+          final runDir = await getOrCreateProductionRunDirectory();
+          return path.join(runDir, filename);
+        }
         return path.join(_getProductionDir(), filename);
     }
   }
@@ -114,6 +155,7 @@ class TestOutputManager {
     if (await persistDir.exists()) {
       await persistDir.delete(recursive: true);
     }
+    _persistRunId = null; // reset for next run if desired
   }
   
   /// Clean up only production mode outputs (guarded by production checks elsewhere).
@@ -122,6 +164,7 @@ class TestOutputManager {
     if (await productionDir.exists()) {
       await productionDir.delete(recursive: true);
     }
+    _productionRunId = null;
   }
   
   /// Get output summary for debugging (paths and basic existence flags).
