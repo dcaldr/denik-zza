@@ -1,7 +1,7 @@
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:drift/drift.dart';
-import '../helpers/database_test_helper.dart';
+import '../utils/database_test_helper.dart';
 
 /// Hardcoded setup for testing with predefined test data
 /// 

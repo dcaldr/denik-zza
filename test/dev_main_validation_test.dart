@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'helpers/database_test_helper.dart';
+import 'utils/database_test_helper.dart';
 import 'setup_templates/hardcoded_setup.dart';
 
 /// Test to validate that the dev_main.dart setup works correctly

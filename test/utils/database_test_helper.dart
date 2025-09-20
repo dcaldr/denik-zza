@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'test_configuration.dart';
 import 'test_output_manager.dart';

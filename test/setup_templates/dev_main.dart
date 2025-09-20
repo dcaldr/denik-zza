@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:denik_zza/screens2/event_list.dart';
 import 'hardcoded_setup.dart';
-import '../helpers/database_test_helper.dart';
+import '../utils/database_test_helper.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 
 /// Development main that uses hardcoded test data

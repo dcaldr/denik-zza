@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
-import 'helpers/database_test_helper.dart';
+import 'utils/database_test_helper.dart';
 import 'setup_templates/hardcoded_setup.dart';
 
 /// Demonstration of HardcodedTestSetup with different database types

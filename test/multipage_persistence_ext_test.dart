@@ -5,7 +5,7 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'setup_templates/hardcoded_setup.dart';
-import 'helpers/database_test_helper.dart';
+import 'utils/database_test_helper.dart';
 
 void main() {
   // Ensure Flutter bindings for rootBundle/font loading

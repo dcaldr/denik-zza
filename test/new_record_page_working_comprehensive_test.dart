@@ -4,7 +4,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:denik_zza/screens2/new_record_page.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
-import 'helpers/database_test_helper.dart';
+import 'utils/database_test_helper.dart';
 import 'setup_templates/hardcoded_setup.dart';
 
 /// Comprehensive tests for NewRecordPage covering real scenarios

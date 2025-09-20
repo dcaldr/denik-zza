@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'helpers/database_test_helper.dart';
+import 'utils/database_test_helper.dart';
 
 /// Test to verify that file test databases are properly created and persisted
 void main() {

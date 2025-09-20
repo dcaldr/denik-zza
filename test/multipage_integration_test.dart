@@ -4,7 +4,7 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/print_ops2/print_center_controller.dart';
 import 'package:denik_zza/print_ops2/print_center_service.dart';
-import 'helpers/database_test_helper.dart';
+import 'utils/database_test_helper.dart';
 import 'setup_templates/hardcoded_setup.dart';
 
 void main() {
