@@ -122,7 +122,7 @@ class JmenoHold extends InputHold {
 /// Validates gender input and converts to numeric format (1=male, 2=female)
 class PohlaviHold extends InputHold {
   List<String> possibleMuz = ["m", "1", "muž", "chlapec", "kluk"];
-  List<String> possibleZena = ["ž", "2", "žena", "dívka", "holka"];
+  List<String> possibleZena = ["ž", "2", "žena", "dívka", "holka","f"];
 
   PohlaviHold({String columnName = "pohlaví"}) : super(columnName);
   PohlaviHold.full(dynamic pureInput, {String columnName = "pohlaví"}) : super.full(pureInput, columnName);
