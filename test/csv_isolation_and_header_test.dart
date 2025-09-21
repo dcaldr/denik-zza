@@ -43,8 +43,13 @@ void main() {
       } else {
         // Construct two answers manually from same underlying data to ensure isolation works via parseLine
         final line = ['A','B','', '', '', '', '', '', '', '', '', ''];
-        final a1 = await parser.parseLine(line);
-        final a2 = await parser.parseLine(line);
+        // Convert list to sparse map format expected by parseLine
+        final sparseData = <int, String>{};
+        for (int i = 0; i < line.length; i++) {
+          sparseData[i] = line[i];
+        }
+        final a1 = await parser.parseLine(sparseData);
+        final a2 = await parser.parseLine(sparseData);
         a1.data[0].addInput('XMutated');
         expect(a1.data[0].getOutput(), 'XMutated');
         expect(a2.data[0].getOutput(), isNot('XMutated'));
@@ -55,7 +60,12 @@ void main() {
       final parser = InputParser();
       // Build a simple line with minimal valid name/surname and missing rc -> warn
       final line = ['Jan', 'Novak', '', '', '', '', '', '', '', '', '', ''];
-      final ans = await parser.parseLine(line);
+      // Convert list to sparse map format expected by parseLine
+      final sparseData = <int, String>{};
+      for (int i = 0; i < line.length; i++) {
+        sparseData[i] = line[i];
+      }
+      final ans = await parser.parseLine(sparseData);
       // Call calculateStatus explicitly and via getters
       ans.calculateStatus();
       final data = ans.data; // should not cause recursion/stack overflow
