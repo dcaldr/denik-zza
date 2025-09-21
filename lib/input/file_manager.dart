@@ -65,18 +65,38 @@ class FileManager {
   /// Optional path for persistent testing mode
   String? _testOutputPath;
   
-  List<String> subFolders = ['backup', 'zpusobilosti', 'vysetreni']; //FIXME - duplicate maybe keep only the one in factory
-  
+  /// Set of subdirectories that should be created in each event directory
+  List<String> subFolders = []; // Set by _updateSubFoldersForMode()
+
   /// Lightweight toggle: when true, run IO sanity check during changeEvent()
   bool _ioCheckOnChange = false;
 
-  FileManager._internal() : isTesting = false, _mode = FileManagerMode.production;
+  /// Standard event subdirectories for persistent modes
+  static const List<String> _standardSubFolders = ['backup', 'zpusobilosti', 'vysetreni'];
+
+  FileManager._internal() : isTesting = false, _mode = FileManagerMode.production {
+    _updateSubFoldersForMode();
+  }
+
+  /// Updates subFolders based on current mode - centralized logic
+  void _updateSubFoldersForMode() {
+    switch (_mode) {
+      case FileManagerMode.inMemory:
+        subFolders = [];
+        break;
+      case FileManagerMode.persist:
+      case FileManagerMode.production:
+        subFolders = List.from(_standardSubFolders);
+        break;
+    }
+  }
 
   factory FileManager({Directory? homeDir, bool? isTesting, String? testOutputPath}) {
     // Handle backward compatibility for isTesting parameter
     if (isTesting != null) {
       _instance.isTesting = isTesting;
       _instance._mode = isTesting ? FileManagerMode.inMemory : FileManagerMode.production;
+      _instance._updateSubFoldersForMode();
     }
     
     // Handle testOutputPath parameter for persistent testing
@@ -84,14 +104,10 @@ class FileManager {
       _instance._testOutputPath = testOutputPath;
       _instance._mode = FileManagerMode.persist;
       _instance.isTesting = false; // persist mode is not the old "isTesting" concept
+      _instance._updateSubFoldersForMode();
     }
     
     _instance.homeDir = homeDir;
-    if (_instance._mode == FileManagerMode.inMemory) {
-      _instance.subFolders = [];
-    } else {
-      _instance.subFolders = ['backup', 'zpusobilosti', 'vysetreni']; //FIXME: dirt fix - duplicate code
-    }
     return _instance;
   }
 
@@ -290,7 +306,7 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
   void setTestMode() {
     _mode = FileManagerMode.inMemory;
     isTesting = true;
-    subFolders = [];
+    _updateSubFoldersForMode();
   }
 
   /// Set FileManager to persistent testing mode with specified output path
@@ -298,7 +314,7 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
     _mode = FileManagerMode.persist;
     _testOutputPath = testOutputPath;
     isTesting = false; // persist mode is different from legacy isTesting
-    subFolders = ['backup', 'zpusobilosti', 'vysetreni'];
+    _updateSubFoldersForMode();
   }
 
   /// Reset FileManager to production mode
@@ -306,7 +322,7 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
     _mode = FileManagerMode.production;
     _testOutputPath = null;
     isTesting = false;
-    subFolders = ['backup', 'zpusobilosti', 'vysetreni'];
+    _updateSubFoldersForMode();
   }
 
   /// Get FileManager configuration summary for debugging
