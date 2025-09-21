@@ -1,0 +1,5 @@
+poznámka,pohlaví,telefon rodič,pojišťovna,jméno,adresa,příjmení,způsobilost,email rodič,datum narození,jméno rodič,rodné číslo,extra_field_ignored
+Alena má poznámku,2,555777999,ČPZP,Alena,Plzeň,Nováková,1,alena.novakova@test.com,05.03.2006,Alena Maminka,0603062345,EXTRA1
+,1,,VZP,Tomáš,České Budějovice,Procházka,1,,15.08.2004,Tomáš Tatínek,0408151234,EXTRA2
+Pavel poznámka,1,333444555,OZP,Pavel,,Svoboda,1,pavel@test.com,22.11.2005,,0511222346,EXTRA3
+,2,111222333,,Kateřina,Ostrava,Černá,1,,18.07.2002,Kateřina Maminka,0207184567,EXTRA4

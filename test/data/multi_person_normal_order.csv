@@ -1,0 +1,4 @@
+jméno,příjmení,rodné číslo,pohlaví,adresa,datum narození,jméno rodič,telefon rodič,email rodič,způsobilost,pojišťovna,poznámka
+Jan,Novák,0306155678,1,Praha 1,15.06.2003,Jan Senior,111222333,jan.novak@test.com,1,VZP,Jan poznámka
+Marie,Svoboda,0412109876,2,Brno 2,12.12.2004,Marie Senior,,marie.svoboda@test.com,1,OZP,
+Petr,Dvořák,0505207777,1,Ostrava 3,20.05.2005,Petr Senior,,,1,CPZP,
