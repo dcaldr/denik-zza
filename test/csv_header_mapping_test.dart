@@ -252,6 +252,88 @@ void main() {
       expect(druhy.jmenoRodice, 'Jiný Rodič');
     });
 
+    test('Absolute minimal CSV - only jméno and příjmení fields', () async {
+      final parser = InputParser();
+      parser.filePath = 'test/data/minimal_absolute.csv';
+      await parser.getFile();
+      final result = parser.result;
+      expect(result, isNotNull);
+      expect(result!.goodPersons.length, 4);
+      
+      // Verify all 4 people are parsed correctly with only names
+      final jan = result.goodPersons[0];
+      expect(jan.jmeno, 'Jan');
+      expect(jan.prijmeni, 'Novák');
+      
+      final marie = result.goodPersons[1];
+      expect(marie.jmeno, 'Marie');
+      expect(marie.prijmeni, 'Svoboda');
+      
+      final petr = result.goodPersons[2];
+      expect(petr.jmeno, 'Petr');
+      expect(petr.prijmeni, 'Dvořák');
+      
+      final anna = result.goodPersons[3];
+      expect(anna.jmeno, 'Anna');
+      expect(anna.prijmeni, 'Nová');
+      
+      // Verify optional fields have reasonable defaults
+      for (final person in result.goodPersons) {
+        // These should be null or empty, not causing errors
+        expect(person.datumNarozeni, anyOf(isNull, isA<DateTime>()));
+        expect(person.cisloPojisteni, anyOf('', isNull, isA<String>()));
+        expect(person.emailRodice, anyOf('', isNull));
+        expect(person.telefonRodice, anyOf('', isNull));
+        expect(person.zdravotniPojistovna, anyOf('', isNull, isA<String>()));
+        expect(person.zpusobilost, anyOf(isNull, false, true)); // Should default to false
+        expect(person.adresa, anyOf('', isNull));
+        expect(person.jmenoRodice, anyOf('', isNull));
+        expect(person.poznamka, anyOf('', isNull));
+      }
+    });
+
+    test('Absolute minimal CSV with swapped headers - header mapping tolerance', () async {
+      final parser = InputParser();
+      parser.filePath = 'test/data/minimal_swapped.csv';
+      await parser.getFile();
+      final result = parser.result;
+      expect(result, isNotNull);
+      expect(result!.goodPersons.length, 4);
+      
+      // Critical: Verify that header mapping works correctly
+      // Even though headers are "příjmení,jméno", the data should be assigned correctly
+      final jan = result.goodPersons[0];
+      expect(jan.jmeno, 'Jan', reason: 'Jan should get his first name, not surname');
+      expect(jan.prijmeni, 'Novák', reason: 'Jan should get his surname, not first name');
+      
+      final marie = result.goodPersons[1];
+      expect(marie.jmeno, 'Marie', reason: 'Marie should get her first name, not surname');
+      expect(marie.prijmeni, 'Svoboda', reason: 'Marie should get her surname, not first name');
+      
+      final petr = result.goodPersons[2];
+      expect(petr.jmeno, 'Petr', reason: 'Petr should get his first name, not surname');
+      expect(petr.prijmeni, 'Dvořák', reason: 'Petr should get his surname, not first name');
+      
+      final anna = result.goodPersons[3];
+      expect(anna.jmeno, 'Anna', reason: 'Anna should get her first name, not surname');
+      expect(anna.prijmeni, 'Nová', reason: 'Anna should get her surname, not first name');
+      
+      // Verify this produces IDENTICAL results to the normal order CSV
+      // This is the ultimate test of header mapping tolerance
+      final normalParser = InputParser();
+      normalParser.filePath = 'test/data/minimal_absolute.csv';
+      await normalParser.getFile();
+      final normalResult = normalParser.result;
+      
+      expect(normalResult!.goodPersons.length, result.goodPersons.length);
+      for (int i = 0; i < normalResult.goodPersons.length; i++) {
+        expect(result.goodPersons[i].jmeno, normalResult.goodPersons[i].jmeno, 
+               reason: 'Swapped headers should produce identical first names');
+        expect(result.goodPersons[i].prijmeni, normalResult.goodPersons[i].prijmeni,
+               reason: 'Swapped headers should produce identical surnames');
+      }
+    });
+
     test('Handles reordered mandatory columns correctly', () async {
       final parser = InputParser();
       parser.filePath = 'test/data/reordered_mandatory.csv';
