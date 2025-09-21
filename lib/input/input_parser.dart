@@ -16,8 +16,8 @@ import 'package:denik_zza/input/input_hold.dart';
 import 'package:denik_zza/input/rodne_cislo.dart';
 import 'package:denik_zza/input/text_tools.dart';
 import 'package:logger/logger.dart';
-import 'csv_definitions.dart';
-import 'csv_reader.dart';
+import '../csv/csv_definitions.dart';
+import '../csv/csv_reader.dart';
 
 var logger = Logger(
   printer: PrettyPrinter(),
