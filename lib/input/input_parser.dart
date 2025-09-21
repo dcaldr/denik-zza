@@ -2,6 +2,13 @@
 /// 
 /// Handles CSV file loading and converts data into person objects
 /// Might be subject to change: rename/refactor to different files
+/// 
+/// TODO: CRITICAL - Implement conflict resolution for CSV import
+/// - Detect duplicate persons (by name, rodné číslo, or other criteria)
+/// - Handle person already exists in database scenarios
+/// - Provide merge/skip/overwrite options
+/// - Add import preview with conflict highlighting
+/// - See docs/csv-import.md for detailed requirements
 library;
 
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
