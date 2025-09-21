@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' as drift;
 import 'package:path/path.dart' as p;
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'test_configuration.dart';
@@ -19,8 +19,9 @@ final Map<AppDatabase, String> _pathByInstance = {};
 /// Monotonic counter to strengthen uniqueness of file test DB filenames
 int _fileDbCounter = 0;
 
-/// Flag to track if drift warnings have been disabled for tests
-bool _driftWarningsDisabled = false;
+/// Flag kept for backward-compatibility; no longer needed since warning
+/// suppression is handled globally in flutter_test_config.dart
+bool _driftWarningsDisabled = true;
 
 /// Database Test Helper for Drift Database Testing
 /// 
@@ -56,17 +57,9 @@ bool _driftWarningsDisabled = false;
 /// Drift's "multiple database instances" warnings.
 class DatabaseTestHelper {
   
-  /// Disable Drift warnings for test environments
-  /// 
-  /// Call this once at the beginning of your test suite to suppress
-  /// Drift's multiple database instance warnings, which are expected
-  /// in test environments where we create many isolated databases.
-  static void disableDriftWarnings() {
-    if (!_driftWarningsDisabled) {
-      driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
-      _driftWarningsDisabled = true;
-    }
-  }
+  /// Deprecated: Warning suppression is configured globally in
+  /// test/flutter_test_config.dart. This is now a no-op.
+  static void disableDriftWarnings() {}
   
   /// Creates a test database instance based on the specified type
   /// 
@@ -86,9 +79,6 @@ class DatabaseTestHelper {
   /// });
   /// ```
   static AppDatabase createTestDatabase(TestDatabaseType type) {
-    // Automatically disable Drift warnings for tests
-    disableDriftWarnings();
-    
     // Check for global override first
     final effectiveType = _globalTestDatabaseOverride ?? type;
     
@@ -456,9 +446,6 @@ class DatabaseTestHelper {
   /// });
   /// ```
   static Future<AppDatabase> createUnifiedTestDatabase() async {
-    // Automatically disable Drift warnings for tests
-    disableDriftWarnings();
-    
     final testMode = TestConfiguration.getTestMode();
     
     switch (testMode) {
@@ -564,7 +551,7 @@ class TestDatabaseUtils {
       firstName: firstName,
       lastName: lastName,
       zzaActionFK: zzaActionFK ?? 1, // Default to action ID 1 if not specified
-      insuranceCompanyFK: insuranceCompanyFK != null ? Value(insuranceCompanyFK) : const Value.absent(),
+      insuranceCompanyFK: insuranceCompanyFK != null ? drift.Value(insuranceCompanyFK) : const drift.Value.absent(),
     );
   }
   

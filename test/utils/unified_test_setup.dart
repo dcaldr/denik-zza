@@ -1,5 +1,4 @@
 import '../../lib/database/drift_database/database.dart';
-import 'package:drift/drift.dart';
 import '../../lib/input/file_manager.dart';
 import 'test_configuration.dart';
 import 'test_output_manager.dart';
@@ -36,9 +35,6 @@ class UnifiedTestSetup {
   
   /// Initialize test environment for all modes
   static Future<void> initializeTestEnvironment() async {
-    // Suppress noisy drift warning about multiple AppDatabase instances in tests.
-    // We intentionally create isolated DBs per test for reliability.
-    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
     await TestOutputManager.initialize();
   }
   

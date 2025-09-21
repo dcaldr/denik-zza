@@ -387,12 +387,16 @@ What it means:
 - Drift recommends using a singleton database per `QueryExecutor`. Creating multiple `AppDatabase` instances is legal but can increase the chance of mishandled lifecycles or shared executors.
 
 Our approach in tests:
-- We intentionally create fresh, isolated `AppDatabase` instances in tests for reliability. To keep logs clean, we set:
+- We intentionally create fresh, isolated `AppDatabase` instances in tests for reliability. To keep logs clean, we enable the official runtime option in the global test bootstrap (`test/flutter_test_config.dart`) so it runs before any database is created:
   ```dart
+  // test/flutter_test_config.dart
   import 'package:drift/drift.dart';
-  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  Future<void> testExecutable(Future<void> Function() testMain) async {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true; // tests only
+    return testMain();
+  }
   ```
-  This is wired in `UnifiedTestSetup.initializeTestEnvironment()` so the warning is suppressed during tests only.
+  Do not set this in production or development builds.
 
 If you still see the warning:
 - Ensure you are not reusing the same `QueryExecutor` across multiple `AppDatabase` instances concurrently.
