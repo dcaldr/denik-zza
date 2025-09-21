@@ -391,9 +391,16 @@ return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergies
   }
 
   /// Watch participants by current event with real-time updates
+  ///
+  /// Uses watchSingleOrNull to avoid throwing when the cache table is empty
+  /// (common in tests before setup). Emits an empty list until a current event
+  /// is set.
   Stream<List<MemoryOsoba>> watchParticipantsByCurrentEvent() {
-    return _driftDatabase.select(_driftDatabase.cache).watchSingle().asyncExpand((cache) {
-      final currentEvent = cache.currentActionID;
+    return _driftDatabase
+        .select(_driftDatabase.cache)
+        .watchSingleOrNull()
+        .asyncExpand((cache) {
+      final currentEvent = cache?.currentActionID;
       if (currentEvent != null) {
         return watchParticipantsByEvent(currentEvent);
       } else {

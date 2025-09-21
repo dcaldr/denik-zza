@@ -7,6 +7,7 @@ import 'package:denik_zza/print_ops2/models/append_build_result.dart';
 import 'package:denik_zza/print_ops2/models/doc_with_count.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:logger/logger.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -92,7 +93,7 @@ class GeneratePdfTemplate {
   _zaznamList!.sort((a, b) => a.casZaznamu!.compareTo(b.casZaznamu!));
   for (int i = 0; i < cmpList.length; i++) {
     if (cmpList[i] != _zaznamList![i]) {
-      Logger().w("Records are not ordered by time, where expected in GeneratePdfTemplate");
+      AppLogger.l.w("Records are not ordered by time, where expected in GeneratePdfTemplate");
       return true;
     }
   }
@@ -170,7 +171,7 @@ class GeneratePdfTemplate {
     List<MemoryLek>? lekList,
     List<MemoryZaznam>? zaznamList,
   }) async {
-    final logger = Logger();
+  final logger = AppLogger.l;
     
     if (zaznamList == null || zaznamList.isEmpty) {
       logger.w('analyzeAndBuildAppend called with empty records list');
@@ -266,7 +267,7 @@ class GeneratePdfTemplate {
     required List<MemoryZaznam> zaznamList,
     required int hideHeaderOnPage,
   }) async {
-    final logger = Logger();
+  final logger = AppLogger.l;
     final theme = await _loadFonts();
     final doc = pw.Document();
     
@@ -340,10 +341,10 @@ class GeneratePdfTemplate {
     int pageCount;
     try {
       pageCount = doc.document.pdfPageList.pages.length;
-      logger.d('Page count from pdfPageList: $pageCount');
+  logger.d('Page count from pdfPageList: $pageCount');
     } catch (e) {
       pageCount = observedPages.isNotEmpty ? observedPages.length : 1;
-      logger.w('Page count fallback to observed pages: $pageCount');
+  logger.w('Page count fallback to observed pages: $pageCount');
     }
     
     return DocWithCount(doc, pageCount, bytes);
@@ -355,7 +356,8 @@ class GeneratePdfTemplate {
       final pageNum = context.pageNumber;
       return pageNum > 0 ? pageNum : 1;
     } catch (e) {
-      logger.w('Failed to get page number, using fallback: $e');
+      // This occurs in some test-only paths; reduce to debug to avoid noise.
+      logger.d('Failed to get page number, using fallback: $e');
       return 1;
     }
   }

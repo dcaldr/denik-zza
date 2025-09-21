@@ -1,12 +1,13 @@
 import 'package:denik_zza/input/rodne_cislo.dart';
 import 'package:logger/logger.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 
 import 'input_parser.dart';
 import 'text_tools.dart';
 
 /// This class parses one data item and validates input according to specific rules
 abstract class InputHold {
-  final Logger _logger = Logger();
+  final Logger _logger = AppLogger.l;
   late dynamic pureInput;
   String input = "";
   dynamic output;
@@ -41,6 +42,10 @@ abstract class InputHold {
   InputHold.empty(this.columnName) {
     status = ParseStatus.empty;
   }
+
+  /// Returns a new empty instance of the same concrete type, preserving columnName
+  /// Implemented by each subclass to allow cloning the definition list per parsed line
+  InputHold fresh();
 
   dynamic getOutput() {
     return output;
@@ -106,6 +111,8 @@ class JmenoHold extends InputHold {
   JmenoHold({String columnName = "jméno"}) : super(columnName);
   JmenoHold.full(dynamic pureInput, {String columnName = "jméno"}) : super.full(pureInput, columnName);
   @override
+  InputHold fresh() => JmenoHold(columnName: columnName);
+  @override
   dynamic _converter() {
     status = ParseStatus.ok;
     return input;
@@ -119,6 +126,8 @@ class PohlaviHold extends InputHold {
 
   PohlaviHold({String columnName = "pohlaví"}) : super(columnName);
   PohlaviHold.full(dynamic pureInput, {String columnName = "pohlaví"}) : super.full(pureInput, columnName);
+  @override
+  InputHold fresh() => PohlaviHold(columnName: columnName);
 
   @override
   _converter() {
@@ -143,6 +152,8 @@ class PohlaviHold extends InputHold {
 class AdresaHold extends InputHold {
   AdresaHold({String columnName = "adresa"}) : super(columnName);
   AdresaHold.full(dynamic pureInput, {String columnName = "adresa"}) : super.full(pureInput, columnName);
+  @override
+  InputHold fresh() => AdresaHold(columnName: columnName);
 
   @override
   _converter() {
@@ -154,6 +165,8 @@ class AdresaHold extends InputHold {
 class CisloPojisteniHold extends InputHold {
   CisloPojisteniHold({String columnName = "rodné číslo"}) : super(columnName);
   CisloPojisteniHold.full(dynamic pureInput, {String columnName = "rodné číslo"}) : super.full(pureInput, columnName);
+  @override
+  InputHold fresh() => CisloPojisteniHold(columnName: columnName);
 
   @override
   _converter() {
@@ -191,12 +204,15 @@ class CisloPojisteniHold extends InputHold {
 class DatumNarozeniHold extends InputHold {
   DatumNarozeniHold({String columnName = "datum narození"}) : super(columnName);
   DatumNarozeniHold.full(dynamic pureInput, {String columnName = "datum narození"}) : super.full(pureInput, columnName);
+  @override
+  InputHold fresh() => DatumNarozeniHold(columnName: columnName);
 
   @override
   _converter() {
     DateTime? date = TextTools.parseDate(input);
     if (date == null) {
-      status = ParseStatus.bad;
+      // Per policy: date parsing should WARN (no silent normalization), not hard-fail
+      status = ParseStatus.warn;
       return null;
     }
     status = ParseStatus.ok;
@@ -207,6 +223,8 @@ class DatumNarozeniHold extends InputHold {
 class TelefonHold extends InputHold {
   TelefonHold({String columnName = "telefon rodič"}) : super(columnName);
   TelefonHold.full(dynamic pureInput, {String columnName = "telefon rodič"}) : super.full(pureInput, columnName);
+  @override
+  InputHold fresh() => TelefonHold(columnName: columnName);
 
   @override
   _converter() {
@@ -219,6 +237,8 @@ class TelefonHold extends InputHold {
 class EmailHold extends InputHold {
   EmailHold({String columnName = "email rodič"}) : super(columnName);
   EmailHold.full(dynamic pureInput, {String columnName = "email rodič"}) : super.full(pureInput, columnName);
+  @override
+  InputHold fresh() => EmailHold(columnName: columnName);
 
   @override
   _converter() {
@@ -238,6 +258,8 @@ class EmailHold extends InputHold {
 class PotvrzeniHold extends InputHold {
   PotvrzeniHold({String columnName = "potvrzení"}) : super(columnName);
   PotvrzeniHold.full(dynamic pureInput, {String columnName = "potvrzení"}) : super.full(pureInput, columnName);
+  @override
+  InputHold fresh() => PotvrzeniHold(columnName: columnName);
   
   List<String> possibleYes = ["ano", "yes", "y", "1", "true"];
   List<String> possibleNo = ["ne", "no", "n", "0", "false"];
@@ -261,9 +283,105 @@ class PotvrzeniHold extends InputHold {
 class PojistovnaHold extends InputHold {
   PojistovnaHold({String columnName = "pojišťovna"}) : super(columnName);
   PojistovnaHold.full(dynamic pureInput, {String columnName = "pojišťovna"}) : super.full(pureInput, columnName);
+  @override
+  InputHold fresh() => PojistovnaHold(columnName: columnName);
   
   @override
   _converter() {
+    // Empty is acceptable, treat as OK with null output
+    if (input.isEmpty) {
+      status = ParseStatus.ok;
+      return null;
+    }
+
+    // Known Czech health insurance companies with common synonyms and codes.
+    // Policy: Loose compare and pick the first match's canonical.
+    // Canonical is a short lowercase code to align with existing expectations (e.g., 'ozp').
+    final List<_InsuranceEntry> insurers = [
+      _InsuranceEntry(
+        canonical: 'vzp',
+        synonyms: [
+          'vzp',
+          '111',
+          'všeobecná zdravotní pojišťovna',
+          'vseobecna zdravotni pojistovna',
+          '111 vzp',
+          'vzp 111',
+        ],
+      ),
+      _InsuranceEntry(
+        canonical: 'vozp',
+        synonyms: [
+          'vozp',
+          '201',
+          'vojenská zdravotní pojišťovna',
+          'vojenska zdravotni pojistovna',
+          '201 vozp',
+        ],
+      ),
+      _InsuranceEntry(
+        canonical: 'cpzp',
+        synonyms: [
+          'cpzp',
+          '205',
+          'ceska prumyslova zdravotni pojistovna',
+          'česká průmyslová zdravotní pojišťovna',
+          '205 cpzp',
+        ],
+      ),
+      _InsuranceEntry(
+        canonical: 'ozp',
+        synonyms: [
+          'ozp',
+          '207',
+          'oborová zdravotní pojišťovna',
+          'oborova zdravotni pojistovna',
+          '207 ozp',
+        ],
+      ),
+      _InsuranceEntry(
+        canonical: 'zpmv',
+        synonyms: [
+          'zpmv',
+          '211',
+          'zdravotni pojistovna ministerstva vnitra ceske republiky',
+          'zdravotní pojišťovna ministerstva vnitra české republiky',
+          '211 zpmv',
+        ],
+      ),
+      _InsuranceEntry(
+        canonical: 'rbp',
+        synonyms: [
+          'rbp',
+          '213',
+          'revirni bratrská pokladna',
+          'revírní bratrská pokladna',
+          '213 rbp',
+        ],
+      ),
+      _InsuranceEntry(
+        canonical: 'zps',
+        synonyms: [
+          'zps',
+          '209',
+          'zdravotni pojistovna skoda',
+          'zdravotní pojišťovna škoda',
+          '209 zps',
+        ],
+      ),
+    ];
+
+    final String norm = TextTools.normText(input);
+    for (final entry in insurers) {
+      for (final syn in entry.synonyms) {
+        if (TextTools.looseCmp(norm, syn)) {
+          status = ParseStatus.ok;
+          return entry.canonical;
+        }
+      }
+    }
+
+    // No match found: keep original value as-is, but still OK
     status = ParseStatus.ok;
     return input;
   }
@@ -273,10 +391,19 @@ class PojistovnaHold extends InputHold {
 class TextHold extends InputHold {
   TextHold({String columnName = "poznámka"}) : super(columnName);
   TextHold.full(dynamic pureInput, {String columnName = "poznámka"}) : super.full(pureInput, columnName);
+  @override
+  InputHold fresh() => TextHold(columnName: columnName);
   
   @override
   _converter() {
     status = ParseStatus.ok;
     return input;
   }
+}
+
+/// Internal helper to represent an insurance with its synonyms.
+class _InsuranceEntry {
+  final String canonical;
+  final List<String> synonyms;
+  const _InsuranceEntry({required this.canonical, required this.synonyms});
 }

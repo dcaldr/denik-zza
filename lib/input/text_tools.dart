@@ -4,10 +4,11 @@ library;
 
 import 'package:diacritic/diacritic.dart';
 import 'package:logger/logger.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 
 /// Utility class for text manipulation and date parsing operations
 class TextTools {
-  static final Logger _logger = Logger();
+  static final Logger _logger = AppLogger.l;
 
   /// Creates "normalized" version of text by removing diacritics and converting to lowercase
   /// 

@@ -4,6 +4,7 @@ import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:logger/logger.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// File Manager Mode enumeration following DatabaseWrapper pattern
@@ -52,7 +53,7 @@ class FileManager {
   /// entire app directory
   Directory? homeDir;
   Directory? eventDir;
-  Logger logger = Logger();
+  Logger logger = AppLogger.l;
   
   /// DEPRECATED: Use _mode instead. Maintained for backward compatibility.
   /// if true, [FileManager] is in testing mode and does not create directories
@@ -65,6 +66,9 @@ class FileManager {
   String? _testOutputPath;
   
   List<String> subFolders = ['backup', 'zpusobilosti', 'vysetreni']; //FIXME - duplicate maybe keep only the one in factory
+  
+  /// Lightweight toggle: when true, run IO sanity check during changeEvent()
+  bool _ioCheckOnChange = false;
 
   FileManager._internal() : isTesting = false, _mode = FileManagerMode.production;
 
@@ -89,6 +93,11 @@ class FileManager {
       _instance.subFolders = ['backup', 'zpusobilosti', 'vysetreni']; //FIXME: dirt fix - duplicate code
     }
     return _instance;
+  }
+
+  /// Enable or disable IO sanity checks in changeEvent()
+  void setIoCheckOnChange(bool enabled) {
+    _ioCheckOnChange = enabled;
   }
 
   Future<Directory?> getHomeDir() async {
@@ -162,8 +171,19 @@ class FileManager {
       logger.e('Error creating event directory: $eventDirCandidate $e');
       return null;
     }
-    changeEvent();
-    return createSubfolders(eventDirCandidate);
+    // Ensure subfolders exist
+    final created = await createSubfolders(eventDirCandidate);
+    if (created == null) {
+      return null;
+    }
+    // Run quick IO sanity check on creation
+    final ok = await verifyWritableReadable(created);
+    if (!ok) {
+      logger.e('IO sanity check failed for new event directory: ${created.path}');
+      return null;
+    }
+    eventDir = created;
+    return created;
   }
 
   Future<Directory?> createSubfolders(Directory baseDir) async {
@@ -321,10 +341,8 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
     }
     // if event hasn't been created yet
     if (event.domovskyAdresarPath == null || event.domovskyAdresarPath!.isEmpty) {
-      logger.i('Event directory not found in db');
-      eventDir = await createNewEventDataDir(event.nadpis);
-      event.domovskyAdresarPath = eventDir?.path;
-      db.updateEvent(action: event);
+      logger.w('Event directory path not set in DB; awaiting explicit creation elsewhere.');
+      eventDir = null;
       return;
     }
     // if in db but not in class - check folder structure
@@ -332,6 +350,12 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
     Directory? candidate = Directory(event.domovskyAdresarPath!);
     await _checkEventDirectoryExists(candidate);
     await _validateSubfolders(candidate);
+    if (_ioCheckOnChange) {
+      final ok = await verifyWritableReadable(candidate);
+      if (!ok) {
+        logger.w('IO sanity check failed for existing event directory: ${candidate.path}');
+      }
+    }
     eventDir = candidate;
   }
 
@@ -343,15 +367,19 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
     }
 
     try {
-      final path = await getDbFilePath();
-      if (path == null) {
+      final dbDir = await getDbFilePath();
+      if (dbDir == null) {
         logger.e('Error getting db path');
         return;
       }
-      final dbFile = File('$path/denik_zza.db');
+      final dbFile = File('$dbDir/db.sqlite');
+      if (!await dbFile.exists()) {
+        logger.e('Database file not found for backup: ${dbFile.path}');
+        return;
+      }
       final backupDir = Directory('${eventDir!.path}/backup');
       await backupDir.create(recursive: true);
-      final newName = await nameCollisionSolver(backupDir, 'denik_zza_backup.db');
+      final newName = await nameCollisionSolver(backupDir, 'db_backup.sqlite');
       if (newName == null) {
         logger.e('Error resolving name collision for backup file');
         return;
@@ -443,6 +471,25 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
         logger.e('Subfolder not found: $subFolder');
         throw FileSystemException('Subfolder not found: $subFolder in ${candidate.path}');
       }
+    }
+  }
+
+  /// Quick IO sanity check: create/write/read/delete a tiny probe file in [dir].
+  Future<bool> verifyWritableReadable(Directory dir) async {
+    final probe = File('${dir.path}/.io_probe');
+    try {
+      await probe.writeAsString('probe');
+      final content = await probe.readAsString();
+      await probe.delete();
+      return content == 'probe';
+    } catch (e, st) {
+      logger.e('IO probe failed in ${dir.path}', error: e, stackTrace: st);
+      try {
+        if (await probe.exists()) {
+          await probe.delete();
+        }
+      } catch (_) {}
+      return false;
     }
   }
 }

@@ -27,9 +27,18 @@ Future<List<List<String>>?> removeFirstLine(List<List<String>>? csvTable) async{
 
 
 
-/// reaads first line (coulmn names) in "raw" format
+/// reaads first line (column names) in "raw" format from file contents
    List<String>? getHeader(){
-    return CsvParserSettings().converter.convert(_path!)[0].map((e) => e.toString()).toList(); //note: :DD
+    if(!canLoadFile()){
+      return null;
+    }
+    final file = File(_path!);
+    final data = file.readAsStringSync();
+    final table = CsvParserSettings().converter.convert(data);
+    if(table.isEmpty){
+      return null;
+    }
+    return table.first.map((e) => e.toString()).toList();
   }
   /// pulls data from file into memory
 /// returns null if file was not processed
@@ -85,7 +94,6 @@ Future<List<List<String>>?> removeFirstLine(List<List<String>>? csvTable) async{
         errorMsg = e.toString();
        return setBadFile();
       }
-      return setBadFile();
 
     }
 

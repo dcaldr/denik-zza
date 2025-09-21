@@ -355,6 +355,49 @@ void main() {
 **Issue**: Persist mode created a directory named like a file (e.g., `foo.db/db.sqlite`)
 **Solution**: Fixed in `AppDatabase` — paths ending with `.db` are now treated as file paths. If you pass a directory, `db.sqlite` is added automatically.
 
+### Drift lifecycle: "Can't re-open a database after closing it"
+
+Symptom:
+- StateError with message similar to: Can't re-open a database after closing it. Please create a new database connection and open that instead.
+
+Why it happens (official Drift behavior):
+- After you close a Drift executor/connection (e.g. the underlying `DelegatedDatabase`), Drift intentionally prevents re-opening it. A closed executor is terminal by design to protect from race conditions. Source: Drift `DelegatedDatabase.ensureOpen` throws this StateError on closed executors.
+
+How to fix (do this):
+- Never attempt to reuse a previously closed `AppDatabase` or `QueryExecutor`.
+- In tests, create a fresh `AppDatabase` per test (or per group) and close it in `tearDown()`. Use our helpers:
+  - Fast unit tests: `final db = AppDatabase.testInMemory();` (already uses `closeStreamsSynchronously: true`).
+  - Unified helper: `final db = await UnifiedTestSetup.createDatabase();` and `await db.close();` in tearDown.
+- For app-level tests using `DatabaseWrapper`, call `DatabaseWrapper.setTestMode()` in `setUp()` and `DatabaseWrapper.resetToProduction()` in `tearDown()` to avoid touching the production singleton.
+- Do not call `close()` on the production singleton instance used by the real app. If you need a closed lifecycle for a test, use an injected/in-memory database instance instead.
+
+Notes and extras:
+- If you hot-restart in dev on desktop and suspect zombie native connections, you can guard with:
+  ```dart
+  assert(() { NativeDatabase.closeExistingInstances(); return true; }());
+  ```
+  Place this in `main()` for debug builds only. Avoid this in production or when active connections are in use.
+
+### Drift warning: "created the database class AppDatabase multiple times"
+
+Symptom:
+- Warning logs from Drift indicating that a database class was created multiple times (often seen in tests).
+
+What it means:
+- Drift recommends using a singleton database per `QueryExecutor`. Creating multiple `AppDatabase` instances is legal but can increase the chance of mishandled lifecycles or shared executors.
+
+Our approach in tests:
+- We intentionally create fresh, isolated `AppDatabase` instances in tests for reliability. To keep logs clean, we set:
+  ```dart
+  import 'package:drift/drift.dart';
+  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  ```
+  This is wired in `UnifiedTestSetup.initializeTestEnvironment()` so the warning is suppressed during tests only.
+
+If you still see the warning:
+- Ensure you are not reusing the same `QueryExecutor` across multiple `AppDatabase` instances concurrently.
+- Prefer per-test databases via `AppDatabase.testInMemory()` and close them deterministically in `tearDown()`.
+
 ### Debugging
 
 ```dart

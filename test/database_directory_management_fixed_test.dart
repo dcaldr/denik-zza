@@ -11,7 +11,7 @@ void main() {
     late String testDbDir;
 
     setUpAll(() {
-      testDbDir = DatabaseTestHelper.getTestDatabaseDirectory();
+      testDbDir = Directory(DatabaseTestHelper.getTestDatabaseDirectory()).absolute.path;
     });
 
     tearDownAll(() async {
@@ -53,16 +53,9 @@ void main() {
     });
 
     test('should create databases with unique filenames', () async {
-      // Snapshot files before this test creates anything
-      final dir = Directory(testDbDir);
-      final before = dir
-          .listSync()
-          .whereType<File>()
-          .map((f) => f.path)
-          .toSet();
-
-      // Create multiple databases quickly
+      // Create multiple databases quickly and track their exact file paths
       final databases = <AppDatabase>[];
+      final createdPaths = <String>[];
 
       try {
         for (int i = 0; i < 3; i++) {
@@ -70,6 +63,10 @@ void main() {
           databases.add(db);
           // Force file creation by performing a write on each DB
           await db.customStatement('CREATE TABLE IF NOT EXISTS _unique_test_$i (id INTEGER)');
+          final path = DatabaseTestHelper.getDatabaseFilePath(db);
+          if (path != null) {
+            createdPaths.add(path);
+          }
           // Small delay to reduce timestamp collision chances on some filesystems
           await Future.delayed(const Duration(milliseconds: 10));
         }
@@ -79,26 +76,34 @@ void main() {
           await db.close();
         }
 
-  // Give filesystem time to sync (slightly longer for Windows)
-  await Future.delayed(const Duration(milliseconds: 250));
+        // Wait for all files to appear on disk (NativeDatabase.createInBackground can delay creation)
+        Future<void> waitForAllFiles(List<String> paths) async {
+          const totalWaitMs = 3000;
+          const stepMs = 100;
+          int waited = 0;
+          bool allExist() => paths.every((p) => File(p).existsSync());
+          while (waited < totalWaitMs && !allExist()) {
+            await Future.delayed(const Duration(milliseconds: stepMs));
+            waited += stepMs;
+          }
+        }
+        await waitForAllFiles(createdPaths);
 
-        // Identify only files created by THIS test
-        final after = dir
-            .listSync()
-            .whereType<File>()
-            .map((f) => f.path)
-            .toSet();
-        final newFiles = after.difference(before)
-            .where((p) => p.contains('testDB') && p.endsWith('.db'))
-            .toList();
+        // We expect 3 distinct paths (one per created database)
+        expect(createdPaths.length, greaterThanOrEqualTo(3),
+            reason: 'Expected at least 3 database instances created by this test');
 
-        // We expect at least 3 distinct new files (one per created database)
-        expect(newFiles.length, greaterThanOrEqualTo(3),
-            reason: 'Expected at least 3 new database files created by this test');
+        // Verify that each recorded path exists on disk and matches expected pattern
+        for (final p in createdPaths) {
+          expect(File(p).existsSync(), isTrue, reason: 'Database file should exist: $p');
+          final filename = p.split(Platform.pathSeparator).last;
+          expect(filename, matches(r'test_\d{2}-\d{2}-\d{2}_testDB_\d+\.db'),
+              reason: 'Filename should match expected pattern: $filename');
+        }
 
-        // Verify new filenames are unique (defensive check if helper ever reuses a path)
-        final unique = newFiles.toSet();
-        expect(unique.length, equals(newFiles.length),
+        // Verify the paths are unique
+        final unique = createdPaths.toSet();
+        expect(unique.length, equals(createdPaths.length),
             reason: 'Newly created database files must have unique paths');
       } finally {
         // Ensure cleanup even if test fails
@@ -180,8 +185,9 @@ void main() {
       expect(createdByThisTest, isNotEmpty,
           reason: 'This test must create some test database files');
 
-      // Clean up using the helper method
-      await DatabaseTestHelper.cleanupTestDatabaseDirectory(filePattern: 'testDB');
+  // Clean up only the files created by this test to avoid interfering with
+  // other tests running in parallel.
+  await DatabaseTestHelper.cleanupSpecificTestFiles(createdByThisTest);
 
       // Retry a few times to avoid Windows file-lock hiccups
       Future<bool> _allDeleted() async {
@@ -189,7 +195,7 @@ void main() {
         return existing.isEmpty;
       }
 
-      const totalWaitMs = 1500;
+  const totalWaitMs = 2000;
       const stepMs = 150;
       int waited = 0;
       while (waited < totalWaitMs && !await _allDeleted()) {
