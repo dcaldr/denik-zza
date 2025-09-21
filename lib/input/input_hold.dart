@@ -336,13 +336,40 @@ class PotvrzeniHold extends InputHold {
   List<String> possibleNo = ["ne", "no", "n", "0", "false"];
 
   @override
-  _converter() {
-    // Handle empty input by defaulting to false (0) - making způsobilost unrequired
+  dynamic addInput(dynamic intake) {
+    pureInput = intake;
+
+    if (pureInput == null) {
+      status = ParseStatus.ok;
+      output = false; // Default to false for null input
+      return output;
+    }
+
+    if (pureInput is int || pureInput is double) {
+      input = pureInput.toString();
+    } else {
+      input = pureInput.trim();
+    }
+
+    // Special handling for empty input - default to false (making způsobilost unrequired)
     if (input.isEmpty) {
       status = ParseStatus.ok;
-      return false;
+      output = false;
+      return output;
+    }
+
+    try {
+      output = _converter();
+    } catch (e) {
+      status = ParseStatus.bad;
+      output = null;
     }
     
+    return output;
+  }
+
+  @override
+  _converter() {
     if (TextTools.looseCmpWithList(input, possibleYes)) {
       status = ParseStatus.ok;
       return true;

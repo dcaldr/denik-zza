@@ -44,28 +44,24 @@ class InputParser {
   bool _headerPrepared = false;
 
   /// Parses one line of data and returns the result as [Answer]
-  Future<Answer> parseLine(List<String> line) async {
+  /// Now accepts sparse data - only processes fields that are actually present
+  Future<Answer> parseLine(Map<int, String> sparseData) async {
     Answer answer = Answer();
     
-    // Basic check if both arrays have same lengths
-    if (line.length != definition.length) {
-      // TODO: better handling of column mismatch
-      answer.error.errorMsg += 'řádek nemá požadovaný počet sloupců';
-      answer.error.lineContents = line.toString();
-      answer.lineStatus = ParseStatus.bad;
-      logger.w('Line length mismatch: expected ${definition.length}, got ${line.length}');
-      return answer;
+    // For each present field, parse with a fresh instance cloned from definition
+    final Map<int, InputHold> parsedHolds = {};
+    for (final entry in sparseData.entries) {
+      final int defIdx = entry.key;
+      final String value = entry.value;
+      
+      if (defIdx >= 0 && defIdx < definition.length) {
+        final InputHold def = definition[defIdx];
+        final InputHold hold = def.fresh();
+        hold.addInput(value);
+        parsedHolds[defIdx] = hold;
+      }
     }
-    
-    // For each item parse with a fresh instance cloned from definition to avoid cross-line state sharing
-    final List<InputHold> parsedHolds = [];
-    for (int i = 0; i < line.length; i++) {
-      final InputHold def = definition[i];
-      final InputHold hold = def.fresh();
-      hold.addInput(line[i]);
-      parsedHolds.add(hold);
-    }
-    answer.data = parsedHolds;
+    answer.dataMap = parsedHolds;
     
     // TODO: Check errors from between lines
     answer.lineStatus = ParseStatus.ok;
@@ -105,17 +101,16 @@ class InputParser {
       }
 
       parsedData = await Future.wait(data.map((line) async {
-        // Reorder incoming line according to definition order using header mapping
-        final List<String> normalizedLine = List.filled(definition.length, '');
+        // Create sparse data map: only include fields that have corresponding headers
+        final Map<int, String> sparseData = {};
         for (int defIdx = 0; defIdx < definition.length; defIdx++) {
           final int hdrIdx = _defToHeaderIdx[defIdx] ?? -1;
           if (hdrIdx >= 0 && hdrIdx < line.length) {
-            normalizedLine[defIdx] = line[hdrIdx];
-          } else {
-            normalizedLine[defIdx] = '';
+            sparseData[defIdx] = line[hdrIdx]; // Include even empty values for present columns
           }
+          // Skip missing columns entirely - don't add them to sparseData
         }
-        return parseLine(normalizedLine);
+        return parseLine(sparseData);
       }));
     } catch (e, stackTrace) {
       logger.e("An error occurred during parsing: $e", stackTrace: stackTrace);
@@ -250,21 +245,36 @@ class Answer {
   // String errorMsg = '';
   // String line = '';
   ErrorLine error = ErrorLine();
-  List<InputHold> _data = [];
+  Map<int, InputHold> _dataMap = {};
 
   /// how was the line marked during parsing (ok, warn, bad) should be expected
   ParseStatus lineStatus = ParseStatus.empty;
   bool cleanState = false;
 
+  Map<int, InputHold> get dataMap {
+    calculateStatus();
+    cleanState = true;
+    return _dataMap;
+  }
+
+  set dataMap(Map<int, InputHold> value) {
+    cleanState = false;
+    _dataMap = value;
+  }
+
+  // Legacy compatibility for existing code that expects _data list
   List<InputHold> get data {
     calculateStatus();
     cleanState = true;
-    return _data;
+    return _dataMap.values.toList();
   }
 
   set data(List<InputHold> value) {
     cleanState = false;
-    _data = value;
+    _dataMap.clear();
+    for (int i = 0; i < value.length; i++) {
+      _dataMap[i] = value[i];
+    }
   }
 
 
@@ -275,22 +285,28 @@ class Answer {
       return;
     }
 
-    if (_data.isEmpty) {
+    if (_dataMap.isEmpty) {
       return;
     }
-    if (_data.length < 3) {
-      lineStatus = ParseStatus.warn;
+    // Required minimum: jméno (0) and příjmení (1)
+    if (!_dataMap.containsKey(0) || !_dataMap.containsKey(1)) {
+      lineStatus = ParseStatus.bad;
+      error.errorMsg += 'chybí povinné pole jméno nebo příjmení';
+      return;
     }
-    //IF name or surname missing
-    final s0 = _data[0].status;
-    final s1 = _data[1].status;
+
+    final s0 = _dataMap[0]!.status;
+    final s1 = _dataMap[1]!.status;
+    
+    // Check if required fields (jméno, příjmení) are OK
     if (s0 != ParseStatus.ok || s1 != ParseStatus.ok) {
       error.errorMsg += 'Jméno nebo příjmení chybí,\n';
       lineStatus = ParseStatus.bad;
       return;
     }
-    // Rodné číslo handling
-    final s2 = _data[2].status;
+    
+    // If rodné číslo is present, check its status
+    final s2 = _dataMap.containsKey(2) ? _dataMap[2]!.status : ParseStatus.empty;
     if (s2 == ParseStatus.bad) {
       // Missing or invalid RC → warn (not immediate hard fail)
       error.errorMsg += 'Rodné číslo chybí,\n';
@@ -299,11 +315,11 @@ class Answer {
       }
     } else if (s2 == ParseStatus.ok) {
       // RC present and valid format; if gender or birthdate missing, we'll warn about inference
-      if (_data[3].output == null) {
+      if (!_dataMap.containsKey(3) || _dataMap[3]!.output == null) {
         lineStatus = ParseStatus.warn;
         error.errorMsg += "odhad pohlaví,\n";
       }
-      if (_data[4].output == null) {
+      if (!_dataMap.containsKey(5) || _dataMap[5]!.output == null) {
         lineStatus = ParseStatus.warn;
         error.errorMsg += "odhad data narození";
       }
@@ -316,36 +332,64 @@ class Answer {
   MemoryOsoba toPerson() {
     calculateStatus();
 
-      CisloPojisteniHold rcHold = _data[2] as CisloPojisteniHold;
-      RodneCislo rc = rcHold.getOutput();
-
-      //FIXME refactor to someting better
-      MemoryOsoba osoba = MemoryOsoba.csvNamed(
-          jmeno: _data[0].getOutput(),
-          prijmeni: _data[1].getOutput(),
-          cisloPojisteni: rc.getRc(),
-          pohlavi: _data[3].getOutput(),
-          adresa: _data[4].getOutput(),
-          datumNarozeni: _data[5].getOutput(),
-          jmenoRodice: _data[6].getOutput(),
-          telefonRodice: _data[7].getOutput(),
-          emailRodice: _data[8].getOutput(),
-          zpusobilost: _data[9].getOutput(),
-          zdravotniPojistovna: _data[10].getOutput(),
-          poznamka: _data[11].getOutput()
-
-      );
-      // if rč
-      if (_data[2].status == ParseStatus.ok) {
-        // if rč in good format for guessing
-        if (_data[2].output is RodneCislo) {
-          RodneCislo rc = _data[2].output;
-          osoba.pohlavi ??= rc.getPohlavi();
-          osoba.datumNarozeni ??= rc.getDatumNarozeni();
-        }
+    // Helper function to safely get output from dataMap
+    T? getFieldOutput<T>(int index) {
+      if (_dataMap.containsKey(index)) {
+        return _dataMap[index]!.getOutput() as T?;
       }
-      return osoba;
+      
+      // Provide defaults for missing fields that have business-meaningful defaults
+      if (index == 9) { // způsobilost - defaults to false when missing
+        return false as T?;
+      }
+      
+      return null;
     }
+
+    // Get required fields - these must exist for minimal CSV
+    final String? jmeno = getFieldOutput<String>(0);
+    final String? prijmeni = getFieldOutput<String>(1);
+    
+    if (jmeno == null || prijmeni == null) {
+      throw StateError('Missing required fields: jméno or příjmení');
+    }
+
+    // Handle rodné číslo - it might not be present in minimal CSV
+    RodneCislo? rc;
+    String? cisloPojisteni;
+    if (_dataMap.containsKey(2)) {
+      final CisloPojisteniHold rcHold = _dataMap[2]! as CisloPojisteniHold;
+      rc = rcHold.getOutput();
+      cisloPojisteni = rc?.getRc();
+    }
+
+    //FIXME refactor to something better
+    MemoryOsoba osoba = MemoryOsoba.csvNamed(
+        jmeno: jmeno,
+        prijmeni: prijmeni,
+        cisloPojisteni: cisloPojisteni,
+        pohlavi: getFieldOutput<int>(3),
+        adresa: getFieldOutput<String>(4),
+        datumNarozeni: getFieldOutput<DateTime>(5),
+        jmenoRodice: getFieldOutput<String>(6),
+        telefonRodice: getFieldOutput<String>(7),
+        emailRodice: getFieldOutput<String>(8),
+        zpusobilost: getFieldOutput<bool>(9),
+        zdravotniPojistovna: getFieldOutput<String>(10),
+        poznamka: getFieldOutput<String>(11)
+    );
+    
+    // if rč is present and valid, use it for guessing missing fields
+    if (_dataMap.containsKey(2) && _dataMap[2]!.status == ParseStatus.ok) {
+      // if rč in good format for guessing
+      if (_dataMap[2]!.output is RodneCislo) {
+        RodneCislo validRc = _dataMap[2]!.output;
+        osoba.pohlavi ??= validRc.getPohlavi();
+        osoba.datumNarozeni ??= validRc.getDatumNarozeni();
+      }
+    }
+    return osoba;
+  }
   }
 
 

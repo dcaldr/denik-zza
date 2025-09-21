@@ -68,6 +68,23 @@ ZPS (209) → 'zps'
 - CSV import (`lib/input/input_hold.dart`)
 - Participant registration form (`lib/screens2/participant_registration_form.dart`)
 
+### Qualification Validation (PotvrzeniHold - způsobilost)
+
+**Current Behavior:**
+- Empty input: Defaults to false (not qualified)
+- **Missing column**: Defaults to false (common use case for minimal CSV)
+- Accepts various formats: "ano"/"ne", "yes"/"no", "y"/"n", "1"/"0", "true"/"false"
+- Case-insensitive matching
+
+**Default Policy:**
+- If způsobilost column is missing from CSV → defaults to false
+- If způsobilost column exists but is empty → defaults to false
+- This supports minimal CSV imports with only essential fields
+
+**Used in:**
+- CSV import (`lib/input/input_hold.dart`)
+- Participant registration form (`lib/screens2/participant_registration_form.dart`)
+
 ## Date Validation (Enhanced)
 
 **Current Behavior (Recently Improved):**

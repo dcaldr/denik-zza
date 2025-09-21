@@ -363,7 +363,7 @@ void main() {
         await parser.getFile();
       } catch (e) {
         caughtException = true;
-        expect(e.toString(), contains('Null'));
+        expect(e.toString(), contains('Missing required fields'));
       }
       
       // Document that this is a known limitation
@@ -384,6 +384,30 @@ void main() {
       final result = parser.result;
       expect(result, isNotNull);
       expect(result!.goodPersons.length, 1);
+    });
+
+    test('Mixed způsobilost scenarios - explicit values, empty, and default', () async {
+      logger.i('💡 Testing mixed způsobilost handling');
+      
+      final parser = InputParser();
+      parser.filePath = 'test/data/mixed_zpusobilost_scenarios.csv';
+      await parser.getFile();
+      
+      final result = parser.result;
+      expect(result, isNotNull);
+      expect(result!.goodPersons.length, 3);
+      
+      // Jana - explicit "ano" should be true
+      final jana = result.goodPersons.firstWhere((p) => p.jmeno == 'Jana');
+      expect(jana.zpusobilost, true, reason: 'Jana explicitly has "ano"');
+      
+      // Petr - empty value should default to false
+      final petr = result.goodPersons.firstWhere((p) => p.jmeno == 'Petr');
+      expect(petr.zpusobilost, false, reason: 'Petr has empty způsobilost, should default to false');
+      
+      // Marie - explicit "ne" should be false
+      final marie = result.goodPersons.firstWhere((p) => p.jmeno == 'Marie');
+      expect(marie.zpusobilost, false, reason: 'Marie explicitly has "ne"');
     });
   });
 }
