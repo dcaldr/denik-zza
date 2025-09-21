@@ -89,14 +89,35 @@ ZPS (209) → 'zps'
 - Encoding: UTF-8 recommended
 
 ### Column Mapping
-**Current Implementation:**
-- Assumes exact header order and column names
-- Case-sensitive matching
-- No tolerance for reordered/missing/extra columns
+**Current Implementation (✅ IMPLEMENTED):**
+- **Order-independent parsing**: Columns can be in any order
+- **Loose header matching**: Uses diacritic-insensitive, case-insensitive comparison via `TextTools.looseCmp()`
+- **Extra column tolerance**: Extra columns are tracked but don't break parsing
+- **Missing column detection**: Logs warnings for missing mandatory columns
+- **Data normalization**: Incoming CSV data is reordered to match internal definition structure
+
+**Supported Header Variations:**
+```
+"jméno" matches: jmeno, Jméno, JMÉNO, jmeno , etc.
+"příjmení" matches: prijmeni, Příjmení, PRIJMENI, etc.
+"email rodič" matches: email rodic, Email Rodič, EMAIL RODIC, etc.
+```
 
 **Mandatory Fields:**
 - `jméno` (first name)
 - `příjmení` (surname)
+
+**Example Working CSV Formats:**
+```csv
+# Standard order
+jméno,příjmení,rodné číslo,datum narození,...
+
+# Shuffled order - works perfectly
+příjmení,pojišťovna,jméno,rodné číslo,email rodič,...
+
+# With extra columns - works perfectly  
+jméno,příjmení,extra_column,rodné číslo,another_extra,...
+```
 
 ### Error Handling
 - **OK**: Valid data, ready for import
@@ -130,14 +151,19 @@ ZPS (209) → 'zps'
 - Define merge vs. skip vs. overwrite policies
 - Add import preview with conflict highlighting
 
-### 3. Limited Header Mapping Tolerance
-**Current Gap:** CSV headers must match exactly.
+### 3. Missing Mandatory Column Edge Case
+**Current Limitation:** When mandatory columns (jméno, příjmení) are completely missing from CSV headers, the parser correctly detects and logs the issue, but the `toPerson()` method fails due to hardcoded field position assumptions.
 
-**Not Supported:**
-- Reordered columns
-- Extra columns (ignored/tracked)
-- Missing optional columns
-- Alternate column names/aliases
+**Impact:**
+- CSV files missing mandatory columns will cause parsing to fail with null pointer exception
+- Workaround: Ensure CSV files include all mandatory columns (even if empty)
+- Future fix: Enhance `toPerson()` method to handle missing fields gracefully
+
+**Working Scenarios:**
+- ✅ Reordered columns with all mandatory fields present
+- ✅ Extra columns in any position  
+- ✅ Empty values in mandatory fields (handled by validation)
+- ❌ Completely missing mandatory column headers
 
 ## Future Improvements
 
@@ -157,20 +183,21 @@ ZPS (209) → 'zps'
 - Strict validation mode option
 - Support for new insurance companies
 
-### Phase 2: Import Process Improvements
-**Header Mapping:**
-- Column order independence
-- Normalized name matching (diacritic-insensitive)
-- Extra column tracking for UI display
-- Missing column detection with clear errors
+### Phase 2: Import Process Improvements (✅ MOSTLY COMPLETE)
+**Header Mapping (✅ IMPLEMENTED):**
+- ✅ Column order independence
+- ✅ Normalized name matching (diacritic-insensitive) 
+- ✅ Extra column tracking for UI display
+- ✅ Missing mandatory column detection with clear warnings
+- ⚠️ Missing mandatory column edge case (toPerson() hardcoded assumptions)
 
-**Conflict Resolution:**
+**Conflict Resolution (❌ PENDING):**
 - Duplicate detection by name + birth date
 - Rodné číslo uniqueness checking
 - Preview import with conflict highlighting
 - User-selectable merge/skip/overwrite policies
 
-**Data Quality:**
+**Data Quality (❌ PENDING):**
 - Import statistics and validation reports
 - Rollback capability
 - Batch processing with progress tracking
