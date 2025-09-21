@@ -221,6 +221,37 @@ void main() {
       expect(katerina.telefonRodice, '111222333'); // Should NOT have Alena's or Pavel's phone
     });
 
+    test('Minimal required fields - způsobilost defaults to false, empty birth date warns', () async {
+      final parser = InputParser();
+      parser.filePath = 'test/data/minimal_required_fields.csv';
+      await parser.getFile();
+      final result = parser.result;
+      expect(result, isNotNull);
+      expect(result!.goodPersons.length, 2);
+      
+      // Person 1: Has all fields, but způsobilost was empty so should default to false
+      final testPerson = result.goodPersons[0];
+      expect(testPerson.jmeno, 'Testovací');
+      expect(testPerson.prijmeni, 'Osoba');
+      expect(testPerson.zpusobilost, false); // Should default to false when empty in CSV
+      expect(testPerson.datumNarozeni, DateTime(2001, 1, 1)); // Has birth date
+      expect(testPerson.cisloPojisteni, '010101/0123'); // Valid rodné číslo
+      expect(testPerson.zdravotniPojistovna, 'vzp');
+      expect(testPerson.adresa, 'Praha');
+      expect(testPerson.jmenoRodice, 'Test Rodič');
+      
+      // Person 2: Has rodné číslo but empty birth date, způsobilost empty
+      final druhy = result.goodPersons[1];
+      expect(druhy.jmeno, 'Další');
+      expect(druhy.prijmeni, 'Člověk');
+      expect(druhy.zpusobilost, false); // Should default to false when empty in CSV
+      expect(druhy.cisloPojisteni, '020202/0123'); // Valid rodné číslo
+      expect(druhy.datumNarozeni, isNull); // Empty birth date should be null
+      expect(druhy.zdravotniPojistovna, 'ozp');
+      expect(druhy.adresa, 'Brno');
+      expect(druhy.jmenoRodice, 'Jiný Rodič');
+    });
+
     test('Handles reordered mandatory columns correctly', () async {
       final parser = InputParser();
       parser.filePath = 'test/data/reordered_mandatory.csv';

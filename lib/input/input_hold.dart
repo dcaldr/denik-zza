@@ -164,23 +164,51 @@ class AdresaHold extends InputHold {
 /// Validates Czech national identification number (rodné číslo)
 class CisloPojisteniHold extends InputHold {
   CisloPojisteniHold({String columnName = "rodné číslo"}) : super(columnName);
-  CisloPojisteniHold.full(dynamic pureInput, {String columnName = "rodné číslo"}) : super.full(pureInput, columnName);
+  CisloPojisteniHold.full(dynamic pureInput, {String columnName = "rodné číslo"}) : super(columnName) {
+    this.pureInput = pureInput;
+    
+    if (pureInput == null) {
+      status = ParseStatus.empty;
+      output = RodneCislo(""); // Create empty RodneCislo instead of null
+      return;
+    }
+
+    if (pureInput is int || pureInput is double) {
+      input = pureInput.toString();
+    } else {
+      input = pureInput.trim();
+    }
+
+    // Always call _converter(), even for empty input
+    output = _converter();
+    status ??= ParseStatus.empty;
+  }
+  
   @override
   InputHold fresh() => CisloPojisteniHold(columnName: columnName);
 
   @override
   _converter() {
+    // Handle empty input by creating an empty RodneCislo
+    if (input.isEmpty) {
+      RodneCislo rc = RodneCislo("");
+      status = ParseStatus.ok;
+      output = rc;
+      return rc;
+    }
+    
     RodneCislo rc = RodneCislo(input);
     if (!rc.hasValidFormat) {
       status = ParseStatus.bad;
+      output = rc;
       return rc;
     }
     if (!rc.hasValidSum) {
       status = ParseStatus.warn;
-      output = rc.getRc();
+      output = rc;
     } else {
       status = ParseStatus.ok;
-      output = rc.getRc();
+      output = rc;
     }
     return rc;
   }
@@ -209,6 +237,12 @@ class DatumNarozeniHold extends InputHold {
 
   @override
   _converter() {
+    // Handle empty input with warning status - same level as computed dates
+    if (input.isEmpty) {
+      status = ParseStatus.warn;
+      return null;
+    }
+    
     DateTime? date = TextTools.parseDate(input);
     if (date == null) {
       // Per policy: date parsing should WARN (no silent normalization), not hard-fail
@@ -217,6 +251,24 @@ class DatumNarozeniHold extends InputHold {
     }
     status = ParseStatus.ok;
     return date;
+  }
+  
+  /// Custom validator to provide specific message for missing birth date
+  @override
+  String? validator(String? input) {
+    addInput(input);
+    _converter();
+    if (status == ParseStatus.ok) {
+      return null;
+    } else if (status == ParseStatus.bad) {
+      return "$columnName má nesprávná data";
+    } else if (status == ParseStatus.warn) {
+      if (this.input.isEmpty) {
+        return "datum narození je extrémně doporučeno";
+      }
+      return "Warning: Please check the input";
+    }
+    return "Unknown error";
   }
 }
 /// Validates telephone number format
@@ -257,7 +309,26 @@ class EmailHold extends InputHold {
 /// Validates confirmation/checkbox input (yes/no values)
 class PotvrzeniHold extends InputHold {
   PotvrzeniHold({String columnName = "potvrzení"}) : super(columnName);
-  PotvrzeniHold.full(dynamic pureInput, {String columnName = "potvrzení"}) : super.full(pureInput, columnName);
+  PotvrzeniHold.full(dynamic pureInput, {String columnName = "potvrzení"}) : super(columnName) {
+    this.pureInput = pureInput;
+    
+    if (pureInput == null) {
+      status = ParseStatus.ok;
+      output = false; // Default to false when null
+      return;
+    }
+
+    if (pureInput is int || pureInput is double) {
+      input = pureInput.toString();
+    } else {
+      input = pureInput.trim();
+    }
+
+    // Always call _converter(), even for empty input
+    output = _converter();
+    status ??= ParseStatus.empty;
+  }
+  
   @override
   InputHold fresh() => PotvrzeniHold(columnName: columnName);
   
@@ -266,6 +337,12 @@ class PotvrzeniHold extends InputHold {
 
   @override
   _converter() {
+    // Handle empty input by defaulting to false (0) - making způsobilost unrequired
+    if (input.isEmpty) {
+      status = ParseStatus.ok;
+      return false;
+    }
+    
     if (TextTools.looseCmpWithList(input, possibleYes)) {
       status = ParseStatus.ok;
       return true;

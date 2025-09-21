@@ -1,0 +1,3 @@
+jméno,příjmení,rodné číslo,pohlaví,adresa,datum narození,jméno rodič,telefon rodič,email rodič,způsobilost,pojišťovna,poznámka
+Testovací,Osoba,0101010123,1,Praha,01.01.2001,Test Rodič,,,VZP,
+Další,Člověk,0202020123,2,Brno,,Jiný Rodič,,,OZP,
