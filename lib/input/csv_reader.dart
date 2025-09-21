@@ -87,12 +87,14 @@ Future<List<List<String>>?> removeFirstLine(List<List<String>>? csvTable) async{
        return setBadFile(); // File does not exist
       }
       try {
-        file.openRead().listen((_) {}).cancel(); // Attempt to read and immediately cancel to not actually process data
+        // Synchronous open/close to avoid leaving pending async subscriptions that may lock the file on Windows
+        final raf = file.openSync(mode: FileMode.read);
+        raf.closeSync();
         wasPathOk = true;
         return true;
       } catch (e) {
         errorMsg = e.toString();
-       return setBadFile();
+        return setBadFile();
       }
 
     }

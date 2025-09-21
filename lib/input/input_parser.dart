@@ -282,22 +282,23 @@ class Answer {
       lineStatus = ParseStatus.bad;
       return;
     }
-    //IF rodneCislo missing - warn only
+    // Rodné číslo handling
     final s2 = _data[2].status;
     if (s2 == ParseStatus.bad) {
+      // Missing or invalid RC → warn (not immediate hard fail)
       error.errorMsg += 'Rodné číslo chybí,\n';
       if (lineStatus < ParseStatus.warn) {
         lineStatus = ParseStatus.warn;
       }
-      if (s2 == ParseStatus.ok) {
-        if (_data[3].output == null) {
-          lineStatus = ParseStatus.warn;
-          error.errorMsg += "odhad pohlaví,\n";
-        }
-        if (_data[4].output == null) {
-          lineStatus = ParseStatus.warn;
-          error.errorMsg += "odhad data narození";
-        }
+    } else if (s2 == ParseStatus.ok) {
+      // RC present and valid format; if gender or birthdate missing, we'll warn about inference
+      if (_data[3].output == null) {
+        lineStatus = ParseStatus.warn;
+        error.errorMsg += "odhad pohlaví,\n";
+      }
+      if (_data[4].output == null) {
+        lineStatus = ParseStatus.warn;
+        error.errorMsg += "odhad data narození";
       }
     }
     if (lineStatus == ParseStatus.empty) {
