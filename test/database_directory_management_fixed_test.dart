@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'utils/database_test_helper.dart';
+import 'utils/test_configuration.dart';
 
 void main() {
   // Initialize Flutter binding for tests that might use Flutter services
@@ -20,6 +21,9 @@ void main() {
     });
 
     test('should create test databases in dedicated directory', () async {
+      if (!TestConfiguration.isPersist) {
+        markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
+      }
       // Create a file-based test database
       final database = DatabaseTestHelper.createTestDatabase(TestDatabaseType.file);
       
@@ -53,6 +57,9 @@ void main() {
     });
 
     test('should create databases with unique filenames', () async {
+      if (!TestConfiguration.isPersist) {
+        markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
+      }
       // Create multiple databases quickly and track their exact file paths
       final databases = <AppDatabase>[];
       final createdPaths = <String>[];
@@ -116,6 +123,9 @@ void main() {
     });
 
     test('should isolate file databases between tests', () async {
+      if (!TestConfiguration.isPersist) {
+        markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
+      }
       // Create first database and add data
       final db1 = DatabaseTestHelper.createTestDatabase(TestDatabaseType.file);
       await db1.customStatement('CREATE TABLE test_isolation (id INTEGER PRIMARY KEY, value TEXT)');
@@ -139,6 +149,12 @@ void main() {
     });
 
     test('should successfully clean up test database files', () async {
+      // IMPORTANT: We only clean files created by THIS test to prove cleanup
+      // works. In persist mode, other files are intentionally preserved for
+      // manual inspection and debugging.
+      if (!TestConfiguration.isPersist) {
+        markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
+      }
       // Track files before this test
       final dir = Directory(testDbDir);
       final before = dir

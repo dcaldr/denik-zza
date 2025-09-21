@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:drift/drift.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'utils/database_test_helper.dart';
+import 'utils/test_configuration.dart';
 
 void main() {
   // Initialize Flutter binding for tests that might use Flutter services
@@ -22,6 +23,11 @@ void main() {
     });
 
     test('should create test databases in dedicated directory', () async {
+      // This scenario requires on-disk persistence. When TEST_MODE is not
+      // set to `persist`, we skip to avoid flaky assumptions about the FS.
+      if (!TestConfiguration.isPersist) {
+        markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
+      }
       // Create a file-based test database
       database = DatabaseTestHelper.createTestDatabase(TestDatabaseType.file);
       
@@ -56,6 +62,9 @@ void main() {
     });
 
     test('should create databases with unique filenames', () async {
+      if (!TestConfiguration.isPersist) {
+        markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
+      }
       // Create multiple databases quickly
   final databases = <AppDatabase>[];
       
@@ -106,6 +115,12 @@ void main() {
     });
 
     test('should successfully clean up test database files', () async {
+      // IMPORTANT: We only clean up files created by THIS test. In persist
+      // mode, files are generally kept for manual inspection. This test is a
+      // targeted cleanup proof, not a policy to wipe all test outputs.
+      if (!TestConfiguration.isPersist) {
+        markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
+      }
       // Create some test databases and record their exact file paths
       final databases = <AppDatabase>[];
       final createdPaths = <String>[];
@@ -163,6 +178,9 @@ void main() {
     });
 
     test('should handle directory creation gracefully', () async {
+      if (!TestConfiguration.isPersist) {
+        markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
+      }
       // Instead of deleting the shared test directory (which might be in use),
       // test with a unique subdirectory that we can safely delete
       final uniqueSubDir = Directory('${testDbDir}/graceful_test_${DateTime.now().millisecondsSinceEpoch}');
@@ -208,6 +226,9 @@ void main() {
     });
 
     test('should isolate file databases between tests', () async {
+      if (!TestConfiguration.isPersist) {
+        markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
+      }
       // Create first database and add data
       final db1 = DatabaseTestHelper.createTestDatabase(TestDatabaseType.file);
       await db1.customStatement('CREATE TABLE test_isolation (id INTEGER PRIMARY KEY, value TEXT)');

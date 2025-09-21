@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'utils/database_test_helper.dart';
+import 'utils/test_configuration.dart';
 
 /// Test to verify that file test databases are properly created and persisted
 void main() {
@@ -8,6 +9,14 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   
   group('Test Database Directory and Persistence', () {
+    if (!TestConfiguration.isPersist) {
+      // Persistence is OFF. These tests verify on-disk behavior and are skipped
+      // unless explicitly enabled via --dart-define=TEST_MODE=persist.
+      test('skipped: persistence-only suite (enable TEST_MODE=persist to run)', () {
+        markTestSkipped('Enable TEST_MODE=persist to run persistence checks.');
+      });
+      return; // Skip the rest of the group
+    }
     
     test('creates test databases in dedicated test/test_dbs directory', () async {
       // Create a file database
@@ -90,7 +99,7 @@ void main() {
       
       // Verify the file exists
       expect(dbPath, isNotNull);
-      final dbFile = File(dbPath!);
+  final dbFile = File(dbPath);
       expect(dbFile.existsSync(), isTrue);
       
       // Verify file has content (not empty)
@@ -98,7 +107,8 @@ void main() {
       
       // Note: We don't test reconnecting to the same file since AppDatabase
       // creates unique filenames each time. This test verifies the file is
-      // actually created and has content.
+      // actually created and has content. Do not auto-clean this file in
+      // persist mode so devs can inspect it if needed.
     });
   });
 }
