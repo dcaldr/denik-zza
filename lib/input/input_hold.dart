@@ -397,7 +397,11 @@ class PojistovnaHold extends InputHold {
       status = ParseStatus.ok;
       return null;
     }
-
+          // TODO: FIXME: if loosecmp then we dont need verions of string without diacritics, here 
+          // FIXME: should add option for when the pojistovna is not recognized - or documenattion if it is already present 
+          // todo: add tests for cases with unrecognized insurance companies and for cases with recognized ones, and test if multiple "same" insurance companies wont be added to db
+          // todo: move this list to special file 
+          // todo: use cmpWithList instead of loops !! 
     // Known Czech health insurance companies with common synonyms and codes.
     // Policy: Loose compare and pick the first match's canonical.
     // Canonical is a short lowercase code to align with existing expectations (e.g., 'ozp').
