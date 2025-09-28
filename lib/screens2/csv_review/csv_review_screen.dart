@@ -24,6 +24,8 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
   bool _isLoading = true;
   CsvImportSession? _session;
   Object? _error;
+  final Set<int> _rowsInProgress = <int>{};
+  final Set<int> _editedRows = <int>{};
 
   @override
   void initState() {
@@ -59,6 +61,226 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _handleRowEdit(CsvReviewRow row) async {
+    final Map<String, String?>? updatedValues = await _showRowEditDialog(row);
+    if (updatedValues == null) {
+      return;
+    }
+    await _applyRowUpdate(
+      row: row,
+      updatedValues: updatedValues,
+      replaceAll: true,
+    );
+  }
+
+  Future<void> _handleFieldEdit(CsvReviewRow row, CsvFieldReview field) async {
+    final String? newValue = await _showFieldEditDialog(row, field);
+    if (newValue == null) {
+      return;
+    }
+    await _applyRowUpdate(
+      row: row,
+      updatedValues: <String, String?>{field.columnKey: newValue},
+      replaceAll: false,
+    );
+  }
+
+  Future<void> _applyRowUpdate({
+    required CsvReviewRow row,
+    required Map<String, String?> updatedValues,
+    required bool replaceAll,
+  }) async {
+    final CsvImportSession? session = _session;
+    if (session == null) {
+      return;
+    }
+
+    setState(() {
+      _rowsInProgress.add(row.originalIndex);
+    });
+
+    final Map<String, String?> payload = replaceAll
+        ? <String, String?>{
+            for (final MapEntry<String, String?> entry in updatedValues.entries)
+              entry.key: entry.value?.trim(),
+          }
+        : _buildPayload(row, updatedValues);
+
+    try {
+      final CsvReviewRow updatedRow = await widget.service.reparseRow(payload);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _session = _sessionWithUpdatedRow(updatedRow);
+        _rowsInProgress.remove(row.originalIndex);
+        _editedRows.add(row.originalIndex);
+      });
+    } catch (error, stackTrace) {
+      _logger.e(
+        'Failed to reparse CSV row ${row.originalIndex}',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _rowsInProgress.remove(row.originalIndex);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Uložení úprav se nezdařilo. Zkuste to prosím znovu.'),
+        ),
+      );
+    }
+  }
+
+  Map<String, String?> _buildPayload(
+    CsvReviewRow row,
+    Map<String, String?> overrides,
+  ) {
+    final Map<String, String?> payload = <String, String?>{};
+    row.fields.forEach((String key, CsvFieldReview field) {
+      final bool hasOverride = overrides.containsKey(key);
+      final String? value = hasOverride
+          ? overrides[key]
+          : field.originalValue ?? field.normalizedValue;
+      payload[key] = value?.trim();
+    });
+    return payload;
+  }
+
+  CsvImportSession _sessionWithUpdatedRow(CsvReviewRow updatedRow) {
+    final CsvImportSession current = _session!;
+    bool replaced = false;
+    final List<CsvReviewRow> updatedRows = <CsvReviewRow>[];
+    for (final CsvReviewRow existing in current.review.rows) {
+      if (existing.originalIndex == updatedRow.originalIndex) {
+        updatedRows.add(updatedRow);
+        replaced = true;
+      } else {
+        updatedRows.add(existing);
+      }
+    }
+    if (!replaced) {
+      _logger.w('Updated row ${updatedRow.originalIndex} not found in current session.');
+      return current;
+    }
+
+    return CsvImportSession(
+      review: CsvImportReview(
+        unparsedColumns: current.review.unparsedColumns,
+        rows: updatedRows,
+      ),
+      personResult: current.personResult,
+    );
+  }
+
+  Future<Map<String, String?>?> _showRowEditDialog(CsvReviewRow row) async {
+    final Map<String, TextEditingController> controllers = <String, TextEditingController>{
+      for (final CsvFieldReview field in row.fields.values)
+        field.columnKey: TextEditingController(text: field.originalValue ?? ''),
+    };
+
+    final Map<String, String?>? result = await showDialog<Map<String, String?>>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          key: Key('CsvReviewScreen_edit_dialog_${row.originalIndex}'),
+          title: Text('Upravit řádek ${row.originalIndex}'),
+          content: SizedBox(
+            width: 480,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: row.fields.values.map((CsvFieldReview field) {
+                  final TextEditingController controller = controllers[field.columnKey]!;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: TextFormField(
+                      key: Key('CsvReviewScreen_edit_field_${row.originalIndex}_${field.columnKey}'),
+                      controller: controller,
+                      decoration: InputDecoration(
+                        labelText: field.columnName,
+                        helperText: field.inferred ? 'Hodnota byla dopočítána' : null,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              key: const Key('CsvReviewScreen_edit_dialog_cancel'),
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Zrušit'),
+            ),
+            ElevatedButton(
+              key: const Key('CsvReviewScreen_edit_dialog_save'),
+              onPressed: () {
+                final Map<String, String?> payload = <String, String?>{
+                  for (final MapEntry<String, TextEditingController> entry in controllers.entries)
+                    entry.key: entry.value.text,
+                };
+                Navigator.of(dialogContext).pop(payload);
+              },
+              child: const Text('Uložit změny'),
+            ),
+          ],
+        );
+      },
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (final TextEditingController controller in controllers.values) {
+        controller.dispose();
+      }
+    });
+
+    return result;
+  }
+
+  Future<String?> _showFieldEditDialog(CsvReviewRow row, CsvFieldReview field) async {
+    final TextEditingController controller = TextEditingController(text: field.originalValue ?? '');
+    final String? result = await showDialog<String>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          key: Key('CsvReviewScreen_field_edit_dialog_${row.originalIndex}_${field.columnKey}'),
+          title: Text('Upravit ${field.columnName}'),
+          content: TextFormField(
+            key: Key('CsvReviewScreen_field_edit_input_${row.originalIndex}_${field.columnKey}'),
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: field.columnName,
+              helperText: field.inferred ? 'Hodnota byla dopočítána' : null,
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              key: Key('CsvReviewScreen_field_edit_cancel_${row.originalIndex}_${field.columnKey}'),
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Zrušit'),
+            ),
+            ElevatedButton(
+              key: Key('CsvReviewScreen_field_edit_save_${row.originalIndex}_${field.columnKey}'),
+              onPressed: () => Navigator.of(dialogContext).pop(controller.text),
+              child: const Text('Uložit'),
+            ),
+          ],
+        );
+      },
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.dispose();
+    });
+    return result;
   }
 
   @override
@@ -149,7 +371,14 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
       key: Key('CsvReviewScreen_list_${status.name}'),
       padding: const EdgeInsets.all(16),
       itemBuilder: (BuildContext context, int index) {
-        return CsvReviewRowCard(row: rows[index]);
+        final CsvReviewRow row = rows[index];
+        return CsvReviewRowCard(
+          row: row,
+          onRowEdit: () => _handleRowEdit(row),
+          onFieldEdit: (CsvFieldReview field) => _handleFieldEdit(row, field),
+          isEdited: _editedRows.contains(row.originalIndex),
+          isLoading: _rowsInProgress.contains(row.originalIndex),
+        );
       },
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemCount: rows.length,
@@ -319,62 +548,182 @@ class CsvReviewRowCard extends StatelessWidget {
   const CsvReviewRowCard({
     super.key,
     required this.row,
+    required this.onRowEdit,
+    required this.onFieldEdit,
+    required this.isEdited,
+    required this.isLoading,
   });
 
   final CsvReviewRow row;
+  final VoidCallback onRowEdit;
+  final ValueChanged<CsvFieldReview> onFieldEdit;
+  final bool isEdited;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
+    final ThemeData theme = Theme.of(context);
+    final TextTheme textTheme = theme.textTheme;
     final Color statusColor = _statusColor(context, row.status);
     final String statusLabel = _statusLabel(row.status);
     final Iterable<String> messageTexts = row.messages.map((CsvReviewMessage m) => m.message);
-    final List<String> fieldPreviews = row.fields.values
+    final List<CsvFieldReview> fields = row.fields.values.toList();
+    final List<String> fieldPreviews = fields
         .take(3)
         .map((CsvFieldReview field) => '${field.columnName}: ${field.originalValue ?? ''}')
         .toList();
 
     return Card(
       key: Key('CsvReviewScreen_row_${row.originalIndex}'),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text('Řádek ${row.originalIndex}', style: textTheme.titleMedium),
-                const SizedBox(width: 12),
-                Chip(
-                  key: Key('CsvReviewScreen_row_${row.originalIndex}_status'),
-                  label: Text(statusLabel),
-                  backgroundColor: statusColor.withValues(alpha: 0.15),
-                  labelStyle: textTheme.labelMedium?.copyWith(color: statusColor),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Expanded(
+                      child: Text('Řádek ${row.originalIndex}', style: textTheme.titleMedium),
+                    ),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: <Widget>[
+                        Chip(
+                          key: Key('CsvReviewScreen_row_${row.originalIndex}_status'),
+                          label: Text(statusLabel),
+                          backgroundColor: statusColor.withValues(alpha: 0.15),
+                          labelStyle: textTheme.labelMedium?.copyWith(color: statusColor),
+                        ),
+                        if (isEdited)
+                          Tooltip(
+                            message: 'Řádek byl upraven v rámci aktuální relace',
+                            child: Chip(
+                              key: Key('CsvReviewScreen_row_${row.originalIndex}_edited_badge'),
+                              avatar: const Icon(Icons.edit_outlined, size: 16),
+                              label: const Text('Upraveno'),
+                              backgroundColor: theme.colorScheme.secondaryContainer,
+                              labelStyle: textTheme.labelMedium?.copyWith(
+                                color: theme.colorScheme.onSecondaryContainer,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+                if (isLoading) ...<Widget>[
+                  const SizedBox(height: 12),
+                  LinearProgressIndicator(
+                    key: Key('CsvReviewScreen_row_${row.originalIndex}_loading_indicator'),
+                    minHeight: 3,
+                  ),
+                ],
+                if (fieldPreviews.isNotEmpty) ...<Widget>[
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: <Widget>[
+                      for (int i = 0; i < fieldPreviews.length; i++)
+                        Chip(
+                          key: Key('CsvReviewScreen_row_${row.originalIndex}_field_$i'),
+                          label: Text(fieldPreviews[i]),
+                        ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Text(
+                  messageTexts.isNotEmpty ? messageTexts.join('\n') : 'Bez zprávy',
+                  key: Key('CsvReviewScreen_row_${row.originalIndex}_messages'),
+                ),
+                if (row.derived.isNotEmpty) ...<Widget>[
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: row.derived.entries
+                        .map(
+                          (MapEntry<String, CsvDerivedValue> entry) => Chip(
+                            key: Key('CsvReviewScreen_row_${row.originalIndex}_derived_${entry.key}'),
+                            avatar: Icon(
+                              entry.value.applied ? Icons.check_circle : Icons.lightbulb_outline,
+                              size: 18,
+                              color: entry.value.applied
+                                  ? theme.colorScheme.secondary
+                                  : theme.colorScheme.primary,
+                            ),
+                            label: Text('${entry.value.key}: ${entry.value.value}'),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    key: Key('CsvReviewScreen_row_${row.originalIndex}_edit_button'),
+                    onPressed: isLoading ? null : onRowEdit,
+                    icon: const Icon(Icons.edit_outlined),
+                    label: const Text('Upravit řádek'),
+                  ),
                 ),
               ],
             ),
-            if (fieldPreviews.isNotEmpty) ...<Widget>[
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: <Widget>[
-                  for (int i = 0; i < fieldPreviews.length; i++)
-                    Chip(
-                      key: Key('CsvReviewScreen_row_${row.originalIndex}_field_$i'),
-                      label: Text(fieldPreviews[i]),
+          ),
+          const Divider(height: 1),
+          ExpansionTile(
+            key: Key('CsvReviewScreen_row_${row.originalIndex}_fields_tile'),
+            tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+            title: const Text('Detaily polí'),
+            childrenPadding: const EdgeInsets.only(bottom: 16),
+            maintainState: true,
+            children: <Widget>[
+              for (final CsvFieldReview field in fields) ...<Widget>[
+                ListTile(
+                  key: Key('CsvReviewScreen_row_${row.originalIndex}_field_tile_${field.columnKey}'),
+                  leading: Icon(
+                    _fieldStatusIcon(field.status),
+                    color: _fieldStatusColor(context, field.status),
+                  ),
+                  title: Text(field.columnName),
+                  subtitle: Text(_fieldSummaryText(field)),
+                  trailing: IconButton(
+                    key: Key(
+                      'CsvReviewScreen_row_${row.originalIndex}_field_${field.columnKey}_edit_button',
                     ),
-                ],
-              ),
+                    tooltip: 'Upravit ${field.columnName}',
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: isLoading ? null : () => onFieldEdit(field),
+                  ),
+                ),
+                if (field.messages.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(72, 0, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: field.messages
+                          .map(
+                            (CsvReviewMessage message) => Text(
+                              '• ${message.message}',
+                              style: textTheme.bodySmall,
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+              ],
             ],
-            const SizedBox(height: 12),
-            Text(
-              messageTexts.isNotEmpty ? messageTexts.join('\n') : 'Bez zprávy',
-              key: Key('CsvReviewScreen_row_${row.originalIndex}_messages'),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -436,4 +785,55 @@ String _statusLabel(CsvRowReviewStatus status) {
     case CsvRowReviewStatus.ok:
       return 'Platné';
   }
+}
+
+Color _fieldStatusColor(BuildContext context, CsvFieldReviewStatus status) {
+  final ColorScheme colors = Theme.of(context).colorScheme;
+  switch (status) {
+    case CsvFieldReviewStatus.ok:
+      return colors.secondary;
+    case CsvFieldReviewStatus.warn:
+      return colors.tertiary;
+    case CsvFieldReviewStatus.bad:
+      return colors.error;
+    case CsvFieldReviewStatus.empty:
+      return colors.outline;
+  }
+}
+
+String _fieldStatusLabel(CsvFieldReviewStatus status) {
+  switch (status) {
+    case CsvFieldReviewStatus.ok:
+      return 'V pořádku';
+    case CsvFieldReviewStatus.warn:
+      return 'Varování';
+    case CsvFieldReviewStatus.bad:
+      return 'Chyba';
+    case CsvFieldReviewStatus.empty:
+      return 'Prázdné';
+  }
+}
+
+IconData _fieldStatusIcon(CsvFieldReviewStatus status) {
+  switch (status) {
+    case CsvFieldReviewStatus.ok:
+      return Icons.check_circle_outline;
+    case CsvFieldReviewStatus.warn:
+      return Icons.warning_amber_rounded;
+    case CsvFieldReviewStatus.bad:
+      return Icons.error_outline;
+    case CsvFieldReviewStatus.empty:
+      return Icons.radio_button_unchecked;
+  }
+}
+
+String _fieldSummaryText(CsvFieldReview field) {
+  final String value = (field.originalValue == null || field.originalValue!.trim().isEmpty)
+      ? 'Bez hodnoty'
+      : field.originalValue!.trim();
+  final String statusLabel = _fieldStatusLabel(field.status);
+  if (field.inferred) {
+    return '$value • $statusLabel • dopočteno';
+  }
+  return '$value • $statusLabel';
 }

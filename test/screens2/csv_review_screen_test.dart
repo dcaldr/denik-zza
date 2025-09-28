@@ -75,6 +75,69 @@ void main() {
       expect(find.byKey(const Key('CsvReviewScreen_error_text')), findsOneWidget);
       expect(mockService.loadInvocations, 1);
     });
+
+    testWidgets('allows editing row and updates UI', (WidgetTester tester) async {
+      final CsvImportSession session = _buildSampleSession();
+      final CsvReviewRow updatedRow = CsvReviewRow(
+        originalIndex: 1,
+        status: CsvRowReviewStatus.rejected,
+        messages: <CsvReviewMessage>[
+          CsvReviewMessage(
+            severity: CsvReviewMessageSeverity.error,
+            message: 'Řádek aktualizován',
+          ),
+        ],
+        fields: <String, CsvFieldReview>{
+          'jmeno': CsvFieldReview(
+            columnKey: 'jmeno',
+            columnName: 'Jméno',
+            status: CsvFieldReviewStatus.ok,
+            originalValue: 'Petr',
+            normalizedValue: 'Petr',
+            inferred: false,
+          ),
+          'prijmeni': CsvFieldReview(
+            columnKey: 'prijmeni',
+            columnName: 'Příjmení',
+            status: CsvFieldReviewStatus.ok,
+            originalValue: 'Novák',
+            normalizedValue: 'Novák',
+            inferred: false,
+          ),
+        },
+        derived: <String, CsvDerivedValue>{},
+      );
+
+      final CsvReviewServiceMock mockService = CsvReviewServiceMock(
+        onLoad: (_) async => session,
+        onReparse: (Map<String, String?> payload) async => updatedRow,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: CsvReviewScreen(
+            filePath: 'sample.csv',
+            service: mockService,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_row_1_edit_button')));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const Key('CsvReviewScreen_edit_field_1_jmeno')),
+        'Petr',
+      );
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_edit_dialog_save')));
+      await tester.pumpAndSettle();
+
+      expect(mockService.reparseInvocations, 1);
+      expect(mockService.lastReparsePayload?['jmeno'], 'Petr');
+      expect(find.byKey(const Key('CsvReviewScreen_row_1_edited_badge')), findsOneWidget);
+      expect(find.text('Řádek aktualizován'), findsOneWidget);
+    });
   });
 }
 
