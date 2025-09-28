@@ -7,7 +7,7 @@ In time before the event start, can be huge for preparing
 1) creating event in system 
 2) adding people in event* (name+surname at the min)
 3) adding preexisting info to people*
-4) při importu CSV zobrazit kontrolu na možné duplicity u již registrovaných účastníků
+
 
 ## intake
 Time and persistence critical part of workflow --> people are queing and medic is approving them in

@@ -82,8 +82,12 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
     );
   }
 
-  Future<void> _handleFieldEdit(CsvReviewRow row, CsvFieldReview field) async {
-    final String? newValue = await _showFieldEditDialog(row, field);
+  Future<void> _handleFieldEdit(
+    CsvReviewRow row,
+    CsvFieldReview field, {
+    String? overrideValue,
+  }) async {
+    final String? newValue = overrideValue ?? await _showFieldEditDialog(row, field);
     if (newValue == null) {
       return;
     }
@@ -742,7 +746,14 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
         return CsvReviewRowCard(
           row: row,
           onRowEdit: () => _handleRowEdit(row),
-          onFieldEdit: (CsvFieldReview field) => _handleFieldEdit(row, field),
+          onFieldEdit: (
+            CsvFieldReview field, {
+            String? overrideValue,
+          }) => _handleFieldEdit(
+            row,
+            field,
+            overrideValue: overrideValue,
+          ),
           isEdited: _editedRows.contains(row.originalIndex),
           isLoading: _rowsInProgress.contains(row.originalIndex),
           decision: decision,
@@ -1011,7 +1022,7 @@ class _BulkActionBar extends StatelessWidget {
   }
 }
 
-class CsvReviewRowCard extends StatelessWidget {
+class CsvReviewRowCard extends StatefulWidget {
   const CsvReviewRowCard({
     super.key,
     required this.row,
@@ -1026,7 +1037,7 @@ class CsvReviewRowCard extends StatelessWidget {
 
   final CsvReviewRow row;
   final VoidCallback onRowEdit;
-  final ValueChanged<CsvFieldReview> onFieldEdit;
+  final Future<void> Function(CsvFieldReview field, {String? overrideValue}) onFieldEdit;
   final bool isEdited;
   final bool isLoading;
   final CsvRowDecision decision;
@@ -1034,21 +1045,74 @@ class CsvReviewRowCard extends StatelessWidget {
   final ValueChanged<CsvRowDecision> onDecisionChanged;
 
   @override
+  State<CsvReviewRowCard> createState() => _CsvReviewRowCardState();
+}
+
+class _CsvReviewRowCardState extends State<CsvReviewRowCard> {
+  final Map<String, TextEditingController> _inlineControllers = <String, TextEditingController>{};
+  final Set<String> _editingFields = <String>{};
+
+  @override
+  void dispose() {
+    for (final TextEditingController controller in _inlineControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _startInlineEdit(CsvFieldReview field) {
+    if (_editingFields.contains(field.columnKey)) {
+      return;
+    }
+    final TextEditingController controller = TextEditingController(
+      text: field.originalValue ?? field.normalizedValue ?? '',
+    );
+    setState(() {
+      _editingFields.add(field.columnKey);
+      _inlineControllers[field.columnKey] = controller;
+    });
+  }
+
+  Future<void> _submitInlineEdit(CsvFieldReview field) async {
+    final TextEditingController? controller = _inlineControllers[field.columnKey];
+    if (controller == null) {
+      return;
+    }
+    final String newValue = controller.text;
+    await widget.onFieldEdit(field, overrideValue: newValue);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _editingFields.remove(field.columnKey);
+      _inlineControllers.remove(field.columnKey)?.dispose();
+    });
+  }
+
+  void _cancelInlineEdit(String columnKey) {
+    setState(() {
+      _editingFields.remove(columnKey);
+      _inlineControllers.remove(columnKey)?.dispose();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final TextTheme textTheme = theme.textTheme;
-    final Color statusColor = _statusColor(context, row.status);
-    final String statusLabel = _statusLabel(row.status);
-    final Iterable<String> messageTexts = row.messages.map((CsvReviewMessage m) => m.message);
-    final List<CsvFieldReview> fields = row.fields.values.toList();
+    final Color statusColor = _statusColor(context, widget.row.status);
+    final String statusLabel = _statusLabel(widget.row.status);
+    final Iterable<String> messageTexts =
+        widget.row.messages.map((CsvReviewMessage m) => m.message);
+    final List<CsvFieldReview> fields = widget.row.fields.values.toList();
     final List<String> fieldPreviews = fields
         .take(3)
         .map((CsvFieldReview field) => '${field.columnName}: ${field.originalValue ?? ''}')
         .toList();
-    final bool hasDuplicates = duplicateMatches.isNotEmpty;
+    final bool hasDuplicates = widget.duplicateMatches.isNotEmpty;
 
     return Card(
-      key: Key('CsvReviewScreen_row_${row.originalIndex}'),
+      key: Key('CsvReviewScreen_row_${widget.row.originalIndex}'),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1062,7 +1126,7 @@ class CsvReviewRowCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Expanded(
-                      child: Text('Řádek ${row.originalIndex}', style: textTheme.titleMedium),
+                      child: Text('Řádek ${widget.row.originalIndex}', style: textTheme.titleMedium),
                     ),
                     Wrap(
                       spacing: 8,
@@ -1070,26 +1134,27 @@ class CsvReviewRowCard extends StatelessWidget {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: <Widget>[
                         Chip(
-                          key: Key('CsvReviewScreen_row_${row.originalIndex}_status'),
+                          key: Key('CsvReviewScreen_row_${widget.row.originalIndex}_status'),
                           label: Text(statusLabel),
                           backgroundColor: statusColor.withValues(alpha: 0.15),
                           labelStyle: textTheme.labelMedium?.copyWith(color: statusColor),
                         ),
-                        if (decision != CsvRowDecision.none)
+                        if (widget.decision != CsvRowDecision.none)
                           Tooltip(
-                            message: decision == CsvRowDecision.approved
+                            message: widget.decision == CsvRowDecision.approved
                                 ? 'Řádek bude schválen'
                                 : 'Řádek bude odmítnut',
                             child: Chip(
-                              key: Key('CsvReviewScreen_row_${row.originalIndex}_decision_chip'),
+                              key: Key('CsvReviewScreen_row_${widget.row.originalIndex}_decision_chip'),
                               avatar: Icon(
-                                decision == CsvRowDecision.approved ? Icons.check : Icons.close,
+                                widget.decision == CsvRowDecision.approved ? Icons.check : Icons.close,
                                 size: 16,
                               ),
-                              label: Text(_decisionLabel(decision)),
-                              backgroundColor: _decisionColor(context, decision).withValues(alpha: 0.15),
+                              label: Text(_decisionLabel(widget.decision)),
+                              backgroundColor:
+                                  _decisionColor(context, widget.decision).withValues(alpha: 0.15),
                               labelStyle: textTheme.labelMedium?.copyWith(
-                                color: _decisionColor(context, decision),
+                                color: _decisionColor(context, widget.decision),
                               ),
                             ),
                           ),
@@ -1097,7 +1162,8 @@ class CsvReviewRowCard extends StatelessWidget {
                           Tooltip(
                             message: 'Řádek může odpovídat již existujícímu účastníkovi',
                             child: Chip(
-                              key: Key('CsvReviewScreen_row_${row.originalIndex}_duplicate_badge'),
+                              key:
+                                  Key('CsvReviewScreen_row_${widget.row.originalIndex}_duplicate_badge'),
                               avatar: const Icon(Icons.warning_amber_rounded, size: 16),
                               label: const Text('Možná duplicita'),
                               backgroundColor: theme.colorScheme.errorContainer,
@@ -1106,11 +1172,12 @@ class CsvReviewRowCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                        if (isEdited)
+                        if (widget.isEdited)
                           Tooltip(
                             message: 'Řádek byl upraven v rámci aktuální relace',
                             child: Chip(
-                              key: Key('CsvReviewScreen_row_${row.originalIndex}_edited_badge'),
+                              key: Key(
+                                  'CsvReviewScreen_row_${widget.row.originalIndex}_edited_badge'),
                               avatar: const Icon(Icons.edit_outlined, size: 16),
                               label: const Text('Upraveno'),
                               backgroundColor: theme.colorScheme.secondaryContainer,
@@ -1123,10 +1190,10 @@ class CsvReviewRowCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (isLoading) ...<Widget>[
+                if (widget.isLoading) ...<Widget>[
                   const SizedBox(height: 12),
                   LinearProgressIndicator(
-                    key: Key('CsvReviewScreen_row_${row.originalIndex}_loading_indicator'),
+                    key: Key('CsvReviewScreen_row_${widget.row.originalIndex}_loading_indicator'),
                     minHeight: 3,
                   ),
                 ],
@@ -1138,7 +1205,7 @@ class CsvReviewRowCard extends StatelessWidget {
                     children: <Widget>[
                       for (int i = 0; i < fieldPreviews.length; i++)
                         Chip(
-                          key: Key('CsvReviewScreen_row_${row.originalIndex}_field_$i'),
+                          key: Key('CsvReviewScreen_row_${widget.row.originalIndex}_field_$i'),
                           label: Text(fieldPreviews[i]),
                         ),
                     ],
@@ -1147,25 +1214,26 @@ class CsvReviewRowCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   messageTexts.isNotEmpty ? messageTexts.join('\n') : 'Bez zprávy',
-                  key: Key('CsvReviewScreen_row_${row.originalIndex}_messages'),
+                  key: Key('CsvReviewScreen_row_${widget.row.originalIndex}_messages'),
                 ),
                 if (hasDuplicates) ...<Widget>[
                   const SizedBox(height: 12),
                   _DuplicateWarningPanel(
-                    key: Key('CsvReviewScreen_row_${row.originalIndex}_duplicate_panel'),
-                    rowIndex: row.originalIndex,
-                    matches: duplicateMatches,
+                    key: Key('CsvReviewScreen_row_${widget.row.originalIndex}_duplicate_panel'),
+                    rowIndex: widget.row.originalIndex,
+                    matches: widget.duplicateMatches,
                   ),
                 ],
-                if (row.derived.isNotEmpty) ...<Widget>[
+                if (widget.row.derived.isNotEmpty) ...<Widget>[
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: row.derived.entries
+                    children: widget.row.derived.entries
                         .map(
                           (MapEntry<String, CsvDerivedValue> entry) => Chip(
-                            key: Key('CsvReviewScreen_row_${row.originalIndex}_derived_${entry.key}'),
+                            key: Key(
+                                'CsvReviewScreen_row_${widget.row.originalIndex}_derived_${entry.key}'),
                             avatar: Icon(
                               entry.value.applied ? Icons.check_circle : Icons.lightbulb_outline,
                               size: 18,
@@ -1181,7 +1249,7 @@ class CsvReviewRowCard extends StatelessWidget {
                 ],
                 const SizedBox(height: 12),
                 SegmentedButton<CsvRowDecision>(
-                  key: Key('CsvReviewScreen_row_${row.originalIndex}_decision_segmented'),
+                  key: Key('CsvReviewScreen_row_${widget.row.originalIndex}_decision_segmented'),
                   segments: const <ButtonSegment<CsvRowDecision>>[
                     ButtonSegment<CsvRowDecision>(
                       value: CsvRowDecision.none,
@@ -1199,22 +1267,22 @@ class CsvReviewRowCard extends StatelessWidget {
                       icon: Icon(Icons.cancel_outlined),
                     ),
                   ],
-                  selected: <CsvRowDecision>{decision},
-                  onSelectionChanged: isLoading
+                  selected: <CsvRowDecision>{widget.decision},
+                  onSelectionChanged: widget.isLoading
                       ? null
                       : (Set<CsvRowDecision> selection) {
                           if (selection.isEmpty) {
                             return;
                           }
-                          onDecisionChanged(selection.first);
+                          widget.onDecisionChanged(selection.first);
                         },
                 ),
                 const SizedBox(height: 12),
                 Align(
                   alignment: Alignment.centerLeft,
                   child: OutlinedButton.icon(
-                    key: Key('CsvReviewScreen_row_${row.originalIndex}_edit_button'),
-                    onPressed: isLoading ? null : onRowEdit,
+                    key: Key('CsvReviewScreen_row_${widget.row.originalIndex}_edit_button'),
+                    onPressed: widget.isLoading ? null : widget.onRowEdit,
                     icon: const Icon(Icons.edit_outlined),
                     label: const Text('Upravit řádek'),
                   ),
@@ -1224,46 +1292,26 @@ class CsvReviewRowCard extends StatelessWidget {
           ),
           const Divider(height: 1),
           ExpansionTile(
-            key: Key('CsvReviewScreen_row_${row.originalIndex}_fields_tile'),
+            key: Key('CsvReviewScreen_row_${widget.row.originalIndex}_fields_tile'),
             tilePadding: const EdgeInsets.symmetric(horizontal: 16),
             title: const Text('Detaily polí'),
             childrenPadding: const EdgeInsets.only(bottom: 16),
             maintainState: true,
             children: <Widget>[
-              for (final CsvFieldReview field in fields) ...<Widget>[
-                ListTile(
-                  key: Key('CsvReviewScreen_row_${row.originalIndex}_field_tile_${field.columnKey}'),
-                  leading: Icon(
-                    _fieldStatusIcon(field.status),
-                    color: _fieldStatusColor(context, field.status),
+              for (final CsvFieldReview field in fields)
+                _FieldDetailTile(
+                  key: Key(
+                    'CsvReviewScreen_row_${widget.row.originalIndex}_field_tile_${field.columnKey}',
                   ),
-                  title: Text(field.columnName),
-                  subtitle: Text(_fieldSummaryText(field)),
-                  trailing: IconButton(
-                    key: Key(
-                      'CsvReviewScreen_row_${row.originalIndex}_field_${field.columnKey}_edit_button',
-                    ),
-                    tooltip: 'Upravit ${field.columnName}',
-                    icon: const Icon(Icons.edit_outlined),
-                    onPressed: isLoading ? null : () => onFieldEdit(field),
-                  ),
+                  field: field,
+                  isLoading: widget.isLoading,
+                  isEditing: _editingFields.contains(field.columnKey),
+                  controller: _inlineControllers[field.columnKey],
+                  onStartInlineEdit: () => _startInlineEdit(field),
+                  onCancelInlineEdit: () => _cancelInlineEdit(field.columnKey),
+                  onSubmitInlineEdit: () => _submitInlineEdit(field),
+                  onOpenDialog: () => widget.onFieldEdit(field),
                 ),
-                if (field.messages.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(72, 0, 16, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: field.messages
-                          .map(
-                            (CsvReviewMessage message) => Text(
-                              '• ${message.message}',
-                              style: textTheme.bodySmall,
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-              ],
             ],
           ),
         ],
@@ -1314,6 +1362,124 @@ class _DuplicateWarningPanel extends StatelessWidget {
           Text(
             'Zkontrolujte, zda se nejedná o již registrovaného účastníka.',
             style: textTheme.bodySmall,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FieldDetailTile extends StatelessWidget {
+  const _FieldDetailTile({
+    super.key,
+    required this.field,
+    required this.isLoading,
+    required this.isEditing,
+    required this.controller,
+    required this.onStartInlineEdit,
+    required this.onCancelInlineEdit,
+    required this.onSubmitInlineEdit,
+    required this.onOpenDialog,
+  });
+
+  final CsvFieldReview field;
+  final bool isLoading;
+  final bool isEditing;
+  final TextEditingController? controller;
+  final VoidCallback onStartInlineEdit;
+  final VoidCallback onCancelInlineEdit;
+  final Future<void> Function() onSubmitInlineEdit;
+  final Future<void> Function() onOpenDialog;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextTheme textTheme = theme.textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(
+            _fieldStatusIcon(field.status),
+            color: _fieldStatusColor(context, field.status),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(field.columnName, style: textTheme.titleSmall),
+                const SizedBox(height: 4),
+                Text(
+                  _fieldSummaryText(field),
+                  style: textTheme.bodySmall,
+                ),
+                if (field.messages.isNotEmpty) ...<Widget>[
+                  const SizedBox(height: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: field.messages
+                        .map(
+                          (CsvReviewMessage message) => Text(
+                            '• ${message.message}',
+                            style: textTheme.bodySmall,
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
+                if (isEditing && controller != null) ...<Widget>[
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: Key('CsvReviewScreen_inline_field_${field.columnKey}_input'),
+                    controller: controller,
+                    minLines: 1,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: 'Nová hodnota',
+                      helperText: 'Úprava přímo v tabulce',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: <Widget>[
+                      FilledButton(
+                        key: Key('CsvReviewScreen_inline_field_${field.columnKey}_save'),
+                        onPressed: isLoading ? null : onSubmitInlineEdit,
+                        child: const Text('Uložit'),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton(
+                        key: Key('CsvReviewScreen_inline_field_${field.columnKey}_cancel'),
+                        onPressed: onCancelInlineEdit,
+                        child: const Text('Zrušit'),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              if (!isEditing)
+                IconButton(
+                  key: Key('CsvReviewScreen_inline_field_${field.columnKey}_edit_button'),
+                  tooltip: 'Upravit přímo v řádku',
+                  icon: const Icon(Icons.edit_note_outlined),
+                  onPressed: isLoading ? null : onStartInlineEdit,
+                ),
+              IconButton(
+                key: Key('CsvReviewScreen_dialog_field_${field.columnKey}_edit_button'),
+                tooltip: 'Otevřít dialog pro úpravu',
+                icon: const Icon(Icons.open_in_new),
+                onPressed: isLoading ? null : onOpenDialog,
+              ),
+            ],
           ),
         ],
       ),

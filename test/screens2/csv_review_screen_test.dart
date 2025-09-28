@@ -130,6 +130,59 @@ void main() {
       expect(find.text('Řádek aktualizován'), findsOneWidget);
     });
 
+    testWidgets('supports inline editing for simple fields', (WidgetTester tester) async {
+      final CsvImportSession session = _buildSampleSession();
+      final CsvReviewRow updatedRow = CsvReviewRow(
+        originalIndex: 1,
+        status: CsvRowReviewStatus.warn,
+        messages: <CsvReviewMessage>[
+          CsvReviewMessage(
+            severity: CsvReviewMessageSeverity.warn,
+            message: 'Jméno upraveno',
+          ),
+        ],
+        fields: <String, CsvFieldReview>{
+          'jmeno': CsvFieldReview(
+            columnKey: 'jmeno',
+            columnName: 'Jméno',
+            status: CsvFieldReviewStatus.ok,
+            originalValue: 'Jana',
+            normalizedValue: 'Jana',
+            inferred: false,
+          ),
+          'prijmeni': session.review.rows.first.fields['prijmeni']!,
+        },
+        derived: <String, CsvDerivedValue>{},
+      );
+
+      final CsvReviewServiceMock mockService = CsvReviewServiceMock(
+        onLoad: (_) async => session,
+        onReparse: (Map<String, String?> payload) async => updatedRow,
+      );
+
+      await _pumpReviewScreen(tester, service: mockService);
+
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_row_1_fields_tile')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_inline_field_jmeno_edit_button')));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const Key('CsvReviewScreen_inline_field_jmeno_input')),
+        'Jana',
+      );
+
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_inline_field_jmeno_save')));
+      await tester.pumpAndSettle();
+
+      expect(mockService.reparseInvocations, 1);
+      expect(mockService.lastReparsePayload?['jmeno'], 'Jana');
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_tab_warn')));
+      await tester.pumpAndSettle();
+      expect(find.text('Jméno upraveno'), findsOneWidget);
+    });
+
     testWidgets('bulk approve presets decisions and counters', (WidgetTester tester) async {
       final CsvImportSession session = _buildSampleSession();
       final CsvReviewServiceMock mockService = CsvReviewServiceMock.fixed(session: session);
