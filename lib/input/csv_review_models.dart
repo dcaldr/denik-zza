@@ -1,7 +1,4 @@
-import 'package:meta/meta.dart';
-
 /// Severity levels for row and field messages shown in the CSV review UI.
-@immutable
 class CsvReviewMessage {
   CsvReviewMessage({
     required this.severity,
@@ -26,7 +23,6 @@ enum CsvRowReviewStatus { ok, info, warn, rejected }
 enum CsvFieldReviewStatus { ok, warn, bad, empty }
 
 /// Represents a single field within the CSV review table.
-@immutable
 class CsvFieldReview {
   CsvFieldReview({
     required this.columnKey,
@@ -48,7 +44,6 @@ class CsvFieldReview {
 }
 
 /// Captures data derived from other fields (e.g. rodné číslo inference).
-@immutable
 class CsvDerivedValue {
   CsvDerivedValue({
     required this.key,
@@ -62,7 +57,6 @@ class CsvDerivedValue {
 }
 
 /// A single CSV row prepared for review UI consumption.
-@immutable
 class CsvReviewRow {
   CsvReviewRow({
     required this.originalIndex,
@@ -80,7 +74,6 @@ class CsvReviewRow {
 }
 
 /// Data contract consumed by the review/confirmation UI.
-@immutable
 class CsvImportReview {
   CsvImportReview({
     required List<String> unparsedColumns,
