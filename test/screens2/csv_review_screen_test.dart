@@ -114,7 +114,7 @@ void main() {
 
       await _pumpReviewScreen(tester, service: mockService);
 
-  await tester.tap(find.byKey(const Key('CsvReviewScreen_row_1_edit_button')));
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_row_1_edit_button')));
       await tester.pumpAndSettle();
 
       await tester.enterText(
@@ -136,7 +136,7 @@ void main() {
 
       await _pumpReviewScreen(tester, service: mockService);
 
-  await tester.tap(find.byKey(const Key('CsvReviewScreen_bulk_approve_info')));
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_bulk_approve_info')));
       await tester.pumpAndSettle();
 
       final Chip approvedChip = tester.widget<Chip>(
@@ -156,7 +156,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('CsvReviewScreen_row_2_decision_chip')), findsNothing);
 
-  await tester.tap(find.byKey(const Key('CsvReviewScreen_bulk_clear_approvals')));
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_bulk_clear_approvals')));
       await tester.pumpAndSettle();
 
       final Chip clearedChip = tester.widget<Chip>(
@@ -167,6 +167,61 @@ void main() {
       await tester.tap(find.byKey(const Key('CsvReviewScreen_tab_info')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('CsvReviewScreen_row_3_decision_chip')), findsNothing);
+    });
+
+    testWidgets('finalize flow confirms decisions and reloads data', (WidgetTester tester) async {
+      final CsvImportSession session = _buildSampleSession();
+      final CsvFinalizeResult finalizeResult = CsvFinalizeResult(
+        approvedCount: 2,
+        rejectedCount: 1,
+        savedRowIndices: const <int>[3, 4],
+        failures: <CsvFinalizeFailure>[
+          CsvFinalizeFailure(originalIndex: 2, message: 'Duplicitní záznam'),
+        ],
+      );
+      final CsvReviewServiceMock mockService = CsvReviewServiceMock.fixed(
+        session: session,
+        finalizeResult: finalizeResult,
+      );
+
+      await _pumpReviewScreen(tester, service: mockService);
+
+      final FilledButton finalizeButtonInitial = tester.widget<FilledButton>(
+        find.byKey(const Key('CsvReviewScreen_finalize_button')),
+      );
+      expect(finalizeButtonInitial.onPressed, isNull);
+
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_bulk_approve_info')));
+      await tester.pumpAndSettle();
+
+      final FilledButton finalizeButtonEnabled = tester.widget<FilledButton>(
+        find.byKey(const Key('CsvReviewScreen_finalize_button')),
+      );
+      expect(finalizeButtonEnabled.onPressed, isNotNull);
+
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_finalize_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('CsvReviewScreen_finalize_confirm_dialog')), findsOneWidget);
+      expect(find.text('Schválíte: 2 řádků'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_finalize_confirm_button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+
+      expect(mockService.finalizeInvocations, 1);
+      expect(mockService.lastFinalizeDecisions?[3], CsvRowDecision.approved);
+      expect(mockService.lastFinalizeDecisions?[4], CsvRowDecision.approved);
+
+      expect(find.byKey(const Key('CsvReviewScreen_finalize_summary_dialog')), findsOneWidget);
+      expect(find.text('Uloženo: 2'), findsOneWidget);
+      expect(find.text('Nepodařilo se uložit: 1'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_finalize_summary_close')));
+      await tester.pumpAndSettle();
+
+      expect(mockService.loadInvocations, 2);
     });
   });
 }

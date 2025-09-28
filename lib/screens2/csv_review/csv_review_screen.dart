@@ -4,9 +4,6 @@ import 'package:denik_zza/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 
-/// Represents the user's decision for a reviewed CSV row.
-enum CsvRowDecision { none, approved, rejected }
-
 /// CSV review page that surfaces parsing results and basic row summaries.
 class CsvReviewScreen extends StatefulWidget {
   const CsvReviewScreen({
@@ -27,6 +24,7 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
   bool _isLoading = true;
   CsvImportSession? _session;
   Object? _error;
+  bool _isFinalizing = false;
   final Set<int> _rowsInProgress = <int>{};
   final Set<int> _editedRows = <int>{};
   final Map<int, CsvRowDecision> _decisions = <int, CsvRowDecision>{};
@@ -246,6 +244,153 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
     });
   }
 
+  Future<void> _handleFinalizePressed() async {
+    final CsvImportSession? session = _session;
+    if (session == null || _isFinalizing) {
+      return;
+    }
+
+    final Map<CsvRowDecision, int> counts = _decisionCounts();
+    final int approvedCount = counts[CsvRowDecision.approved] ?? 0;
+    final int rejectedCount = counts[CsvRowDecision.rejected] ?? 0;
+    final int undecidedCount = session.review.rows.length - approvedCount - rejectedCount;
+
+    final bool confirmed = await _showFinalizeConfirmation(
+      approvedCount: approvedCount,
+      rejectedCount: rejectedCount,
+      undecidedCount: undecidedCount,
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setState(() {
+      _isFinalizing = true;
+    });
+
+    try {
+      final CsvFinalizeResult result = await widget.service.finalizeImport(
+        session: session,
+        decisions: Map<int, CsvRowDecision>.from(_decisions),
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isFinalizing = false;
+      });
+      await _showFinalizeSummary(result);
+      if (!mounted) {
+        return;
+      }
+      if (result.savedCount > 0) {
+        await _loadReview();
+      }
+    } catch (error, stackTrace) {
+      _logger.e(
+        'Finalize import failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isFinalizing = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Dokončení importu selhalo. Zkuste to prosím znovu.'),
+        ),
+      );
+    }
+  }
+
+  Future<bool> _showFinalizeConfirmation({
+    required int approvedCount,
+    required int rejectedCount,
+    required int undecidedCount,
+  }) async {
+    if (approvedCount == 0) {
+      return false;
+    }
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          key: const Key('CsvReviewScreen_finalize_confirm_dialog'),
+          title: const Text('Potvrdit import'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text('Schválíte: $approvedCount řádků'),
+              Text('Odmítnete: $rejectedCount řádků'),
+              Text('Bez rozhodnutí: $undecidedCount řádků'),
+              const SizedBox(height: 12),
+              const Text('Po potvrzení budou schválené řádky uloženy do evidence.'),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              key: const Key('CsvReviewScreen_finalize_cancel_button'),
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Zrušit'),
+            ),
+            FilledButton(
+              key: const Key('CsvReviewScreen_finalize_confirm_button'),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Potvrdit'),
+            ),
+          ],
+        );
+      },
+    );
+    return confirmed ?? false;
+  }
+
+  Future<void> _showFinalizeSummary(CsvFinalizeResult result) async {
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          key: const Key('CsvReviewScreen_finalize_summary_dialog'),
+          title: Text(
+            result.failedCount > 0 ? 'Import dokončen s chybami' : 'Import dokončen',
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text('Schváleno: ${result.approvedCount}'),
+                Text('Odmítnuto: ${result.rejectedCount}'),
+                Text('Uloženo: ${result.savedCount}'),
+                if (result.failedCount > 0) ...<Widget>[
+                  const SizedBox(height: 12),
+                  Text('Nepodařilo se uložit: ${result.failedCount}'),
+                  const SizedBox(height: 8),
+                  for (final CsvFinalizeFailure failure in result.failures)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text('• Řádek ${failure.originalIndex}: ${failure.message}'),
+                    ),
+                ],
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              key: const Key('CsvReviewScreen_finalize_summary_close'),
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Zavřít'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<Map<String, String?>?> _showRowEditDialog(CsvReviewRow row) async {
     final Map<String, TextEditingController> controllers = <String, TextEditingController>{
       for (final CsvFieldReview field in row.fields.values)
@@ -385,6 +530,9 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
     final CsvImportReview review = _session!.review;
     final Map<CsvRowReviewStatus, List<CsvReviewRow>> groupedRows = _groupRows(review.rows);
     final Map<CsvRowDecision, int> decisionCounts = _decisionCounts();
+    final int approvedCount = decisionCounts[CsvRowDecision.approved] ?? 0;
+    final int rejectedCount = decisionCounts[CsvRowDecision.rejected] ?? 0;
+    final int undecidedCount = review.rows.length - approvedCount - rejectedCount;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -410,6 +558,11 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
                   onRejectAll: () => _applyRejectionPreset(allRows: true),
                   onRejectOnlyRejected: () => _applyRejectionPreset(allRows: false),
                 ),
+                _buildFinalizeSection(
+                  approvedCount: approvedCount,
+                  rejectedCount: rejectedCount,
+                  undecidedCount: undecidedCount,
+                ),
               ],
             ),
           ),
@@ -426,6 +579,82 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildFinalizeSection({
+    required int approvedCount,
+    required int rejectedCount,
+    required int undecidedCount,
+  }) {
+    final ThemeData theme = Theme.of(context);
+    final TextTheme textTheme = theme.textTheme;
+    final bool isButtonEnabled = !_isFinalizing && approvedCount > 0;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Card(
+        key: const Key('CsvReviewScreen_finalize_card'),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text('Dokončení importu', style: textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Text(
+                'Zkontrolujte počty řádků a potvrďte uložení schválených záznamů do evidence.',
+                style: textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                children: <Widget>[
+                  Chip(
+                    key: const Key('CsvReviewScreen_finalize_approved_count'),
+                    avatar: const Icon(Icons.check, size: 16),
+                    label: Text('Ke schválení: $approvedCount'),
+                  ),
+                  Chip(
+                    key: const Key('CsvReviewScreen_finalize_rejected_count'),
+                    avatar: const Icon(Icons.close, size: 16),
+                    label: Text('Odmítnuto: $rejectedCount'),
+                  ),
+                  Chip(
+                    key: const Key('CsvReviewScreen_finalize_undecided_count'),
+                    avatar: const Icon(Icons.help_outline, size: 16),
+                    label: Text('Bez rozhodnutí: $undecidedCount'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                key: const Key('CsvReviewScreen_finalize_button'),
+                onPressed: isButtonEnabled ? _handleFinalizePressed : null,
+                icon: const Icon(Icons.done_all),
+                label: const Text('Dokončit import'),
+              ),
+              if (approvedCount == 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'Nejprve vyberte řádky ke schválení.',
+                    key: const Key('CsvReviewScreen_finalize_disabled_hint'),
+                    style: textTheme.bodySmall,
+                  ),
+                ),
+              if (_isFinalizing) ...<Widget>[
+                const SizedBox(height: 12),
+                const LinearProgressIndicator(
+                  key: Key('CsvReviewScreen_finalize_progress'),
+                  minHeight: 3,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 

@@ -22,6 +22,9 @@ enum CsvRowReviewStatus { ok, info, warn, rejected }
 /// Field-level status derived from the original parser holds.
 enum CsvFieldReviewStatus { ok, warn, bad, empty }
 
+/// User's decision made during CSV review for a particular row.
+enum CsvRowDecision { none, approved, rejected }
+
 /// Represents a single field within the CSV review table.
 class CsvFieldReview {
   CsvFieldReview({
