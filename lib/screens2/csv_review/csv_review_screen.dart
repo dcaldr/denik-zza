@@ -4,6 +4,9 @@ import 'package:denik_zza/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 
+/// Represents the user's decision for a reviewed CSV row.
+enum CsvRowDecision { none, approved, rejected }
+
 /// CSV review page that surfaces parsing results and basic row summaries.
 class CsvReviewScreen extends StatefulWidget {
   const CsvReviewScreen({
@@ -26,6 +29,7 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
   Object? _error;
   final Set<int> _rowsInProgress = <int>{};
   final Set<int> _editedRows = <int>{};
+  final Map<int, CsvRowDecision> _decisions = <int, CsvRowDecision>{};
 
   @override
   void initState() {
@@ -44,6 +48,7 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
         return;
       }
       setState(() {
+        _decisions.clear();
         _session = session;
         _isLoading = false;
       });
@@ -177,6 +182,68 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
       ),
       personResult: current.personResult,
     );
+  }
+
+  CsvRowDecision _decisionForRow(int index) {
+    return _decisions[index] ?? CsvRowDecision.none;
+  }
+
+  void _setRowDecision(int index, CsvRowDecision decision) {
+    setState(() {
+      if (decision == CsvRowDecision.none) {
+        _decisions.remove(index);
+      } else {
+        _decisions[index] = decision;
+      }
+    });
+  }
+
+  Map<CsvRowDecision, int> _decisionCounts() {
+    final Map<CsvRowDecision, int> counts = <CsvRowDecision, int>{
+      for (final CsvRowDecision decision in CsvRowDecision.values) decision: 0,
+    };
+    for (final CsvRowDecision decision in _decisions.values) {
+      counts[decision] = (counts[decision] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  void _applyApprovalPreset(Set<CsvRowReviewStatus> statuses) {
+    final CsvImportSession? session = _session;
+    if (session == null) {
+      return;
+    }
+    setState(() {
+      for (final CsvReviewRow row in session.review.rows) {
+        if (statuses.contains(row.status)) {
+          _decisions[row.originalIndex] = CsvRowDecision.approved;
+        } else if (_decisions[row.originalIndex] == CsvRowDecision.approved) {
+          _decisions.remove(row.originalIndex);
+        }
+      }
+    });
+  }
+
+  void _clearApprovals() {
+    setState(() {
+      _decisions.removeWhere((int _, CsvRowDecision decision) => decision == CsvRowDecision.approved);
+    });
+  }
+
+  void _applyRejectionPreset({required bool allRows}) {
+    final CsvImportSession? session = _session;
+    if (session == null) {
+      return;
+    }
+    setState(() {
+      for (final CsvReviewRow row in session.review.rows) {
+        if (allRows || row.status == CsvRowReviewStatus.rejected) {
+          _decisions[row.originalIndex] = CsvRowDecision.rejected;
+        } else if (_decisions[row.originalIndex] == CsvRowDecision.rejected) {
+          _decisions.remove(row.originalIndex);
+        }
+      }
+    });
   }
 
   Future<Map<String, String?>?> _showRowEditDialog(CsvReviewRow row) async {
@@ -317,12 +384,36 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
 
     final CsvImportReview review = _session!.review;
     final Map<CsvRowReviewStatus, List<CsvReviewRow>> groupedRows = _groupRows(review.rows);
+    final Map<CsvRowDecision, int> decisionCounts = _decisionCounts();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _SummarySection(review: review, groupedRows: groupedRows),
-        _UnparsedColumnsSection(unparsedColumns: review.unparsedColumns),
+        Flexible(
+          fit: FlexFit.loose,
+          child: SingleChildScrollView(
+            key: const Key('CsvReviewScreen_header_scroll'),
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                _SummarySection(review: review, groupedRows: groupedRows),
+                _UnparsedColumnsSection(unparsedColumns: review.unparsedColumns),
+                _BulkActionBar(
+                  approvedCount: decisionCounts[CsvRowDecision.approved] ?? 0,
+                  rejectedCount: decisionCounts[CsvRowDecision.rejected] ?? 0,
+                  onApproveOk: () => _applyApprovalPreset(<CsvRowReviewStatus>{CsvRowReviewStatus.ok}),
+                  onApproveUpToInfo: () => _applyApprovalPreset(
+                    <CsvRowReviewStatus>{CsvRowReviewStatus.ok, CsvRowReviewStatus.info},
+                  ),
+                  onClearApprovals: _clearApprovals,
+                  onRejectAll: () => _applyRejectionPreset(allRows: true),
+                  onRejectOnlyRejected: () => _applyRejectionPreset(allRows: false),
+                ),
+              ],
+            ),
+          ),
+        ),
         Expanded(
           child: TabBarView(
             key: const Key('CsvReviewScreen_tabbar_view'),
@@ -372,12 +463,18 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
       padding: const EdgeInsets.all(16),
       itemBuilder: (BuildContext context, int index) {
         final CsvReviewRow row = rows[index];
+        final CsvRowDecision decision = _decisionForRow(row.originalIndex);
         return CsvReviewRowCard(
           row: row,
           onRowEdit: () => _handleRowEdit(row),
           onFieldEdit: (CsvFieldReview field) => _handleFieldEdit(row, field),
           isEdited: _editedRows.contains(row.originalIndex),
           isLoading: _rowsInProgress.contains(row.originalIndex),
+          decision: decision,
+          onDecisionChanged: (CsvRowDecision newDecision) => _setRowDecision(
+            row.originalIndex,
+            newDecision,
+          ),
         );
       },
       separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -544,6 +641,100 @@ class _UnparsedColumnsSection extends StatelessWidget {
   }
 }
 
+class _BulkActionBar extends StatelessWidget {
+  const _BulkActionBar({
+    required this.approvedCount,
+    required this.rejectedCount,
+    required this.onApproveOk,
+    required this.onApproveUpToInfo,
+    required this.onClearApprovals,
+    required this.onRejectAll,
+    required this.onRejectOnlyRejected,
+  });
+
+  final int approvedCount;
+  final int rejectedCount;
+  final VoidCallback onApproveOk;
+  final VoidCallback onApproveUpToInfo;
+  final VoidCallback onClearApprovals;
+  final VoidCallback onRejectAll;
+  final VoidCallback onRejectOnlyRejected;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextTheme textTheme = theme.textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text('Hromadné akce', style: textTheme.titleMedium),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  FilledButton.icon(
+                    key: const Key('CsvReviewScreen_bulk_approve_ok'),
+                    onPressed: onApproveOk,
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: const Text('Schválit platné'),
+                  ),
+                  FilledButton.icon(
+                    key: const Key('CsvReviewScreen_bulk_approve_info'),
+                    onPressed: onApproveUpToInfo,
+                    icon: const Icon(Icons.info_outline),
+                    label: const Text('Schválit platné + info'),
+                  ),
+                  OutlinedButton.icon(
+                    key: const Key('CsvReviewScreen_bulk_clear_approvals'),
+                    onPressed: onClearApprovals,
+                    icon: const Icon(Icons.undo),
+                    label: const Text('Zrušit schválení'),
+                  ),
+                  OutlinedButton.icon(
+                    key: const Key('CsvReviewScreen_bulk_reject_only_rejected'),
+                    onPressed: onRejectOnlyRejected,
+                    icon: const Icon(Icons.block),
+                    label: const Text('Odmítnout zamítnuté'),
+                  ),
+                  FilledButton.icon(
+                    key: const Key('CsvReviewScreen_bulk_reject_all'),
+                    onPressed: onRejectAll,
+                    icon: const Icon(Icons.cancel),
+                    label: const Text('Odmítnout vše'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: <Widget>[
+                  Chip(
+                    key: const Key('CsvReviewScreen_bulk_approved_count'),
+                    avatar: const Icon(Icons.check, size: 16),
+                    label: Text('Schváleno: $approvedCount'),
+                  ),
+                  Chip(
+                    key: const Key('CsvReviewScreen_bulk_rejected_count'),
+                    avatar: const Icon(Icons.close, size: 16),
+                    label: Text('Odmítnuto: $rejectedCount'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class CsvReviewRowCard extends StatelessWidget {
   const CsvReviewRowCard({
     super.key,
@@ -552,6 +743,8 @@ class CsvReviewRowCard extends StatelessWidget {
     required this.onFieldEdit,
     required this.isEdited,
     required this.isLoading,
+    required this.decision,
+    required this.onDecisionChanged,
   });
 
   final CsvReviewRow row;
@@ -559,6 +752,8 @@ class CsvReviewRowCard extends StatelessWidget {
   final ValueChanged<CsvFieldReview> onFieldEdit;
   final bool isEdited;
   final bool isLoading;
+  final CsvRowDecision decision;
+  final ValueChanged<CsvRowDecision> onDecisionChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -601,6 +796,24 @@ class CsvReviewRowCard extends StatelessWidget {
                           backgroundColor: statusColor.withValues(alpha: 0.15),
                           labelStyle: textTheme.labelMedium?.copyWith(color: statusColor),
                         ),
+                        if (decision != CsvRowDecision.none)
+                          Tooltip(
+                            message: decision == CsvRowDecision.approved
+                                ? 'Řádek bude schválen'
+                                : 'Řádek bude odmítnut',
+                            child: Chip(
+                              key: Key('CsvReviewScreen_row_${row.originalIndex}_decision_chip'),
+                              avatar: Icon(
+                                decision == CsvRowDecision.approved ? Icons.check : Icons.close,
+                                size: 16,
+                              ),
+                              label: Text(_decisionLabel(decision)),
+                              backgroundColor: _decisionColor(context, decision).withValues(alpha: 0.15),
+                              labelStyle: textTheme.labelMedium?.copyWith(
+                                color: _decisionColor(context, decision),
+                              ),
+                            ),
+                          ),
                         if (isEdited)
                           Tooltip(
                             message: 'Řádek byl upraven v rámci aktuální relace',
@@ -666,6 +879,36 @@ class CsvReviewRowCard extends StatelessWidget {
                         .toList(),
                   ),
                 ],
+                const SizedBox(height: 12),
+                SegmentedButton<CsvRowDecision>(
+                  key: Key('CsvReviewScreen_row_${row.originalIndex}_decision_segmented'),
+                  segments: const <ButtonSegment<CsvRowDecision>>[
+                    ButtonSegment<CsvRowDecision>(
+                      value: CsvRowDecision.none,
+                      label: Text('Bez rozhodnutí'),
+                      icon: Icon(Icons.remove_circle_outline),
+                    ),
+                    ButtonSegment<CsvRowDecision>(
+                      value: CsvRowDecision.approved,
+                      label: Text('Schválit'),
+                      icon: Icon(Icons.check_circle_outline),
+                    ),
+                    ButtonSegment<CsvRowDecision>(
+                      value: CsvRowDecision.rejected,
+                      label: Text('Odmítnout'),
+                      icon: Icon(Icons.cancel_outlined),
+                    ),
+                  ],
+                  selected: <CsvRowDecision>{decision},
+                  onSelectionChanged: isLoading
+                      ? null
+                      : (Set<CsvRowDecision> selection) {
+                          if (selection.isEmpty) {
+                            return;
+                          }
+                          onDecisionChanged(selection.first);
+                        },
+                ),
                 const SizedBox(height: 12),
                 Align(
                   alignment: Alignment.centerLeft,
@@ -836,4 +1079,27 @@ String _fieldSummaryText(CsvFieldReview field) {
     return '$value • $statusLabel • dopočteno';
   }
   return '$value • $statusLabel';
+}
+
+String _decisionLabel(CsvRowDecision decision) {
+  switch (decision) {
+    case CsvRowDecision.none:
+      return 'Bez rozhodnutí';
+    case CsvRowDecision.approved:
+      return 'Schválit';
+    case CsvRowDecision.rejected:
+      return 'Odmítnout';
+  }
+}
+
+Color _decisionColor(BuildContext context, CsvRowDecision decision) {
+  final ColorScheme colors = Theme.of(context).colorScheme;
+  switch (decision) {
+    case CsvRowDecision.none:
+      return colors.outline;
+    case CsvRowDecision.approved:
+      return colors.secondary;
+    case CsvRowDecision.rejected:
+      return colors.error;
+  }
 }

@@ -6,21 +6,37 @@ import 'package:denik_zza/services/mock/csv_review_service_mock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+Future<void> _pumpReviewScreen(
+  WidgetTester tester, {
+  required CsvReviewService service,
+  String filePath = 'sample.csv',
+}) async {
+  final TestWidgetsFlutterBinding binding = TestWidgetsFlutterBinding.ensureInitialized();
+  binding.window.physicalSizeTestValue = const Size(1280, 2000);
+  binding.window.devicePixelRatioTestValue = 1.0;
+  addTearDown(() {
+    binding.window.clearPhysicalSizeTestValue();
+    binding.window.clearDevicePixelRatioTestValue();
+  });
+
+  await tester.pumpWidget(
+    MaterialApp(
+      home: CsvReviewScreen(
+        filePath: filePath,
+        service: service,
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
 void main() {
   group('CsvReviewScreen', () {
     testWidgets('renders summary counts and unparsed columns', (WidgetTester tester) async {
       final CsvImportSession session = _buildSampleSession();
       final CsvReviewServiceMock mockService = CsvReviewServiceMock.fixed(session: session);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: CsvReviewScreen(
-            filePath: 'sample.csv',
-            service: mockService,
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _pumpReviewScreen(tester, service: mockService);
       await tester.tap(find.byKey(const Key('CsvReviewScreen_unparsed_columns_tile')));
       await tester.pumpAndSettle();
 
@@ -35,15 +51,7 @@ void main() {
       final CsvImportSession session = _buildSampleSession();
       final CsvReviewServiceMock mockService = CsvReviewServiceMock.fixed(session: session);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: CsvReviewScreen(
-            filePath: 'sample.csv',
-            service: mockService,
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _pumpReviewScreen(tester, service: mockService);
 
       await tester.tap(find.byKey(const Key('CsvReviewScreen_tab_warn')));
       await tester.pumpAndSettle();
@@ -61,16 +69,7 @@ void main() {
         onLoad: (_) async => throw Exception('boom'),
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: CsvReviewScreen(
-            filePath: 'sample.csv',
-            service: mockService,
-          ),
-        ),
-      );
-      await tester.pump();
-      await tester.pumpAndSettle();
+      await _pumpReviewScreen(tester, service: mockService);
 
       expect(find.byKey(const Key('CsvReviewScreen_error_text')), findsOneWidget);
       expect(mockService.loadInvocations, 1);
@@ -113,17 +112,9 @@ void main() {
         onReparse: (Map<String, String?> payload) async => updatedRow,
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: CsvReviewScreen(
-            filePath: 'sample.csv',
-            service: mockService,
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _pumpReviewScreen(tester, service: mockService);
 
-      await tester.tap(find.byKey(const Key('CsvReviewScreen_row_1_edit_button')));
+  await tester.tap(find.byKey(const Key('CsvReviewScreen_row_1_edit_button')));
       await tester.pumpAndSettle();
 
       await tester.enterText(
@@ -137,6 +128,45 @@ void main() {
       expect(mockService.lastReparsePayload?['jmeno'], 'Petr');
       expect(find.byKey(const Key('CsvReviewScreen_row_1_edited_badge')), findsOneWidget);
       expect(find.text('Řádek aktualizován'), findsOneWidget);
+    });
+
+    testWidgets('bulk approve presets decisions and counters', (WidgetTester tester) async {
+      final CsvImportSession session = _buildSampleSession();
+      final CsvReviewServiceMock mockService = CsvReviewServiceMock.fixed(session: session);
+
+      await _pumpReviewScreen(tester, service: mockService);
+
+  await tester.tap(find.byKey(const Key('CsvReviewScreen_bulk_approve_info')));
+      await tester.pumpAndSettle();
+
+      final Chip approvedChip = tester.widget<Chip>(
+        find.byKey(const Key('CsvReviewScreen_bulk_approved_count')),
+      );
+      expect((approvedChip.label as Text).data, 'Schváleno: 2');
+
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_tab_info')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('CsvReviewScreen_row_3_decision_chip')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_tab_ok')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('CsvReviewScreen_row_4_decision_chip')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_tab_warn')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('CsvReviewScreen_row_2_decision_chip')), findsNothing);
+
+  await tester.tap(find.byKey(const Key('CsvReviewScreen_bulk_clear_approvals')));
+      await tester.pumpAndSettle();
+
+      final Chip clearedChip = tester.widget<Chip>(
+        find.byKey(const Key('CsvReviewScreen_bulk_approved_count')),
+      );
+      expect((clearedChip.label as Text).data, 'Schváleno: 0');
+
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_tab_info')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('CsvReviewScreen_row_3_decision_chip')), findsNothing);
     });
   });
 }
