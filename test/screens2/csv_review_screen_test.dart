@@ -223,6 +223,41 @@ void main() {
 
       expect(mockService.loadInvocations, 2);
     });
+
+    testWidgets('shows duplicate warnings and skips bulk auto approvals', (WidgetTester tester) async {
+      final CsvImportSession session = _buildSampleSession();
+      final CsvDuplicateCandidate duplicate = CsvDuplicateCandidate(
+        participantId: 42,
+        displayName: 'Jan Novák (01.05.2010)',
+        reason: 'Stejné rodné číslo',
+      );
+      final Map<int, List<CsvDuplicateCandidate>> duplicates = <int, List<CsvDuplicateCandidate>>{
+        3: <CsvDuplicateCandidate>[duplicate],
+      };
+      final CsvReviewServiceMock mockService = CsvReviewServiceMock.fixed(
+        session: session,
+        duplicateMatches: duplicates,
+      );
+
+      await _pumpReviewScreen(tester, service: mockService);
+
+      expect(mockService.findDuplicateInvocations, 1);
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_tab_info')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('CsvReviewScreen_row_3_duplicate_badge')), findsOneWidget);
+      expect(find.textContaining('Možní duplicitní účastníci'), findsOneWidget);
+      expect(find.text('• Jan Novák (01.05.2010) – Stejné rodné číslo'), findsOneWidget);
+      expect(find.byKey(const Key('CsvReviewScreen_finalize_duplicates_count')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('CsvReviewScreen_bulk_approve_info')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('CsvReviewScreen_row_3_decision_chip')), findsNothing);
+      final Chip approvedChip = tester.widget<Chip>(
+        find.byKey(const Key('CsvReviewScreen_bulk_approved_count')),
+      );
+      expect((approvedChip.label as Text).data, 'Schváleno: 1');
+    });
   });
 }
 

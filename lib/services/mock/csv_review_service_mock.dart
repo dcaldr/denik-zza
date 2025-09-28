@@ -11,15 +11,18 @@ class CsvReviewServiceMock implements CsvReviewService {
     Future<CsvReviewRow> Function(Map<String, String?> updatedFields)? onReparse,
     Future<CsvFinalizeResult> Function(CsvImportSession session, Map<int, CsvRowDecision> decisions)?
         onFinalize,
+    Future<Map<int, List<CsvDuplicateCandidate>>> Function(CsvImportSession session)? onFindDuplicates,
   })  : _onLoad = onLoad,
         _onReparse = onReparse,
-        _onFinalize = onFinalize;
+        _onFinalize = onFinalize,
+        _onFindDuplicates = onFindDuplicates;
 
   /// Convenience factory that always returns the provided [session].
   factory CsvReviewServiceMock.fixed({
     required CsvImportSession session,
     CsvReviewRow? reparseRow,
     CsvFinalizeResult? finalizeResult,
+    Map<int, List<CsvDuplicateCandidate>>? duplicateMatches,
   }) {
     return CsvReviewServiceMock(
       onLoad: (_) async => session,
@@ -39,6 +42,7 @@ class CsvReviewServiceMock implements CsvReviewService {
             savedRowIndices: const <int>[],
             failures: const <CsvFinalizeFailure>[],
           ),
+      onFindDuplicates: (_) async => duplicateMatches ?? const <int, List<CsvDuplicateCandidate>>{},
     );
   }
 
@@ -46,6 +50,8 @@ class CsvReviewServiceMock implements CsvReviewService {
   final Future<CsvReviewRow> Function(Map<String, String?> updatedFields)? _onReparse;
   final Future<CsvFinalizeResult> Function(
       CsvImportSession session, Map<int, CsvRowDecision> decisions)? _onFinalize;
+  final Future<Map<int, List<CsvDuplicateCandidate>>> Function(CsvImportSession session)?
+      _onFindDuplicates;
 
   int loadInvocations = 0;
   String? lastLoadPath;
@@ -54,6 +60,7 @@ class CsvReviewServiceMock implements CsvReviewService {
   int finalizeInvocations = 0;
   CsvImportSession? lastFinalizeSession;
   Map<int, CsvRowDecision>? lastFinalizeDecisions;
+  int findDuplicateInvocations = 0;
 
   @override
   Future<CsvImportSession> loadCsv(String path) async {
@@ -89,5 +96,18 @@ class CsvReviewServiceMock implements CsvReviewService {
     lastFinalizeSession = session;
     lastFinalizeDecisions = Map<int, CsvRowDecision>.from(decisions);
     return handler(session, decisions);
+  }
+
+  @override
+  Future<Map<int, List<CsvDuplicateCandidate>>> findPotentialDuplicates({
+    required CsvImportSession session,
+  }) async {
+    final Future<Map<int, List<CsvDuplicateCandidate>>> Function(CsvImportSession session)?
+        handler = _onFindDuplicates;
+    if (handler == null) {
+      return const <int, List<CsvDuplicateCandidate>>{};
+    }
+    findDuplicateInvocations += 1;
+    return handler(session);
   }
 }

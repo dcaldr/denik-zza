@@ -79,6 +79,11 @@ abstract class CsvReviewService {
     required CsvImportSession session,
     required Map<int, CsvRowDecision> decisions,
   });
+
+  /// Finds participants that appear to duplicate rows within the current review session.
+  Future<Map<int, List<CsvDuplicateCandidate>>> findPotentialDuplicates({
+    required CsvImportSession session,
+  });
 }
 
 /// Service coordinating CSV parsing and review DTO generation.
@@ -212,6 +217,67 @@ class CsvImportService implements CsvReviewService {
     );
   }
 
+  @override
+  Future<Map<int, List<CsvDuplicateCandidate>>> findPotentialDuplicates({
+    required CsvImportSession session,
+  }) async {
+    if (session.review.rows.isEmpty) {
+      return const <int, List<CsvDuplicateCandidate>>{};
+    }
+
+    final DatabaseInterface database = DatabaseWrapper.getDatabase();
+    List<MemoryOsoba> existingParticipants = <MemoryOsoba>[];
+    try {
+      existingParticipants = await database.getParticipantsByCurrentEvent();
+    } catch (error, stackTrace) {
+      _logger.w(
+        'Duplicate detection skipped because current event participants could not be loaded.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return const <int, List<CsvDuplicateCandidate>>{};
+    }
+
+    if (existingParticipants.isEmpty) {
+      return const <int, List<CsvDuplicateCandidate>>{};
+    }
+
+    final InputParser parser = _parserFactory();
+    final Map<int, List<CsvDuplicateCandidate>> result = <int, List<CsvDuplicateCandidate>>{};
+
+    for (final CsvReviewRow row in session.review.rows) {
+      try {
+        final MemoryOsoba candidate = await _buildPersonFromRow(parser, row);
+        final List<CsvDuplicateCandidate> matches = <CsvDuplicateCandidate>[];
+        for (final MemoryOsoba existing in existingParticipants) {
+          // TODO: replace with DatabaseInterface-level comparator once available.
+          final String? reason = _duplicateReason(candidate, existing);
+          if (reason == null) {
+            continue;
+          }
+          matches.add(
+            CsvDuplicateCandidate(
+              participantId: existing.id,
+              displayName: _formatParticipantName(existing),
+              reason: reason,
+            ),
+          );
+        }
+        if (matches.isNotEmpty) {
+          result[row.originalIndex] = matches;
+        }
+      } catch (error, stackTrace) {
+        _logger.w(
+          'Skipping duplicate detection for row ${row.originalIndex} due to parse failure.',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }
+    }
+
+    return result;
+  }
+
   Future<MemoryOsoba> _buildPersonFromRow(InputParser parser, CsvReviewRow row) async {
     final Map<int, String> sparseData = <int, String>{};
 
@@ -245,6 +311,63 @@ class CsvImportService implements CsvReviewService {
     person.bezinfekcnost ??= false;
     person.wasPrinted ??= false;
     return person;
+  }
+
+  String _formatParticipantName(MemoryOsoba person) {
+    final String firstName = person.jmeno.trim();
+    final String lastName = person.prijmeni.trim();
+    final String base = '$firstName $lastName'.trim();
+    final DateTime? birthDate = person.datumNarozeni;
+    if (birthDate == null) {
+      return base;
+    }
+    return '$base (${_formatDate(birthDate)})';
+  }
+
+  String _formatDate(DateTime date) {
+    String twoDigits(int value) => value.toString().padLeft(2, '0');
+    return '${twoDigits(date.day)}.${twoDigits(date.month)}.${date.year}';
+  }
+
+  String? _duplicateReason(MemoryOsoba imported, MemoryOsoba existing) {
+    final String? importedRc = _normalized(imported.cisloPojisteni);
+    final String? existingRc = _normalized(existing.cisloPojisteni);
+
+    if (importedRc != null && importedRc.isNotEmpty && importedRc == existingRc) {
+      return 'Stejné rodné číslo';
+    }
+
+    final bool sameNames = _normalized(imported.jmeno) == _normalized(existing.jmeno) &&
+        _normalized(imported.prijmeni) == _normalized(existing.prijmeni);
+    if (!sameNames) {
+      return null;
+    }
+
+    final DateTime? importedBirth = imported.datumNarozeni;
+    final DateTime? existingBirth = existing.datumNarozeni;
+    if (importedBirth != null && existingBirth != null) {
+      if (_isSameDate(importedBirth, existingBirth)) {
+        return 'Stejné jméno a datum narození';
+      }
+    }
+
+    if (_normalized(imported.telefonRodice) != null &&
+        _normalized(imported.telefonRodice) == _normalized(existing.telefonRodice)) {
+      return 'Stejné jméno a telefon zákonného zástupce';
+    }
+
+    return 'Stejné jméno a příjmení';
+  }
+
+  String? _normalized(String? value) {
+    if (value == null) {
+      return null;
+    }
+    return value.trim().toLowerCase();
+  }
+
+  bool _isSameDate(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
   static Map<String, int> _buildColumnKeyIndex(List<InputHold> columns) {

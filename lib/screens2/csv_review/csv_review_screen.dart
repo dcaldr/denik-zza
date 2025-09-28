@@ -28,6 +28,8 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
   final Set<int> _rowsInProgress = <int>{};
   final Set<int> _editedRows = <int>{};
   final Map<int, CsvRowDecision> _decisions = <int, CsvRowDecision>{};
+  Map<int, List<CsvDuplicateCandidate>> _duplicateMatches =
+      <int, List<CsvDuplicateCandidate>>{};
 
   @override
   void initState() {
@@ -49,7 +51,9 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
         _decisions.clear();
         _session = session;
         _isLoading = false;
+        _duplicateMatches = <int, List<CsvDuplicateCandidate>>{};
       });
+      await _loadDuplicateMatches(session);
     } catch (error, stackTrace) {
       _logger.e(
         'Failed to load CSV review data',
@@ -121,6 +125,7 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
         _rowsInProgress.remove(row.originalIndex);
         _editedRows.add(row.originalIndex);
       });
+        await _loadDuplicateMatches(_session!);
     } catch (error, stackTrace) {
       _logger.e(
         'Failed to reparse CSV row ${row.originalIndex}',
@@ -214,6 +219,9 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
     setState(() {
       for (final CsvReviewRow row in session.review.rows) {
         if (statuses.contains(row.status)) {
+          if (_hasDuplicate(row.originalIndex)) {
+            continue;
+          }
           _decisions[row.originalIndex] = CsvRowDecision.approved;
         } else if (_decisions[row.originalIndex] == CsvRowDecision.approved) {
           _decisions.remove(row.originalIndex);
@@ -242,6 +250,33 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
         }
       }
     });
+  }
+
+  Future<void> _loadDuplicateMatches(CsvImportSession session) async {
+    try {
+      final Map<int, List<CsvDuplicateCandidate>> duplicates =
+          await widget.service.findPotentialDuplicates(session: session);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _duplicateMatches = duplicates;
+      });
+    } catch (error, stackTrace) {
+      _logger.w(
+        'Failed to load duplicate matches',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  bool _hasDuplicate(int index) {
+    return (_duplicateMatches[index]?.isNotEmpty ?? false);
+  }
+
+  List<CsvDuplicateCandidate> _duplicatesForRow(int index) {
+    return _duplicateMatches[index] ?? const <CsvDuplicateCandidate>[];
   }
 
   Future<void> _handleFinalizePressed() async {
@@ -533,6 +568,9 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
     final int approvedCount = decisionCounts[CsvRowDecision.approved] ?? 0;
     final int rejectedCount = decisionCounts[CsvRowDecision.rejected] ?? 0;
     final int undecidedCount = review.rows.length - approvedCount - rejectedCount;
+  final int duplicateCount = _duplicateMatches.values
+    .where((List<CsvDuplicateCandidate> matches) => matches.isNotEmpty)
+    .length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -562,6 +600,7 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
                   approvedCount: approvedCount,
                   rejectedCount: rejectedCount,
                   undecidedCount: undecidedCount,
+                  duplicateCount: duplicateCount,
                 ),
               ],
             ),
@@ -586,6 +625,7 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
     required int approvedCount,
     required int rejectedCount,
     required int undecidedCount,
+    required int duplicateCount,
   }) {
     final ThemeData theme = Theme.of(context);
     final TextTheme textTheme = theme.textTheme;
@@ -626,6 +666,12 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
                     avatar: const Icon(Icons.help_outline, size: 16),
                     label: Text('Bez rozhodnutí: $undecidedCount'),
                   ),
+                  if (duplicateCount > 0)
+                    Chip(
+                      key: const Key('CsvReviewScreen_finalize_duplicates_count'),
+                      avatar: const Icon(Icons.warning_amber_rounded, size: 16),
+                      label: Text('Možné duplicity: $duplicateCount'),
+                    ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -700,6 +746,7 @@ class _CsvReviewScreenState extends State<CsvReviewScreen> {
           isEdited: _editedRows.contains(row.originalIndex),
           isLoading: _rowsInProgress.contains(row.originalIndex),
           decision: decision,
+          duplicateMatches: _duplicatesForRow(row.originalIndex),
           onDecisionChanged: (CsvRowDecision newDecision) => _setRowDecision(
             row.originalIndex,
             newDecision,
@@ -973,6 +1020,7 @@ class CsvReviewRowCard extends StatelessWidget {
     required this.isEdited,
     required this.isLoading,
     required this.decision,
+    required this.duplicateMatches,
     required this.onDecisionChanged,
   });
 
@@ -982,6 +1030,7 @@ class CsvReviewRowCard extends StatelessWidget {
   final bool isEdited;
   final bool isLoading;
   final CsvRowDecision decision;
+  final List<CsvDuplicateCandidate> duplicateMatches;
   final ValueChanged<CsvRowDecision> onDecisionChanged;
 
   @override
@@ -996,6 +1045,7 @@ class CsvReviewRowCard extends StatelessWidget {
         .take(3)
         .map((CsvFieldReview field) => '${field.columnName}: ${field.originalValue ?? ''}')
         .toList();
+    final bool hasDuplicates = duplicateMatches.isNotEmpty;
 
     return Card(
       key: Key('CsvReviewScreen_row_${row.originalIndex}'),
@@ -1043,6 +1093,19 @@ class CsvReviewRowCard extends StatelessWidget {
                               ),
                             ),
                           ),
+                        if (hasDuplicates)
+                          Tooltip(
+                            message: 'Řádek může odpovídat již existujícímu účastníkovi',
+                            child: Chip(
+                              key: Key('CsvReviewScreen_row_${row.originalIndex}_duplicate_badge'),
+                              avatar: const Icon(Icons.warning_amber_rounded, size: 16),
+                              label: const Text('Možná duplicita'),
+                              backgroundColor: theme.colorScheme.errorContainer,
+                              labelStyle: textTheme.labelMedium?.copyWith(
+                                color: theme.colorScheme.onErrorContainer,
+                              ),
+                            ),
+                          ),
                         if (isEdited)
                           Tooltip(
                             message: 'Řádek byl upraven v rámci aktuální relace',
@@ -1086,6 +1149,14 @@ class CsvReviewRowCard extends StatelessWidget {
                   messageTexts.isNotEmpty ? messageTexts.join('\n') : 'Bez zprávy',
                   key: Key('CsvReviewScreen_row_${row.originalIndex}_messages'),
                 ),
+                if (hasDuplicates) ...<Widget>[
+                  const SizedBox(height: 12),
+                  _DuplicateWarningPanel(
+                    key: Key('CsvReviewScreen_row_${row.originalIndex}_duplicate_panel'),
+                    rowIndex: row.originalIndex,
+                    matches: duplicateMatches,
+                  ),
+                ],
                 if (row.derived.isNotEmpty) ...<Widget>[
                   const SizedBox(height: 12),
                   Wrap(
@@ -1194,6 +1265,55 @@ class CsvReviewRowCard extends StatelessWidget {
                   ),
               ],
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DuplicateWarningPanel extends StatelessWidget {
+  const _DuplicateWarningPanel({
+    super.key,
+    required this.rowIndex,
+    required this.matches,
+  });
+
+  final int rowIndex;
+  final List<CsvDuplicateCandidate> matches;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextTheme textTheme = theme.textTheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.errorContainer.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.errorContainer),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Možní duplicitní účastníci v databázi:',
+            style: textTheme.titleSmall?.copyWith(color: theme.colorScheme.onErrorContainer),
+          ),
+          const SizedBox(height: 8),
+          for (int i = 0; i < matches.length; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                '• ${matches[i].displayName} – ${matches[i].reason}',
+                key: Key('CsvReviewScreen_row_${rowIndex}_duplicate_$i'),
+                style: textTheme.bodyMedium,
+              ),
+            ),
+          Text(
+            'Zkontrolujte, zda se nejedná o již registrovaného účastníka.',
+            style: textTheme.bodySmall,
           ),
         ],
       ),

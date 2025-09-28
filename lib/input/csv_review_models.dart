@@ -25,6 +25,24 @@ enum CsvFieldReviewStatus { ok, warn, bad, empty }
 /// User's decision made during CSV review for a particular row.
 enum CsvRowDecision { none, approved, rejected }
 
+/// Represents a potential duplicate participant match against current event data.
+class CsvDuplicateCandidate {
+  CsvDuplicateCandidate({
+    required this.participantId,
+    required this.displayName,
+    required this.reason,
+  });
+
+  /// Identifier of the participant already present in the event database.
+  final int participantId;
+
+  /// Human-readable label to help the user identify the existing participant.
+  final String displayName;
+
+  /// Czech description explaining why the match was detected.
+  final String reason;
+}
+
 /// Represents a single field within the CSV review table.
 class CsvFieldReview {
   CsvFieldReview({
