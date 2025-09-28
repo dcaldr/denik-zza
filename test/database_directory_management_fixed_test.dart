@@ -154,6 +154,7 @@ void main() {
       // manual inspection and debugging.
       if (!TestConfiguration.isPersist) {
         markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
+        return true;
       }
       // Track files before this test
       final dir = Directory(testDbDir);
