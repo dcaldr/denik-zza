@@ -18,20 +18,29 @@ class CsvImportSession {
   final PersonResult personResult;
 }
 
+/// Contract used by the UI layer to obtain CSV review data.
+abstract class CsvReviewService {
+  /// Loads a CSV file and prepares the review session.
+  Future<CsvImportSession> loadCsv(String path);
+
+  /// Recomputes a single review row using updated field values.
+  Future<CsvReviewRow> reparseRow(Map<String, String?> updatedFields);
+}
+
 /// Service coordinating CSV parsing and review DTO generation.
-class CsvImportService {
+class CsvImportService implements CsvReviewService {
   CsvImportService({InputParser Function()? parserFactory})
-      : _parserFactory = parserFactory ?? InputParser.new,
-        _definitions = CsvDefinitions() {
-    _columnKeyToIndex = _buildColumnKeyIndex();
+      : _parserFactory = parserFactory ?? InputParser.new {
+    final CsvDefinitions definitions = CsvDefinitions();
+    _columnKeyToIndex = _buildColumnKeyIndex(definitions.mainCsv);
   }
 
   final InputParser Function() _parserFactory;
-  final CsvDefinitions _definitions;
   late final Map<String, int> _columnKeyToIndex;
 
   /// Loads a CSV file and returns both the structured review data and
   /// the legacy person result aggregation.
+  @override
   Future<CsvImportSession> loadCsv(String path) async {
     final InputParser parser = _parserFactory();
     parser.filePath = path;
@@ -46,6 +55,7 @@ class CsvImportService {
 
   /// Recomputes a single row using updated values supplied by the UI.
   /// Field keys must be normalized (lowercase, diacritics removed, spaces -> _).
+  @override
   Future<CsvReviewRow> reparseRow(Map<String, String?> updatedFields) async {
     final InputParser parser = _parserFactory();
     final Map<int, String> sparseData = <int, String>{};
@@ -67,9 +77,8 @@ class CsvImportService {
     return review.rows.single;
   }
 
-  Map<String, int> _buildColumnKeyIndex() {
+  static Map<String, int> _buildColumnKeyIndex(List<InputHold> columns) {
     final Map<String, int> map = <String, int>{};
-    final List<InputHold> columns = _definitions.mainCsv;
     for (int i = 0; i < columns.length; i++) {
       final String key = _columnKey(columns[i].columnName);
       map[key] = i;

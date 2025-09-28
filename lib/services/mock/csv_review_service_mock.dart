@@ -1,0 +1,60 @@
+import 'package:denik_zza/input/csv_review_models.dart';
+import 'package:denik_zza/services/csv_import_service.dart';
+
+/// In-memory mock of [CsvReviewService] for widget tests and UI prototypes.
+///
+/// The mock records invocation metadata and allows callers to provide
+/// custom handlers for CSV loading and row re-parse operations.
+class CsvReviewServiceMock implements CsvReviewService {
+  CsvReviewServiceMock({
+    required Future<CsvImportSession> Function(String path) onLoad,
+    Future<CsvReviewRow> Function(Map<String, String?> updatedFields)? onReparse,
+  })  : _onLoad = onLoad,
+        _onReparse = onReparse;
+
+  /// Convenience factory that always returns the provided [session].
+  factory CsvReviewServiceMock.fixed({
+    required CsvImportSession session,
+    CsvReviewRow? reparseRow,
+  }) {
+    return CsvReviewServiceMock(
+      onLoad: (_) async => session,
+      onReparse: (_) async {
+        if (reparseRow != null) {
+          return reparseRow;
+        }
+        if (session.review.rows.isEmpty) {
+          throw StateError('CsvReviewServiceMock.fixed requires at least one row.');
+        }
+        return session.review.rows.first;
+      },
+    );
+  }
+
+  final Future<CsvImportSession> Function(String path) _onLoad;
+  final Future<CsvReviewRow> Function(Map<String, String?> updatedFields)? _onReparse;
+
+  int loadInvocations = 0;
+  String? lastLoadPath;
+  int reparseInvocations = 0;
+  Map<String, String?>? lastReparsePayload;
+
+  @override
+  Future<CsvImportSession> loadCsv(String path) async {
+    loadInvocations += 1;
+    lastLoadPath = path;
+    return _onLoad(path);
+  }
+
+  @override
+  Future<CsvReviewRow> reparseRow(Map<String, String?> updatedFields) async {
+    final Future<CsvReviewRow> Function(Map<String, String?> updatedFields)? handler =
+        _onReparse;
+    if (handler == null) {
+      throw UnimplementedError('No reparse handler registered for CsvReviewServiceMock.');
+    }
+    reparseInvocations += 1;
+    lastReparsePayload = Map<String, String?>.from(updatedFields);
+    return handler(updatedFields);
+  }
+}
