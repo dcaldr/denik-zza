@@ -4,6 +4,7 @@ import 'package:denik_zza/utils/app_logger.dart';
 
 import 'input_parser.dart';
 import 'text_tools.dart';
+import 'poistovny.dart';
 
 /// This class parses one data item and validates input according to specific rules
 abstract class InputHold {
@@ -397,101 +398,9 @@ class PojistovnaHold extends InputHold {
       status = ParseStatus.ok;
       return null;
     }
-          // TODO: FIXME: if loosecmp then we dont need verions of string without diacritics, here 
-          // FIXME: should add option for when the pojistovna is not recognized - or documenattion if it is already present 
-          // todo: add tests for cases with unrecognized insurance companies and for cases with recognized ones, and test if multiple "same" insurance companies wont be added to db
-          // todo: move this list to special file 
-          // todo: use cmpWithList instead of loops !! 
-    // Known Czech health insurance companies with common synonyms and codes.
-    // Policy: Loose compare and pick the first match's canonical.
-    // Canonical is a short lowercase code to align with existing expectations (e.g., 'ozp').
-    final List<_InsuranceEntry> insurers = [
-      _InsuranceEntry(
-        canonical: 'vzp',
-        synonyms: [
-          'vzp',
-          '111',
-          'všeobecná zdravotní pojišťovna',
-          'vseobecna zdravotni pojistovna',
-          '111 vzp',
-          'vzp 111',
-        ],
-      ),
-      _InsuranceEntry(
-        canonical: 'vozp',
-        synonyms: [
-          'vozp',
-          '201',
-          'vojenská zdravotní pojišťovna',
-          'vojenska zdravotni pojistovna',
-          '201 vozp',
-        ],
-      ),
-      _InsuranceEntry(
-        canonical: 'cpzp',
-        synonyms: [
-          'cpzp',
-          '205',
-          'ceska prumyslova zdravotni pojistovna',
-          'česká průmyslová zdravotní pojišťovna',
-          '205 cpzp',
-        ],
-      ),
-      _InsuranceEntry(
-        canonical: 'ozp',
-        synonyms: [
-          'ozp',
-          '207',
-          'oborová zdravotní pojišťovna',
-          'oborova zdravotni pojistovna',
-          '207 ozp',
-        ],
-      ),
-      _InsuranceEntry(
-        canonical: 'zpmv',
-        synonyms: [
-          'zpmv',
-          '211',
-          'zdravotni pojistovna ministerstva vnitra ceske republiky',
-          'zdravotní pojišťovna ministerstva vnitra české republiky',
-          '211 zpmv',
-        ],
-      ),
-      _InsuranceEntry(
-        canonical: 'rbp',
-        synonyms: [
-          'rbp',
-          '213',
-          'revirni bratrská pokladna',
-          'revírní bratrská pokladna',
-          '213 rbp',
-        ],
-      ),
-      _InsuranceEntry(
-        canonical: 'zps',
-        synonyms: [
-          'zps',
-          '209',
-          'zdravotni pojistovna skoda',
-          'zdravotní pojišťovna škoda',
-          '209 zps',
-        ],
-      ),
-    ];
-
-    final String norm = TextTools.normText(input);
-    for (final entry in insurers) {
-      for (final syn in entry.synonyms) {
-        if (TextTools.looseCmp(norm, syn)) {
-          status = ParseStatus.ok;
-          return entry.canonical;
-        }
-      }
-    }
-
-    // No match found: keep original value as-is, but still OK
+    final mapped = canonicalizeInsurance(input);
     status = ParseStatus.ok;
-    return input;
+    return mapped;
   }
 }
 
@@ -510,8 +419,4 @@ class TextHold extends InputHold {
 }
 
 /// Internal helper to represent an insurance with its synonyms.
-class _InsuranceEntry {
-  final String canonical;
-  final List<String> synonyms;
-  const _InsuranceEntry({required this.canonical, required this.synonyms});
-}
+// _InsuranceEntry removed from here - moved to lib/input/poistovny.dart
