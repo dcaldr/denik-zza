@@ -142,6 +142,23 @@ jméno,příjmení,extra_column,rodné číslo,another_extra,...
 - **BAD**: Invalid data that blocks import
 - **EMPTY**: Missing required data
 
+### Participant classification outputs
+
+Parsing results are aggregated in `PersonResult`, which now exposes three
+distinct views:
+
+- `goodPersons` – participants whose rows parsed with `ParseStatus.ok` (no WARNs).
+- `warnPersons` – map of `MemoryOsoba → ErrorLine` for rows with `ParseStatus.warn`.
+- `passingPersons` – new lightweight list containing every row that is either
+    OK or WARN. This projection powers tests and review tooling that need to count
+    all non-rejected entries without hiding WARN banners.
+
+`CsvImportSession` re-exports the `passingPersons` list and a `passingCount`
+getter so UI workflows (bulk approvals, analytics) can base decisions on the
+highest severity per row while still surfacing WARN/INFO messaging. WARN/INFO/
+ERROR precedence remains unchanged—the projection simply groups rows that are
+eligible to pass without downgrading their severity.
+
 ## ⚠️ Critical Limitations & Risks
 
 ### 1. Shared Validation Logic

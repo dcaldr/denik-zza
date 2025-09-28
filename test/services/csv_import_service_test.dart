@@ -17,8 +17,10 @@ void main() {
 
       expect(session.review.rows, isNotEmpty);
       expect(session.personResult.goodPersons, isNotEmpty);
+      expect(session.passingPersons, isNotEmpty);
+      expect(session.passingCount, session.passingPersons.length);
       final CsvReviewRow row = session.review.rows.first;
-  expect(row.status, CsvRowReviewStatus.ok);
+      expect(row.status, CsvRowReviewStatus.ok);
       expect(row.fields.containsKey('jmeno'), isTrue);
       expect(row.fields['jmeno']?.status, CsvFieldReviewStatus.ok);
     });

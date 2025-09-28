@@ -21,6 +21,12 @@ class CsvImportSession {
 
   /// Original parser outcome with MemoryOsoba lists.
   final PersonResult personResult;
+
+  /// Convenience view of rows that are eligible to pass (OK or WARN).
+  List<PassingPersonEntry> get passingPersons => personResult.passingPersons;
+
+  /// Count of rows considered passing (OK or WARN).
+  int get passingCount => personResult.passingCount;
 }
 
 /// Aggregated outcome of a finalize operation.

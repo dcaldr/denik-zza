@@ -2,7 +2,6 @@
 
 import 'dart:io';
 
-import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/csv/csv_reader.dart';
 import 'package:denik_zza/input/input_parser.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -45,32 +44,36 @@ void main(){
   });
   group('Full csv parsing (my logic) ',(){
     //final file = File('test/data/first.csv');
+    /// Happy path parse should populate both `goodPersons` and
+    /// `passingPersons`, with the latter enabling WARN-tolerant checks.
     test('best case parse',()async{
       InputParser inputParser = InputParser();
       expect(inputParser, isNotNull);
       inputParser.filePath = 'test/data/first.csv';
 
        await inputParser.getFile();
-      List<List<String>>? testus = await inputParser.loadedData;
-       //loggerNoStack.i(testus.toString());
-      PersonResult? result = inputParser.result;
+  await inputParser.loadedData;
+  PersonResult? result = inputParser.result;
       //loggerNoStack.i(inputParser.loadedData.toString());
       expect(result, isNotNull);
-      MemoryOsoba? person = result?.goodPersons[0];
-      expect(person, isNotNull);
+  expect(result!.goodPersons.length, 1);
+
+  final PassingPersonEntry entry = result.passingPersons.first;
+  final person = entry.person;
+  expect(person, isNotNull);
       // here very literal check
   // print(person?.jmeno);
-      expect(person?.jmeno, 'Jan');
-      expect(person?.prijmeni, 'Hus');
-      expect(person?.cisloPojisteni, '130610/2567');
-      expect(person?.pohlavi, 1);
-      expect(person?.datumNarozeni, DateTime(2013, 06, 10));
-      expect(person?.jmenoRodice, 'Mr Rodič');
-      expect(person?.telefonRodice, '123456');
-      expect(person?.emailRodice,'hello@proble.com');
-      expect(person?.zpusobilost, true);
-      expect(person?.zdravotniPojistovna, 'ozp');
-      expect(person?.poznamka, 'není');
+  expect(person.jmeno, 'Jan');
+  expect(person.prijmeni, 'Hus');
+  expect(person.cisloPojisteni, '130610/2567');
+  expect(person.pohlavi, 1);
+  expect(person.datumNarozeni, DateTime(2013, 06, 10));
+  expect(person.jmenoRodice, 'Mr Rodič');
+  expect(person.telefonRodice, '123456');
+  expect(person.emailRodice,'hello@proble.com');
+  expect(person.zpusobilost, true);
+  expect(person.zdravotniPojistovna, 'ozp');
+  expect(person.poznamka, 'není');
 
 
      // loggerNoStack.i(result?.persons.toString());

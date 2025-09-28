@@ -221,6 +221,22 @@ class InputParser {
   }
 }
 
+class PassingPersonEntry {
+  PassingPersonEntry({
+    required this.person,
+    required this.status,
+    required this.originalIndex,
+    this.errorLine,
+  });
+
+  final MemoryOsoba person;
+  final ParseStatus status;
+  final int originalIndex;
+  final ErrorLine? errorLine;
+
+  bool get isWarn => status == ParseStatus.warn;
+}
+
 class PersonResult{
 /// persons that were ok during parsing
   List<MemoryOsoba> goodPersons = [];
@@ -229,29 +245,59 @@ class PersonResult{
   /// mostly where something was guessed, in future this could be separeted into format and warn
   /// key is person, value is error
   Map<MemoryOsoba,ErrorLine> warnPersons = {};
+  List<PassingPersonEntry> passingPersons = [];
   List<ErrorLine> errors = [];
   List<Answer> answers =[];
   CsvImportReview? review;
+
   PersonResult(List<Answer> inAnswers, {this.review}) {
     loggerNoStack.t("Person result");
     answers = inAnswers;
-    for(Answer answer in inAnswers){
-     if(answer.lineStatus == ParseStatus.bad){
-       //TODO: handle error;
-       errors.add(answer.error);
-       continue;
-     }
-     if(answer.lineStatus == ParseStatus.warn){
-      warnPersons[answer.toPerson()] = answer.error;
-      continue;
-     }
-     if(answer.lineStatus == ParseStatus.ok){
-       goodPersons.add(answer.toPerson());
-       continue;
-     }
-     loggerNoStack.w("Person result unexpected value");
+
+    for (int i = 0; i < inAnswers.length; i++) {
+      final Answer answer = inAnswers[i];
+      final ParseStatus status = answer.lineStatus;
+      final int originalIndex = answer.originalIndex > 0 ? answer.originalIndex : i + 1;
+
+      if (status == ParseStatus.bad) {
+        errors.add(answer.error);
+        continue;
+      }
+
+      if (status == ParseStatus.warn) {
+        final MemoryOsoba person = answer.toPerson();
+        warnPersons[person] = answer.error;
+        passingPersons.add(
+          PassingPersonEntry(
+            person: person,
+            status: status,
+            originalIndex: originalIndex,
+            errorLine: answer.error,
+          ),
+        );
+        continue;
+      }
+
+      if (status == ParseStatus.ok) {
+        final MemoryOsoba person = answer.toPerson();
+        goodPersons.add(person);
+        passingPersons.add(
+          PassingPersonEntry(
+            person: person,
+            status: status,
+            originalIndex: originalIndex,
+          ),
+        );
+        continue;
+      }
+
+      loggerNoStack.w("Person result unexpected value");
     }
   }
+
+  Iterable<MemoryOsoba> get passingPersonOsoby => passingPersons.map((PassingPersonEntry entry) => entry.person);
+
+  int get passingCount => passingPersons.length;
 }
 class ErrorLine{
   String errorMsg="";
