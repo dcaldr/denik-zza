@@ -199,6 +199,20 @@ Recommended patterns:
 - Prefer the `TestingSetupHelper.setupGroup()` wrapper in tests for consistent setup/teardown across modes.
 - Persist artifacts are placed in `test/test_outputs/` and are ignored by git.
 
+### Rodné číslo generators for fixtures
+
+When preparing participant fixtures, reuse the generator helpers in
+`lib/input/rodne_cislo.dart` instead of hard-coding values. The static methods
+`RodneCislo.generateForDate` and `RodneCislo.generateForYear` apply the same
+validation rules as the parser and prevent accidental checksum mistakes.
+
+- Prefer `generateForDate` when you need deterministic birth dates for tests.
+- Use `generateForYear` in data-factory style helpers when only the birth year
+  matters; supply `isFemale` to control gender encoding deterministically.
+
+👉 See the inline DartDoc on these helpers for usage snippets and a reminder to
+align with this section when creating new test data factories.
+
 
 Force all tests to use the same database type (useful for CI/CD):
 
