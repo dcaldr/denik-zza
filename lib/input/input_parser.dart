@@ -12,6 +12,7 @@
 library;
 
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
+import 'package:denik_zza/input/csv_review_models.dart';
 import 'package:denik_zza/input/input_hold.dart';
 import 'package:denik_zza/input/rodne_cislo.dart';
 import 'package:denik_zza/input/text_tools.dart';
@@ -35,12 +36,14 @@ class InputParser {
   List<InputHold> definition = CsvDefinitions().mainCsv;
   List<Answer> parsedData = [];
   PersonResult? result;
+  CsvImportReview? review;
   // Header handling for order-agnostic mapping
   List<String>? _header;
   // Maps definition index -> header index, or -1 if not present
   final Map<int, int> _defToHeaderIdx = {};
   // Header indices not mapped to any definition (extra columns)
   final List<int> _extraHeaderIdx = [];
+  final Set<int> _missingColumnIndices = {};
   bool _headerPrepared = false;
 
   /// Parses one line of data and returns the result as [Answer]
@@ -100,7 +103,8 @@ class InputParser {
         _buildPassthroughMapping(data.isNotEmpty ? data.first.length : definition.length);
       }
 
-      parsedData = await Future.wait(data.map((line) async {
+      parsedData = await Future.wait(List<Future<Answer>>.generate(data.length, (int rowIndex) async {
+        final List<String> line = data[rowIndex];
         // Create sparse data map: only include fields that have corresponding headers
         final Map<int, String> sparseData = {};
         for (int defIdx = 0; defIdx < definition.length; defIdx++) {
@@ -110,12 +114,19 @@ class InputParser {
           }
           // Skip missing columns entirely - don't add them to sparseData
         }
-        return parseLine(sparseData);
+        final Answer answer = await parseLine(sparseData);
+        answer.originalIndex = rowIndex + 1;
+        return answer;
       }));
     } catch (e, stackTrace) {
       logger.e("An error occurred during parsing: $e", stackTrace: stackTrace);
     }
-    result = PersonResult(parsedData);
+    review = CsvImportReviewBuilder(
+      definition: definition,
+      missingColumnIndices: _missingColumnIndices,
+      unparsedColumns: _computeUnparsedColumns(),
+    ).build(parsedData);
+    result = PersonResult(parsedData, review: review);
   }
 
   void _prepareHeaderMapping(CsvReader reader) {
@@ -123,6 +134,7 @@ class InputParser {
       _header = reader.getHeader();
       _defToHeaderIdx.clear();
       _extraHeaderIdx.clear();
+      _missingColumnIndices.clear();
       if (_header == null || _header!.isEmpty) {
         _buildPassthroughMapping(definition.length);
         _headerPrepared = true;
@@ -142,6 +154,9 @@ class InputParser {
           }
         }
         _defToHeaderIdx[defIdx] = matchIdx; // -1 when not found
+        if (matchIdx == -1) {
+          _missingColumnIndices.add(defIdx);
+        }
       }
       // Collect extra header indices
       for (int i = 0; i < _header!.length; i++) {
@@ -178,10 +193,23 @@ class InputParser {
 
   void _buildPassthroughMapping(int columns) {
     _defToHeaderIdx.clear();
+    _missingColumnIndices.clear();
     for (int i = 0; i < definition.length; i++) {
-      _defToHeaderIdx[i] = i < columns ? i : -1;
+      if (i < columns) {
+        _defToHeaderIdx[i] = i;
+      } else {
+        _defToHeaderIdx[i] = -1;
+        _missingColumnIndices.add(i);
+      }
     }
     _extraHeaderIdx.clear();
+  }
+
+  List<String> _computeUnparsedColumns() {
+    if (_header == null) {
+      return const [];
+    }
+    return _extraHeaderIdx.map((i) => _header![i]).toList();
   }
 
   /// Returns the parsing result, loading file if necessary
@@ -203,7 +231,8 @@ class PersonResult{
   Map<MemoryOsoba,ErrorLine> warnPersons = {};
   List<ErrorLine> errors = [];
   List<Answer> answers =[];
-  PersonResult(List<Answer> inAnswers) {
+  CsvImportReview? review;
+  PersonResult(List<Answer> inAnswers, {this.review}) {
     loggerNoStack.t("Person result");
     answers = inAnswers;
     for(Answer answer in inAnswers){
@@ -230,6 +259,485 @@ class ErrorLine{
   int? lineNum;
 }
 
+class CsvReviewMessageCatalog {
+  static const String missingFirstNameValue = 'Jméno nesmí být prázdné.';
+  static const String missingFirstNameColumn = 'Sloupec "jméno" chybí v souboru.';
+  static const String missingSurnameValue = 'Příjmení nesmí být prázdné.';
+  static const String missingSurnameColumn = 'Sloupec "příjmení" chybí v souboru.';
+  static const String rcMissing = 'Rodné číslo není vyplněno.';
+  static const String rcInvalidFormat = 'Rodné číslo má neplatný formát.';
+  static const String rcInvalidChecksum = 'Rodné číslo má podezřelý kontrolní součet.';
+  static const String genderInferred = 'Pohlaví bylo odvozeno z rodného čísla.';
+  static const String genderMismatch = 'Pohlaví neodpovídá rodnému číslu.';
+  static const String birthdateInferred = 'Datum narození bylo odvozeno z rodného čísla.';
+  static const String birthdateMismatch = 'Datum narození neodpovídá rodnému číslu.';
+  static const String birthdateInvalid = 'Datum narození má neplatný formát.';
+  static const String parentEmailInvalid = 'Email rodič má neplatný formát.';
+}
+
+/// Builds the enriched CSV import review data contract consumed by the UI.
+///
+/// Row status precedence rule: rejected > warn > info > ok. The builder
+/// upgrades the row status whenever a new message with higher severity is
+/// emitted, ensuring UI summaries can rely on the aggregated value.
+class CsvImportReviewBuilder {
+  CsvImportReviewBuilder({
+    required this.definition,
+    Set<int>? missingColumnIndices,
+    List<String>? unparsedColumns,
+  })  : _missingColumnIndices = Set<int>.unmodifiable(missingColumnIndices ?? const <int>{}),
+        _unparsedColumns = List<String>.unmodifiable(unparsedColumns ?? const <String>[]);
+
+  final List<InputHold> definition;
+  final Set<int> _missingColumnIndices;
+  final List<String> _unparsedColumns;
+  int _nextFallbackIndex = 1;
+
+  CsvImportReview build(List<Answer> answers) {
+    final List<CsvReviewRow> rows = <CsvReviewRow>[];
+    for (final Answer answer in answers) {
+      rows.add(_buildRow(answer));
+    }
+    return CsvImportReview(unparsedColumns: _unparsedColumns, rows: rows);
+  }
+
+  CsvReviewRow _buildRow(Answer answer) {
+    final Map<int, InputHold> answerMap = answer.dataMap;
+    final Map<int, InputHold> holds = <int, InputHold>{};
+    final List<_FieldComputation> fields = <_FieldComputation>[];
+    final List<CsvReviewMessage> rowMessages = <CsvReviewMessage>[];
+    CsvRowReviewStatus rowStatus = CsvRowReviewStatus.ok;
+    final Map<String, CsvDerivedValue> derived = <String, CsvDerivedValue>{};
+
+    void pushMessage(_FieldComputation? target, CsvReviewMessage message) {
+      if (target != null) {
+        target.messages.add(message);
+      }
+      rowMessages.add(message);
+      rowStatus = _promoteRowStatus(rowStatus, message.severity);
+    }
+
+    for (int defIdx = 0; defIdx < definition.length; defIdx++) {
+      final InputHold template = definition[defIdx];
+      InputHold hold;
+      if (answerMap.containsKey(defIdx)) {
+        hold = answerMap[defIdx]!;
+      } else {
+        hold = template.fresh();
+        hold.addInput(null);
+      }
+      holds[defIdx] = hold;
+
+      final _FieldComputation computation = _FieldComputation(
+        index: defIdx,
+        columnKey: _columnKey(template.columnName),
+        columnName: template.columnName,
+        hold: hold,
+        status: _mapFieldStatus(hold.status),
+        columnMissing: _missingColumnIndices.contains(defIdx),
+        originalValue: _originalValue(hold),
+        normalizedValue: _formatOutput(hold.output),
+      );
+      fields.add(computation);
+
+      _applyFieldSpecificMessages(
+        computation: computation,
+        pushMessage: pushMessage,
+      );
+    }
+
+    _handleRodneCisloDerived(
+      fields: fields,
+      holds: holds,
+      derived: derived,
+      pushMessage: pushMessage,
+    );
+
+    final Map<String, CsvFieldReview> fieldMap = <String, CsvFieldReview>{};
+    for (final _FieldComputation field in fields) {
+      fieldMap[field.columnKey] = field.toFieldReview();
+    }
+
+    final int rowIndex = answer.originalIndex > 0 ? answer.originalIndex : _nextFallbackIndex++;
+
+    return CsvReviewRow(
+      originalIndex: rowIndex,
+      status: rowStatus,
+      messages: List.unmodifiable(rowMessages),
+      fields: Map.unmodifiable(fieldMap),
+      derived: Map.unmodifiable(derived),
+    );
+  }
+
+  static CsvFieldReviewStatus _mapFieldStatus(ParseStatus? status) {
+    switch (status) {
+      case ParseStatus.ok:
+        return CsvFieldReviewStatus.ok;
+      case ParseStatus.warn:
+        return CsvFieldReviewStatus.warn;
+      case ParseStatus.bad:
+      case ParseStatus.format:
+        return CsvFieldReviewStatus.bad;
+      case ParseStatus.empty:
+      default:
+        return CsvFieldReviewStatus.empty;
+    }
+  }
+
+  static String _columnKey(String columnName) {
+    final String normalized = TextTools.normText(columnName);
+    return normalized.replaceAll(RegExp(r'\s+'), '_');
+  }
+
+  static String? _originalValue(InputHold hold) {
+    return hold.input.isEmpty ? null : hold.input;
+  }
+
+  static String? _formatOutput(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+    if (value is DateTime) {
+      return '${value.year.toString().padLeft(4, '0')}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
+    }
+    if (value is bool) {
+      return value ? 'true' : 'false';
+    }
+    return value.toString();
+  }
+
+  static CsvRowReviewStatus _promoteRowStatus(
+    CsvRowReviewStatus current,
+    CsvReviewMessageSeverity severity,
+  ) {
+    final CsvRowReviewStatus candidate = _statusFromSeverity(severity);
+    if (_rowStatusWeights[candidate]! > _rowStatusWeights[current]!) {
+      return candidate;
+    }
+    return current;
+  }
+
+  static CsvRowReviewStatus _statusFromSeverity(CsvReviewMessageSeverity severity) {
+    switch (severity) {
+      case CsvReviewMessageSeverity.error:
+        return CsvRowReviewStatus.rejected;
+      case CsvReviewMessageSeverity.warn:
+        return CsvRowReviewStatus.warn;
+      case CsvReviewMessageSeverity.info:
+        return CsvRowReviewStatus.info;
+    }
+  }
+
+  static const Map<CsvRowReviewStatus, int> _rowStatusWeights = <CsvRowReviewStatus, int>{
+    CsvRowReviewStatus.ok: 0,
+    CsvRowReviewStatus.info: 1,
+    CsvRowReviewStatus.warn: 2,
+    CsvRowReviewStatus.rejected: 3,
+  };
+
+  static bool _sameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  void _applyFieldSpecificMessages({
+    required _FieldComputation computation,
+    required void Function(_FieldComputation?, CsvReviewMessage) pushMessage,
+  }) {
+    final bool isMandatory = computation.index == 0 || computation.index == 1;
+    if (computation.columnMissing) {
+      if (isMandatory) {
+        final CsvReviewMessage message = CsvReviewMessage(
+          severity: CsvReviewMessageSeverity.error,
+          message: computation.index == 0
+              ? CsvReviewMessageCatalog.missingFirstNameColumn
+              : CsvReviewMessageCatalog.missingSurnameColumn,
+          code: computation.index == 0 ? 'missing_column_jmeno' : 'missing_column_prijmeni',
+        );
+        pushMessage(computation, message);
+      }
+      return;
+    }
+
+    if (isMandatory) {
+      if (computation.status == CsvFieldReviewStatus.bad || computation.status == CsvFieldReviewStatus.empty) {
+        final CsvReviewMessage message = CsvReviewMessage(
+          severity: CsvReviewMessageSeverity.error,
+          message: computation.index == 0
+              ? CsvReviewMessageCatalog.missingFirstNameValue
+              : CsvReviewMessageCatalog.missingSurnameValue,
+          code: computation.index == 0 ? 'missing_value_jmeno' : 'missing_value_prijmeni',
+        );
+        pushMessage(computation, message);
+      }
+      return;
+    }
+
+    switch (computation.index) {
+      case 2:
+        _handleRodneCisloMessages(computation, pushMessage);
+        break;
+      case 5:
+        _handleBirthDateMessages(computation, pushMessage);
+        break;
+      case 8:
+        _handleEmailMessages(computation, pushMessage);
+        break;
+      default:
+        break;
+    }
+  }
+
+  void _handleRodneCisloMessages(
+    _FieldComputation computation,
+    void Function(_FieldComputation?, CsvReviewMessage) pushMessage,
+  ) {
+    final InputHold hold = computation.hold;
+    if (hold is! CisloPojisteniHold) {
+      return;
+    }
+    if (hold.input.isEmpty) {
+      pushMessage(
+        computation,
+        CsvReviewMessage(
+          severity: CsvReviewMessageSeverity.warn,
+          message: CsvReviewMessageCatalog.rcMissing,
+          code: 'rc_missing',
+        ),
+      );
+      return;
+    }
+    final RodneCislo? rc = hold.output is RodneCislo ? hold.output as RodneCislo : null;
+    if (rc == null) {
+      pushMessage(
+        computation,
+        CsvReviewMessage(
+          severity: CsvReviewMessageSeverity.warn,
+          message: CsvReviewMessageCatalog.rcInvalidFormat,
+          code: 'rc_invalid_format',
+        ),
+      );
+      return;
+    }
+    if (!rc.hasValidFormat || hold.status == ParseStatus.bad) {
+      pushMessage(
+        computation,
+        CsvReviewMessage(
+          severity: CsvReviewMessageSeverity.warn,
+          message: CsvReviewMessageCatalog.rcInvalidFormat,
+          code: 'rc_invalid_format',
+        ),
+      );
+      return;
+    }
+    if (!rc.hasValidSum || hold.status == ParseStatus.warn) {
+      pushMessage(
+        computation,
+        CsvReviewMessage(
+          severity: CsvReviewMessageSeverity.warn,
+          message: CsvReviewMessageCatalog.rcInvalidChecksum,
+          code: 'rc_invalid_checksum',
+        ),
+      );
+    }
+  }
+
+  void _handleBirthDateMessages(
+    _FieldComputation computation,
+    void Function(_FieldComputation?, CsvReviewMessage) pushMessage,
+  ) {
+    final InputHold hold = computation.hold;
+    if (hold.input.isEmpty) {
+      return;
+    }
+    if (hold.status == ParseStatus.warn) {
+      pushMessage(
+        computation,
+        CsvReviewMessage(
+          severity: CsvReviewMessageSeverity.warn,
+          message: CsvReviewMessageCatalog.birthdateInvalid,
+          code: 'birthdate_invalid',
+        ),
+      );
+    }
+  }
+
+  void _handleEmailMessages(
+    _FieldComputation computation,
+    void Function(_FieldComputation?, CsvReviewMessage) pushMessage,
+  ) {
+    final InputHold hold = computation.hold;
+    if (hold.input.isEmpty) {
+      return;
+    }
+    if (hold.status == ParseStatus.bad) {
+      pushMessage(
+        computation,
+        CsvReviewMessage(
+          severity: CsvReviewMessageSeverity.warn,
+          message: CsvReviewMessageCatalog.parentEmailInvalid,
+          code: 'email_invalid',
+        ),
+      );
+    }
+  }
+
+  void _handleRodneCisloDerived({
+    required List<_FieldComputation> fields,
+    required Map<int, InputHold> holds,
+    required Map<String, CsvDerivedValue> derived,
+    required void Function(_FieldComputation?, CsvReviewMessage) pushMessage,
+  }) {
+    final InputHold? rcHold = holds[2];
+    if (rcHold is! CisloPojisteniHold) {
+      return;
+    }
+    if (rcHold.input.isEmpty) {
+      return;
+    }
+    final RodneCislo rc = rcHold.output as RodneCislo;
+    if (!rc.hasValidFormat) {
+      return;
+    }
+
+    final _FieldComputation? genderField = _findField(fields, 3);
+    if (genderField != null) {
+      final dynamic genderValue = genderField.hold.output;
+      final int? providedGender = genderValue is int ? genderValue : null;
+      final int derivedGender = rc.getPohlavi();
+      final String derivedGenderValue = derivedGender.toString();
+      if (providedGender == null) {
+        pushMessage(
+          genderField,
+          CsvReviewMessage(
+            severity: CsvReviewMessageSeverity.info,
+            message: CsvReviewMessageCatalog.genderInferred,
+            code: 'gender_inferred_from_rc',
+          ),
+        );
+        genderField.inferred = true;
+        genderField.status = CsvFieldReviewStatus.ok;
+        genderField.normalizedValue = derivedGenderValue;
+        derived[genderField.columnKey] = CsvDerivedValue(
+          key: genderField.columnKey,
+          value: derivedGenderValue,
+          applied: true,
+        );
+      } else if (providedGender != derivedGender) {
+        pushMessage(
+          genderField,
+          CsvReviewMessage(
+            severity: CsvReviewMessageSeverity.warn,
+            message: CsvReviewMessageCatalog.genderMismatch,
+            code: 'gender_mismatch_with_rc',
+          ),
+        );
+        derived[genderField.columnKey] = CsvDerivedValue(
+          key: genderField.columnKey,
+          value: derivedGenderValue,
+          applied: false,
+        );
+      } else {
+        derived[genderField.columnKey] = CsvDerivedValue(
+          key: genderField.columnKey,
+          value: derivedGenderValue,
+          applied: false,
+        );
+      }
+    }
+
+    final _FieldComputation? birthField = _findField(fields, 5);
+    if (birthField != null) {
+      final dynamic birthValue = birthField.hold.output;
+      final DateTime? providedBirth = birthValue is DateTime ? birthValue : null;
+      final DateTime derivedBirth = rc.getDatumNarozeni();
+      final String derivedBirthValue = _formatOutput(derivedBirth)!;
+      if (providedBirth == null) {
+        pushMessage(
+          birthField,
+          CsvReviewMessage(
+            severity: CsvReviewMessageSeverity.info,
+            message: CsvReviewMessageCatalog.birthdateInferred,
+            code: 'birthdate_inferred_from_rc',
+          ),
+        );
+        birthField.inferred = true;
+        birthField.status = CsvFieldReviewStatus.ok;
+        birthField.normalizedValue = derivedBirthValue;
+        derived[birthField.columnKey] = CsvDerivedValue(
+          key: birthField.columnKey,
+          value: derivedBirthValue,
+          applied: true,
+        );
+      } else if (!_sameDay(providedBirth, derivedBirth)) {
+        pushMessage(
+          birthField,
+          CsvReviewMessage(
+            severity: CsvReviewMessageSeverity.warn,
+            message: CsvReviewMessageCatalog.birthdateMismatch,
+            code: 'birthdate_mismatch_with_rc',
+          ),
+        );
+        derived[birthField.columnKey] = CsvDerivedValue(
+          key: birthField.columnKey,
+          value: derivedBirthValue,
+          applied: false,
+        );
+      } else {
+        derived[birthField.columnKey] = CsvDerivedValue(
+          key: birthField.columnKey,
+          value: derivedBirthValue,
+          applied: false,
+        );
+      }
+    }
+  }
+
+  _FieldComputation? _findField(List<_FieldComputation> fields, int index) {
+    for (final _FieldComputation field in fields) {
+      if (field.index == index) {
+        return field;
+      }
+    }
+    return null;
+  }
+}
+
+class _FieldComputation {
+  _FieldComputation({
+    required this.index,
+    required this.columnKey,
+    required this.columnName,
+    required this.hold,
+    required this.status,
+    required this.columnMissing,
+    required this.originalValue,
+    required this.normalizedValue,
+  });
+
+  final int index;
+  final String columnKey;
+  final String columnName;
+  final InputHold hold;
+  CsvFieldReviewStatus status;
+  bool inferred = false;
+  final bool columnMissing;
+  final List<CsvReviewMessage> messages = <CsvReviewMessage>[];
+  String? originalValue;
+  String? normalizedValue;
+
+  CsvFieldReview toFieldReview() {
+    return CsvFieldReview(
+      columnKey: columnKey,
+      columnName: columnName,
+      status: status,
+      originalValue: originalValue,
+      normalizedValue: normalizedValue,
+      inferred: inferred,
+      messages: List.unmodifiable(messages),
+    );
+  }
+}
+
   ///4) check errors between lines
   ///5) create persons for database
 
@@ -246,6 +754,7 @@ class Answer {
   // String line = '';
   ErrorLine error = ErrorLine();
   Map<int, InputHold> _dataMap = {};
+  int originalIndex = 0;
 
   /// how was the line marked during parsing (ok, warn, bad) should be expected
   ParseStatus lineStatus = ParseStatus.empty;
@@ -313,14 +822,17 @@ class Answer {
       if (lineStatus < ParseStatus.warn) {
         lineStatus = ParseStatus.warn;
       }
+    } else if (s2 == ParseStatus.warn) {
+      error.errorMsg += 'Rodné číslo má podezřelý kontrolní součet,\n';
+      if (lineStatus < ParseStatus.warn) {
+        lineStatus = ParseStatus.warn;
+      }
     } else if (s2 == ParseStatus.ok) {
       // RC present and valid format; if gender or birthdate missing, we'll warn about inference
       if (!_dataMap.containsKey(3) || _dataMap[3]!.output == null) {
-        lineStatus = ParseStatus.warn;
         error.errorMsg += "odhad pohlaví,\n";
       }
       if (!_dataMap.containsKey(5) || _dataMap[5]!.output == null) {
-        lineStatus = ParseStatus.warn;
         error.errorMsg += "odhad data narození";
       }
     }
