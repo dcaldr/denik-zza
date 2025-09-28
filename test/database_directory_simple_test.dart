@@ -11,26 +11,26 @@ void main() {
     test('should create test database directory and files', () async {
       // Get the test directory path
       final testDbDir = DatabaseTestHelper.getTestDatabaseDirectory();
-      print('Test DB directory path: $testDbDir');
+        // print('Test DB directory path: $testDbDir');
       
       // Create a file-based test database
       final database = DatabaseTestHelper.createTestDatabase(TestDatabaseType.file);
       
       // Check if directory exists
       final dir = Directory(testDbDir);
-      print('Directory exists: ${dir.existsSync()}');
+        // print('Directory exists: ${dir.existsSync()}');
       
       if (dir.existsSync()) {
         final files = dir.listSync();
-        print('Files in directory:');
+          // print('Files in directory:');
         for (final file in files) {
-          print('  ${file.path}');
+            // print('  ${file.path}');
         }
         
         final testDbFiles = files.whereType<File>()
             .where((f) => f.path.contains('testDB') && f.path.endsWith('.db'))
             .toList();
-        print('Test DB files found: ${testDbFiles.length}');
+          // print('Test DB files found: ${testDbFiles.length}');
       }
       
       // Try to use the database
@@ -39,7 +39,7 @@ void main() {
         await database.customStatement('INSERT INTO test_simple (id) VALUES (1)');
         
         final result = await database.customSelect('SELECT COUNT(*) as count FROM test_simple').get();
-        print('Database query result: ${result.first.data['count']}');
+          // print('Database query result: ${result.first.data['count']}');
         
         expect(result.first.data['count'], equals(1));
       } finally {

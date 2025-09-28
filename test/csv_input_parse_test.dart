@@ -20,20 +20,20 @@ var loggerNoStack = Logger(
 
 
 void main(){
-  //print(CsvDefinitions().getColumnNamesAsCsv(CsvDefinitions().mainCsv));
+  // print(CsvDefinitions().getColumnNamesAsCsv(CsvDefinitions().mainCsv));
   group('InputParser basic preflight logic',(){
     final file = File('test/data/first.csv');
     test('fully basic read check',() async {
 
       final contents = await file.readAsString();
-      //print(contents);
+  // print(contents);
       expect(contents, isNotEmpty);
     });
     test('basic read csv file',() async {
      // final file = File('test/data/first.csv');
       final contents = await file.readAsString();
       List<List<String>>? csvTable =  CsvParserSettings().converter.convert(contents);
-    //  print(csvTable);
+      // print(csvTable);
       expect(csvTable, isNotNull);
       expect(csvTable[0][0], 'jméno');
     });
@@ -59,7 +59,7 @@ void main(){
       MemoryOsoba? person = result?.goodPersons[0];
       expect(person, isNotNull);
       // here very literal check
-      //print(person?.jmeno);
+  // print(person?.jmeno);
       expect(person?.jmeno, 'Jan');
       expect(person?.prijmeni, 'Hus');
       expect(person?.cisloPojisteni, '130610/2567');

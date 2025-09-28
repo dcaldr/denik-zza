@@ -221,7 +221,7 @@ void main() {
         }
       } catch (e) {
         // Ignore cleanup errors - this is just a test artifact
-        print('Warning: Could not clean up test subdirectory: $e');
+  // print('Warning: Could not clean up test subdirectory: $e');
       }
     });
 
