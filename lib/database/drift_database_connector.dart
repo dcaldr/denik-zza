@@ -17,20 +17,19 @@ class DriftDatabaseConnector implements DatabaseInterface {
   factory DriftDatabaseConnector() {
     return _singleton;
   }
-  DriftDatabaseConnector._internal();
+  DriftDatabaseConnector._internal() : _driftDatabase = AppDatabase();
 
   /// Drift database instance (defaults to production AppDatabase()).
   /// In tests or dev runs, use [DriftDatabaseConnector.withDatabase] to inject
   /// an in-memory AppDatabase created with AppDatabase.testInMemory().
-  AppDatabase _driftDatabase = AppDatabase();
+  final AppDatabase _driftDatabase;
 
   /// Test-only: Create a connector bound to a provided [AppDatabase].
   ///
   /// This is useful to inject an in-memory database for tests or dev runs
   /// without affecting the production singleton state globally.
-  DriftDatabaseConnector.withDatabase(AppDatabase database) {
-    _driftDatabase = database;
-  }
+  DriftDatabaseConnector.withDatabase(AppDatabase database)
+      : _driftDatabase = database;
 
   @override
   Future<int?> addOsobaAndReturnId(MemoryOsoba osoba) async {
