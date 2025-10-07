@@ -83,31 +83,16 @@ class _ChecklistScaffoldState extends State<_ChecklistScaffold> {
           ),
         ],
       ),
-      body: Row(
-        children: <Widget>[
-          NavigationRail(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: (int index) {
-              setState(() {
-                _selectedIndex = index;
-              });
-            },
-            labelType: NavigationRailLabelType.all,
-            destinations: _steps
-                .map(
-                  (_ChecklistStepDefinition step) => NavigationRailDestination(
-                    icon: const Icon(Icons.circle_outlined),
-                    selectedIcon: const Icon(Icons.check_circle),
-                    label: Text(step.title),
-                  ),
-                )
-                .toList(),
-          ),
-          const VerticalDivider(width: 1),
-          Expanded(
-            child: _buildStepContent(context, _steps[_selectedIndex]),
-          ),
-        ],
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            const double breakpoint = 900;
+            if (constraints.maxWidth >= breakpoint) {
+              return _buildWideLayout(context);
+            }
+            return _buildCompactLayout(context);
+          },
+        ),
       ),
       bottomNavigationBar: _controller.session == null
           ? null
@@ -131,6 +116,66 @@ class _ChecklistScaffoldState extends State<_ChecklistScaffold> {
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildWideLayout(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        NavigationRail(
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: (int index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+          labelType: NavigationRailLabelType.all,
+          destinations: _steps
+              .map(
+                (_ChecklistStepDefinition step) => NavigationRailDestination(
+                  icon: const Icon(Icons.circle_outlined),
+                  selectedIcon: const Icon(Icons.check_circle),
+                  label: Text(step.title),
+                ),
+              )
+              .toList(),
+        ),
+        const VerticalDivider(width: 1),
+        Expanded(
+          child: _buildStepContent(context, _steps[_selectedIndex]),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompactLayout(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: SegmentedButton<int>(
+            segments: List<ButtonSegment<int>>.generate(
+              _steps.length,
+              (int index) => ButtonSegment<int>(
+                value: index,
+                label: Text(_steps[index].title),
+              ),
+            ),
+            selected: <int>{_selectedIndex},
+            onSelectionChanged: (Set<int> selection) {
+              setState(() {
+                _selectedIndex = selection.first;
+              });
+            },
+          ),
+        ),
+        const Divider(height: 1),
+        Expanded(
+          child: _buildStepContent(context, _steps[_selectedIndex]),
+        ),
+      ],
     );
   }
 

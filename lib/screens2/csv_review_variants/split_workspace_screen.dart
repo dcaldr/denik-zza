@@ -148,25 +148,16 @@ class _SplitWorkspaceScaffoldState extends State<_SplitWorkspaceScaffold>
       ),
       body: _controller.session == null
           ? const SizedBox.shrink()
-          : Row(
-              children: <Widget>[
-                SizedBox(
-                  width: 320,
-                  child: Column(
-                    children: <Widget>[
-                      _buildFilterChips(theme),
-                      const Divider(height: 1),
-                      Expanded(
-                        child: _buildRowList(theme),
-                      ),
-                    ],
-                  ),
-                ),
-                const VerticalDivider(width: 1),
-                Expanded(
-                  child: _buildDetailPane(theme),
-                ),
-              ],
+          : SafeArea(
+              child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  const double breakpoint = 980;
+                  if (constraints.maxWidth >= breakpoint) {
+                    return _buildWideLayout(theme);
+                  }
+                  return _buildCompactLayout(theme);
+                },
+              ),
             ),
       bottomNavigationBar: _controller.session == null
           ? null
@@ -190,6 +181,46 @@ class _SplitWorkspaceScaffoldState extends State<_SplitWorkspaceScaffold>
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildWideLayout(ThemeData theme) {
+    return Row(
+      children: <Widget>[
+        SizedBox(
+          width: 320,
+          child: Column(
+            children: <Widget>[
+              _buildFilterChips(theme),
+              const Divider(height: 1),
+              Expanded(
+                child: _buildRowList(theme),
+              ),
+            ],
+          ),
+        ),
+        const VerticalDivider(width: 1),
+        Expanded(
+          child: _buildDetailPane(theme),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompactLayout(ThemeData theme) {
+    return Column(
+      children: <Widget>[
+        _buildFilterChips(theme),
+        const Divider(height: 1),
+        SizedBox(
+          height: 240,
+          child: _buildRowList(theme),
+        ),
+        const Divider(height: 1),
+        Expanded(
+          child: _buildDetailPane(theme),
+        ),
+      ],
     );
   }
 

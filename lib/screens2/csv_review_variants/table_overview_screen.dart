@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:denik_zza/input/csv_review_models.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/screens2/csv_review/widgets/bulk_action_bar.dart';
@@ -48,6 +50,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
   late List<_TableFilter> _filters;
   late List<String> _columnOrder;
   late final ScrollController _horizontalScrollController;
+  late final ScrollController _verticalScrollController;
 
   CsvReviewPrototypeController get _controller => widget.controller;
 
@@ -63,7 +66,8 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     ];
     _activeStatus = null;
     _columnOrder = _resolveColumnOrder();
-    _horizontalScrollController = ScrollController();
+  _horizontalScrollController = ScrollController();
+  _verticalScrollController = ScrollController();
   }
 
   @override
@@ -77,6 +81,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
   @override
   void dispose() {
     _horizontalScrollController.dispose();
+    _verticalScrollController.dispose();
     super.dispose();
   }
 
@@ -99,40 +104,31 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tabulkový přehled CSV'),
-        actions: <Widget>[
-          IconButton(
-            key: const Key('CsvTableOverview_refresh'),
-            icon: const Icon(Icons.refresh),
-            onPressed: _controller.reload,
-            tooltip: 'Znovu načíst soubor',
-          ),
-        ],
-      ),
       body: _controller.session == null
           ? const SizedBox.shrink()
-          : Column(
-              children: <Widget>[
-                _SummaryHeader(controller: _controller),
-                _buildFilterRow(context),
-                const Divider(height: 1),
-                Expanded(
-                  child: Scrollbar(
-                    controller: _horizontalScrollController,
-                    thumbVisibility: true,
-                    child: SingleChildScrollView(
-                      key: const Key('CsvTableOverview_horizontalScroll'),
-                      controller: _horizontalScrollController,
-                      scrollDirection: Axis.horizontal,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(minWidth: 960),
-                        child: _buildTable(context),
-                      ),
-                    ),
+          : SafeArea(
+              child: Scrollbar(
+                controller: _verticalScrollController,
+                thumbVisibility: true,
+                child: ListView(
+                  controller: _verticalScrollController,
+                  padding: EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    bottom: 24 + kBottomNavigationBarHeight +
+                        MediaQuery.of(context).viewPadding.bottom,
                   ),
+                  children: <Widget>[
+                    _buildTitleRow(context),
+                    const SizedBox(height: 8),
+                    _buildSummaryPanel(context),
+                    const SizedBox(height: 8),
+                    _buildFilterRow(context),
+                    const Divider(height: 16),
+                    _buildTableSection(context),
+                  ],
                 ),
-              ],
+              ),
             ),
       bottomNavigationBar: _controller.session == null
           ? null
@@ -176,26 +172,111 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     final ThemeData theme = Theme.of(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Wrap(
-        spacing: 8,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
         children: _filters.map((_TableFilter filter) {
           final bool selected = _activeStatus == filter.status;
           final int count = filter.status == null
               ? _controller.totalRowCount
               : _controller.groupedRows[filter.status]?.length ?? 0;
-          return ChoiceChip(
-            key: Key(filter.key),
-            label: Text('${filter.label} ($count)'),
-            selected: selected,
-            onSelected: (bool value) {
-              setState(() {
-                _activeStatus = value ? filter.status : null;
-              });
-            },
-            selectedColor: theme.colorScheme.primaryContainer,
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              key: Key(filter.key),
+              label: Text('${filter.label} ($count)'),
+              selected: selected,
+              onSelected: (bool value) {
+                setState(() {
+                  _activeStatus = value ? filter.status : null;
+                });
+              },
+              selectedColor: theme.colorScheme.primaryContainer,
+            ),
           );
         }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildTitleRow(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'Tabulkový přehled CSV',
+                style: theme.textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Rychle prohlédněte importované záznamy a upravte je na jednom místě.',
+                style: theme.textTheme.bodyMedium,
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          key: const Key('CsvTableOverview_refresh'),
+          onPressed: _controller.reload,
+          icon: const Icon(Icons.refresh),
+          tooltip: 'Znovu načíst soubor',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSummaryPanel(BuildContext context) {
+    final Map<CsvRowReviewStatus, List<CsvReviewRow>> grouped =
+        _controller.groupedRows;
+    final int rejected = grouped[CsvRowReviewStatus.rejected]?.length ?? 0;
+    final int warn = grouped[CsvRowReviewStatus.warn]?.length ?? 0;
+    final int info = grouped[CsvRowReviewStatus.info]?.length ?? 0;
+    final int ok = grouped[CsvRowReviewStatus.ok]?.length ?? 0;
+    final String subtitle =
+        'Zamítnuto $rejected • Varování $warn • Informace $info • Platné $ok';
+
+    return Card(
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        key: const Key('CsvTableOverview_summaryTile'),
+        initiallyExpanded: false,
+        title: const Text('Shrnutí souboru'),
+        subtitle: Text(subtitle),
+        childrenPadding: const EdgeInsets.only(bottom: 16),
+        children: <Widget>[
+          SummarySection(
+            review: _controller.session!.review,
+            groupedRows: grouped,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTableSection(BuildContext context) {
+    final double viewportWidth = MediaQuery.of(context).size.width;
+    final double minTableWidth = math.max(960, viewportWidth - 32);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Scrollbar(
+        controller: _horizontalScrollController,
+        thumbVisibility: true,
+        notificationPredicate: (ScrollNotification notification) =>
+            notification.metrics.axis == Axis.horizontal,
+        child: SingleChildScrollView(
+          key: const Key('CsvTableOverview_horizontalScroll'),
+          controller: _horizontalScrollController,
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: minTableWidth),
+            child: _buildTable(context),
+          ),
+        ),
       ),
     );
   }
@@ -484,92 +565,3 @@ class _EditableCellState extends State<_EditableCell> {
   }
 }
 
-class _SummaryHeader extends StatelessWidget {
-  const _SummaryHeader({
-    required this.controller,
-  });
-
-  final CsvReviewPrototypeController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final CsvImportSession? session = controller.session;
-    if (session == null) {
-      return const SizedBox.shrink();
-    }
-    return Material(
-      elevation: 4,
-      color: Theme.of(context).colorScheme.surface,
-      child: Column(
-        key: const Key('CsvTableOverview_summary'),
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          SummarySection(
-            review: session.review,
-            groupedRows: controller.groupedRows,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: <Widget>[
-                ElevatedButton.icon(
-                  key: const Key('CsvTableOverview_editDialog'),
-                  onPressed: controller.rows.isEmpty
-                      ? null
-                      : () async {
-                          final CsvReviewRow firstRow = controller.rows.first;
-                          final Map<String, String?> payload =
-                              controller.buildPayload(firstRow);
-                          final Map<String, String?>? dialogResult =
-                              await showDialog<Map<String, String?>>(
-                            context: context,
-                            builder: (BuildContext context) => CsvRowEditDialog(
-                              row: firstRow,
-                            ),
-                          );
-                          if (dialogResult != null) {
-                            try {
-                              await controller.editRow(firstRow, dialogResult);
-                            } catch (_) {
-                              if (!context.mounted) {
-                                return;
-                              }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('Úprava se nepodařila uložit.')),
-                              );
-                            }
-                          } else {
-                            controller.editRow(firstRow, payload);
-                          }
-                        },
-                  icon: const Icon(Icons.edit_square),
-                  label: const Text('Upravit první řádek'),
-                ),
-                const SizedBox(width: 12),
-                if (controller.duplicateRowCount > 0)
-                  Chip(
-                    key: const Key('CsvTableOverview_duplicatesChip'),
-                    backgroundColor:
-                        Theme.of(context).colorScheme.errorContainer,
-                    avatar: Icon(
-                      Icons.warning,
-                      color: Theme.of(context).colorScheme.onErrorContainer,
-                    ),
-                    label: Text(
-                      'Duplicitní: ${controller.duplicateRowCount}',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onErrorContainer,
-                          ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

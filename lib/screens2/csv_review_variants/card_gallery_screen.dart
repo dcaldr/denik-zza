@@ -66,18 +66,20 @@ class _CardGalleryScaffoldState extends State<_CardGalleryScaffold> {
       ),
       body: _controller.session == null
           ? const SizedBox.shrink()
-          : Column(
-              children: <Widget>[
-                _GalleryHeader(controller: _controller),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    children: CsvRowReviewStatus.values
-                        .map((CsvRowReviewStatus status) => _buildSection(context, status))
-                        .toList(),
+          : SafeArea(
+              child: Column(
+                children: <Widget>[
+                  _GalleryHeader(controller: _controller),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      children: CsvRowReviewStatus.values
+                          .map((CsvRowReviewStatus status) => _buildSection(context, status))
+                          .toList(),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
       bottomNavigationBar: _controller.session == null
           ? null
@@ -226,27 +228,26 @@ class _GalleryGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final double maxWidth = constraints.maxWidth;
-        final int crossAxisCount = maxWidth ~/ 320;
-        final int effectiveCount = crossAxisCount.clamp(1, 4);
-        return Padding(
+        final SliverGridDelegate delegate = const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 360,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: 0.95,
+        );
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.only(bottom: 16),
-          child: Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: rows
-                .map(
-                  (CsvReviewRow row) => SizedBox(
-                    width: maxWidth / effectiveCount - 16,
-                    child: _GalleryCard(
-                      row: row,
-                      controller: controller,
-                      keyPrefix: keyPrefix,
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
+          gridDelegate: delegate,
+          itemCount: rows.length,
+          itemBuilder: (BuildContext context, int index) {
+            final CsvReviewRow row = rows[index];
+            return _GalleryCard(
+              row: row,
+              controller: controller,
+              keyPrefix: keyPrefix,
+            );
+          },
         );
       },
     );
