@@ -71,27 +71,28 @@ class _ChecklistScaffoldState extends State<_ChecklistScaffold> {
 
   @override
   Widget build(BuildContext context) {
+    final bool ready = _controller.session != null;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kontrolní seznam importu CSV'),
-        actions: <Widget>[
-          IconButton(
-            key: const Key('CsvChecklist_refresh'),
-            onPressed: _controller.reload,
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Znovu načíst soubor',
-          ),
-        ],
-      ),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-            const double breakpoint = 900;
-            if (constraints.maxWidth >= breakpoint) {
-              return _buildWideLayout(context);
-            }
-            return _buildCompactLayout(context);
-          },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            _buildPageHeader(context),
+            const Divider(height: 1),
+            Expanded(
+              child: ready
+                  ? LayoutBuilder(
+                      builder: (BuildContext context, BoxConstraints constraints) {
+                        const double breakpoint = 900;
+                        if (constraints.maxWidth >= breakpoint) {
+                          return _buildWideLayout(context);
+                        }
+                        return _buildCompactLayout(context);
+                      },
+                    )
+                  : const Center(child: CircularProgressIndicator()),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: _controller.session == null
@@ -116,6 +117,29 @@ class _ChecklistScaffoldState extends State<_ChecklistScaffold> {
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildPageHeader(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Text(
+              'Kontrolní seznam importu CSV',
+              style: theme.textTheme.titleLarge,
+            ),
+          ),
+          IconButton(
+            key: const Key('CsvChecklist_refresh'),
+            onPressed: _controller.reload,
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Znovu načíst soubor',
+          ),
+        ],
+      ),
     );
   }
 

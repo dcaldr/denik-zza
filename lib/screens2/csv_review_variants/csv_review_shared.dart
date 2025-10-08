@@ -562,6 +562,10 @@ class _CsvReviewPrototypeHostState extends State<CsvReviewPrototypeHost> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint(
+      'CsvReviewPrototypeHost.build loading=${_controller.isLoading} '
+      'session=${_controller.session != null} rows=${_controller.rows.length}',
+    );
     if (_controller.isLoading) {
       final WidgetBuilder? loadingBuilder = widget.loadingBuilder;
       if (loadingBuilder != null) {

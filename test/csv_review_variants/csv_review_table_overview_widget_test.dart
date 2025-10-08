@@ -1,5 +1,8 @@
 import 'package:denik_zza/input/csv_review_models.dart';
 import 'package:denik_zza/input/input_parser.dart';
+import 'package:denik_zza/screens2/csv_review_variants/card_gallery_screen.dart';
+import 'package:denik_zza/screens2/csv_review_variants/checklist_screen.dart';
+import 'package:denik_zza/screens2/csv_review_variants/split_workspace_screen.dart';
 import 'package:denik_zza/screens2/csv_review_variants/table_overview_screen.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:flutter/material.dart';
@@ -73,6 +76,87 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(service.lastPayload?['pohlavi'], equals('2'));
+  });
+
+  testWidgets('card gallery renders grouped sections', (WidgetTester tester) async {
+    final TestWidgetsFlutterBinding binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.window.physicalSizeTestValue = const Size(1600, 1200);
+    binding.window.devicePixelRatioTestValue = 1.0;
+    addTearDown(() {
+      binding.window.clearPhysicalSizeTestValue();
+      binding.window.clearDevicePixelRatioTestValue();
+    });
+
+    final _WidgetFakeService service = _WidgetFakeService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CsvReviewCardGalleryScreen(
+          filePath: 'ignored.csv',
+          service: service,
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+  expect(find.text('Galerie záznamů CSV'), findsOneWidget);
+  expect(find.byKey(const Key('CsvCardGallery_refresh')), findsOneWidget);
+  expect(find.textContaining('Soubor obsahuje'), findsOneWidget);
+  });
+
+  testWidgets('checklist shows step cards', (WidgetTester tester) async {
+    final TestWidgetsFlutterBinding binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.window.physicalSizeTestValue = const Size(1600, 1200);
+    binding.window.devicePixelRatioTestValue = 1.0;
+    addTearDown(() {
+      binding.window.clearPhysicalSizeTestValue();
+      binding.window.clearDevicePixelRatioTestValue();
+    });
+
+    final _WidgetFakeService service = _WidgetFakeService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CsvReviewChecklistScreen(
+          filePath: 'ignored.csv',
+          service: service,
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+  expect(find.text('Kontrolní seznam importu CSV'), findsOneWidget);
+  expect(find.byType(NavigationRail), findsOneWidget);
+  expect(find.textContaining('Souhrn'), findsOneWidget);
+  });
+
+  testWidgets('split workspace shows list and detail', (WidgetTester tester) async {
+    final TestWidgetsFlutterBinding binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.window.physicalSizeTestValue = const Size(1600, 1200);
+    binding.window.devicePixelRatioTestValue = 1.0;
+    addTearDown(() {
+      binding.window.clearPhysicalSizeTestValue();
+      binding.window.clearDevicePixelRatioTestValue();
+    });
+
+    final _WidgetFakeService service = _WidgetFakeService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CsvReviewSplitWorkspaceScreen(
+          filePath: 'ignored.csv',
+          service: service,
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Dvou-panelový přehled CSV'), findsOneWidget);
+    expect(find.byKey(const Key('CsvSplitWorkspace_rowList')), findsOneWidget);
+    expect(find.byType(TabBar), findsOneWidget);
   });
 }
 

@@ -52,35 +52,34 @@ class _CardGalleryScaffoldState extends State<_CardGalleryScaffold> {
 
   @override
   Widget build(BuildContext context) {
+    final bool ready = _controller.session != null;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Galerie záznamů CSV'),
-        actions: <Widget>[
-          IconButton(
-            key: const Key('CsvCardGallery_refresh'),
-            onPressed: _controller.reload,
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Znovu načíst soubor',
-          ),
-        ],
-      ),
-      body: _controller.session == null
-          ? const SizedBox.shrink()
-          : SafeArea(
-              child: Column(
-                children: <Widget>[
-                  _GalleryHeader(controller: _controller),
-                  Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      children: CsvRowReviewStatus.values
-                          .map((CsvRowReviewStatus status) => _buildSection(context, status))
-                          .toList(),
-                    ),
-                  ),
-                ],
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            _buildPageHeader(context),
+            const Divider(height: 1),
+            if (!ready)
+              const Expanded(
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else ...<Widget>[
+              const SizedBox(height: 12),
+              _GalleryHeader(controller: _controller),
+              const SizedBox(height: 8),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  children: CsvRowReviewStatus.values
+                      .map((CsvRowReviewStatus status) => _buildSection(context, status))
+                      .toList(),
+                ),
               ),
-            ),
+            ],
+          ],
+        ),
+      ),
       bottomNavigationBar: _controller.session == null
           ? null
           : Material(
@@ -103,6 +102,29 @@ class _CardGalleryScaffoldState extends State<_CardGalleryScaffold> {
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildPageHeader(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Text(
+              'Galerie záznamů CSV',
+              style: theme.textTheme.titleLarge,
+            ),
+          ),
+          IconButton(
+            key: const Key('CsvCardGallery_refresh'),
+            onPressed: _controller.reload,
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Znovu načíst soubor',
+          ),
+        ],
+      ),
     );
   }
 

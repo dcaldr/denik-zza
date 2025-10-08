@@ -134,31 +134,30 @@ class _SplitWorkspaceScaffoldState extends State<_SplitWorkspaceScaffold>
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final bool ready = _controller.session != null;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dvou-panelový přehled CSV'),
-        actions: <Widget>[
-          IconButton(
-            key: const Key('CsvSplitWorkspace_refresh'),
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Znovu načíst soubor',
-            onPressed: _controller.reload,
-          ),
-        ],
-      ),
-      body: _controller.session == null
-          ? const SizedBox.shrink()
-          : SafeArea(
-              child: LayoutBuilder(
-                builder: (BuildContext context, BoxConstraints constraints) {
-                  const double breakpoint = 980;
-                  if (constraints.maxWidth >= breakpoint) {
-                    return _buildWideLayout(theme);
-                  }
-                  return _buildCompactLayout(theme);
-                },
-              ),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            _buildPageHeader(theme),
+            const Divider(height: 1),
+            Expanded(
+              child: ready
+                  ? LayoutBuilder(
+                      builder: (BuildContext context, BoxConstraints constraints) {
+                        const double breakpoint = 980;
+                        if (constraints.maxWidth >= breakpoint) {
+                          return _buildWideLayout(theme);
+                        }
+                        return _buildCompactLayout(theme);
+                      },
+                    )
+                  : const Center(child: CircularProgressIndicator()),
             ),
+          ],
+        ),
+      ),
       bottomNavigationBar: _controller.session == null
           ? null
           : Material(
@@ -181,6 +180,28 @@ class _SplitWorkspaceScaffoldState extends State<_SplitWorkspaceScaffold>
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildPageHeader(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Text(
+              'Dvou-panelový přehled CSV',
+              style: theme.textTheme.titleLarge,
+            ),
+          ),
+          IconButton(
+            key: const Key('CsvSplitWorkspace_refresh'),
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Znovu načíst soubor',
+            onPressed: _controller.reload,
+          ),
+        ],
+      ),
     );
   }
 
