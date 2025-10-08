@@ -43,19 +43,10 @@ void main() {
     );
     expect(birthField.controller?.text, equals('01.01.2010'));
 
-    // Change decision via dropdown.
-    await tester.tap(find.byKey(const Key('CsvTableOverview_decision_1')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Přijmout').first);
-    await tester.pumpAndSettle();
-
-    expect(
-      find.descendant(
-        of: find.byKey(const Key('CsvTableOverview_decision_1')),
-        matching: find.text('Přijmout'),
-      ),
-      findsOneWidget,
-    );
+    // Worst statuses appear first (warn row above ok row).
+    final Offset warnPosition = tester.getTopLeft(find.text('Varování'));
+    final Offset okPosition = tester.getTopLeft(find.text('V pořádku'));
+    expect(warnPosition.dy, lessThan(okPosition.dy));
 
     // Edit cell inline and ensure service receives payload.
     await tester.tap(find.byKey(const Key('CsvTableOverview_cell_1_jmeno')));

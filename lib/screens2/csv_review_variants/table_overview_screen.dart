@@ -297,7 +297,6 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     }
 
     final List<DataColumn> columns = <DataColumn>[
-      const DataColumn(label: Text('Rozhodnutí')),
       const DataColumn(label: Text('Stav')),
       const DataColumn(label: Text('Duplicitní?')),
       ..._columnOrder.map(
@@ -340,34 +339,6 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                   );
                 },
           cells: <DataCell>[
-            DataCell(
-              DropdownButton<CsvRowDecision>(
-                key: Key('CsvTableOverview_decision_${row.originalIndex}'),
-                value: decision,
-                onChanged: loading
-                    ? null
-                    : (CsvRowDecision? value) {
-                        if (value == null) {
-                          return;
-                        }
-                        _controller.updateDecision(row.originalIndex, value);
-                      },
-                items: const <DropdownMenuItem<CsvRowDecision>>[
-                  DropdownMenuItem(
-                    value: CsvRowDecision.none,
-                    child: Text('Bez rozhodnutí'),
-                  ),
-                  DropdownMenuItem(
-                    value: CsvRowDecision.approved,
-                    child: Text('Přijmout'),
-                  ),
-                  DropdownMenuItem(
-                    value: CsvRowDecision.rejected,
-                    child: Text('Zamítnout'),
-                  ),
-                ],
-              ),
-            ),
             DataCell(
               Container(
                 padding:

@@ -113,6 +113,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
                   a.originalIndex.compareTo(b.originalIndex),
             );
 
+  _sortRowsByPriority(sessionRows);
+
       _session = loadedSession;
       _rows = sessionRows;
       _groupedRows = _groupRows(sessionRows);
@@ -278,6 +280,7 @@ class CsvReviewPrototypeController extends ChangeNotifier {
       return;
     }
     _rows[index] = updatedRow;
+    _sortRowsByPriority(_rows);
     _groupedRows = _groupRows(_rows);
   }
 
@@ -288,7 +291,34 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     for (final CsvReviewRow row in rows) {
       grouped[row.status]!.add(row);
     }
+    for (final List<CsvReviewRow> statusRows in grouped.values) {
+      _sortRowsByPriority(statusRows);
+    }
     return grouped;
+  }
+
+  static void _sortRowsByPriority(List<CsvReviewRow> rows) {
+    rows.sort((CsvReviewRow a, CsvReviewRow b) {
+      final int priorityA = _statusPriority(a.status);
+      final int priorityB = _statusPriority(b.status);
+      if (priorityA != priorityB) {
+        return priorityA.compareTo(priorityB);
+      }
+      return a.originalIndex.compareTo(b.originalIndex);
+    });
+  }
+
+  static int _statusPriority(CsvRowReviewStatus status) {
+    switch (status) {
+      case CsvRowReviewStatus.rejected:
+        return 0;
+      case CsvRowReviewStatus.warn:
+        return 1;
+      case CsvRowReviewStatus.info:
+        return 2;
+      case CsvRowReviewStatus.ok:
+        return 3;
+    }
   }
 
   static Map<CsvRowReviewStatus, List<CsvReviewRow>> _emptyGroupedRows() =>
