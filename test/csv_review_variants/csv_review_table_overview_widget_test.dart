@@ -30,6 +30,16 @@ void main() {
 
     expect(find.byKey(const Key('CsvTableOverview_table')), findsOneWidget);
 
+    final TextFormField genderField = tester.widget<TextFormField>(
+      find.byKey(const Key('CsvTableOverview_cell_1_pohlavi')),
+    );
+    expect(genderField.controller?.text, equals('Muž'));
+
+    final TextFormField birthField = tester.widget<TextFormField>(
+      find.byKey(const Key('CsvTableOverview_cell_1_datum_narozeni')),
+    );
+    expect(birthField.controller?.text, equals('01.01.2010'));
+
     // Change decision via dropdown.
     await tester.tap(find.byKey(const Key('CsvTableOverview_decision_1')));
     await tester.pumpAndSettle();
@@ -54,6 +64,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(service.lastPayload?['jmeno'], equals('Karolina'));
+
+    await tester.enterText(
+      find.byKey(const Key('CsvTableOverview_cell_1_pohlavi')),
+      'Žena',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    expect(service.lastPayload?['pohlavi'], equals('2'));
   });
 }
 
@@ -159,12 +178,20 @@ CsvReviewRow _buildRow(
         normalizedValue: lastName,
         inferred: false,
       ),
+      'pohlavi': CsvFieldReview(
+        columnKey: 'pohlavi',
+        columnName: 'Pohlaví',
+        status: CsvFieldReviewStatus.ok,
+        originalValue: '1',
+        normalizedValue: '1',
+        inferred: false,
+      ),
       'datum_narozeni': CsvFieldReview(
         columnKey: 'datum_narozeni',
         columnName: 'Datum narození',
         status: CsvFieldReviewStatus.ok,
-        originalValue: '01.01.2010',
-        normalizedValue: '01.01.2010',
+        originalValue: '2010-01-01',
+        normalizedValue: '2010-01-01',
         inferred: false,
       ),
     },

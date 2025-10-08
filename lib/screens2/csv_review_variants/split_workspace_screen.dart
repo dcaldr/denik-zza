@@ -113,7 +113,7 @@ class _SplitWorkspaceScaffoldState extends State<_SplitWorkspaceScaffold>
     }
     for (final MapEntry<String, CsvFieldReview> entry in row.fields.entries) {
       _fieldControllers[entry.key] = TextEditingController(
-        text: entry.value.normalizedValue ?? entry.value.originalValue ?? '',
+        text: formatCsvFieldDisplay(entry.key, entry.value),
       );
     }
   }
@@ -279,7 +279,7 @@ class _SplitWorkspaceScaffoldState extends State<_SplitWorkspaceScaffold>
                 color: statusColor(theme, row.status),
               ),
               trailing: _controller.hasDuplicate(row.originalIndex)
-                  ? const Icon(Icons.warning_amber_outlined, color: Colors.orange)
+          ? const Icon(Icons.construction, color: Colors.orange)
                   : null,
               onTap: () => _selectRow(row.originalIndex),
             ),
@@ -347,7 +347,7 @@ class _SplitWorkspaceScaffoldState extends State<_SplitWorkspaceScaffold>
                         ),
                         if (_controller.hasDuplicate(row.originalIndex))
                           Chip(
-                            avatar: const Icon(Icons.warning_amber, size: 16),
+                            avatar: const Icon(Icons.construction, size: 16),
                             label: const Text('Možná duplicita'),
                             backgroundColor:
                                 theme.colorScheme.errorContainer,
@@ -473,7 +473,7 @@ class _SplitWorkspaceScaffoldState extends State<_SplitWorkspaceScaffold>
     final CsvFieldReview? field = row.fields[fieldKey];
     final TextEditingController controller = _fieldControllers[fieldKey] ??
         (_fieldControllers[fieldKey] = TextEditingController(
-          text: field?.normalizedValue ?? field?.originalValue ?? '',
+          text: formatCsvFieldDisplay(fieldKey, field),
         ));
 
     final bool hasWarning = field?.status == CsvFieldReviewStatus.warn ||
@@ -525,7 +525,8 @@ class _SplitWorkspaceScaffoldState extends State<_SplitWorkspaceScaffold>
   Future<void> _submitEdits(CsvReviewRow row) async {
     final Map<String, String?> payload = _controller.buildPayload(row);
     _fieldControllers.forEach((String key, TextEditingController value) {
-      payload[key] = value.text.trim();
+      final CsvFieldReview? field = row.fields[key];
+      payload[key] = normalizeCsvFieldInput(key, value.text, field);
     });
     try {
       await _controller.editRow(row, payload);

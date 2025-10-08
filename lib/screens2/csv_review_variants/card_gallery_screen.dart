@@ -200,7 +200,7 @@ class _GalleryHeader extends StatelessWidget {
             ),
             if (controller.duplicateRowCount > 0)
               Chip(
-                avatar: const Icon(Icons.link_off, size: 16),
+                avatar: const Icon(Icons.construction, size: 16),
                 label: Text('Duplicitní: ${controller.duplicateRowCount}'),
                 backgroundColor: Theme.of(context).colorScheme.errorContainer,
               ),
@@ -305,7 +305,7 @@ class _GalleryCard extends StatelessWidget {
                 ),
                 if (hasDuplicate)
                   Chip(
-                    avatar: const Icon(Icons.warning_amber, size: 16),
+                    avatar: const Icon(Icons.construction, size: 16),
                     label: const Text('Možná duplicita'),
                     backgroundColor: theme.colorScheme.errorContainer,
                   ),

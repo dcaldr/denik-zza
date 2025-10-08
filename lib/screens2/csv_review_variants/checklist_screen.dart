@@ -377,7 +377,7 @@ class _ChecklistRowCard extends StatelessWidget {
                     ),
                     if (controller.hasDuplicate(row.originalIndex))
                       Chip(
-                        avatar: const Icon(Icons.warning_amber, size: 16),
+                        avatar: const Icon(Icons.construction, size: 16),
                         label: const Text('Možná duplicita'),
                         backgroundColor: theme.colorScheme.errorContainer,
                       ),

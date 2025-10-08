@@ -1,4 +1,5 @@
 import 'package:denik_zza/input/csv_review_models.dart';
+import 'package:denik_zza/screens2/csv_review_variants/csv_review_shared.dart';
 import 'package:flutter/material.dart';
 
 /// Dialog that allows editing all fields of a CSV review row.
@@ -26,7 +27,7 @@ class _CsvRowEditDialogState extends State<CsvRowEditDialog> {
       for (final MapEntry<String, CsvFieldReview> entry
           in widget.row.fields.entries)
         entry.key: TextEditingController(
-          text: entry.value.originalValue ?? entry.value.normalizedValue ?? '',
+          text: formatCsvFieldDisplay(entry.key, entry.value),
         ),
     };
   }
@@ -89,7 +90,11 @@ class _CsvRowEditDialogState extends State<CsvRowEditDialog> {
             final Map<String, String?> result = <String, String?>{};
             _controllers
                 .forEach((String key, TextEditingController controller) {
-              result[key] = controller.text.trim();
+              result[key] = normalizeCsvFieldInput(
+                key,
+                controller.text,
+                widget.row.fields[key],
+              );
             });
             Navigator.of(context).pop(result);
           },

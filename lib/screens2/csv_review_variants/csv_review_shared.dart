@@ -3,6 +3,7 @@ import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 
 /// Signature for building a prototype widget once the controller is ready.
@@ -338,6 +339,132 @@ Color statusColor(ThemeData theme, CsvRowReviewStatus status) {
       return theme.colorScheme.error;
   }
 }
+
+/// Returns a field value formatted for Czech UI display.
+String formatCsvFieldDisplay(String fieldKey, CsvFieldReview? field) {
+  final String rawValue = field?.normalizedValue ?? field?.originalValue ?? '';
+  if (rawValue.isEmpty) {
+    return '';
+  }
+  switch (fieldKey) {
+    case 'pohlavi':
+      return _formatGenderLabel(rawValue);
+    case 'datum_narozeni':
+      final DateTime? parsed = _tryParseCsvDate(rawValue);
+      if (parsed != null) {
+        return _czechDateFormatter.format(parsed);
+      }
+      return rawValue;
+    default:
+      return rawValue;
+  }
+}
+
+/// Normalizes a user-facing value back to a payload-friendly normalized value.
+String normalizeCsvFieldInput(
+  String fieldKey,
+  String input,
+  CsvFieldReview? originalField,
+) {
+  final String trimmed = input.trim();
+  if (trimmed.isEmpty) {
+    return '';
+  }
+
+  switch (fieldKey) {
+    case 'pohlavi':
+      final String normalized = trimmed.toLowerCase();
+      if (_maleTokens.contains(normalized)) {
+        return '1';
+      }
+      if (_femaleTokens.contains(normalized)) {
+        return '2';
+      }
+      if (originalField != null &&
+          trimmed == formatCsvFieldDisplay(fieldKey, originalField)) {
+        return originalField.normalizedValue ??
+            originalField.originalValue ??
+            trimmed;
+      }
+      return trimmed;
+    case 'datum_narozeni':
+      final DateTime? parsed = _tryParseCsvDate(trimmed);
+      if (parsed != null) {
+        return _czechDateFormatter.format(parsed);
+      }
+      if (originalField != null &&
+          trimmed == formatCsvFieldDisplay(fieldKey, originalField)) {
+        return originalField.normalizedValue ??
+            originalField.originalValue ??
+            trimmed;
+      }
+      return trimmed;
+    default:
+      return trimmed;
+  }
+}
+
+final DateFormat _czechDateFormatter = DateFormat('dd.MM.yyyy');
+
+DateTime? _tryParseCsvDate(String value) {
+  final String trimmed = value.trim();
+  if (trimmed.isEmpty) {
+    return null;
+  }
+  for (final DateFormat format in _acceptedDateFormats) {
+    try {
+      return format.parseStrict(trimmed);
+    } catch (_) {
+      // Ignore parse failures and continue trying other formats.
+    }
+  }
+  try {
+    return DateTime.parse(trimmed);
+  } catch (_) {
+    return null;
+  }
+}
+
+final List<DateFormat> _acceptedDateFormats = <DateFormat>[
+  DateFormat('dd.MM.yyyy'),
+  DateFormat('d.M.yyyy'),
+  DateFormat('yyyy-MM-dd'),
+  DateFormat('yyyy-M-d'),
+  DateFormat('dd/MM/yyyy'),
+  DateFormat('d/M/yyyy'),
+];
+
+String _formatGenderLabel(String rawValue) {
+  final String normalized = rawValue.trim().toLowerCase();
+  if (normalized.isEmpty) {
+    return '';
+  }
+  if (_maleTokens.contains(normalized)) {
+    return 'Muž';
+  }
+  if (_femaleTokens.contains(normalized)) {
+    return 'Žena';
+  }
+  return rawValue;
+}
+
+const Set<String> _maleTokens = <String>{
+  '1',
+  'm',
+  'muž',
+  'muz',
+  'male',
+};
+
+const Set<String> _femaleTokens = <String>{
+  '2',
+  'ž',
+  'z',
+  'žena',
+  'zena',
+  'f',
+  'female',
+};
 
 /// Returns display list of derived values for quick badge rendering.
 List<DerivedValueDisplay> derivedValueDisplays(CsvReviewRow row) {

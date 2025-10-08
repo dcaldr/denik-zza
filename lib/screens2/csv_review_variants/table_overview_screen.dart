@@ -390,7 +390,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                   ? Tooltip(
                       message: 'Potenciální duplicitní záznam',
                       child: Icon(
-                        Icons.error_outline,
+                        Icons.construction,
                         color: Theme.of(context).colorScheme.error,
                       ),
                     )
@@ -458,20 +458,23 @@ class _EditableCellState extends State<_EditableCell> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: _currentValue);
+    _controller = TextEditingController(text: _displayValue);
   }
 
   @override
   void didUpdateWidget(covariant _EditableCell oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.row != oldWidget.row || widget.fieldKey != oldWidget.fieldKey) {
-      _controller.text = _currentValue;
+      _controller.text = _displayValue;
     }
   }
 
-  String get _currentValue {
-    final CsvFieldReview? field = widget.row.fields[widget.fieldKey];
-    return field?.normalizedValue ?? field?.originalValue ?? '';
+  CsvFieldReview? get _field => widget.row.fields[widget.fieldKey];
+
+  String get _displayValue => formatCsvFieldDisplay(widget.fieldKey, _field);
+
+  String _normalizeForPayload(String value) {
+    return normalizeCsvFieldInput(widget.fieldKey, value, _field);
   }
 
   @override
@@ -482,7 +485,7 @@ class _EditableCellState extends State<_EditableCell> {
 
   @override
   Widget build(BuildContext context) {
-    final CsvFieldReview? field = widget.row.fields[widget.fieldKey];
+  final CsvFieldReview? field = _field;
     final bool hasWarning =
         field?.status == CsvFieldReviewStatus.warn ||
             field?.status == CsvFieldReviewStatus.bad;
@@ -503,7 +506,7 @@ class _EditableCellState extends State<_EditableCell> {
       onFieldSubmitted: (String value) async {
         final Map<String, String?> payload =
             widget.controller.buildPayload(widget.row);
-        payload[widget.fieldKey] = value.trim();
+        payload[widget.fieldKey] = _normalizeForPayload(value);
         try {
           await widget.controller.editRow(widget.row, payload);
         } catch (_) {
@@ -518,7 +521,7 @@ class _EditableCellState extends State<_EditableCell> {
       onTapOutside: (PointerDownEvent _) async {
         final Map<String, String?> payload =
             widget.controller.buildPayload(widget.row);
-        payload[widget.fieldKey] = _controller.text.trim();
+        payload[widget.fieldKey] = _normalizeForPayload(_controller.text);
         try {
           await widget.controller.editRow(widget.row, payload);
         } catch (_) {
