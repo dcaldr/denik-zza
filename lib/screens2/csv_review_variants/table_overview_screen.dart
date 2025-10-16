@@ -232,28 +232,71 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
   Widget _buildSummaryPanel(BuildContext context) {
     final Map<CsvRowReviewStatus, List<CsvReviewRow>> grouped =
         _controller.groupedRows;
-    final int rejected = grouped[CsvRowReviewStatus.rejected]?.length ?? 0;
-    final int warn = grouped[CsvRowReviewStatus.warn]?.length ?? 0;
-    final int info = grouped[CsvRowReviewStatus.info]?.length ?? 0;
-    final int ok = grouped[CsvRowReviewStatus.ok]?.length ?? 0;
-    final String subtitle =
-        'Zamítnuto $rejected • Varování $warn • Informace $info • Platné $ok';
+    final ThemeData theme = Theme.of(context);
+    final int totalCount = _controller.session?.review.rows.length ?? 0;
 
     return Card(
       elevation: 0,
       clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
-        key: const Key('CsvTableOverview_summaryTile'),
-        initiallyExpanded: false,
-        title: const Text('Shrnutí souboru'),
-        subtitle: Text(subtitle),
-        childrenPadding: const EdgeInsets.only(bottom: 16),
-        children: <Widget>[
-          SummarySection(
-            review: _controller.session!.review,
-            groupedRows: grouped,
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        child: Wrap(
+          key: const Key('CsvTableOverview_summary_content'),
+          spacing: 16,
+          runSpacing: 16,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: <Widget>[
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(Icons.insights_outlined, color: theme.colorScheme.primary),
+                const SizedBox(width: 12),
+                Text(
+                  'Shrnutí souboru',
+                  style: theme.textTheme.titleMedium,
+                ),
+              ],
+            ),
+            SummaryBadge(
+              key: const Key('CsvTableOverview_summary_rejected_count'),
+              label: 'Zamítnuto',
+              count: grouped[CsvRowReviewStatus.rejected]?.length ?? 0,
+              color: statusColor(theme, CsvRowReviewStatus.rejected),
+            ),
+            SummaryBadge(
+              key: const Key('CsvTableOverview_summary_warn_count'),
+              label: 'Varování',
+              count: grouped[CsvRowReviewStatus.warn]?.length ?? 0,
+              color: statusColor(theme, CsvRowReviewStatus.warn),
+            ),
+            SummaryBadge(
+              key: const Key('CsvTableOverview_summary_info_count'),
+              label: 'Informace',
+              count: grouped[CsvRowReviewStatus.info]?.length ?? 0,
+              color: statusColor(theme, CsvRowReviewStatus.info),
+            ),
+            SummaryBadge(
+              key: const Key('CsvTableOverview_summary_ok_count'),
+              label: 'Platné',
+              count: grouped[CsvRowReviewStatus.ok]?.length ?? 0,
+              color: statusColor(theme, CsvRowReviewStatus.ok),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceVariant,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'Celkem řádků: $totalCount',
+                key: const Key('CsvTableOverview_summary_total'),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

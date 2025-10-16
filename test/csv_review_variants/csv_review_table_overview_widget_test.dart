@@ -31,6 +31,25 @@ void main() {
 
     await tester.pumpAndSettle();
 
+    expect(find.byKey(const Key('CsvTableOverview_summary_content')), findsOneWidget);
+    expect(
+      find.byKey(const Key('CsvTableOverview_summary_rejected_count')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('CsvTableOverview_summary_warn_count')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('CsvTableOverview_summary_info_count')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('CsvTableOverview_summary_ok_count')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('CsvTableOverview_summary_total')), findsOneWidget);
+
     expect(find.byKey(const Key('CsvTableOverview_table')), findsOneWidget);
 
     final TextFormField genderField = tester.widget<TextFormField>(
@@ -43,9 +62,14 @@ void main() {
     );
     expect(birthField.controller?.text, equals('01.01.2010'));
 
-    // Worst statuses appear first (warn row above ok row).
-    final Offset warnPosition = tester.getTopLeft(find.text('Varování'));
-    final Offset okPosition = tester.getTopLeft(find.text('V pořádku'));
+    // Worst statuses appear first (warn row above ok row inside the table body).
+    final Finder tableFinder = find.byKey(const Key('CsvTableOverview_table'));
+    final Offset warnPosition = tester.getTopLeft(
+      find.descendant(of: tableFinder, matching: find.text('Varování')).first,
+    );
+    final Offset okPosition = tester.getTopLeft(
+      find.descendant(of: tableFinder, matching: find.text('V pořádku')).first,
+    );
     expect(warnPosition.dy, lessThan(okPosition.dy));
 
     // Edit cell inline and ensure service receives payload.
