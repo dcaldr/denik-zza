@@ -2,9 +2,6 @@ import 'dart:math' as math;
 
 import 'package:denik_zza/input/csv_review_models.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
-import 'package:denik_zza/screens2/csv_review/widgets/bulk_action_bar.dart';
-import 'package:denik_zza/screens2/csv_review/widgets/csv_row_edit_dialog.dart';
-import 'package:denik_zza/screens2/csv_review/widgets/finalize_card.dart';
 import 'package:denik_zza/screens2/csv_review/widgets/summary_section.dart';
 import 'package:flutter/material.dart';
 
@@ -137,32 +134,43 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
               color: Theme.of(context).colorScheme.surface,
               child: SafeArea(
                 top: false,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    BulkActionBar(
-                      key: const Key('CsvTableOverview_bulkActions'),
-                      approvedCount: _controller.approvedCount,
-                      rejectedCount: _controller.rejectedCount,
-                      onApproveOk: _controller.bulkApproveOk,
-                      onApproveUpToInfo: _controller.bulkApproveUpToInfo,
-                      onClearApprovals: _controller.bulkClearApprovals,
-                      onRejectAll: _controller.bulkRejectAll,
-                      onRejectOnlyRejected: _controller.bulkRejectOnlyRejected,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        /*
+                        // Legacy footer preserved for potential rollback during prototyping.
+                        BulkActionBar(
+                          key: const Key('CsvTableOverview_bulkActions'),
+                          approvedCount: _controller.approvedCount,
+                          rejectedCount: _controller.rejectedCount,
+                          onApproveOk: _controller.bulkApproveOk,
+                          onApproveUpToInfo: _controller.bulkApproveUpToInfo,
+                          onClearApprovals: _controller.bulkClearApprovals,
+                          onRejectAll: _controller.bulkRejectAll,
+                          onRejectOnlyRejected: _controller.bulkRejectOnlyRejected,
+                        ),
+                        FinalizeCard(
+                          key: const Key('CsvTableOverview_finalize'),
+                          approvedCount: _controller.approvedCount,
+                          rejectedCount: _controller.rejectedCount,
+                          undecidedCount: _controller.undecidedCount,
+                          duplicateCount: _controller.duplicateRowCount,
+                          isFinalizing: _controller.isFinalizing,
+                          onFinalize: () async {
+                            await _controller.finalizeImport();
+                          },
+                        ),
+                        */
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: _buildFooterButtons(context),
+                          ),
+                        ),
+                      ],
                     ),
-                    FinalizeCard(
-                      key: const Key('CsvTableOverview_finalize'),
-                      approvedCount: _controller.approvedCount,
-                      rejectedCount: _controller.rejectedCount,
-                      undecidedCount: _controller.undecidedCount,
-                      duplicateCount: _controller.duplicateRowCount,
-                      isFinalizing: _controller.isFinalizing,
-                      onFinalize: () async {
-                        await _controller.finalizeImport();
-                      },
-                    ),
-                  ],
-                ),
               ),
             ),
     );
@@ -234,6 +242,10 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
         _controller.groupedRows;
     final ThemeData theme = Theme.of(context);
     final int totalCount = _controller.session?.review.rows.length ?? 0;
+    final int warnCount = grouped[CsvRowReviewStatus.warn]?.length ?? 0;
+    final int infoCount = grouped[CsvRowReviewStatus.info]?.length ?? 0;
+    final int okCount = grouped[CsvRowReviewStatus.ok]?.length ?? 0;
+    final int validCount = warnCount + infoCount + okCount;
 
     return Card(
       elevation: 0,
@@ -266,19 +278,19 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
             SummaryBadge(
               key: const Key('CsvTableOverview_summary_warn_count'),
               label: 'Varování',
-              count: grouped[CsvRowReviewStatus.warn]?.length ?? 0,
+              count: warnCount,
               color: statusColor(theme, CsvRowReviewStatus.warn),
             ),
             SummaryBadge(
               key: const Key('CsvTableOverview_summary_info_count'),
               label: 'Informace',
-              count: grouped[CsvRowReviewStatus.info]?.length ?? 0,
+              count: infoCount,
               color: statusColor(theme, CsvRowReviewStatus.info),
             ),
             SummaryBadge(
               key: const Key('CsvTableOverview_summary_ok_count'),
               label: 'Platné',
-              count: grouped[CsvRowReviewStatus.ok]?.length ?? 0,
+              count: validCount,
               color: statusColor(theme, CsvRowReviewStatus.ok),
             ),
             Container(
@@ -324,6 +336,46 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     );
   }
 
+  Widget _buildFooterButtons(BuildContext context) {
+    final int selectedCount = _controller.selectedRowCount;
+    final bool hasRejections = _controller.hasRejectedDecisions;
+    final bool canApproveAllValid = _controller.canApproveAllValid;
+    final bool hasRows = _controller.totalRowCount > 0;
+    final String approveSelectedLabel = selectedCount > 0
+        ? 'Schválit vybrané ($selectedCount)'
+        : 'Schválit vybrané';
+    final String rejectLabel =
+        hasRejections ? 'Zrušit odmítnutí' : 'Odmítnout vše';
+    final IconData rejectIcon = hasRejections ? Icons.undo : Icons.block;
+
+    return Wrap(
+      alignment: WrapAlignment.end,
+      spacing: 12,
+      runSpacing: 12,
+      children: <Widget>[
+        FilledButton.icon(
+          key: const Key('CsvTableOverview_action_approve_all_valid'),
+          onPressed: canApproveAllValid ? _controller.approveAllValid : null,
+          icon: const Icon(Icons.library_add_check),
+          label: const Text('Schválit všechny platné'),
+        ),
+        OutlinedButton.icon(
+          key: const Key('CsvTableOverview_action_approve_selected'),
+          onPressed:
+              selectedCount == 0 ? null : _controller.approveSelected,
+          icon: const Icon(Icons.task_alt),
+          label: Text(approveSelectedLabel),
+        ),
+        FilledButton.icon(
+          key: const Key('CsvTableOverview_action_reject_toggle'),
+          onPressed: hasRows ? _controller.toggleRejectAll : null,
+          icon: Icon(rejectIcon),
+          label: Text(rejectLabel),
+        ),
+      ],
+    );
+  }
+
   Widget _buildTable(BuildContext context) {
     final List<CsvReviewRow> rows =
         _controller.rowsForStatus(_activeStatus);
@@ -357,28 +409,27 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
         Theme.of(context).colorScheme.surfaceVariant,
       ),
       rows: rows.map((CsvReviewRow row) {
-        final CsvRowDecision decision =
-            _controller.decisionForRow(row.originalIndex);
         final bool loading = _controller.isRowLoading(row.originalIndex);
         final bool edited = _controller.isRowEdited(row.originalIndex);
         final bool hasDuplicate =
             _controller.hasDuplicate(row.originalIndex);
+        final bool isSelected = _controller.isRowSelected(row.originalIndex);
         final Color statusAccent = statusColor(
           Theme.of(context),
           row.status,
         );
         return DataRow(
           key: ValueKey<int>(row.originalIndex),
-          selected: decision == CsvRowDecision.approved,
+          selected: isSelected,
           onSelectChanged: loading
               ? null
               : (bool? value) {
                   if (value == null) {
                     return;
                   }
-                  _controller.updateDecision(
+                  _controller.toggleRowSelection(
                     row.originalIndex,
-                    value ? CsvRowDecision.approved : CsvRowDecision.none,
+                    value,
                   );
                 },
           cells: <DataCell>[

@@ -34,6 +34,7 @@ class CsvReviewPrototypeController extends ChangeNotifier {
   Map<CsvRowReviewStatus, List<CsvReviewRow>> _groupedRows =
       _emptyGroupedRows();
   Map<int, CsvRowDecision> _decisions = <int, CsvRowDecision>{};
+  Set<int> _selectedRows = <int>{};
   Set<int> _editedRows = <int>{};
   Set<int> _loadingRows = <int>{};
   Map<int, List<CsvDuplicateCandidate>> _duplicateMatches =
@@ -48,6 +49,20 @@ class CsvReviewPrototypeController extends ChangeNotifier {
       Map<CsvRowReviewStatus, List<CsvReviewRow>>.unmodifiable(_groupedRows);
   Map<int, CsvRowDecision> get decisions =>
       Map<int, CsvRowDecision>.unmodifiable(_decisions);
+  Set<int> get selectedRows => Set<int>.unmodifiable(_selectedRows);
+  int get selectedRowCount => _selectedRows.length;
+  bool get hasRejectedDecisions => _decisions.values
+      .any((CsvRowDecision decision) => decision == CsvRowDecision.rejected);
+  int get validRowCount {
+    int count = 0;
+    for (final CsvReviewRow row in _rows) {
+      if (_isValidStatus(row.status) && !hasDuplicate(row.originalIndex)) {
+        count++;
+      }
+    }
+    return count;
+  }
+  bool get canApproveAllValid => validRowCount > 0;
   Set<int> get editedRows => Set<int>.unmodifiable(_editedRows);
   Set<int> get loadingRows => Set<int>.unmodifiable(_loadingRows);
   Map<int, List<CsvDuplicateCandidate>> get duplicateMatches =>
@@ -75,6 +90,19 @@ class CsvReviewPrototypeController extends ChangeNotifier {
   bool isRowLoading(int rowIndex) => _loadingRows.contains(rowIndex);
   bool hasDuplicate(int rowIndex) =>
       _duplicateMatches[rowIndex]?.isNotEmpty ?? false;
+  bool isRowSelected(int rowIndex) => _selectedRows.contains(rowIndex);
+
+  void toggleRowSelection(int rowIndex, bool isSelected) {
+    bool changed = false;
+    if (isSelected) {
+      changed = _selectedRows.add(rowIndex) || changed;
+    } else {
+      changed = _selectedRows.remove(rowIndex) || changed;
+    }
+    if (changed) {
+      notifyListeners();
+    }
+  }
 
   List<CsvReviewRow> rowsForStatus(CsvRowReviewStatus? status) {
     if (status == null) {
@@ -119,6 +147,7 @@ class CsvReviewPrototypeController extends ChangeNotifier {
       _rows = sessionRows;
       _groupedRows = _groupRows(sessionRows);
       _decisions = <int, CsvRowDecision>{};
+  _selectedRows = <int>{};
       _editedRows = <int>{};
       _loadingRows = <int>{};
       _duplicateMatches = _cloneDuplicateMatches(duplicates);
@@ -135,6 +164,7 @@ class CsvReviewPrototypeController extends ChangeNotifier {
       _rows = <CsvReviewRow>[];
       _groupedRows = _emptyGroupedRows();
       _decisions = <int, CsvRowDecision>{};
+  _selectedRows = <int>{};
       _editedRows = <int>{};
       _loadingRows = <int>{};
       _duplicateMatches = <int, List<CsvDuplicateCandidate>>{};
@@ -209,6 +239,110 @@ class CsvReviewPrototypeController extends ChangeNotifier {
       }
     }
     notifyListeners();
+  }
+
+  void approveAllValid() {
+    bool changed = false;
+    for (final CsvReviewRow row in _rows) {
+      if (!_isValidStatus(row.status)) {
+        continue;
+      }
+      if (hasDuplicate(row.originalIndex)) {
+        continue;
+      }
+      if (_decisions[row.originalIndex] != CsvRowDecision.approved) {
+        _decisions[row.originalIndex] = CsvRowDecision.approved;
+        changed = true;
+      }
+    }
+    if (_clearSelection()) {
+      changed = true;
+    }
+    if (changed) {
+      notifyListeners();
+    }
+  }
+
+  void approveSelected() {
+    if (_selectedRows.isEmpty) {
+      return;
+    }
+    bool changed = false;
+    for (final int rowIndex in List<int>.from(_selectedRows)) {
+      final CsvReviewRow? row = _findRowByIndex(rowIndex);
+      if (row == null) {
+        continue;
+      }
+      if (hasDuplicate(rowIndex)) {
+        continue;
+      }
+      if (_decisions[rowIndex] != CsvRowDecision.approved) {
+        _decisions[rowIndex] = CsvRowDecision.approved;
+        changed = true;
+      }
+    }
+    if (_clearSelection()) {
+      changed = true;
+    }
+    if (changed) {
+      notifyListeners();
+    }
+  }
+
+  void toggleRejectAll() {
+    bool changed = false;
+    if (hasRejectedDecisions) {
+      changed = _clearRejectedDecisions();
+    } else {
+      for (final CsvReviewRow row in _rows) {
+        if (_decisions[row.originalIndex] != CsvRowDecision.rejected) {
+          _decisions[row.originalIndex] = CsvRowDecision.rejected;
+          changed = true;
+        }
+      }
+    }
+    if (_clearSelection()) {
+      changed = true;
+    }
+    if (changed) {
+      notifyListeners();
+    }
+  }
+
+  bool _clearSelection() {
+    if (_selectedRows.isEmpty) {
+      return false;
+    }
+    _selectedRows.clear();
+    return true;
+  }
+
+  bool _clearRejectedDecisions() {
+    final int before = _decisions.length;
+    _decisions.removeWhere(
+      (int _, CsvRowDecision decision) => decision == CsvRowDecision.rejected,
+    );
+    return before != _decisions.length;
+  }
+
+  CsvReviewRow? _findRowByIndex(int rowIndex) {
+    for (final CsvReviewRow row in _rows) {
+      if (row.originalIndex == rowIndex) {
+        return row;
+      }
+    }
+    return null;
+  }
+
+  bool _isValidStatus(CsvRowReviewStatus status) {
+    switch (status) {
+      case CsvRowReviewStatus.rejected:
+        return false;
+      case CsvRowReviewStatus.warn:
+      case CsvRowReviewStatus.info:
+      case CsvRowReviewStatus.ok:
+        return true;
+    }
   }
 
   Future<CsvReviewRow?> editRow(
