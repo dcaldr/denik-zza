@@ -1,5 +1,6 @@
 import 'package:denik_zza/input/csv_review_models.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
+import 'package:denik_zza/input/text_tools.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -519,6 +520,9 @@ String formatCsvFieldDisplay(String fieldKey, CsvFieldReview? field) {
         return _czechDateFormatter.format(parsed);
       }
       return rawValue;
+    case 'zpusobilost':
+    case 'bezinfekcnost':
+      return _formatBooleanLabel(rawValue);
     default:
       return rawValue;
   }
@@ -555,6 +559,22 @@ String normalizeCsvFieldInput(
       final DateTime? parsed = _tryParseCsvDate(trimmed);
       if (parsed != null) {
         return _czechDateFormatter.format(parsed);
+      }
+      if (originalField != null &&
+          trimmed == formatCsvFieldDisplay(fieldKey, originalField)) {
+        return originalField.normalizedValue ??
+            originalField.originalValue ??
+            trimmed;
+      }
+      return trimmed;
+    case 'zpusobilost':
+    case 'bezinfekcnost':
+      final String normalizedBoolean = TextTools.normText(trimmed);
+      if (_booleanTrueTokens.contains(normalizedBoolean)) {
+        return 'true';
+      }
+      if (_booleanFalseTokens.contains(normalizedBoolean)) {
+        return 'false';
       }
       if (originalField != null &&
           trimmed == formatCsvFieldDisplay(fieldKey, originalField)) {
@@ -612,6 +632,20 @@ String _formatGenderLabel(String rawValue) {
   return rawValue;
 }
 
+String _formatBooleanLabel(String rawValue) {
+  final String normalized = TextTools.normText(rawValue);
+  if (normalized.isEmpty) {
+    return '';
+  }
+  if (_booleanTrueTokens.contains(normalized)) {
+    return 'Má';
+  }
+  if (_booleanFalseTokens.contains(normalized)) {
+    return 'Nemá';
+  }
+  return rawValue;
+}
+
 const Set<String> _maleTokens = <String>{
   '1',
   'm',
@@ -628,6 +662,24 @@ const Set<String> _femaleTokens = <String>{
   'zena',
   'f',
   'female',
+};
+
+const Set<String> _booleanTrueTokens = <String>{
+  'true',
+  '1',
+  'ano',
+  'yes',
+  'y',
+  'ma',
+};
+
+const Set<String> _booleanFalseTokens = <String>{
+  'false',
+  '0',
+  'ne',
+  'no',
+  'n',
+  'nema',
 };
 
 /// Returns display list of derived values for quick badge rendering.

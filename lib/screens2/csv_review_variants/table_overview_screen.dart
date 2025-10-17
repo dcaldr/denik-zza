@@ -43,9 +43,27 @@ class _TableOverviewScaffold extends StatefulWidget {
 }
 
 class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
+  static const List<String> _preferredFieldOrder = <String>[
+    'jmeno',
+    'prijmeni',
+    'cislo_pojisteni',
+    'rodne_cislo',
+    'datum_narozeni',
+    'pohlavi',
+    'pojistovna',
+    'adresa',
+    'jmeno_rodice',
+    'email_rodice',
+    'telefon_rodice',
+    'zpusobilost',
+    'bezinfekcnost',
+    'poznamka',
+  ];
+
   CsvRowReviewStatus? _activeStatus;
   late List<_TableFilter> _filters;
   late List<String> _columnOrder;
+  String? _duplicateIndicatorFieldKey;
   late final ScrollController _horizontalScrollController;
   late final ScrollController _verticalScrollController;
 
@@ -84,18 +102,42 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
 
   List<String> _resolveColumnOrder() {
     if (_controller.rows.isEmpty) {
+      _duplicateIndicatorFieldKey = null;
       return const <String>[];
     }
     final CsvReviewRow sample = _controller.rows.first;
-    final List<MapEntry<String, CsvFieldReview>> entries =
-        sample.fields.entries.toList()
-          ..sort((MapEntry<String, CsvFieldReview> a,
-                  MapEntry<String, CsvFieldReview> b) =>
-              a.value.columnName.compareTo(b.value.columnName));
-    return entries
-        .map((MapEntry<String, CsvFieldReview> entry) => entry.key)
-        .take(6)
-        .toList(growable: false);
+    final List<String> orderedKeys = <String>[];
+    final Set<String> remaining = <String>{
+      for (final String key in sample.fields.keys) key,
+    };
+
+    for (final String preferred in _preferredFieldOrder) {
+      if (remaining.remove(preferred)) {
+        orderedKeys.add(preferred);
+      }
+    }
+
+    for (final String key in sample.fields.keys) {
+      if (!orderedKeys.contains(key)) {
+        orderedKeys.add(key);
+      }
+    }
+
+    _duplicateIndicatorFieldKey = _resolveDuplicateIndicatorHost(orderedKeys);
+    return List<String>.unmodifiable(orderedKeys);
+  }
+
+  String? _resolveDuplicateIndicatorHost(List<String> orderedKeys) {
+    if (orderedKeys.isEmpty) {
+      return null;
+    }
+    if (orderedKeys.contains('jmeno')) {
+      return 'jmeno';
+    }
+    if (orderedKeys.contains('prijmeni')) {
+      return 'prijmeni';
+    }
+    return orderedKeys.first;
   }
 
   @override
@@ -393,7 +435,6 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
 
     final List<DataColumn> columns = <DataColumn>[
       const DataColumn(label: Text('Stav')),
-      const DataColumn(label: Text('Duplicitní?')),
       ..._columnOrder.map(
         (String key) => DataColumn(
           label: Text(_fieldLabel(rows.first, key)),
@@ -411,8 +452,8 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
       rows: rows.map((CsvReviewRow row) {
         final bool loading = _controller.isRowLoading(row.originalIndex);
         final bool edited = _controller.isRowEdited(row.originalIndex);
-        final bool hasDuplicate =
-            _controller.hasDuplicate(row.originalIndex);
+    final bool hasDuplicate =
+      _controller.hasDuplicate(row.originalIndex);
         final bool isSelected = _controller.isRowSelected(row.originalIndex);
         final Color statusAccent = statusColor(
           Theme.of(context),
@@ -450,27 +491,17 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                 ),
               ),
             ),
-            DataCell(
-              hasDuplicate
-                  ? Tooltip(
-                      message: 'Potenciální duplicitní záznam',
-                      child: Icon(
-                        Icons.construction,
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    )
-                  : const Icon(Icons.check_circle_outline, color: Colors.green),
-            ),
             ..._columnOrder.map(
               (String key) => DataCell(
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 220),
-                  child: _EditableCell(
+                  child: _buildFieldCell(
+                    context: context,
                     row: row,
                     fieldKey: key,
-                    controller: _controller,
                     loading: loading,
                     edited: edited,
+                    hasDuplicate: hasDuplicate,
                   ),
                 ),
               ),
@@ -483,6 +514,46 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
 
   String _fieldLabel(CsvReviewRow row, String key) {
     return row.fields[key]?.columnName ?? key;
+  }
+
+  Widget _buildFieldCell({
+    required BuildContext context,
+    required CsvReviewRow row,
+    required String fieldKey,
+    required bool loading,
+    required bool edited,
+    required bool hasDuplicate,
+  }) {
+    final Widget cell = _EditableCell(
+      row: row,
+      fieldKey: fieldKey,
+      controller: _controller,
+      loading: loading,
+      edited: edited,
+    );
+
+    final bool isDuplicateHost =
+        hasDuplicate && fieldKey == _duplicateIndicatorFieldKey;
+    if (!isDuplicateHost) {
+      return cell;
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Expanded(child: cell),
+        const SizedBox(width: 8),
+        Tooltip(
+          message: 'Potenciální duplicitní záznam',
+          child: Icon(
+            Icons.warning_amber_rounded,
+            key: Key('CsvTableOverview_duplicate_indicator_${row.originalIndex}'),
+            color: Theme.of(context).colorScheme.error,
+            size: 18,
+          ),
+        ),
+      ],
+    );
   }
 }
 

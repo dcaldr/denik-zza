@@ -60,6 +60,16 @@ void main() {
   expect(find.byKey(const Key('CsvTableOverview_action_reject_toggle')), findsOneWidget);
 
     expect(find.byKey(const Key('CsvTableOverview_table')), findsOneWidget);
+    expect(find.text('Duplicitní?'), findsNothing);
+    expect(
+      find.byKey(const Key('CsvTableOverview_duplicate_indicator_2')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('CsvTableOverview_duplicate_indicator_1')),
+      findsNothing,
+    );
+    expect(find.text('Nemá'), findsWidgets);
 
     final TextFormField genderField = tester.widget<TextFormField>(
       find.byKey(const Key('CsvTableOverview_cell_1_pohlavi')),
@@ -70,6 +80,11 @@ void main() {
       find.byKey(const Key('CsvTableOverview_cell_1_datum_narozeni')),
     );
     expect(birthField.controller?.text, equals('01.01.2010'));
+
+    final TextFormField eligibleField = tester.widget<TextFormField>(
+      find.byKey(const Key('CsvTableOverview_cell_1_zpusobilost')),
+    );
+    expect(eligibleField.controller?.text, equals('Má'));
 
     // Worst statuses appear first (warn row above ok row inside the table body).
     final Finder tableFinder = find.byKey(const Key('CsvTableOverview_table'));
@@ -100,6 +115,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(service.lastPayload?['pohlavi'], equals('2'));
+
+    await tester.enterText(
+      find.byKey(const Key('CsvTableOverview_cell_1_zpusobilost')),
+      'Nemá',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    expect(service.lastPayload?['zpusobilost'], equals('false'));
   });
 
   testWidgets('card gallery renders grouped sections', (WidgetTester tester) async {
@@ -188,7 +212,7 @@ class _WidgetFakeService implements CsvReviewService {
   _WidgetFakeService()
       : _rows = <CsvReviewRow>[
           _buildRow(1, 'Alena', 'Nováková'),
-          _buildRow(2, 'Jana', 'Svobodová', status: CsvRowReviewStatus.warn),
+          _buildRow(2, 'Jana', 'Svobodová', status: CsvRowReviewStatus.warn, eligible: false),
         ];
 
   final List<CsvReviewRow> _rows;
@@ -255,7 +279,15 @@ class _WidgetFakeService implements CsvReviewService {
   Future<Map<int, List<CsvDuplicateCandidate>>> findPotentialDuplicates({
     required CsvImportSession session,
   }) async {
-    return const <int, List<CsvDuplicateCandidate>>{};
+    return <int, List<CsvDuplicateCandidate>>{
+      2: <CsvDuplicateCandidate>[
+        CsvDuplicateCandidate(
+          participantId: 42,
+          displayName: 'Jan Novák',
+          reason: 'Shoda jména a data narození',
+        ),
+      ],
+    };
   }
 }
 
@@ -264,6 +296,7 @@ CsvReviewRow _buildRow(
   String firstName,
   String lastName, {
   CsvRowReviewStatus status = CsvRowReviewStatus.ok,
+  bool eligible = true,
 }) {
   return CsvReviewRow(
     originalIndex: index,
@@ -300,6 +333,14 @@ CsvReviewRow _buildRow(
         status: CsvFieldReviewStatus.ok,
         originalValue: '2010-01-01',
         normalizedValue: '2010-01-01',
+        inferred: false,
+      ),
+      'zpusobilost': CsvFieldReview(
+        columnKey: 'zpusobilost',
+        columnName: 'Způsobilost',
+        status: CsvFieldReviewStatus.ok,
+        originalValue: eligible ? 'true' : 'false',
+        normalizedValue: eligible ? 'true' : 'false',
         inferred: false,
       ),
     },
