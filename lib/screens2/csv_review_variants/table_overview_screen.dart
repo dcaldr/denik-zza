@@ -601,7 +601,9 @@ class _EditableCellState extends State<_EditableCell> {
   void didUpdateWidget(covariant _EditableCell oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.row != oldWidget.row || widget.fieldKey != oldWidget.fieldKey) {
-      _controller.text = _displayValue;
+      _controller
+        ..text = _displayValue
+        ..selection = TextSelection.collapsed(offset: _controller.text.length);
     }
   }
 

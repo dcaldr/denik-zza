@@ -1,6 +1,7 @@
 import 'package:denik_zza/input/csv_review_models.dart';
-import 'package:denik_zza/services/csv_import_service.dart';
+import 'package:denik_zza/input/input_hold.dart';
 import 'package:denik_zza/input/text_tools.dart';
+import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -355,7 +356,16 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final CsvReviewRow updatedRow = await service.reparseRow(updatedFields);
+      CsvReviewRow updatedRow = await service.reparseRow(updatedFields);
+      if (updatedRow.originalIndex != row.originalIndex) {
+        updatedRow = CsvReviewRow(
+          originalIndex: row.originalIndex,
+          status: updatedRow.status,
+          messages: updatedRow.messages,
+          fields: updatedRow.fields,
+          derived: updatedRow.derived,
+        );
+      }
       _loadingRows.remove(rowIndex);
       _editedRows.add(rowIndex);
       _duplicateMatches.remove(rowIndex);
@@ -515,7 +525,7 @@ String formatCsvFieldDisplay(String fieldKey, CsvFieldReview? field) {
     case 'pohlavi':
       return _formatGenderLabel(rawValue);
     case 'datum_narozeni':
-      final DateTime? parsed = _tryParseCsvDate(rawValue);
+      final DateTime? parsed = TextTools.parseDate(rawValue);
       if (parsed != null) {
         return _czechDateFormatter.format(parsed);
       }
@@ -541,7 +551,7 @@ String normalizeCsvFieldInput(
 
   switch (fieldKey) {
     case 'pohlavi':
-      final String normalized = trimmed.toLowerCase();
+      final String normalized = TextTools.normText(trimmed);
       if (_maleTokens.contains(normalized)) {
         return '1';
       }
@@ -556,7 +566,7 @@ String normalizeCsvFieldInput(
       }
       return trimmed;
     case 'datum_narozeni':
-      final DateTime? parsed = _tryParseCsvDate(trimmed);
+      final DateTime? parsed = TextTools.parseDate(trimmed);
       if (parsed != null) {
         return _czechDateFormatter.format(parsed);
       }
@@ -570,10 +580,10 @@ String normalizeCsvFieldInput(
     case 'zpusobilost':
     case 'bezinfekcnost':
       final String normalizedBoolean = TextTools.normText(trimmed);
-      if (_booleanTrueTokens.contains(normalizedBoolean)) {
+      if (_matchesYes(normalizedBoolean)) {
         return 'true';
       }
-      if (_booleanFalseTokens.contains(normalizedBoolean)) {
+      if (_matchesNo(normalizedBoolean)) {
         return 'false';
       }
       if (originalField != null &&
@@ -590,36 +600,8 @@ String normalizeCsvFieldInput(
 
 final DateFormat _czechDateFormatter = DateFormat('dd.MM.yyyy');
 
-DateTime? _tryParseCsvDate(String value) {
-  final String trimmed = value.trim();
-  if (trimmed.isEmpty) {
-    return null;
-  }
-  for (final DateFormat format in _acceptedDateFormats) {
-    try {
-      return format.parseStrict(trimmed);
-    } catch (_) {
-      // Ignore parse failures and continue trying other formats.
-    }
-  }
-  try {
-    return DateTime.parse(trimmed);
-  } catch (_) {
-    return null;
-  }
-}
-
-final List<DateFormat> _acceptedDateFormats = <DateFormat>[
-  DateFormat('dd.MM.yyyy'),
-  DateFormat('d.M.yyyy'),
-  DateFormat('yyyy-MM-dd'),
-  DateFormat('yyyy-M-d'),
-  DateFormat('dd/MM/yyyy'),
-  DateFormat('d/M/yyyy'),
-];
-
 String _formatGenderLabel(String rawValue) {
-  final String normalized = rawValue.trim().toLowerCase();
+  final String normalized = TextTools.normText(rawValue);
   if (normalized.isEmpty) {
     return '';
   }
@@ -633,14 +615,15 @@ String _formatGenderLabel(String rawValue) {
 }
 
 String _formatBooleanLabel(String rawValue) {
-  final String normalized = TextTools.normText(rawValue);
-  if (normalized.isEmpty) {
+  final String trimmed = rawValue.trim();
+  if (trimmed.isEmpty) {
     return '';
   }
-  if (_booleanTrueTokens.contains(normalized)) {
+  final String normalized = TextTools.normText(trimmed);
+  if (_matchesYes(normalized)) {
     return 'Má';
   }
-  if (_booleanFalseTokens.contains(normalized)) {
+  if (_matchesNo(normalized)) {
     return 'Nemá';
   }
   return rawValue;
@@ -649,38 +632,33 @@ String _formatBooleanLabel(String rawValue) {
 const Set<String> _maleTokens = <String>{
   '1',
   'm',
-  'muž',
   'muz',
   'male',
 };
 
 const Set<String> _femaleTokens = <String>{
   '2',
-  'ž',
   'z',
-  'žena',
   'zena',
   'f',
   'female',
 };
 
-const Set<String> _booleanTrueTokens = <String>{
-  'true',
-  '1',
-  'ano',
-  'yes',
-  'y',
-  'ma',
-};
+final PotvrzeniHold _potvrzeniPrototype = PotvrzeniHold();
 
-const Set<String> _booleanFalseTokens = <String>{
-  'false',
-  '0',
-  'ne',
-  'no',
-  'n',
-  'nema',
-};
+bool _matchesYes(String normalizedInput) {
+  if (normalizedInput == 'ma') {
+    return true;
+  }
+  return TextTools.looseCmpWithList(normalizedInput, _potvrzeniPrototype.possibleYes);
+}
+
+bool _matchesNo(String normalizedInput) {
+  if (normalizedInput == 'nema') {
+    return true;
+  }
+  return TextTools.looseCmpWithList(normalizedInput, _potvrzeniPrototype.possibleNo);
+}
 
 /// Returns display list of derived values for quick badge rendering.
 List<DerivedValueDisplay> derivedValueDisplays(CsvReviewRow row) {

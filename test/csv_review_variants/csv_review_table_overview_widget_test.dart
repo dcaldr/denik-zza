@@ -4,6 +4,7 @@ import 'package:denik_zza/screens2/csv_review_variants/card_gallery_screen.dart'
 import 'package:denik_zza/screens2/csv_review_variants/checklist_screen.dart';
 import 'package:denik_zza/screens2/csv_review_variants/split_workspace_screen.dart';
 import 'package:denik_zza/screens2/csv_review_variants/table_overview_screen.dart';
+import 'package:denik_zza/screens2/csv_review_variants/csv_review_shared.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -206,6 +207,36 @@ void main() {
     expect(find.byKey(const Key('CsvSplitWorkspace_rowList')), findsOneWidget);
     expect(find.byType(TabBar), findsOneWidget);
   });
+
+  test('controller preserves row index after edits', () async {
+    final _MisindexedService service = _MisindexedService();
+    final CsvReviewPrototypeController controller = CsvReviewPrototypeController(
+      filePath: 'ignored.csv',
+      service: service,
+    );
+
+    await controller.load();
+
+    final CsvReviewRow rowToEdit =
+        controller.rows.firstWhere((CsvReviewRow row) => row.originalIndex == 2);
+    final Map<String, String?> payload = controller.buildPayload(rowToEdit);
+    payload['jmeno'] = 'Karolina';
+
+    await controller.editRow(rowToEdit, payload);
+
+  final List<int> indices =
+    controller.rows.map((CsvReviewRow row) => row.originalIndex).toList();
+  indices.sort();
+  expect(indices, <int>[1, 2]);
+
+    final CsvReviewRow updated =
+        controller.rows.firstWhere((CsvReviewRow row) => row.originalIndex == 2);
+    expect(updated.fields['jmeno']?.normalizedValue, 'Karolina');
+
+    final int rowOneCount =
+        controller.rows.where((CsvReviewRow row) => row.originalIndex == 1).length;
+    expect(rowOneCount, 1);
+  });
 }
 
 class _WidgetFakeService implements CsvReviewService {
@@ -288,6 +319,59 @@ class _WidgetFakeService implements CsvReviewService {
         ),
       ],
     };
+  }
+}
+
+class _MisindexedService implements CsvReviewService {
+  _MisindexedService()
+      : _rows = <CsvReviewRow>[
+          _buildRow(1, 'Alena', 'Nováková'),
+          _buildRow(2, 'Jana', 'Svobodová', status: CsvRowReviewStatus.warn),
+        ];
+
+  final List<CsvReviewRow> _rows;
+
+  @override
+  Future<CsvImportSession> loadCsv(String path) async {
+    return CsvImportSession(
+      review: CsvImportReview(
+        unparsedColumns: const <String>[],
+        rows: _rows,
+      ),
+      personResult: PersonResult(<Answer>[]),
+    );
+  }
+
+  @override
+  Future<CsvReviewRow> reparseRow(Map<String, String?> updatedFields) async {
+    final String newName = updatedFields['jmeno'] ?? 'Jana';
+    final CsvReviewRow updated = _buildRow(
+      1,
+      newName,
+      'Svobodová',
+      status: CsvRowReviewStatus.warn,
+    );
+    return updated;
+  }
+
+  @override
+  Future<CsvFinalizeResult> finalizeImport({
+    required CsvImportSession session,
+    required Map<int, CsvRowDecision> decisions,
+  }) async {
+    return CsvFinalizeResult(
+      approvedCount: 0,
+      rejectedCount: 0,
+      savedRowIndices: const <int>[],
+      failures: const <CsvFinalizeFailure>[],
+    );
+  }
+
+  @override
+  Future<Map<int, List<CsvDuplicateCandidate>>> findPotentialDuplicates({
+    required CsvImportSession session,
+  }) async {
+    return const <int, List<CsvDuplicateCandidate>>{};
   }
 }
 
