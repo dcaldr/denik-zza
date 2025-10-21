@@ -1,8 +1,5 @@
 import 'package:denik_zza/input/csv_review_models.dart';
 import 'package:denik_zza/input/input_parser.dart';
-import 'package:denik_zza/screens2/csv_review_variants/card_gallery_screen.dart';
-import 'package:denik_zza/screens2/csv_review_variants/checklist_screen.dart';
-import 'package:denik_zza/screens2/csv_review_variants/split_workspace_screen.dart';
 import 'package:denik_zza/screens2/csv_review_variants/table_overview_screen.dart';
 import 'package:denik_zza/screens2/csv_review_variants/csv_review_shared.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
@@ -10,8 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('table overview renders rows and supports inline actions', (WidgetTester tester) async {
-    final TestWidgetsFlutterBinding binding = TestWidgetsFlutterBinding.ensureInitialized();
+  testWidgets('table overview renders rows and supports inline actions',
+      (WidgetTester tester) async {
+    final TestWidgetsFlutterBinding binding =
+        TestWidgetsFlutterBinding.ensureInitialized();
     binding.window.physicalSizeTestValue = const Size(1600, 1200);
     binding.window.devicePixelRatioTestValue = 1.0;
     addTearDown(() {
@@ -32,7 +31,8 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('CsvTableOverview_summary_content')), findsOneWidget);
+    expect(find.byKey(const Key('CsvTableOverview_summary_content')),
+        findsOneWidget);
     expect(
       find.byKey(const Key('CsvTableOverview_summary_rejected_count')),
       findsOneWidget,
@@ -49,16 +49,19 @@ void main() {
       find.byKey(const Key('CsvTableOverview_summary_ok_count')),
       findsOneWidget,
     );
-    expect(find.byKey(const Key('CsvTableOverview_summary_total')), findsOneWidget);
+    expect(find.byKey(const Key('CsvTableOverview_summary_total')),
+        findsOneWidget);
 
-  expect(find.byKey(const Key('CsvTableOverview_action_approve_all_valid')), findsOneWidget);
-  final Finder approveSelectedFinder =
-    find.byKey(const Key('CsvTableOverview_action_approve_selected'));
-  expect(approveSelectedFinder, findsOneWidget);
-  final OutlinedButton approveSelectedButton =
-    tester.widget<OutlinedButton>(approveSelectedFinder);
-  expect(approveSelectedButton.onPressed, isNull);
-  expect(find.byKey(const Key('CsvTableOverview_action_reject_toggle')), findsOneWidget);
+    expect(find.byKey(const Key('CsvTableOverview_action_approve_all_valid')),
+        findsOneWidget);
+    final Finder approveSelectedFinder =
+        find.byKey(const Key('CsvTableOverview_action_approve_selected'));
+    expect(approveSelectedFinder, findsOneWidget);
+    final OutlinedButton approveSelectedButton =
+        tester.widget<OutlinedButton>(approveSelectedFinder);
+    expect(approveSelectedButton.onPressed, isNull);
+    expect(find.byKey(const Key('CsvTableOverview_action_reject_toggle')),
+        findsOneWidget);
 
     expect(find.byKey(const Key('CsvTableOverview_table')), findsOneWidget);
     expect(find.text('Duplicitní?'), findsNothing);
@@ -127,114 +130,35 @@ void main() {
     expect(service.lastPayload?['zpusobilost'], equals('false'));
   });
 
-  testWidgets('card gallery renders grouped sections', (WidgetTester tester) async {
-    final TestWidgetsFlutterBinding binding = TestWidgetsFlutterBinding.ensureInitialized();
-    binding.window.physicalSizeTestValue = const Size(1600, 1200);
-    binding.window.devicePixelRatioTestValue = 1.0;
-    addTearDown(() {
-      binding.window.clearPhysicalSizeTestValue();
-      binding.window.clearDevicePixelRatioTestValue();
-    });
-
-    final _WidgetFakeService service = _WidgetFakeService();
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: CsvReviewCardGalleryScreen(
-          filePath: 'ignored.csv',
-          service: service,
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle();
-
-  expect(find.text('Galerie záznamů CSV'), findsOneWidget);
-  expect(find.byKey(const Key('CsvCardGallery_refresh')), findsOneWidget);
-  expect(find.textContaining('Soubor obsahuje'), findsOneWidget);
-  });
-
-  testWidgets('checklist shows step cards', (WidgetTester tester) async {
-    final TestWidgetsFlutterBinding binding = TestWidgetsFlutterBinding.ensureInitialized();
-    binding.window.physicalSizeTestValue = const Size(1600, 1200);
-    binding.window.devicePixelRatioTestValue = 1.0;
-    addTearDown(() {
-      binding.window.clearPhysicalSizeTestValue();
-      binding.window.clearDevicePixelRatioTestValue();
-    });
-
-    final _WidgetFakeService service = _WidgetFakeService();
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: CsvReviewChecklistScreen(
-          filePath: 'ignored.csv',
-          service: service,
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle();
-
-  expect(find.text('Kontrolní seznam importu CSV'), findsOneWidget);
-  expect(find.byType(NavigationRail), findsOneWidget);
-  expect(find.textContaining('Souhrn'), findsOneWidget);
-  });
-
-  testWidgets('split workspace shows list and detail', (WidgetTester tester) async {
-    final TestWidgetsFlutterBinding binding = TestWidgetsFlutterBinding.ensureInitialized();
-    binding.window.physicalSizeTestValue = const Size(1600, 1200);
-    binding.window.devicePixelRatioTestValue = 1.0;
-    addTearDown(() {
-      binding.window.clearPhysicalSizeTestValue();
-      binding.window.clearDevicePixelRatioTestValue();
-    });
-
-    final _WidgetFakeService service = _WidgetFakeService();
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: CsvReviewSplitWorkspaceScreen(
-          filePath: 'ignored.csv',
-          service: service,
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle();
-
-    expect(find.text('Dvou-panelový přehled CSV'), findsOneWidget);
-    expect(find.byKey(const Key('CsvSplitWorkspace_rowList')), findsOneWidget);
-    expect(find.byType(TabBar), findsOneWidget);
-  });
-
   test('controller preserves row index after edits', () async {
     final _MisindexedService service = _MisindexedService();
-    final CsvReviewPrototypeController controller = CsvReviewPrototypeController(
+    final CsvReviewPrototypeController controller =
+        CsvReviewPrototypeController(
       filePath: 'ignored.csv',
       service: service,
     );
 
     await controller.load();
 
-    final CsvReviewRow rowToEdit =
-        controller.rows.firstWhere((CsvReviewRow row) => row.originalIndex == 2);
+    final CsvReviewRow rowToEdit = controller.rows
+        .firstWhere((CsvReviewRow row) => row.originalIndex == 2);
     final Map<String, String?> payload = controller.buildPayload(rowToEdit);
     payload['jmeno'] = 'Karolina';
 
     await controller.editRow(rowToEdit, payload);
 
-  final List<int> indices =
-    controller.rows.map((CsvReviewRow row) => row.originalIndex).toList();
-  indices.sort();
-  expect(indices, <int>[1, 2]);
+    final List<int> indices =
+        controller.rows.map((CsvReviewRow row) => row.originalIndex).toList();
+    indices.sort();
+    expect(indices, <int>[1, 2]);
 
-    final CsvReviewRow updated =
-        controller.rows.firstWhere((CsvReviewRow row) => row.originalIndex == 2);
+    final CsvReviewRow updated = controller.rows
+        .firstWhere((CsvReviewRow row) => row.originalIndex == 2);
     expect(updated.fields['jmeno']?.normalizedValue, 'Karolina');
 
-    final int rowOneCount =
-        controller.rows.where((CsvReviewRow row) => row.originalIndex == 1).length;
+    final int rowOneCount = controller.rows
+        .where((CsvReviewRow row) => row.originalIndex == 1)
+        .length;
     expect(rowOneCount, 1);
   });
 }
@@ -243,7 +167,8 @@ class _WidgetFakeService implements CsvReviewService {
   _WidgetFakeService()
       : _rows = <CsvReviewRow>[
           _buildRow(1, 'Alena', 'Nováková'),
-          _buildRow(2, 'Jana', 'Svobodová', status: CsvRowReviewStatus.warn, eligible: false),
+          _buildRow(2, 'Jana', 'Svobodová',
+              status: CsvRowReviewStatus.warn, eligible: false),
         ];
 
   final List<CsvReviewRow> _rows;
@@ -296,10 +221,12 @@ class _WidgetFakeService implements CsvReviewService {
   }) async {
     return CsvFinalizeResult(
       approvedCount: decisions.values
-          .where((CsvRowDecision decision) => decision == CsvRowDecision.approved)
+          .where(
+              (CsvRowDecision decision) => decision == CsvRowDecision.approved)
           .length,
       rejectedCount: decisions.values
-          .where((CsvRowDecision decision) => decision == CsvRowDecision.rejected)
+          .where(
+              (CsvRowDecision decision) => decision == CsvRowDecision.rejected)
           .length,
       savedRowIndices: const <int>[],
       failures: const <CsvFinalizeFailure>[],

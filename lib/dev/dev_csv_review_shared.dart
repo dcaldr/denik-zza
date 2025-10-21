@@ -2,9 +2,6 @@ import 'dart:io';
 
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
-import 'package:denik_zza/screens2/csv_review_variants/card_gallery_screen.dart';
-import 'package:denik_zza/screens2/csv_review_variants/checklist_screen.dart';
-import 'package:denik_zza/screens2/csv_review_variants/split_workspace_screen.dart';
 import 'package:denik_zza/screens2/csv_review_variants/table_overview_screen.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:flutter/material.dart';
@@ -35,9 +32,6 @@ String resolveProjectFile(String relativePath) {
 /// Identifiers for available CSV review prototypes.
 enum CsvReviewPrototypeId {
   tableOverview,
-  checklist,
-  cardGallery,
-  splitWorkspace,
 }
 
 /// Metadata describing a CSV review prototype variant.
@@ -56,48 +50,20 @@ class CsvReviewPrototypeEntry {
 }
 
 /// Registry of prototype implementations used by the dev launchers.
-const Map<CsvReviewPrototypeId, CsvReviewPrototypeEntry> csvReviewPrototypeRegistry =
+const Map<CsvReviewPrototypeId, CsvReviewPrototypeEntry>
+    csvReviewPrototypeRegistry =
     <CsvReviewPrototypeId, CsvReviewPrototypeEntry>{
   CsvReviewPrototypeId.tableOverview: CsvReviewPrototypeEntry(
     id: CsvReviewPrototypeId.tableOverview,
     title: 'Tabulkový přehled',
-    description: 'Sticky souhrn, DataTable s inline úpravami a rychlými bulk akcemi.',
+    description:
+        'Sticky souhrn, DataTable s inline úpravami a rychlými bulk akcemi.',
     builder: _buildTableOverview,
-  ),
-  CsvReviewPrototypeId.checklist: CsvReviewPrototypeEntry(
-    id: CsvReviewPrototypeId.checklist,
-    title: 'Kontrolní seznam',
-    description: 'Tříkrokový průvodce se zaměřením na ujištění a jasné instrukce.',
-    builder: _buildChecklist,
-  ),
-  CsvReviewPrototypeId.cardGallery: CsvReviewPrototypeEntry(
-    id: CsvReviewPrototypeId.cardGallery,
-    title: 'Katalog osob',
-    description: 'Stavové sekce s kartami, badge duplikátů a rychlými rozhodnutími.',
-    builder: _buildCardGallery,
-  ),
-  CsvReviewPrototypeId.splitWorkspace: CsvReviewPrototypeEntry(
-    id: CsvReviewPrototypeId.splitWorkspace,
-    title: 'Dvou-panelový přehled',
-    description: 'Seznam vlevo, detailní editace v panelech pro zkušené uživatele.',
-    builder: _buildSplitWorkspace,
   ),
 };
 
 Widget _buildTableOverview(String filePath, {CsvReviewService? service}) {
   return CsvReviewTableOverviewScreen(filePath: filePath, service: service);
-}
-
-Widget _buildChecklist(String filePath, {CsvReviewService? service}) {
-  return CsvReviewChecklistScreen(filePath: filePath, service: service);
-}
-
-Widget _buildCardGallery(String filePath, {CsvReviewService? service}) {
-  return CsvReviewCardGalleryScreen(filePath: filePath, service: service);
-}
-
-Widget _buildSplitWorkspace(String filePath, {CsvReviewService? service}) {
-  return CsvReviewSplitWorkspaceScreen(filePath: filePath, service: service);
 }
 
 /// Common Material app used by prototype dev entry points.
