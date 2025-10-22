@@ -30,8 +30,8 @@ void main() {
     test('decision helpers mutate state consistently', () async {
       await controller.load();
 
-  controller.bulkApproveOk();
-  expect(controller.approvedCount, equals(0));
+      controller.bulkApproveOk();
+      expect(controller.approvedCount, equals(0));
 
       controller.bulkRejectAll();
       expect(controller.rejectedCount, equals(2));
@@ -47,11 +47,13 @@ void main() {
       final Map<String, String?> payload = controller.buildPayload(row);
       payload['jmeno'] = 'Karolina';
 
-  final CsvReviewRow? updated = await controller.editRow(row, payload);
+      final CsvReviewRow? updated = await controller.editRow(row, payload);
 
-  expect(updated, isNotNull);
-  expect(updated!.fields['jmeno']?.normalizedValue, equals('Karolina'));
+      expect(updated, isNotNull);
+      expect(updated!.fields['jmeno']?.normalizedValue, equals('Karolina'));
       expect(controller.isRowEdited(row.originalIndex), isTrue);
+      expect(controller.isCellEdited(row.originalIndex, 'jmeno'), isTrue);
+      expect(controller.isCellEdited(row.originalIndex, 'prijmeni'), isFalse);
       expect(service.lastPayload?['jmeno'], equals('Karolina'));
     });
   });
@@ -136,10 +138,12 @@ class _FakeCsvReviewService implements CsvReviewService {
   }) async {
     return CsvFinalizeResult(
       approvedCount: decisions.values
-          .where((CsvRowDecision decision) => decision == CsvRowDecision.approved)
+          .where(
+              (CsvRowDecision decision) => decision == CsvRowDecision.approved)
           .length,
       rejectedCount: decisions.values
-          .where((CsvRowDecision decision) => decision == CsvRowDecision.rejected)
+          .where(
+              (CsvRowDecision decision) => decision == CsvRowDecision.rejected)
           .length,
       savedRowIndices: decisions.entries
           .where((MapEntry<int, CsvRowDecision> entry) =>

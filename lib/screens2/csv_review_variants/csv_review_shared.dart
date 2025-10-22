@@ -37,7 +37,9 @@ class CsvReviewPrototypeController extends ChangeNotifier {
       _emptyGroupedRows();
   Map<int, CsvRowDecision> _decisions = <int, CsvRowDecision>{};
   Set<int> _selectedRows = <int>{};
-  Set<int> _editedRows = <int>{};
+  final Map<int, Set<String>> _editedCells = <int, Set<String>>{};
+  final Map<int, Map<String, String?>> _initialRowValues =
+      <int, Map<String, String?>>{};
   Set<int> _loadingRows = <int>{};
   Map<int, List<CsvDuplicateCandidate>> _duplicateMatches =
       <int, List<CsvDuplicateCandidate>>{};
@@ -64,8 +66,9 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     }
     return count;
   }
+
   bool get canApproveAllValid => validRowCount > 0;
-  Set<int> get editedRows => Set<int>.unmodifiable(_editedRows);
+  Set<int> get editedRows => Set<int>.unmodifiable(_editedCells.keys);
   Set<int> get loadingRows => Set<int>.unmodifiable(_loadingRows);
   Map<int, List<CsvDuplicateCandidate>> get duplicateMatches =>
       Map<int, List<CsvDuplicateCandidate>>.unmodifiable(_duplicateMatches);
@@ -78,8 +81,7 @@ class CsvReviewPrototypeController extends ChangeNotifier {
   int get rejectedCount => _decisions.values
       .where((CsvRowDecision decision) => decision == CsvRowDecision.rejected)
       .length;
-  int get undecidedCount =>
-      totalRowCount - approvedCount - rejectedCount;
+  int get undecidedCount => totalRowCount - approvedCount - rejectedCount;
   int get duplicateRowCount => _duplicateMatches.entries
       .where((MapEntry<int, List<CsvDuplicateCandidate>> entry) =>
           entry.value.isNotEmpty)
@@ -88,7 +90,9 @@ class CsvReviewPrototypeController extends ChangeNotifier {
   CsvRowDecision decisionForRow(int rowIndex) =>
       _decisions[rowIndex] ?? CsvRowDecision.none;
 
-  bool isRowEdited(int rowIndex) => _editedRows.contains(rowIndex);
+  bool isRowEdited(int rowIndex) => _editedCells[rowIndex]?.isNotEmpty ?? false;
+  bool isCellEdited(int rowIndex, String fieldKey) =>
+      _editedCells[rowIndex]?.contains(fieldKey) ?? false;
   bool isRowLoading(int rowIndex) => _loadingRows.contains(rowIndex);
   bool hasDuplicate(int rowIndex) =>
       _duplicateMatches[rowIndex]?.isNotEmpty ?? false;
@@ -110,8 +114,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     if (status == null) {
       return List<CsvReviewRow>.unmodifiable(_rows);
     }
-    return List<CsvReviewRow>.unmodifiable(_groupedRows[status] ??
-        const <CsvReviewRow>[]);
+    return List<CsvReviewRow>.unmodifiable(
+        _groupedRows[status] ?? const <CsvReviewRow>[]);
   }
 
   Future<void> load() async {
@@ -120,8 +124,7 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final CsvImportSession loadedSession =
-          await service.loadCsv(filePath);
+      final CsvImportSession loadedSession = await service.loadCsv(filePath);
       Map<int, List<CsvDuplicateCandidate>> duplicates =
           <int, List<CsvDuplicateCandidate>>{};
       try {
@@ -143,16 +146,17 @@ class CsvReviewPrototypeController extends ChangeNotifier {
                   a.originalIndex.compareTo(b.originalIndex),
             );
 
-  _sortRowsByPriority(sessionRows);
+      _sortRowsByPriority(sessionRows);
 
       _session = loadedSession;
       _rows = sessionRows;
       _groupedRows = _groupRows(sessionRows);
       _decisions = <int, CsvRowDecision>{};
-  _selectedRows = <int>{};
-      _editedRows = <int>{};
+      _selectedRows = <int>{};
+      _editedCells.clear();
       _loadingRows = <int>{};
       _duplicateMatches = _cloneDuplicateMatches(duplicates);
+      _snapshotInitialRows(sessionRows);
       _isLoading = false;
       _isFinalizing = false;
       notifyListeners();
@@ -166,10 +170,11 @@ class CsvReviewPrototypeController extends ChangeNotifier {
       _rows = <CsvReviewRow>[];
       _groupedRows = _emptyGroupedRows();
       _decisions = <int, CsvRowDecision>{};
-  _selectedRows = <int>{};
-      _editedRows = <int>{};
+      _selectedRows = <int>{};
+      _editedCells.clear();
       _loadingRows = <int>{};
       _duplicateMatches = <int, List<CsvDuplicateCandidate>>{};
+      _initialRowValues.clear();
       _isLoading = false;
       _isFinalizing = false;
       _loadError = error;
@@ -367,7 +372,7 @@ class CsvReviewPrototypeController extends ChangeNotifier {
         );
       }
       _loadingRows.remove(rowIndex);
-      _editedRows.add(rowIndex);
+      _updateEditedCells(rowIndex, updatedRow);
       _duplicateMatches.remove(rowIndex);
       _replaceRow(updatedRow);
       notifyListeners();
@@ -419,14 +424,61 @@ class CsvReviewPrototypeController extends ChangeNotifier {
   }
 
   void _replaceRow(CsvReviewRow updatedRow) {
-    final int index =
-        _rows.indexWhere((CsvReviewRow row) => row.originalIndex == updatedRow.originalIndex);
+    final int index = _rows.indexWhere(
+        (CsvReviewRow row) => row.originalIndex == updatedRow.originalIndex);
     if (index == -1) {
       return;
     }
     _rows[index] = updatedRow;
     _sortRowsByPriority(_rows);
     _groupedRows = _groupRows(_rows);
+  }
+
+  void _updateEditedCells(
+    int rowIndex,
+    CsvReviewRow updated,
+  ) {
+    final Map<String, String?> baseline =
+        _initialRowValues[rowIndex] ?? const <String, String?>{};
+    final Set<String> changed = <String>{};
+    final Set<String> keys = <String>{
+      ...baseline.keys,
+      ...updated.fields.keys,
+    };
+    for (final String key in keys) {
+      final String? baselineValue = baseline[key];
+      final String? currentValue = _valueForComparison(updated.fields[key]);
+      if (baselineValue != currentValue) {
+        changed.add(key);
+      }
+    }
+    if (changed.isEmpty) {
+      _editedCells.remove(rowIndex);
+    } else {
+      _editedCells[rowIndex] = changed;
+    }
+  }
+
+  void _snapshotInitialRows(List<CsvReviewRow> rows) {
+    _initialRowValues
+      ..clear()
+      ..addEntries(rows.map((CsvReviewRow row) {
+        final Map<String, String?> fieldValues = <String, String?>{};
+        row.fields.forEach((String key, CsvFieldReview field) {
+          fieldValues[key] = _valueForComparison(field);
+        });
+        return MapEntry<int, Map<String, String?>>(
+          row.originalIndex,
+          fieldValues,
+        );
+      }));
+  }
+
+  String? _valueForComparison(CsvFieldReview? field) {
+    if (field == null) {
+      return null;
+    }
+    return field.normalizedValue ?? field.originalValue;
   }
 
   static Map<CsvRowReviewStatus, List<CsvReviewRow>> _groupRows(
@@ -650,14 +702,16 @@ bool _matchesYes(String normalizedInput) {
   if (normalizedInput == 'ma') {
     return true;
   }
-  return TextTools.looseCmpWithList(normalizedInput, _potvrzeniPrototype.possibleYes);
+  return TextTools.looseCmpWithList(
+      normalizedInput, _potvrzeniPrototype.possibleYes);
 }
 
 bool _matchesNo(String normalizedInput) {
   if (normalizedInput == 'nema') {
     return true;
   }
-  return TextTools.looseCmpWithList(normalizedInput, _potvrzeniPrototype.possibleNo);
+  return TextTools.looseCmpWithList(
+      normalizedInput, _potvrzeniPrototype.possibleNo);
 }
 
 /// Returns display list of derived values for quick badge rendering.
@@ -729,7 +783,8 @@ class _CsvReviewPrototypeHostState extends State<CsvReviewPrototypeHost> {
   @override
   void didUpdateWidget(covariant CsvReviewPrototypeHost oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.filePath != oldWidget.filePath || widget.service != oldWidget.service) {
+    if (widget.filePath != oldWidget.filePath ||
+        widget.service != oldWidget.service) {
       _controller.removeListener(_handleControllerChanged);
       _controller.dispose();
       _controller = CsvReviewPrototypeController(

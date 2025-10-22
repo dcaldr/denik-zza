@@ -111,6 +111,15 @@ void main() {
 
     expect(service.lastPayload?['jmeno'], equals('Karolina'));
 
+    final TextField updatedNameField = tester.widget<TextField>(
+      find.descendant(
+        of: find.byKey(const Key('CsvTableOverview_cell_1_jmeno')),
+        matching: find.byType(TextField),
+      ),
+    );
+    expect(updatedNameField.decoration?.suffixIcon, isNull);
+    expect(updatedNameField.decoration?.filled, isTrue);
+
     await tester.enterText(
       find.byKey(const Key('CsvTableOverview_cell_1_pohlavi')),
       'Žena',

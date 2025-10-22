@@ -74,15 +74,27 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     super.initState();
     _filters = <_TableFilter>[
       const _TableFilter(label: 'Vše', status: null, key: 'CsvTableFilter_all'),
-      const _TableFilter(label: 'Chyby', status: CsvRowReviewStatus.rejected, key: 'CsvTableFilter_rejected'),
-      const _TableFilter(label: 'Varování', status: CsvRowReviewStatus.warn, key: 'CsvTableFilter_warn'),
-      const _TableFilter(label: 'Informace', status: CsvRowReviewStatus.info, key: 'CsvTableFilter_info'),
-      const _TableFilter(label: 'V pořádku', status: CsvRowReviewStatus.ok, key: 'CsvTableFilter_ok'),
+      const _TableFilter(
+          label: 'Chyby',
+          status: CsvRowReviewStatus.rejected,
+          key: 'CsvTableFilter_rejected'),
+      const _TableFilter(
+          label: 'Varování',
+          status: CsvRowReviewStatus.warn,
+          key: 'CsvTableFilter_warn'),
+      const _TableFilter(
+          label: 'Informace',
+          status: CsvRowReviewStatus.info,
+          key: 'CsvTableFilter_info'),
+      const _TableFilter(
+          label: 'V pořádku',
+          status: CsvRowReviewStatus.ok,
+          key: 'CsvTableFilter_ok'),
     ];
     _activeStatus = null;
     _columnOrder = _resolveColumnOrder();
-  _horizontalScrollController = ScrollController();
-  _verticalScrollController = ScrollController();
+    _horizontalScrollController = ScrollController();
+    _verticalScrollController = ScrollController();
   }
 
   @override
@@ -154,7 +166,8 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                   padding: EdgeInsets.only(
                     left: 16,
                     right: 16,
-                    bottom: 24 + kBottomNavigationBarHeight +
+                    bottom: 24 +
+                        kBottomNavigationBarHeight +
                         MediaQuery.of(context).viewPadding.bottom,
                   ),
                   children: <Widget>[
@@ -176,11 +189,11 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
               color: Theme.of(context).colorScheme.surface,
               child: SafeArea(
                 top: false,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        /*
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    /*
                         // Legacy footer preserved for potential rollback during prototyping.
                         BulkActionBar(
                           key: const Key('CsvTableOverview_bulkActions'),
@@ -204,15 +217,15 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                           },
                         ),
                         */
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: _buildFooterButtons(context),
-                          ),
-                        ),
-                      ],
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: _buildFooterButtons(context),
+                      ),
                     ),
+                  ],
+                ),
               ),
             ),
     );
@@ -403,8 +416,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
         ),
         OutlinedButton.icon(
           key: const Key('CsvTableOverview_action_approve_selected'),
-          onPressed:
-              selectedCount == 0 ? null : _controller.approveSelected,
+          onPressed: selectedCount == 0 ? null : _controller.approveSelected,
           icon: const Icon(Icons.task_alt),
           label: Text(approveSelectedLabel),
         ),
@@ -419,8 +431,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
   }
 
   Widget _buildTable(BuildContext context) {
-    final List<CsvReviewRow> rows =
-        _controller.rowsForStatus(_activeStatus);
+    final List<CsvReviewRow> rows = _controller.rowsForStatus(_activeStatus);
     if (rows.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(32),
@@ -451,9 +462,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
       ),
       rows: rows.map((CsvReviewRow row) {
         final bool loading = _controller.isRowLoading(row.originalIndex);
-        final bool edited = _controller.isRowEdited(row.originalIndex);
-    final bool hasDuplicate =
-      _controller.hasDuplicate(row.originalIndex);
+        final bool hasDuplicate = _controller.hasDuplicate(row.originalIndex);
         final bool isSelected = _controller.isRowSelected(row.originalIndex);
         final Color statusAccent = statusColor(
           Theme.of(context),
@@ -476,8 +485,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
           cells: <DataCell>[
             DataCell(
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: statusAccent.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
@@ -500,7 +508,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                     row: row,
                     fieldKey: key,
                     loading: loading,
-                    edited: edited,
+                    isEdited: _controller.isCellEdited(row.originalIndex, key),
                     hasDuplicate: hasDuplicate,
                   ),
                 ),
@@ -521,7 +529,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     required CsvReviewRow row,
     required String fieldKey,
     required bool loading,
-    required bool edited,
+    required bool isEdited,
     required bool hasDuplicate,
   }) {
     final Widget cell = _EditableCell(
@@ -529,7 +537,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
       fieldKey: fieldKey,
       controller: _controller,
       loading: loading,
-      edited: edited,
+      isEdited: isEdited,
     );
 
     final bool isDuplicateHost =
@@ -547,7 +555,8 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
           message: 'Potenciální duplicitní záznam',
           child: Icon(
             Icons.warning_amber_rounded,
-            key: Key('CsvTableOverview_duplicate_indicator_${row.originalIndex}'),
+            key: Key(
+                'CsvTableOverview_duplicate_indicator_${row.originalIndex}'),
             color: Theme.of(context).colorScheme.error,
             size: 18,
           ),
@@ -575,14 +584,14 @@ class _EditableCell extends StatefulWidget {
     required this.fieldKey,
     required this.controller,
     required this.loading,
-    required this.edited,
+    required this.isEdited,
   });
 
   final CsvReviewRow row;
   final String fieldKey;
   final CsvReviewPrototypeController controller;
   final bool loading;
-  final bool edited;
+  final bool isEdited;
 
   @override
   State<_EditableCell> createState() => _EditableCellState();
@@ -623,23 +632,38 @@ class _EditableCellState extends State<_EditableCell> {
 
   @override
   Widget build(BuildContext context) {
-  final CsvFieldReview? field = _field;
-    final bool hasWarning =
-        field?.status == CsvFieldReviewStatus.warn ||
-            field?.status == CsvFieldReviewStatus.bad;
+    final CsvFieldReview? field = _field;
+    final bool hasWarning = field?.status == CsvFieldReviewStatus.warn ||
+        field?.status == CsvFieldReviewStatus.bad;
+    final bool showChangeHighlight = widget.isEdited;
+    // Use a vivid blue so edited cells pop during prototype QA passes.
+    const Color vividHighlight = Color(0xFF1E88E5);
+    final OutlineInputBorder baseBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(4),
+    );
+    final OutlineInputBorder highlightBorder = baseBorder.copyWith(
+      borderSide: BorderSide(
+        color: vividHighlight,
+        width: 1.4,
+      ),
+    );
     return TextFormField(
-      key: Key('CsvTableOverview_cell_${widget.row.originalIndex}_${widget.fieldKey}'),
+      key: Key(
+          'CsvTableOverview_cell_${widget.row.originalIndex}_${widget.fieldKey}'),
       controller: _controller,
       enabled: !widget.loading,
       decoration: InputDecoration(
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        border: const OutlineInputBorder(),
+        border: baseBorder,
+        enabledBorder: showChangeHighlight ? highlightBorder : baseBorder,
+        focusedBorder: showChangeHighlight ? highlightBorder : null,
+        filled: showChangeHighlight,
+    fillColor:
+      showChangeHighlight ? vividHighlight.withOpacity(0.16) : null,
         suffixIcon: hasWarning
             ? const Icon(Icons.warning_amber_outlined, color: Colors.orange)
-            : (widget.edited
-                ? const Icon(Icons.edit, color: Colors.blueAccent)
-                : null),
+            : null,
       ),
       onFieldSubmitted: (String value) async {
         final Map<String, String?> payload =
@@ -705,4 +729,3 @@ class _EditableCellState extends State<_EditableCell> {
     );
   }
 }
-
