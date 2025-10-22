@@ -484,19 +484,9 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                 },
           cells: <DataCell>[
             DataCell(
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusAccent.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  statusLabel(row.status),
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelMedium
-                      ?.copyWith(color: statusAccent),
-                ),
+              _StatusCell(
+                row: row,
+                statusAccent: statusAccent,
               ),
             ),
             ..._columnOrder.map(
@@ -578,6 +568,64 @@ class _TableFilter {
   final String key;
 }
 
+class _StatusCell extends StatelessWidget {
+  const _StatusCell({
+    required this.row,
+    required this.statusAccent,
+  });
+
+  final CsvReviewRow row;
+  final Color statusAccent;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final BorderRadius borderRadius = BorderRadius.circular(12);
+    final bool hasMessages = row.messages.isNotEmpty;
+    final Widget chip = Container(
+      key: Key('CsvTableOverview_status_${row.originalIndex}'),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: statusAccent.withOpacity(0.15),
+        borderRadius: borderRadius,
+      ),
+      child: Text(
+        statusLabel(row.status),
+        style: theme.textTheme.labelMedium?.copyWith(color: statusAccent),
+      ),
+    );
+
+    if (!hasMessages) {
+      return chip;
+    }
+
+    final String tooltipMessage = row.messages
+        .map(
+          (CsvReviewMessage message) =>
+              '${_severityLabel(message.severity)}: ${message.message}',
+        )
+        .join('\n');
+
+    return Tooltip(
+      message: tooltipMessage,
+      triggerMode: TooltipTriggerMode.tap,
+      child: chip,
+    );
+  }
+
+}
+
+String _severityLabel(CsvReviewMessageSeverity severity) {
+  switch (severity) {
+    case CsvReviewMessageSeverity.info:
+      return 'Informace';
+    case CsvReviewMessageSeverity.warn:
+      return 'Varování';
+    case CsvReviewMessageSeverity.error:
+      return 'Chyba';
+  }
+}
+
 class _EditableCell extends StatefulWidget {
   const _EditableCell({
     required this.row,
@@ -599,11 +647,50 @@ class _EditableCell extends StatefulWidget {
 
 class _EditableCellState extends State<_EditableCell> {
   late TextEditingController _controller;
+  late FocusNode _focusNode;
+  final GlobalKey<TooltipState> _warningTooltipKey =
+      GlobalKey<TooltipState>();
+
+  List<CsvReviewMessage> _scopedMessages(
+    CsvFieldReview? field,
+    String fieldKey,
+  ) {
+    if (field == null || field.messages.isEmpty) {
+      return const <CsvReviewMessage>[];
+    }
+    return field.messages.where((CsvReviewMessage message) {
+      final String? code = message.code;
+      if (code == null || code.isEmpty) {
+        return true;
+      }
+      if (code.startsWith('rc_')) {
+        return fieldKey == 'rodne_cislo';
+      }
+      if (code.startsWith('gender_') || code == 'gender_unrecognized_input') {
+        return fieldKey == 'pohlavi';
+      }
+      if (code.startsWith('birthdate_')) {
+        return fieldKey == 'datum_narozeni';
+      }
+      if (code.contains('_jmeno')) {
+        return fieldKey == 'jmeno';
+      }
+      if (code.contains('_prijmeni')) {
+        return fieldKey == 'prijmeni';
+      }
+      if (code.startsWith('email_')) {
+        return fieldKey.startsWith('email');
+      }
+      return true;
+    }).toList();
+  }
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController(text: _displayValue);
+    _focusNode = FocusNode();
+    _focusNode.addListener(_handleFocusChange);
   }
 
   @override
@@ -613,6 +700,38 @@ class _EditableCellState extends State<_EditableCell> {
       _controller
         ..text = _displayValue
         ..selection = TextSelection.collapsed(offset: _controller.text.length);
+    }
+
+    if (_focusNode.hasFocus) {
+      final CsvFieldReview? previousField =
+          oldWidget.row.fields[oldWidget.fieldKey];
+      final CsvFieldReview? currentField = _field;
+      final List<CsvReviewMessage> previousMessages =
+          _scopedMessages(previousField, oldWidget.fieldKey);
+      final List<CsvReviewMessage> currentMessages =
+          _scopedMessages(currentField, widget.fieldKey);
+      final bool hadMessages = previousMessages.isNotEmpty;
+      final bool hasMessages = currentMessages.isNotEmpty;
+      if (hasMessages) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _warningTooltipKey.currentState?.ensureTooltipVisible();
+        });
+      } else if (hadMessages && !hasMessages) {
+        Tooltip.dismissAllToolTips();
+      }
+    }
+  }
+
+  void _handleFocusChange() {
+    final CsvFieldReview? field = _field;
+    final List<CsvReviewMessage> scopedMessages =
+        _scopedMessages(field, widget.fieldKey);
+    if (_focusNode.hasFocus && scopedMessages.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _warningTooltipKey.currentState?.ensureTooltipVisible();
+      });
+    } else {
+      Tooltip.dismissAllToolTips();
     }
   }
 
@@ -627,12 +746,17 @@ class _EditableCellState extends State<_EditableCell> {
   @override
   void dispose() {
     _controller.dispose();
+    _focusNode
+      ..removeListener(_handleFocusChange)
+      ..dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final CsvFieldReview? field = _field;
+  final List<CsvReviewMessage> scopedMessages =
+    _scopedMessages(field, widget.fieldKey);
     final bool hasWarning = field?.status == CsvFieldReviewStatus.warn ||
         field?.status == CsvFieldReviewStatus.bad;
     final bool showChangeHighlight = widget.isEdited;
@@ -652,6 +776,7 @@ class _EditableCellState extends State<_EditableCell> {
           'CsvTableOverview_cell_${widget.row.originalIndex}_${widget.fieldKey}'),
       controller: _controller,
       enabled: !widget.loading,
+      focusNode: _focusNode,
       decoration: InputDecoration(
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -659,10 +784,15 @@ class _EditableCellState extends State<_EditableCell> {
         enabledBorder: showChangeHighlight ? highlightBorder : baseBorder,
         focusedBorder: showChangeHighlight ? highlightBorder : null,
         filled: showChangeHighlight,
-    fillColor:
-      showChangeHighlight ? vividHighlight.withOpacity(0.16) : null,
-        suffixIcon: hasWarning
-            ? const Icon(Icons.warning_amber_outlined, color: Colors.orange)
+        fillColor:
+            showChangeHighlight ? vividHighlight.withOpacity(0.16) : null,
+    suffixIcon: hasWarning && scopedMessages.isNotEmpty
+            ? _FieldWarningIcon(
+                iconKey: Key(
+                    'CsvTableOverview_field_warning_${widget.row.originalIndex}_${widget.fieldKey}'),
+                tooltipStateKey: _warningTooltipKey,
+        messages: scopedMessages,
+              )
             : null,
       ),
       onFieldSubmitted: (String value) async {
@@ -695,37 +825,47 @@ class _EditableCellState extends State<_EditableCell> {
           );
         }
       },
-      onTap: () async {
-        if (field == null) {
-          return;
-        }
-        if (field.messages.isNotEmpty) {
-          await showDialog<void>(
-            context: context,
-            builder: (BuildContext context) => AlertDialog(
-              title: Text(field.columnName),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: field.messages
-                    .map(
-                      (CsvReviewMessage message) => Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Text(message.message),
-                      ),
-                    )
-                    .toList(),
-              ),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Zavřít'),
-                ),
-              ],
-            ),
-          );
-        }
-      },
+    );
+  }
+
+}
+
+class _FieldWarningIcon extends StatelessWidget {
+  const _FieldWarningIcon({
+    required this.iconKey,
+    required this.tooltipStateKey,
+    required this.messages,
+  });
+
+  final Key iconKey;
+  final GlobalKey<TooltipState> tooltipStateKey;
+  final List<CsvReviewMessage> messages;
+
+  @override
+  Widget build(BuildContext context) {
+    if (messages.isEmpty) {
+      return Icon(
+        Icons.warning_amber_outlined,
+        key: iconKey,
+        color: Colors.orange,
+      );
+    }
+    final String tooltipMessage = messages
+        .map((CsvReviewMessage message) =>
+            '${_severityLabel(message.severity)}: ${message.message}')
+        .join('\n');
+    return Tooltip(
+      key: tooltipStateKey,
+      message: tooltipMessage,
+      triggerMode: TooltipTriggerMode.manual,
+      waitDuration: Duration.zero,
+      showDuration: const Duration(days: 1),
+      preferBelow: false,
+      child: Icon(
+        Icons.warning_amber_outlined,
+        key: iconKey,
+        color: Colors.orange,
+      ),
     );
   }
 }

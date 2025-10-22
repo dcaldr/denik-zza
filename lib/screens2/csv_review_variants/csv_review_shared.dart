@@ -373,8 +373,9 @@ class CsvReviewPrototypeController extends ChangeNotifier {
       }
       _loadingRows.remove(rowIndex);
       _updateEditedCells(rowIndex, updatedRow);
-      _duplicateMatches.remove(rowIndex);
-      _replaceRow(updatedRow);
+    _duplicateMatches.remove(rowIndex);
+    updatedRow = _applyPrototypeWarnings(updatedRow, updatedFields);
+    _replaceRow(updatedRow);
       notifyListeners();
       return updatedRow;
     } catch (error, stackTrace) {
@@ -387,6 +388,100 @@ class CsvReviewPrototypeController extends ChangeNotifier {
       notifyListeners();
       rethrow;
     }
+  }
+
+  CsvReviewRow _applyPrototypeWarnings(
+    CsvReviewRow updatedRow,
+    Map<String, String?> updatedFields,
+  ) {
+    final String? genderInput = updatedFields['pohlavi'];
+    if (genderInput == null) {
+      return updatedRow;
+    }
+    final String trimmed = genderInput.trim();
+    if (trimmed.isEmpty || _isRecognizedGenderToken(trimmed)) {
+      return updatedRow;
+    }
+
+    final CsvFieldReview? genderField = updatedRow.fields['pohlavi'];
+    if (genderField == null) {
+      return updatedRow;
+    }
+
+    const String warningText = 'Neznámá hodnota pohlaví';
+    const String genderInferredCode = 'gender_inferred_from_rc';
+    const String genderWarningCode = 'gender_unrecognized_input';
+    final CsvReviewMessage warning = CsvReviewMessage(
+      severity: CsvReviewMessageSeverity.warn,
+      message: warningText,
+      code: genderWarningCode,
+    );
+
+    final Map<String, CsvFieldReview> updatedFieldsMap =
+        Map<String, CsvFieldReview>.from(updatedRow.fields);
+    final List<CsvReviewMessage> filteredFieldMessages =
+        genderField.messages.where((CsvReviewMessage message) {
+      final String? code = message.code;
+      if (message.message == warningText) {
+        return false;
+      }
+      if (code == genderInferredCode || code == genderWarningCode) {
+        return false;
+      }
+      return true;
+    }).toList()
+          ..add(warning);
+    final CsvFieldReview updatedGenderField = CsvFieldReview(
+      columnKey: genderField.columnKey,
+      columnName: genderField.columnName,
+      status: CsvFieldReviewStatus.warn,
+      originalValue: trimmed,
+      normalizedValue: trimmed,
+      inferred: false,
+      messages: filteredFieldMessages,
+    );
+    updatedFieldsMap['pohlavi'] = updatedGenderField;
+
+    final List<CsvReviewMessage> rowMessages = <CsvReviewMessage>[...
+        updatedRow.messages.where(
+          (CsvReviewMessage message) {
+            final String? code = message.code;
+            if (message.message == warningText) {
+              return false;
+            }
+            if (code == genderInferredCode || code == genderWarningCode) {
+              return false;
+            }
+            return true;
+          },
+        ),
+        warning,
+      ];
+
+    final Map<String, CsvDerivedValue> derivedMap =
+        Map<String, CsvDerivedValue>.from(updatedRow.derived);
+    final CsvDerivedValue? genderDerived =
+        derivedMap[updatedGenderField.columnKey];
+    if (genderDerived != null && genderDerived.applied) {
+      derivedMap[updatedGenderField.columnKey] = CsvDerivedValue(
+        key: genderDerived.key,
+        value: genderDerived.value,
+        applied: false,
+      );
+    }
+
+    CsvRowReviewStatus status = updatedRow.status;
+    if (status == CsvRowReviewStatus.ok || status == CsvRowReviewStatus.info) {
+      status = CsvRowReviewStatus.warn;
+    }
+
+    return CsvReviewRow(
+      originalIndex: updatedRow.originalIndex,
+      status: status,
+      messages: rowMessages,
+      fields: updatedFieldsMap,
+      derived: derivedMap,
+    );
   }
 
   Future<CsvFinalizeResult?> finalizeImport() async {
@@ -679,6 +774,14 @@ String _formatBooleanLabel(String rawValue) {
     return 'Nemá';
   }
   return rawValue;
+}
+
+bool _isRecognizedGenderToken(String value) {
+  final String normalized = TextTools.normText(value);
+  if (normalized.isEmpty) {
+    return false;
+  }
+  return _maleTokens.contains(normalized) || _femaleTokens.contains(normalized);
 }
 
 const Set<String> _maleTokens = <String>{

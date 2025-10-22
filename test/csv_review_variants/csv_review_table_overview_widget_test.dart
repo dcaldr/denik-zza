@@ -137,6 +137,96 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(service.lastPayload?['zpusobilost'], equals('false'));
+
+    await tester.enterText(
+      find.byKey(const Key('CsvTableOverview_cell_1_pohlavi')),
+      'xx',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    final Finder statusChipFinder =
+        find.byKey(const Key('CsvTableOverview_status_2'));
+    expect(statusChipFinder, findsOneWidget);
+    final Finder statusTooltipFinder = find.ancestor(
+      of: statusChipFinder,
+      matching: find.byType(Tooltip),
+    );
+    expect(statusTooltipFinder, findsOneWidget);
+    final Tooltip statusTooltip =
+        tester.widget<Tooltip>(statusTooltipFinder.first);
+    expect(statusTooltip.message, contains('Varování'));
+    expect(statusTooltip.message, contains('Chybí potvrzení od lékaře'));
+    expect(statusTooltip.triggerMode, TooltipTriggerMode.tap);
+
+    final Finder rowOneStatusChipFinder =
+        find.byKey(const Key('CsvTableOverview_status_1'));
+    expect(rowOneStatusChipFinder, findsOneWidget);
+    final Finder rowOneStatusTooltipFinder = find.ancestor(
+      of: rowOneStatusChipFinder,
+      matching: find.byType(Tooltip),
+    );
+    expect(rowOneStatusTooltipFinder, findsOneWidget);
+    final Tooltip rowOneStatusTooltip =
+        tester.widget<Tooltip>(rowOneStatusTooltipFinder.first);
+    expect(rowOneStatusTooltip.message, contains('Varování'));
+    expect(rowOneStatusTooltip.message, contains('Neznámá hodnota pohlaví'));
+    expect(rowOneStatusTooltip.message, contains('Rodné číslo'));
+    expect(
+      rowOneStatusTooltip.message,
+      isNot(contains('Pohlaví bylo odvozeno z rodného čísla.')),
+    );
+
+    final Finder warningIconFinder = find.byKey(
+      const Key('CsvTableOverview_field_warning_2_zpusobilost'),
+    );
+    expect(warningIconFinder, findsOneWidget);
+    final Finder fieldTooltipFinder = find.ancestor(
+      of: warningIconFinder,
+      matching: find.byType(Tooltip),
+    );
+    expect(fieldTooltipFinder, findsOneWidget);
+    final Tooltip fieldTooltip =
+        tester.widget<Tooltip>(fieldTooltipFinder.first);
+    expect(fieldTooltip.message, contains('Varování'));
+    expect(fieldTooltip.message, contains('Chybí potvrzení od lékaře'));
+    expect(fieldTooltip.triggerMode, TooltipTriggerMode.manual);
+
+    await tester.tap(
+      find.byKey(const Key('CsvTableOverview_cell_2_zpusobilost')),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.text('Varování: Chybí potvrzení od lékaře'), findsOneWidget);
+
+    final Finder genderIconFinder = find.byKey(
+      const Key('CsvTableOverview_field_warning_1_pohlavi'),
+    );
+    expect(genderIconFinder, findsOneWidget);
+    final Finder genderTooltipFinder = find.ancestor(
+      of: genderIconFinder,
+      matching: find.byType(Tooltip),
+    );
+    expect(genderTooltipFinder, findsOneWidget);
+    final Tooltip genderTooltip =
+        tester.widget<Tooltip>(genderTooltipFinder.first);
+    expect(genderTooltip.message, contains('Neznámá hodnota pohlaví'));
+    expect(genderTooltip.message, isNot(contains('Rodné číslo')));
+    expect(
+      genderTooltip.message,
+      isNot(contains('Pohlaví bylo odvozeno z rodného čísla.')),
+    );
+    expect(genderTooltip.triggerMode, TooltipTriggerMode.manual);
+
+    await tester.tap(
+      find.byKey(const Key('CsvTableOverview_cell_1_pohlavi')),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(
+      find.text('Varování: Neznámá hodnota pohlaví'),
+      findsOneWidget,
+    );
   });
 
   test('controller preserves row index after edits', () async {
@@ -175,9 +265,31 @@ void main() {
 class _WidgetFakeService implements CsvReviewService {
   _WidgetFakeService()
       : _rows = <CsvReviewRow>[
-          _buildRow(1, 'Alena', 'Nováková'),
-          _buildRow(2, 'Jana', 'Svobodová',
-              status: CsvRowReviewStatus.warn, eligible: false),
+          _buildRow(
+            1,
+            'Alena',
+            'Nováková',
+            genderMessages: <CsvReviewMessage>[
+              CsvReviewMessage(
+                severity: CsvReviewMessageSeverity.info,
+                message: 'Pohlaví bylo odvozeno z rodného čísla.',
+                code: 'gender_inferred_from_rc',
+              ),
+            ],
+          ),
+          _buildRow(
+            2,
+            'Jana',
+            'Svobodová',
+            status: CsvRowReviewStatus.warn,
+            eligible: false,
+            messages: <CsvReviewMessage>[
+              CsvReviewMessage(
+                severity: CsvReviewMessageSeverity.warn,
+                message: 'Chybí potvrzení od lékaře',
+              ),
+            ],
+          ),
         ];
 
   final List<CsvReviewRow> _rows;
@@ -198,24 +310,55 @@ class _WidgetFakeService implements CsvReviewService {
   Future<CsvReviewRow> reparseRow(Map<String, String?> updatedFields) async {
     lastPayload = Map<String, String?>.from(updatedFields);
     final CsvReviewRow existing = _rows.first;
-    final Map<String, CsvFieldReview> newFields = existing.fields.map(
-      (String key, CsvFieldReview field) => MapEntry<String, CsvFieldReview>(
-        key,
-        CsvFieldReview(
-          columnKey: field.columnKey,
-          columnName: field.columnName,
-          status: field.status,
-          originalValue: updatedFields[key] ?? field.originalValue,
-          normalizedValue: updatedFields[key] ?? field.normalizedValue,
-          inferred: field.inferred,
-          messages: field.messages,
-        ),
-      ),
+    final String? genderValue = updatedFields['pohlavi'];
+    final bool invalidGender =
+        genderValue != null && genderValue != '1' && genderValue != '2';
+    final CsvReviewMessage genderMessage = CsvReviewMessage(
+      severity: CsvReviewMessageSeverity.warn,
+      message: 'Neznámá hodnota pohlaví',
+      code: 'gender_unrecognized_input',
     );
+    final CsvReviewMessage rodneCisloMessage = CsvReviewMessage(
+      severity: CsvReviewMessageSeverity.warn,
+      message: 'Rodné číslo má neplatný formát.',
+      code: 'rc_invalid_format',
+    );
+    final Map<String, CsvFieldReview> newFields = <String, CsvFieldReview>{};
+    existing.fields.forEach((String key, CsvFieldReview field) {
+      final String? newValue = updatedFields[key] ?? field.normalizedValue;
+      final bool isGenderField = key == 'pohlavi';
+      final bool isRodneCisloField = key == 'rodne_cislo';
+      final bool emitWarning = isGenderField && invalidGender;
+      final bool carryRodneWarning = isRodneCisloField && invalidGender;
+      final List<CsvReviewMessage> scopedMessages;
+      if (emitWarning) {
+        scopedMessages = <CsvReviewMessage>[genderMessage, rodneCisloMessage];
+      } else if (carryRodneWarning) {
+        scopedMessages = <CsvReviewMessage>[rodneCisloMessage];
+      } else {
+        scopedMessages = field.messages;
+      }
+      newFields[key] = CsvFieldReview(
+        columnKey: field.columnKey,
+        columnName: field.columnName,
+        status: emitWarning
+            ? CsvFieldReviewStatus.warn
+            : (carryRodneWarning ? CsvFieldReviewStatus.warn : field.status),
+        originalValue: newValue ?? field.originalValue,
+        normalizedValue: newValue,
+        inferred: field.inferred,
+        messages: scopedMessages,
+      );
+    });
+
+  final List<CsvReviewMessage> rowMessages = invalidGender
+    ? <CsvReviewMessage>[genderMessage, rodneCisloMessage]
+    : existing.messages;
+
     final CsvReviewRow updated = CsvReviewRow(
       originalIndex: existing.originalIndex,
-      status: existing.status,
-      messages: existing.messages,
+      status: invalidGender ? CsvRowReviewStatus.warn : existing.status,
+      messages: rowMessages,
       fields: newFields,
       derived: existing.derived,
     );
@@ -262,7 +405,18 @@ class _MisindexedService implements CsvReviewService {
   _MisindexedService()
       : _rows = <CsvReviewRow>[
           _buildRow(1, 'Alena', 'Nováková'),
-          _buildRow(2, 'Jana', 'Svobodová', status: CsvRowReviewStatus.warn),
+          _buildRow(
+            2,
+            'Jana',
+            'Svobodová',
+            status: CsvRowReviewStatus.warn,
+            messages: <CsvReviewMessage>[
+              CsvReviewMessage(
+                severity: CsvReviewMessageSeverity.warn,
+                message: 'Chybí potvrzení od lékaře',
+              ),
+            ],
+          ),
         ];
 
   final List<CsvReviewRow> _rows;
@@ -317,11 +471,36 @@ CsvReviewRow _buildRow(
   String lastName, {
   CsvRowReviewStatus status = CsvRowReviewStatus.ok,
   bool eligible = true,
+  List<CsvReviewMessage> messages = const <CsvReviewMessage>[],
+  List<CsvReviewMessage> rodneCisloMessages = const <CsvReviewMessage>[],
+  List<CsvReviewMessage> genderMessages = const <CsvReviewMessage>[],
 }) {
+  final List<CsvReviewMessage> rowMessages = <CsvReviewMessage>[
+    ...messages,
+    ...rodneCisloMessages,
+    ...genderMessages,
+  ];
+  final bool genderInferred = genderMessages
+      .any((CsvReviewMessage message) => message.code == 'gender_inferred_from_rc');
+  final Map<String, CsvDerivedValue> derived = <String, CsvDerivedValue>{
+    'datum_narozeni': CsvDerivedValue(
+      key: 'datum_narozeni',
+      value: '01.01.2010',
+      applied: true,
+    ),
+  };
+  if (genderInferred) {
+    derived['pohlavi'] = CsvDerivedValue(
+      key: 'pohlavi',
+      value: '1',
+      applied: true,
+    );
+  }
+
   return CsvReviewRow(
     originalIndex: index,
     status: status,
-    messages: const <CsvReviewMessage>[],
+    messages: rowMessages,
     fields: <String, CsvFieldReview>{
       'jmeno': CsvFieldReview(
         columnKey: 'jmeno',
@@ -339,13 +518,25 @@ CsvReviewRow _buildRow(
         normalizedValue: lastName,
         inferred: false,
       ),
+      'rodne_cislo': CsvFieldReview(
+        columnKey: 'rodne_cislo',
+        columnName: 'Rodné číslo',
+        status: rodneCisloMessages.isNotEmpty
+            ? CsvFieldReviewStatus.warn
+            : CsvFieldReviewStatus.ok,
+        originalValue: '101010/0000',
+        normalizedValue: '1010100000',
+        inferred: false,
+        messages: rodneCisloMessages,
+      ),
       'pohlavi': CsvFieldReview(
         columnKey: 'pohlavi',
         columnName: 'Pohlaví',
         status: CsvFieldReviewStatus.ok,
         originalValue: '1',
         normalizedValue: '1',
-        inferred: false,
+        inferred: genderInferred,
+        messages: genderMessages,
       ),
       'datum_narozeni': CsvFieldReview(
         columnKey: 'datum_narozeni',
@@ -358,18 +549,14 @@ CsvReviewRow _buildRow(
       'zpusobilost': CsvFieldReview(
         columnKey: 'zpusobilost',
         columnName: 'Způsobilost',
-        status: CsvFieldReviewStatus.ok,
+        status:
+            messages.isNotEmpty ? CsvFieldReviewStatus.warn : CsvFieldReviewStatus.ok,
         originalValue: eligible ? 'true' : 'false',
         normalizedValue: eligible ? 'true' : 'false',
         inferred: false,
+        messages: messages,
       ),
     },
-    derived: <String, CsvDerivedValue>{
-      'datum_narozeni': CsvDerivedValue(
-        key: 'datum_narozeni',
-        value: '01.01.2010',
-        applied: true,
-      ),
-    },
+    derived: derived,
   );
 }
