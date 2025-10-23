@@ -225,6 +225,7 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  // TODO: Surface the same checksum/format warnings shown in CSV review so camp staff get inline feedback when manual entry fails the rodné číslo validation.
   void guessAndFillFields(String inText) {
     if (inText.length >= 6) {
       RodneCislo rc = RodneCislo(inText);
