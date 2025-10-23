@@ -66,6 +66,8 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
   String? _duplicateIndicatorFieldKey;
   late final ScrollController _horizontalScrollController;
   late final ScrollController _verticalScrollController;
+  final GlobalKey<TooltipState> _rejectedSummaryTooltipKey =
+      GlobalKey<TooltipState>();
 
   CsvReviewPrototypeController get _controller => widget.controller;
 
@@ -302,6 +304,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     final int okCount = grouped[CsvRowReviewStatus.ok]?.length ?? 0;
     final int validCount = warnCount + infoCount + okCount;
 
+    final BorderRadius badgeRadius = BorderRadius.circular(8);
     return Card(
       elevation: 0,
       clipBehavior: Clip.antiAlias,
@@ -313,52 +316,108 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
           runSpacing: 16,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: <Widget>[
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Icon(Icons.insights_outlined, color: theme.colorScheme.primary),
-                const SizedBox(width: 12),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Icon(Icons.insights_outlined,
+                        color: theme.colorScheme.primary),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Shrnutí souboru',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
                 Text(
-                  'Shrnutí souboru',
-                  style: theme.textTheme.titleMedium,
+                  'Dočasné výběry kategorií upravují pouze označení řádků.',
+                  key: const Key('CsvTableOverview_summary_note'),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
-            SummaryBadge(
-              key: const Key('CsvTableOverview_summary_rejected_count'),
-              label: 'Zamítnuto',
-              count: grouped[CsvRowReviewStatus.rejected]?.length ?? 0,
-              color: statusColor(theme, CsvRowReviewStatus.rejected),
-            ),
-            SummaryBadge(
-              key: const Key('CsvTableOverview_summary_warn_count'),
-              label: 'Varování',
-              count: warnCount,
-              color: statusColor(theme, CsvRowReviewStatus.warn),
-            ),
-            SummaryBadge(
-              key: const Key('CsvTableOverview_summary_info_count'),
-              label: 'Informace',
-              count: infoCount,
-              color: statusColor(theme, CsvRowReviewStatus.info),
-            ),
-            SummaryBadge(
-              key: const Key('CsvTableOverview_summary_ok_count'),
-              label: 'Platné',
-              count: validCount,
-              color: statusColor(theme, CsvRowReviewStatus.ok),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant,
-                borderRadius: BorderRadius.circular(8),
+            Tooltip(
+              key: _rejectedSummaryTooltipKey,
+              message:
+                  'Zamítnuté řádky nelze vybrat. Opravte chyby a zkuste to znovu.',
+              child: InkWell(
+                key: const Key('CsvTableOverview_summary_rejected_toggle'),
+                borderRadius: badgeRadius,
+                onTap: () {
+                  _rejectedSummaryTooltipKey.currentState
+                      ?.ensureTooltipVisible();
+                },
+                onLongPress: () {
+                  _rejectedSummaryTooltipKey.currentState
+                      ?.ensureTooltipVisible();
+                },
+                child: SummaryBadge(
+                  key: const Key('CsvTableOverview_summary_rejected_count'),
+                  label: 'Zamítnuto',
+                  count: grouped[CsvRowReviewStatus.rejected]?.length ?? 0,
+                  color: statusColor(theme, CsvRowReviewStatus.rejected),
+                ),
               ),
-              child: Text(
-                'Celkem řádků: $totalCount',
+            ),
+            InkWell(
+              key: const Key('CsvTableOverview_summary_warn_toggle'),
+              borderRadius: badgeRadius,
+              onTap: () =>
+                  _handleSummaryStatusTap(CsvRowReviewStatus.warn),
+              child: SummaryBadge(
+                key: const Key('CsvTableOverview_summary_warn_count'),
+                label: 'Varování',
+                count: warnCount,
+                color: statusColor(theme, CsvRowReviewStatus.warn),
+              ),
+            ),
+            InkWell(
+              key: const Key('CsvTableOverview_summary_info_toggle'),
+              borderRadius: badgeRadius,
+              onTap: () =>
+                  _handleSummaryStatusTap(CsvRowReviewStatus.info),
+              child: SummaryBadge(
+                key: const Key('CsvTableOverview_summary_info_count'),
+                label: 'Informace',
+                count: infoCount,
+                color: statusColor(theme, CsvRowReviewStatus.info),
+              ),
+            ),
+            InkWell(
+              key: const Key('CsvTableOverview_summary_ok_toggle'),
+              borderRadius: badgeRadius,
+              onTap: () =>
+                  _handleSummaryStatusTap(CsvRowReviewStatus.ok),
+              child: SummaryBadge(
+                key: const Key('CsvTableOverview_summary_ok_count'),
+                label: 'Platné',
+                count: validCount,
+                color: statusColor(theme, CsvRowReviewStatus.ok),
+              ),
+            ),
+            InkWell(
+              key: const Key('CsvTableOverview_summary_total_toggle'),
+              borderRadius: badgeRadius,
+              onTap: _handleSummaryTotalTap,
+              child: Container(
                 key: const Key('CsvTableOverview_summary_total'),
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceVariant,
+                  borderRadius: badgeRadius,
+                ),
+                child: Text(
+                  'Celkem řádků: $totalCount',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ),
@@ -366,6 +425,35 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
         ),
       ),
     );
+  }
+
+  void _handleSummaryStatusTap(CsvRowReviewStatus status) {
+    final List<CsvReviewRow> rows =
+        _controller.groupedRows[status] ?? const <CsvReviewRow>[];
+    if (rows.isEmpty) {
+      return;
+    }
+    final List<int> indices = rows
+        .where((CsvReviewRow row) => row.status != CsvRowReviewStatus.rejected)
+        .map((CsvReviewRow row) => row.originalIndex)
+        .toList();
+    if (indices.isEmpty) {
+      return;
+    }
+    final bool allSelected = indices.every(_controller.isRowSelected);
+    _controller.setRowsSelected(indices, !allSelected);
+  }
+
+  void _handleSummaryTotalTap() {
+    final List<int> indices = _controller.rows
+        .where((CsvReviewRow row) => row.status != CsvRowReviewStatus.rejected)
+        .map((CsvReviewRow row) => row.originalIndex)
+        .toList();
+    if (indices.isEmpty) {
+      return;
+    }
+    final bool allSelected = indices.every(_controller.isRowSelected);
+    _controller.setRowsSelected(indices, !allSelected);
   }
 
   Widget _buildTableSection(BuildContext context) {
@@ -445,6 +533,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     }
 
     final List<DataColumn> columns = <DataColumn>[
+      const DataColumn(label: SizedBox()),
       const DataColumn(label: Text('Stav')),
       ..._columnOrder.map(
         (String key) => DataColumn(
@@ -456,6 +545,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     return DataTable(
       key: const Key('CsvTableOverview_table'),
       columns: columns,
+      showCheckboxColumn: false,
       columnSpacing: 24,
       headingRowColor: MaterialStateProperty.all<Color>(
         Theme.of(context).colorScheme.surfaceVariant,
@@ -464,6 +554,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
         final bool loading = _controller.isRowLoading(row.originalIndex);
         final bool hasDuplicate = _controller.hasDuplicate(row.originalIndex);
         final bool isSelected = _controller.isRowSelected(row.originalIndex);
+        final bool isRejected = row.status == CsvRowReviewStatus.rejected;
         final Color statusAccent = statusColor(
           Theme.of(context),
           row.status,
@@ -471,7 +562,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
         return DataRow(
           key: ValueKey<int>(row.originalIndex),
           selected: isSelected,
-          onSelectChanged: loading
+          onSelectChanged: loading || isRejected
               ? null
               : (bool? value) {
                   if (value == null) {
@@ -483,6 +574,26 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                   );
                 },
           cells: <DataCell>[
+            DataCell(
+              Center(
+                child: Checkbox(
+                  key: Key(
+                      'CsvTableOverview_select_checkbox_${row.originalIndex}'),
+                  value: isSelected,
+                  onChanged: loading || isRejected
+                      ? null
+                      : (bool? value) {
+                          if (value == null) {
+                            return;
+                          }
+                          _controller.toggleRowSelection(
+                            row.originalIndex,
+                            value,
+                          );
+                        },
+                ),
+              ),
+            ),
             DataCell(
               _StatusCell(
                 row: row,

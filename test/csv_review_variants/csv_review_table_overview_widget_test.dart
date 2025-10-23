@@ -33,6 +33,7 @@ void main() {
 
     expect(find.byKey(const Key('CsvTableOverview_summary_content')),
         findsOneWidget);
+    expect(find.byKey(const Key('CsvTableOverview_summary_note')), findsOneWidget);
     expect(
       find.byKey(const Key('CsvTableOverview_summary_rejected_count')),
       findsOneWidget,
@@ -90,15 +91,126 @@ void main() {
     );
     expect(eligibleField.controller?.text, equals('Má'));
 
-    // Worst statuses appear first (warn row above ok row inside the table body).
-    final Finder tableFinder = find.byKey(const Key('CsvTableOverview_table'));
+    // Worst statuses appear first (rejected row above warn row in the table body).
+    final Offset rejectedPosition = tester.getTopLeft(
+      find.byKey(const Key('CsvTableOverview_status_1')),
+    );
     final Offset warnPosition = tester.getTopLeft(
-      find.descendant(of: tableFinder, matching: find.text('Varování')).first,
+      find.byKey(const Key('CsvTableOverview_status_2')),
     );
-    final Offset okPosition = tester.getTopLeft(
-      find.descendant(of: tableFinder, matching: find.text('V pořádku')).first,
+    expect(rejectedPosition.dy, lessThan(warnPosition.dy));
+
+    // `Chyba` rows should be disabled for selection in the table before edits.
+    final Finder rejectedRowCheckbox = find.byKey(
+      const Key('CsvTableOverview_select_checkbox_1'),
     );
-    expect(warnPosition.dy, lessThan(okPosition.dy));
+    expect(rejectedRowCheckbox, findsOneWidget);
+    Checkbox disabledCheckbox =
+        tester.widget<Checkbox>(rejectedRowCheckbox);
+    expect(disabledCheckbox.onChanged, isNull);
+    expect(disabledCheckbox.value, isFalse);
+    await tester.tap(rejectedRowCheckbox);
+    await tester.pumpAndSettle();
+    disabledCheckbox = tester.widget<Checkbox>(rejectedRowCheckbox);
+    expect(disabledCheckbox.value, isFalse);
+
+    final Finder rejectedToggle =
+        find.byKey(const Key('CsvTableOverview_summary_rejected_toggle'));
+    await tester.tap(rejectedToggle);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(
+      find.text('Zamítnuté řádky nelze vybrat. Opravte chyby a zkuste to znovu.'),
+      findsOneWidget,
+    );
+
+  final Finder warnToggle =
+    find.byKey(const Key('CsvTableOverview_summary_warn_toggle'));
+  final Finder infoToggle =
+    find.byKey(const Key('CsvTableOverview_summary_info_toggle'));
+  final Finder okToggle =
+    find.byKey(const Key('CsvTableOverview_summary_ok_toggle'));
+  final Finder totalToggle =
+    find.byKey(const Key('CsvTableOverview_summary_total_toggle'));
+  final Finder warnCheckboxFinder =
+    find.byKey(const Key('CsvTableOverview_select_checkbox_2'));
+  final Finder infoCheckboxFinder =
+    find.byKey(const Key('CsvTableOverview_select_checkbox_3'));
+  final Finder okCheckboxFinder =
+    find.byKey(const Key('CsvTableOverview_select_checkbox_4'));
+
+  Checkbox warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
+  expect(warnCheckbox.value, isFalse);
+  await tester.tap(warnToggle);
+  await tester.pumpAndSettle();
+  warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
+  expect(warnCheckbox.value, isTrue);
+  await tester.tap(warnToggle);
+  await tester.pumpAndSettle();
+  warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
+  expect(warnCheckbox.value, isFalse);
+
+  Checkbox infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
+  expect(infoCheckbox.value, isFalse);
+  await tester.tap(infoToggle);
+  await tester.pumpAndSettle();
+  infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
+  expect(infoCheckbox.value, isTrue);
+  await tester.tap(infoToggle);
+  await tester.pumpAndSettle();
+  infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
+  expect(infoCheckbox.value, isFalse);
+
+  Checkbox okCheckbox = tester.widget<Checkbox>(okCheckboxFinder);
+  expect(okCheckbox.value, isFalse);
+  await tester.tap(okToggle);
+  await tester.pumpAndSettle();
+  okCheckbox = tester.widget<Checkbox>(okCheckboxFinder);
+  expect(okCheckbox.value, isTrue);
+  await tester.tap(okToggle);
+  await tester.pumpAndSettle();
+  okCheckbox = tester.widget<Checkbox>(okCheckboxFinder);
+  expect(okCheckbox.value, isFalse);
+
+  await tester.tap(totalToggle);
+  await tester.pumpAndSettle();
+  warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
+  infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
+  okCheckbox = tester.widget<Checkbox>(okCheckboxFinder);
+  Checkbox rejectedCheckboxAfterTotal =
+    tester.widget<Checkbox>(rejectedRowCheckbox);
+  expect(warnCheckbox.value, isTrue);
+  expect(infoCheckbox.value, isTrue);
+  expect(okCheckbox.value, isTrue);
+  expect(rejectedCheckboxAfterTotal.value, isFalse);
+
+  await tester.tap(totalToggle);
+  await tester.pumpAndSettle();
+  warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
+  infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
+  okCheckbox = tester.widget<Checkbox>(okCheckboxFinder);
+  expect(warnCheckbox.value, isFalse);
+  expect(infoCheckbox.value, isFalse);
+  expect(okCheckbox.value, isFalse);
+
+    service.markRejectedRowForRepair();
+    await tester.enterText(
+      find.byKey(const Key('CsvTableOverview_cell_1_jmeno')),
+      'Alena opravena',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    Checkbox repairedCheckbox = tester.widget<Checkbox>(rejectedRowCheckbox);
+    expect(repairedCheckbox.onChanged, isNotNull);
+    await tester.tap(rejectedRowCheckbox);
+    await tester.pumpAndSettle();
+    repairedCheckbox = tester.widget<Checkbox>(rejectedRowCheckbox);
+    expect(repairedCheckbox.value, isTrue);
+    await tester.tap(rejectedRowCheckbox);
+    await tester.pumpAndSettle();
+    repairedCheckbox = tester.widget<Checkbox>(rejectedRowCheckbox);
+    expect(repairedCheckbox.value, isFalse);
 
     // Edit cell inline and ensure service receives payload.
     await tester.tap(find.byKey(const Key('CsvTableOverview_cell_1_jmeno')));
@@ -158,6 +270,7 @@ void main() {
     expect(statusTooltip.message, contains('Varování'));
     expect(statusTooltip.message, contains('Chybí potvrzení od lékaře'));
     expect(statusTooltip.triggerMode, TooltipTriggerMode.tap);
+
 
     final Finder rowOneStatusChipFinder =
         find.byKey(const Key('CsvTableOverview_status_1'));
@@ -269,6 +382,14 @@ class _WidgetFakeService implements CsvReviewService {
             1,
             'Alena',
             'Nováková',
+            status: CsvRowReviewStatus.rejected,
+            messages: <CsvReviewMessage>[
+              CsvReviewMessage(
+                severity: CsvReviewMessageSeverity.error,
+                message: 'Řádek nelze importovat',
+                code: 'row_unimportable',
+              ),
+            ],
             genderMessages: <CsvReviewMessage>[
               CsvReviewMessage(
                 severity: CsvReviewMessageSeverity.info,
@@ -290,10 +411,27 @@ class _WidgetFakeService implements CsvReviewService {
               ),
             ],
           ),
+          _buildRow(
+            3,
+            'Petr',
+            'Krátký',
+            status: CsvRowReviewStatus.info,
+          ),
+          _buildRow(
+            4,
+            'Eva',
+            'Veselá',
+            status: CsvRowReviewStatus.ok,
+          ),
         ];
 
   final List<CsvReviewRow> _rows;
   Map<String, String?>? lastPayload;
+  bool repairRejectedOnNextEdit = false;
+
+  void markRejectedRowForRepair() {
+    repairRejectedOnNextEdit = true;
+  }
 
   @override
   Future<CsvImportSession> loadCsv(String path) async {
@@ -310,6 +448,21 @@ class _WidgetFakeService implements CsvReviewService {
   Future<CsvReviewRow> reparseRow(Map<String, String?> updatedFields) async {
     lastPayload = Map<String, String?>.from(updatedFields);
     final CsvReviewRow existing = _rows.first;
+    if (existing.originalIndex == 1 && repairRejectedOnNextEdit) {
+      repairRejectedOnNextEdit = false;
+      final String newFirstName =
+          updatedFields['jmeno'] ?? existing.fields['jmeno']?.normalizedValue ?? 'Alena';
+      final String newLastName =
+          updatedFields['prijmeni'] ?? existing.fields['prijmeni']?.normalizedValue ?? 'Nováková';
+      final CsvReviewRow repaired = _buildRow(
+        1,
+        newFirstName,
+        newLastName,
+        status: CsvRowReviewStatus.ok,
+      );
+      _rows[0] = repaired;
+      return repaired;
+    }
     final String? genderValue = updatedFields['pohlavi'];
     final bool invalidGender =
         genderValue != null && genderValue != '1' && genderValue != '2';

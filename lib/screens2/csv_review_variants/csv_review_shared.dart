@@ -99,11 +99,48 @@ class CsvReviewPrototypeController extends ChangeNotifier {
   bool isRowSelected(int rowIndex) => _selectedRows.contains(rowIndex);
 
   void toggleRowSelection(int rowIndex, bool isSelected) {
+    CsvReviewRow? targetRow;
+    for (final CsvReviewRow row in _rows) {
+      if (row.originalIndex == rowIndex) {
+        targetRow = row;
+        break;
+      }
+    }
+    if (isSelected &&
+        targetRow != null &&
+        targetRow.status == CsvRowReviewStatus.rejected) {
+      return;
+    }
     bool changed = false;
     if (isSelected) {
       changed = _selectedRows.add(rowIndex) || changed;
     } else {
       changed = _selectedRows.remove(rowIndex) || changed;
+    }
+    if (changed) {
+      notifyListeners();
+    }
+  }
+
+  void setRowsSelected(Iterable<int> rowIndices, bool isSelected) {
+    bool changed = false;
+    for (final int rowIndex in rowIndices) {
+      final CsvReviewRow? row = _findRowByIndex(rowIndex);
+      if (row == null) {
+        continue;
+      }
+      if (isSelected && row.status == CsvRowReviewStatus.rejected) {
+        continue;
+      }
+      if (isSelected) {
+        if (_selectedRows.add(rowIndex)) {
+          changed = true;
+        }
+      } else {
+        if (_selectedRows.remove(rowIndex)) {
+          changed = true;
+        }
+      }
     }
     if (changed) {
       notifyListeners();
