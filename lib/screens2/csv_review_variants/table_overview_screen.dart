@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:denik_zza/input/csv_review_models.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/screens2/csv_review/widgets/summary_section.dart';
+import 'package:denik_zza/screens2/csv_review/widgets/unparsed_columns_section.dart';
 import 'package:flutter/material.dart';
 
 import 'csv_review_shared.dart';
@@ -176,6 +177,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                     _buildTitleRow(context),
                     const SizedBox(height: 8),
                     _buildSummaryPanel(context),
+                    _buildUnparsedColumnsSection(),
                     const SizedBox(height: 8),
                     _buildFilterRow(context),
                     const Divider(height: 16),
@@ -230,6 +232,21 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildUnparsedColumnsSection() {
+    final List<String> unparsed =
+        _controller.session?.review.unparsedColumns ?? const <String>[];
+    if (unparsed.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: UnparsedColumnsSection(
+        key: const Key('CsvTableOverview_unparsed_columns'),
+        unparsedColumns: unparsed,
+      ),
     );
   }
 

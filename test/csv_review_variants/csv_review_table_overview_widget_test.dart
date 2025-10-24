@@ -52,6 +52,23 @@ void main() {
     );
     expect(find.byKey(const Key('CsvTableOverview_summary_total')),
         findsOneWidget);
+    expect(
+      find.byKey(const Key('CsvTableOverview_unparsed_columns')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('CsvReviewScreen_unparsed_columns_tile')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const Key('CsvReviewScreen_unparsed_columns_tile')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('CsvReviewScreen_unparsed_column_0')),
+      findsOneWidget,
+    );
+    expect(find.text('neocekavany sloupec'), findsOneWidget);
 
     expect(find.byKey(const Key('CsvTableOverview_action_approve_all_valid')),
         findsOneWidget);
@@ -437,7 +454,7 @@ class _WidgetFakeService implements CsvReviewService {
   Future<CsvImportSession> loadCsv(String path) async {
     return CsvImportSession(
       review: CsvImportReview(
-        unparsedColumns: const <String>[],
+  unparsedColumns: const <String>['neocekavany sloupec'],
         rows: _rows,
       ),
       personResult: PersonResult(<Answer>[]),

@@ -1,5 +1,6 @@
 import 'package:denik_zza/input/csv_review_models.dart';
 import 'package:denik_zza/input/input_hold.dart';
+import 'package:denik_zza/input/input_parser.dart' show ParseStatus;
 import 'package:denik_zza/input/text_tools.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/utils/app_logger.dart';
@@ -735,32 +736,22 @@ String normalizeCsvFieldInput(
 
   switch (fieldKey) {
     case 'pohlavi':
-      final String normalized = TextTools.normText(trimmed);
-      if (_maleTokens.contains(normalized)) {
-        return '1';
-      }
-      if (_femaleTokens.contains(normalized)) {
-        return '2';
-      }
-      if (originalField != null &&
-          trimmed == formatCsvFieldDisplay(fieldKey, originalField)) {
-        return originalField.normalizedValue ??
-            originalField.originalValue ??
-            trimmed;
-      }
-      return trimmed;
+      return _normalizeWithHold(
+        fieldKey: fieldKey,
+        input: trimmed,
+        originalField: originalField,
+        holdBuilder: () => PohlaviHold(columnName: 'pohlaví'),
+        formatter: (dynamic value) => value?.toString() ?? '',
+      );
     case 'datum_narozeni':
-      final DateTime? parsed = TextTools.parseDate(trimmed);
-      if (parsed != null) {
-        return _czechDateFormatter.format(parsed);
-      }
-      if (originalField != null &&
-          trimmed == formatCsvFieldDisplay(fieldKey, originalField)) {
-        return originalField.normalizedValue ??
-            originalField.originalValue ??
-            trimmed;
-      }
-      return trimmed;
+      return _normalizeWithHold(
+        fieldKey: fieldKey,
+        input: trimmed,
+        originalField: originalField,
+        holdBuilder: () => DatumNarozeniHold(columnName: 'datum narození'),
+        formatter: (dynamic value) =>
+            value is DateTime ? _czechDateFormatter.format(value) : '',
+      );
     case 'zpusobilost':
     case 'bezinfekcnost':
       final String normalizedBoolean = TextTools.normText(trimmed);
@@ -770,16 +761,41 @@ String normalizeCsvFieldInput(
       if (_matchesNo(normalizedBoolean)) {
         return 'false';
       }
-      if (originalField != null &&
-          trimmed == formatCsvFieldDisplay(fieldKey, originalField)) {
-        return originalField.normalizedValue ??
-            originalField.originalValue ??
-            trimmed;
-      }
-      return trimmed;
+      return _normalizeWithHold(
+        fieldKey: fieldKey,
+        input: trimmed,
+        originalField: originalField,
+        holdBuilder: () => PotvrzeniHold(columnName: 'potvrzení'),
+        formatter: (dynamic value) =>
+            value is bool ? value.toString() : '',
+      );
     default:
       return trimmed;
   }
+}
+
+String _normalizeWithHold({
+  required String fieldKey,
+  required String input,
+  required CsvFieldReview? originalField,
+  required InputHold Function() holdBuilder,
+  required String Function(dynamic value) formatter,
+}) {
+  final InputHold hold = holdBuilder();
+  hold.addInput(input);
+  if (hold.status == ParseStatus.ok) {
+    final String formatted = formatter(hold.getOutput());
+    if (formatted.isNotEmpty) {
+      return formatted;
+    }
+  }
+  if (originalField != null &&
+      input == formatCsvFieldDisplay(fieldKey, originalField)) {
+    return originalField.normalizedValue ??
+        originalField.originalValue ??
+        input;
+  }
+  return input;
 }
 
 final DateFormat _czechDateFormatter = DateFormat('dd.MM.yyyy');
