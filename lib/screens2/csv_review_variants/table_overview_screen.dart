@@ -5,6 +5,7 @@ import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/screens2/csv_review/widgets/summary_section.dart';
 import 'package:denik_zza/screens2/csv_review/widgets/unparsed_columns_section.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import 'csv_review_shared.dart';
 
@@ -44,6 +45,8 @@ class _TableOverviewScaffold extends StatefulWidget {
 }
 
 class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
+  static const double _tableHeaderHeight = 56.0;
+  static const double _tableHeaderGap = 8.0;
   static const List<String> _preferredFieldOrder = <String>[
     'jmeno',
     'prijmeni',
@@ -67,6 +70,9 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
   String? _duplicateIndicatorFieldKey;
   late final ScrollController _horizontalScrollController;
   late final ScrollController _verticalScrollController;
+  final GlobalKey _tableBodyKey = GlobalKey();
+  double? _tableBodyWidth;
+  List<double>? _columnPixelWidths;
   final GlobalKey<TooltipState> _rejectedSummaryTooltipKey =
       GlobalKey<TooltipState>();
 
@@ -115,6 +121,85 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     super.dispose();
   }
 
+  void _scheduleTableWidthMeasurement() {
+    // Mirror body table sizing after layout so the overlay header stays aligned.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final RenderBox? renderBox =
+          _tableBodyKey.currentContext?.findRenderObject() as RenderBox?;
+      if (renderBox == null) {
+        return;
+      }
+      final double measuredWidth = renderBox.size.width;
+      RenderTable? renderTable;
+      void findTable(RenderObject child) {
+        if (renderTable != null) {
+          return;
+        }
+        if (child is RenderTable) {
+          renderTable = child;
+          return;
+        }
+        if (child is RenderBox) {
+          child.visitChildren(findTable);
+        }
+      }
+      renderBox.visitChildren(findTable);
+      List<double>? measuredColumns;
+      if (renderTable != null) {
+        final Map<int, double> widthMap = <int, double>{};
+        renderTable!.visitChildren((RenderObject child) {
+          if (child is! RenderBox) {
+            return;
+          }
+          final TableCellParentData parentData =
+              child.parentData! as TableCellParentData;
+          if (parentData.y == 0 && parentData.x != null) {
+            widthMap[parentData.x!] = child.size.width;
+          }
+        });
+        if (widthMap.isNotEmpty) {
+          measuredColumns = List<double>.generate(
+            renderTable!.columns,
+            (int column) => widthMap[column] ?? widthMap.values.last,
+          );
+        }
+      }
+
+      final bool widthChanged = _tableBodyWidth == null ||
+          (_tableBodyWidth! - measuredWidth).abs() >= 0.5;
+      final bool columnsChanged = measuredColumns != null &&
+          (_columnPixelWidths == null ||
+              !_areColumnWidthsEqual(_columnPixelWidths!, measuredColumns));
+      if (!widthChanged && !columnsChanged) {
+        return;
+      }
+      setState(() {
+        _tableBodyWidth = measuredWidth;
+        if (measuredColumns != null) {
+          _columnPixelWidths = measuredColumns;
+        }
+      });
+    });
+  }
+
+  bool _areColumnWidthsEqual(List<double> a, List<double> b) {
+    if (identical(a, b)) {
+      return true;
+    }
+    if (a.length != b.length) {
+      return false;
+    }
+    for (int i = 0; i < a.length; i++) {
+      if ((a[i] - b[i]).abs() >= 0.5) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   List<String> _resolveColumnOrder() {
     if (_controller.rows.isEmpty) {
       _duplicateIndicatorFieldKey = null;
@@ -157,33 +242,90 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
 
   @override
   Widget build(BuildContext context) {
+    final MediaQueryData mediaQuery = MediaQuery.of(context);
+    final double bottomListPadding =
+        24 + kBottomNavigationBarHeight + mediaQuery.viewPadding.bottom;
+    final double viewportWidth = mediaQuery.size.width;
+    final double minTableWidth = math.max(960, viewportWidth - 32);
+    final double headerOverlayHeight = _tableHeaderHeight + 1;
+    final double listTopPadding = headerOverlayHeight + _tableHeaderGap;
+
+    if (_controller.rows.isNotEmpty) {
+      _scheduleTableWidthMeasurement();
+    } else if (_tableBodyWidth != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _tableBodyWidth = null;
+        });
+      });
+    }
     return Scaffold(
       body: _controller.session == null
           ? const SizedBox.shrink()
           : SafeArea(
-              child: Scrollbar(
-                controller: _verticalScrollController,
-                thumbVisibility: true,
-                child: ListView(
-                  controller: _verticalScrollController,
-                  padding: EdgeInsets.only(
-                    left: 16,
-                    right: 16,
-                    bottom: 24 +
-                        kBottomNavigationBarHeight +
-                        MediaQuery.of(context).viewPadding.bottom,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  // Keep the control header outside the scrollable body so it remains
+                  // visible while rows scroll. Flutter recommends pinning persistent
+                  // headers (see SliverPersistentHeader docs) and this layout achieves
+                  // the same effect without introducing slivers for our dynamic wrap.
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      key: const Key('CsvTableOverview_sticky_header'),
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        _buildTitleRow(context),
+                        const SizedBox(height: 8),
+                        _buildSummaryPanel(context),
+                        _buildUnparsedColumnsSection(),
+                        const SizedBox(height: 8),
+                        _buildFilterRow(context),
+                      ],
+                    ),
                   ),
-                  children: <Widget>[
-                    _buildTitleRow(context),
-                    const SizedBox(height: 8),
-                    _buildSummaryPanel(context),
-                    _buildUnparsedColumnsSection(),
-                    const SizedBox(height: 8),
-                    _buildFilterRow(context),
-                    const Divider(height: 16),
-                    _buildTableSection(context),
-                  ],
-                ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Divider(height: 16),
+                  ),
+                  Expanded(
+                    child: Stack(
+                      children: <Widget>[
+                        Scrollbar(
+                          controller: _verticalScrollController,
+                          thumbVisibility: true,
+                          child: ListView(
+                            key: const Key('CsvTableOverview_scrollable_body'),
+                            controller: _verticalScrollController,
+                            padding: EdgeInsets.only(
+                              left: 16,
+                              right: 16,
+                              top: listTopPadding,
+                              bottom: bottomListPadding,
+                            ),
+                            children: <Widget>[
+                              _buildTableBodySection(context, minTableWidth),
+                            ],
+                          ),
+                        ),
+                        Positioned(
+                          left: 16,
+                          right: 16,
+                          top: 0,
+                          child: _buildStickyTableHeader(
+                            context: context,
+                            minTableWidth: minTableWidth,
+                            height: headerOverlayHeight,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
       bottomNavigationBar: _controller.session == null
@@ -496,24 +638,121 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     _controller.setRowsSelected(indices, !allSelected);
   }
 
-  Widget _buildTableSection(BuildContext context) {
-    final double viewportWidth = MediaQuery.of(context).size.width;
-    final double minTableWidth = math.max(960, viewportWidth - 32);
+  Widget _buildStickyTableHeader({
+    required BuildContext context,
+    required double minTableWidth,
+    required double height,
+  }) {
+    final List<CsvReviewRow> rows = _controller.rowsForStatus(_activeStatus);
+    final ThemeData theme = Theme.of(context);
+    final List<double>? columnWidths = _columnPixelWidths;
+  final List<DataColumn> currentColumns =
+    rows.isEmpty ? const <DataColumn>[] : _buildDataColumns(context, rows);
+    final bool canRenderMeasuredHeader = rows.isNotEmpty &&
+        columnWidths != null &&
+        columnWidths.length == currentColumns.length;
+    final double computedWidth = canRenderMeasuredHeader
+        ? columnWidths.fold<double>(0, (double sum, double value) => sum + value)
+        : math.max(_tableBodyWidth ?? minTableWidth, minTableWidth);
+    final Widget headerRow = rows.isEmpty
+        ? const SizedBox.shrink()
+        : canRenderMeasuredHeader
+      ? _buildMeasuredHeaderRow(context, currentColumns, columnWidths)
+            : const SizedBox.shrink();
+
+    return SizedBox(
+      height: height,
+      child: Container(
+        color: theme.colorScheme.surface,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            SizedBox(
+              height: _tableHeaderHeight,
+              child: SingleChildScrollView(
+                key: const Key('CsvTableOverview_table_header_horizontal'),
+                controller: _horizontalScrollController,
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: computedWidth,
+                  child: headerRow,
+                ),
+              ),
+            ),
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: theme.dividerColor,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTableBodySection(BuildContext context, double minTableWidth) {
+    final List<CsvReviewRow> rows = _controller.rowsForStatus(_activeStatus);
+    if (rows.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(32),
+        child: Center(
+          child: Text(
+            'Žádné řádky pro vybraný filtr.',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Scrollbar(
+      child: SingleChildScrollView(
+        key: const Key('CsvTableOverview_horizontalScroll'),
         controller: _horizontalScrollController,
-        thumbVisibility: true,
-        notificationPredicate: (ScrollNotification notification) =>
-            notification.metrics.axis == Axis.horizontal,
-        child: SingleChildScrollView(
-          key: const Key('CsvTableOverview_horizontalScroll'),
-          controller: _horizontalScrollController,
-          scrollDirection: Axis.horizontal,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minWidth: minTableWidth),
-            child: _buildTable(context),
+        scrollDirection: Axis.horizontal,
+        child: ConstrainedBox(
+          key: _tableBodyKey,
+          constraints: BoxConstraints(minWidth: minTableWidth),
+          child: _buildDataTable(context, rows),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMeasuredHeaderRow(
+    BuildContext context,
+    List<DataColumn> columns,
+    List<double> columnWidths,
+  ) {
+    final ThemeData theme = Theme.of(context);
+    final List<Widget> cells = <Widget>[];
+    for (int i = 0; i < columns.length; i++) {
+      final double width = i < columnWidths.length ? columnWidths[i] : columnWidths.last;
+      final Widget label = columns[i].label;
+      final AlignmentGeometry alignment =
+          i == 0 ? Alignment.center : AlignmentDirectional.centerStart;
+      cells.add(
+        SizedBox(
+          width: width,
+          child: Align(
+            alignment: alignment,
+            child: DefaultTextStyle.merge(
+              style: theme.textTheme.titleSmall,
+              child: label,
+            ),
           ),
+        ),
+      );
+    }
+
+    return ColoredBox(
+      key: const Key('CsvTableOverview_table_header'),
+      color: theme.colorScheme.surfaceVariant,
+      child: SizedBox(
+        height: _tableHeaderHeight,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: cells,
         ),
       ),
     );
@@ -558,38 +797,16 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     );
   }
 
-  Widget _buildTable(BuildContext context) {
-    final List<CsvReviewRow> rows = _controller.rowsForStatus(_activeStatus);
-    if (rows.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.all(32),
-        child: Center(
-          child: Text(
-            'Žádné řádky pro vybraný filtr.',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ),
-      );
-    }
-
-    final List<DataColumn> columns = <DataColumn>[
-      const DataColumn(label: SizedBox()),
-      const DataColumn(label: Text('Stav')),
-      ..._columnOrder.map(
-        (String key) => DataColumn(
-          label: Text(_fieldLabel(rows.first, key)),
-        ),
-      ),
-    ];
+  Widget _buildDataTable(BuildContext context, List<CsvReviewRow> rows) {
+    final List<DataColumn> columns = _buildDataColumns(context, rows);
 
     return DataTable(
       key: const Key('CsvTableOverview_table'),
       columns: columns,
       showCheckboxColumn: false,
       columnSpacing: 24,
-      headingRowColor: MaterialStateProperty.all<Color>(
-        Theme.of(context).colorScheme.surfaceVariant,
-      ),
+      horizontalMargin: 24,
+      headingRowHeight: 0,
       rows: rows.map((CsvReviewRow row) {
         final bool loading = _controller.isRowLoading(row.originalIndex);
         final bool hasDuplicate = _controller.hasDuplicate(row.originalIndex);
@@ -661,8 +878,20 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     );
   }
 
-  String _fieldLabel(CsvReviewRow row, String key) {
-    return row.fields[key]?.columnName ?? key;
+  List<DataColumn> _buildDataColumns(
+    BuildContext context,
+    List<CsvReviewRow> rows,
+  ) {
+    final CsvReviewRow? sample = rows.isNotEmpty ? rows.first : null;
+    return <DataColumn>[
+      const DataColumn(label: SizedBox()),
+      const DataColumn(label: Text('Stav')),
+      ..._columnOrder.map(
+        (String key) => DataColumn(
+          label: Text(sample?.fields[key]?.columnName ?? key),
+        ),
+      ),
+    ];
   }
 
   Widget _buildFieldCell({

@@ -369,6 +369,51 @@ void main() {
     );
   });
 
+  testWidgets('header remains visible during body scroll',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CsvReviewTableOverviewScreen(
+          filePath: 'ignored.csv',
+          service: _WidgetFakeService(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final Finder headerFinder =
+        find.byKey(const Key('CsvTableOverview_sticky_header'));
+    expect(headerFinder, findsOneWidget);
+
+  final double initialTop = tester.getTopLeft(headerFinder).dy;
+  expect(initialTop, greaterThanOrEqualTo(0));
+
+  final Finder tableHeaderFinder =
+    find.byKey(const Key('CsvTableOverview_table_header'));
+  expect(tableHeaderFinder, findsOneWidget);
+  final double initialTableHeaderTop =
+    tester.getTopLeft(tableHeaderFinder).dy;
+  expect(initialTableHeaderTop, greaterThan(initialTop));
+
+    final Finder scrollableBodyFinder =
+        find.byKey(const Key('CsvTableOverview_scrollable_body'));
+    expect(scrollableBodyFinder, findsOneWidget);
+
+    await tester.drag(
+      scrollableBodyFinder,
+      const Offset(0, -400),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+
+    final double scrolledTop = tester.getTopLeft(headerFinder).dy;
+    expect(scrolledTop, closeTo(initialTop, 0.1));
+
+  final double scrolledTableHeaderTop =
+    tester.getTopLeft(tableHeaderFinder).dy;
+  expect(scrolledTableHeaderTop, closeTo(initialTableHeaderTop, 0.1));
+  });
+
   test('controller preserves row index after edits', () async {
     final _MisindexedService service = _MisindexedService();
     final CsvReviewPrototypeController controller =
