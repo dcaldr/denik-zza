@@ -45,6 +45,7 @@ class _TableOverviewScaffold extends StatefulWidget {
 }
 
 class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
+  // TODO: Split this scaffold into smaller widgets once table interactions stabilize.
   static const double _tableHeaderHeight = 56.0;
   static const double _tableHeaderGap = 8.0;
   static const List<String> _preferredFieldOrder = <String>[
@@ -123,6 +124,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
 
   void _scheduleTableWidthMeasurement() {
     // Mirror body table sizing after layout so the overlay header stays aligned.
+    // TODO: Replace RenderTable traversal with a stable width source once DataTable offers API hooks.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
@@ -654,11 +656,28 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     final double computedWidth = canRenderMeasuredHeader
         ? columnWidths.fold<double>(0, (double sum, double value) => sum + value)
         : math.max(_tableBodyWidth ?? minTableWidth, minTableWidth);
-    final Widget headerRow = rows.isEmpty
-        ? const SizedBox.shrink()
-        : canRenderMeasuredHeader
-      ? _buildMeasuredHeaderRow(context, currentColumns, columnWidths)
-            : const SizedBox.shrink();
+    // TODO: Persist last measured widths to reduce fallback drift when the table rebuilds quickly.
+    final Widget headerRow;
+    if (rows.isEmpty) {
+      headerRow = const SizedBox.shrink();
+    } else if (canRenderMeasuredHeader) {
+      headerRow = _buildMeasuredHeaderRow(context, currentColumns, columnWidths);
+    } else {
+      final int columnCount = currentColumns.length;
+      final double equalWidth = columnCount == 0
+          ? computedWidth
+          : computedWidth / columnCount;
+      final List<double> fallbackWidths = List<double>.filled(
+        columnCount,
+        equalWidth,
+        growable: false,
+      );
+      headerRow = _buildMeasuredHeaderRow(
+        context,
+        currentColumns,
+        fallbackWidths,
+      );
+    }
 
     return SizedBox(
       height: height,
@@ -1030,6 +1049,8 @@ class _EditableCellState extends State<_EditableCell> {
   late FocusNode _focusNode;
   final GlobalKey<TooltipState> _warningTooltipKey =
       GlobalKey<TooltipState>();
+  bool _warningTooltipVisible = false;
+  // TODO: Avoid rebuilding entire payload maps once controller exposes targeted update APIs.
 
   List<CsvReviewMessage> _scopedMessages(
     CsvFieldReview? field,
@@ -1093,11 +1114,9 @@ class _EditableCellState extends State<_EditableCell> {
       final bool hadMessages = previousMessages.isNotEmpty;
       final bool hasMessages = currentMessages.isNotEmpty;
       if (hasMessages) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _warningTooltipKey.currentState?.ensureTooltipVisible();
-        });
+        _setWarningTooltipVisibility(true);
       } else if (hadMessages && !hasMessages) {
-        Tooltip.dismissAllToolTips();
+        _setWarningTooltipVisibility(false);
       }
     }
   }
@@ -1107,12 +1126,37 @@ class _EditableCellState extends State<_EditableCell> {
     final List<CsvReviewMessage> scopedMessages =
         _scopedMessages(field, widget.fieldKey);
     if (_focusNode.hasFocus && scopedMessages.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _warningTooltipKey.currentState?.ensureTooltipVisible();
-      });
+      _setWarningTooltipVisibility(true);
     } else {
-      Tooltip.dismissAllToolTips();
+      _setWarningTooltipVisibility(false);
     }
+  }
+
+  void _setWarningTooltipVisibility(bool visible) {
+    if (_warningTooltipVisible == visible) {
+      if (visible) {
+        _scheduleWarningTooltipShow();
+      }
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _warningTooltipVisible = visible;
+    });
+    if (visible) {
+      _scheduleWarningTooltipShow();
+    }
+  }
+
+  void _scheduleWarningTooltipShow() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _warningTooltipKey.currentState?.ensureTooltipVisible();
+    });
   }
 
   CsvFieldReview? get _field => widget.row.fields[widget.fieldKey];
@@ -1135,8 +1179,8 @@ class _EditableCellState extends State<_EditableCell> {
   @override
   Widget build(BuildContext context) {
     final CsvFieldReview? field = _field;
-  final List<CsvReviewMessage> scopedMessages =
-    _scopedMessages(field, widget.fieldKey);
+    final List<CsvReviewMessage> scopedMessages =
+        _scopedMessages(field, widget.fieldKey);
     final bool hasWarning = field?.status == CsvFieldReviewStatus.warn ||
         field?.status == CsvFieldReviewStatus.bad;
     final bool showChangeHighlight = widget.isEdited;
@@ -1166,12 +1210,13 @@ class _EditableCellState extends State<_EditableCell> {
         filled: showChangeHighlight,
         fillColor:
             showChangeHighlight ? vividHighlight.withOpacity(0.16) : null,
-    suffixIcon: hasWarning && scopedMessages.isNotEmpty
+        suffixIcon: hasWarning && scopedMessages.isNotEmpty
             ? _FieldWarningIcon(
                 iconKey: Key(
                     'CsvTableOverview_field_warning_${widget.row.originalIndex}_${widget.fieldKey}'),
                 tooltipStateKey: _warningTooltipKey,
-        messages: scopedMessages,
+                messages: scopedMessages,
+                showTooltip: _warningTooltipVisible,
               )
             : null,
       ),
@@ -1215,11 +1260,13 @@ class _FieldWarningIcon extends StatelessWidget {
     required this.iconKey,
     required this.tooltipStateKey,
     required this.messages,
+    required this.showTooltip,
   });
 
   final Key iconKey;
   final GlobalKey<TooltipState> tooltipStateKey;
   final List<CsvReviewMessage> messages;
+  final bool showTooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -1229,6 +1276,14 @@ class _FieldWarningIcon extends StatelessWidget {
         key: iconKey,
         color: Colors.orange,
       );
+    }
+    final Widget icon = Icon(
+      Icons.warning_amber_outlined,
+      key: iconKey,
+      color: Colors.orange,
+    );
+    if (!showTooltip) {
+      return icon;
     }
     final String tooltipMessage = messages
         .map((CsvReviewMessage message) =>
@@ -1241,11 +1296,7 @@ class _FieldWarningIcon extends StatelessWidget {
       waitDuration: Duration.zero,
       showDuration: const Duration(days: 1),
       preferBelow: false,
-      child: Icon(
-        Icons.warning_amber_outlined,
-        key: iconKey,
-        color: Colors.orange,
-      ),
+      child: icon,
     );
   }
 }
