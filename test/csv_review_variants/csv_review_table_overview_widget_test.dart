@@ -179,14 +179,24 @@ void main() {
   expect(infoCheckbox.value, isFalse);
 
   Checkbox okCheckbox = tester.widget<Checkbox>(okCheckboxFinder);
+  expect(warnCheckbox.value, isFalse);
+  expect(infoCheckbox.value, isFalse);
   expect(okCheckbox.value, isFalse);
   await tester.tap(okToggle);
   await tester.pumpAndSettle();
+  warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
+  infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
   okCheckbox = tester.widget<Checkbox>(okCheckboxFinder);
+  expect(warnCheckbox.value, isTrue);
+  expect(infoCheckbox.value, isTrue);
   expect(okCheckbox.value, isTrue);
   await tester.tap(okToggle);
   await tester.pumpAndSettle();
+  warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
+  infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
   okCheckbox = tester.widget<Checkbox>(okCheckboxFinder);
+  expect(warnCheckbox.value, isFalse);
+  expect(infoCheckbox.value, isFalse);
   expect(okCheckbox.value, isFalse);
 
   await tester.tap(totalToggle);

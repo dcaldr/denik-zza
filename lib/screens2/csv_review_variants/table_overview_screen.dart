@@ -409,8 +409,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
             InkWell(
               key: const Key('CsvTableOverview_summary_ok_toggle'),
               borderRadius: badgeRadius,
-              onTap: () =>
-                  _handleSummaryStatusTap(CsvRowReviewStatus.ok),
+              onTap: _handleSummaryValidTap,
               child: SummaryBadge(
                 key: const Key('CsvTableOverview_summary_ok_count'),
                 label: 'Platné',
@@ -457,6 +456,30 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     if (indices.isEmpty) {
       return;
     }
+    final bool allSelected = indices.every(_controller.isRowSelected);
+    _controller.setRowsSelected(indices, !allSelected);
+  }
+
+  void _handleSummaryValidTap() {
+    final Set<int> indexSet = <int>{};
+    for (final CsvRowReviewStatus status in <CsvRowReviewStatus>{
+      CsvRowReviewStatus.warn,
+      CsvRowReviewStatus.info,
+      CsvRowReviewStatus.ok,
+    }) {
+      final List<CsvReviewRow> rows =
+          _controller.groupedRows[status] ?? const <CsvReviewRow>[];
+      for (final CsvReviewRow row in rows) {
+        if (row.status == CsvRowReviewStatus.rejected) {
+          continue;
+        }
+        indexSet.add(row.originalIndex);
+      }
+    }
+    if (indexSet.isEmpty) {
+      return;
+    }
+  final List<int> indices = indexSet.toList()..sort();
     final bool allSelected = indices.every(_controller.isRowSelected);
     _controller.setRowsSelected(indices, !allSelected);
   }
