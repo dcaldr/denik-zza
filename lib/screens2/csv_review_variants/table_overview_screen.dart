@@ -648,36 +648,36 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     final List<CsvReviewRow> rows = _controller.rowsForStatus(_activeStatus);
     final ThemeData theme = Theme.of(context);
     final List<double>? columnWidths = _columnPixelWidths;
-  final List<DataColumn> currentColumns =
-    rows.isEmpty ? const <DataColumn>[] : _buildDataColumns(context, rows);
-    final bool canRenderMeasuredHeader = rows.isNotEmpty &&
-        columnWidths != null &&
-        columnWidths.length == currentColumns.length;
-    final double computedWidth = canRenderMeasuredHeader
-        ? columnWidths.fold<double>(0, (double sum, double value) => sum + value)
-        : math.max(_tableBodyWidth ?? minTableWidth, minTableWidth);
-    // TODO: Persist last measured widths to reduce fallback drift when the table rebuilds quickly.
-    final Widget headerRow;
-    if (rows.isEmpty) {
-      headerRow = const SizedBox.shrink();
-    } else if (canRenderMeasuredHeader) {
-      headerRow = _buildMeasuredHeaderRow(context, currentColumns, columnWidths);
-    } else {
-      final int columnCount = currentColumns.length;
-      final double equalWidth = columnCount == 0
-          ? computedWidth
-          : computedWidth / columnCount;
-      final List<double> fallbackWidths = List<double>.filled(
-        columnCount,
-        equalWidth,
-        growable: false,
-      );
-      headerRow = _buildMeasuredHeaderRow(
-        context,
-        currentColumns,
-        fallbackWidths,
-      );
-    }
+    final List<CsvReviewRow> headerSourceRows = rows.isNotEmpty
+        ? rows
+        : (_controller.rows.isNotEmpty
+            ? <CsvReviewRow>[_controller.rows.first]
+            : const <CsvReviewRow>[]);
+    final List<DataColumn> currentColumns =
+        _buildDataColumns(context, headerSourceRows);
+    final double targetWidth = math.max(_tableBodyWidth ?? minTableWidth, minTableWidth);
+    final List<double>? measuredHeaderWidths =
+        columnWidths != null && columnWidths.length == currentColumns.length
+            ? columnWidths
+            : null;
+    final List<double> effectiveColumnWidths = measuredHeaderWidths ??
+        _fallbackHeaderColumnWidths(context, currentColumns, targetWidth);
+    final double computedWidth = effectiveColumnWidths.isNotEmpty
+        ? effectiveColumnWidths.fold<double>(0, (double sum, double value) => sum + value)
+        : targetWidth;
+    final Widget headerRow = currentColumns.isEmpty
+        ? const SizedBox.shrink()
+        : _buildMeasuredHeaderRow(
+            context,
+            currentColumns,
+            effectiveColumnWidths.isEmpty
+                ? List<double>.filled(
+                    currentColumns.length,
+                    computedWidth / currentColumns.length,
+                    growable: false,
+                  )
+                : effectiveColumnWidths,
+          );
 
     return SizedBox(
       height: height,
@@ -775,6 +775,108 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
         ),
       ),
     );
+  }
+
+  List<double> _fallbackHeaderColumnWidths(
+    BuildContext context,
+    List<DataColumn> columns,
+    double targetWidth,
+  ) {
+    if (columns.isEmpty) {
+      return const <double>[];
+    }
+    final double resolvedTargetWidth = targetWidth <= 0
+        ? columns.length * 120.0
+        : targetWidth;
+    final TextStyle headerStyle =
+        Theme.of(context).textTheme.titleSmall ?? const TextStyle(fontSize: 14);
+    final List<double> baseWidths = <double>[];
+    for (int i = 0; i < columns.length; i++) {
+      final double intrinsic = _measureHeaderLabelWidth(
+        columns[i].label,
+        headerStyle,
+      );
+      final double padding = i <= 1 ? 24.0 : 40.0;
+      double baseWidth = intrinsic + padding;
+      if (i == 0) {
+        baseWidth = 56.0;
+      } else if (i == 1) {
+        baseWidth = math.max(128.0, baseWidth);
+      } else {
+        baseWidth = math.max(128.0, baseWidth);
+      }
+      baseWidths.add(baseWidth);
+    }
+
+    final double baseTotal =
+        baseWidths.fold<double>(0, (double sum, double value) => sum + value);
+    if (baseTotal == 0) {
+      return List<double>.filled(
+        columns.length,
+        resolvedTargetWidth / columns.length,
+        growable: false,
+      );
+    }
+
+    if ((baseTotal - resolvedTargetWidth).abs() <= 0.5) {
+      return baseWidths;
+    }
+
+    final List<double> result = List<double>.from(baseWidths, growable: false);
+    if (baseTotal < resolvedTargetWidth) {
+      final double extra = resolvedTargetWidth - baseTotal;
+      final int adjustableCount = result.length <= 1 ? result.length : result.length - 1;
+      if (adjustableCount == 0) {
+        result[0] += extra;
+        return result;
+      }
+      final double adjustableBase = result.skip(1).fold<double>(0, (double sum, double value) => sum + value);
+      for (int i = 1; i < result.length; i++) {
+        final double share = adjustableBase == 0
+            ? extra / adjustableCount
+            : extra * (result[i] / adjustableBase);
+        result[i] += share;
+      }
+      return result;
+    }
+
+    final double scale = resolvedTargetWidth / baseTotal;
+    for (int i = 0; i < result.length; i++) {
+      final double minimum = i == 0 ? 48.0 : 96.0;
+      result[i] = math.max(minimum, result[i] * scale);
+    }
+
+    final double scaledTotal =
+        result.fold<double>(0, (double sum, double value) => sum + value);
+    if (scaledTotal < resolvedTargetWidth) {
+      final double deficit = resolvedTargetWidth - scaledTotal;
+      final double increment = deficit / result.length;
+      for (int i = 0; i < result.length; i++) {
+        result[i] += increment;
+      }
+    }
+    return result;
+  }
+
+  double _measureHeaderLabelWidth(Widget label, TextStyle fallbackStyle) {
+    if (label is SizedBox && label.width != null) {
+      return label.width!;
+    }
+    if (label is Text) {
+      final InlineSpan innerSpan = label.textSpan ??
+          TextSpan(text: label.data ?? '', style: label.style);
+      final TextSpan wrappedSpan = TextSpan(
+        style: fallbackStyle,
+        children: <InlineSpan>[innerSpan],
+      );
+      final TextPainter painter = TextPainter(
+        text: wrappedSpan,
+        maxLines: 1,
+        textDirection: TextDirection.ltr,
+      )..layout();
+      return painter.width;
+    }
+    return 128.0;
   }
 
   Widget _buildFooterButtons(BuildContext context) {
@@ -1047,8 +1149,7 @@ class _EditableCell extends StatefulWidget {
 class _EditableCellState extends State<_EditableCell> {
   late TextEditingController _controller;
   late FocusNode _focusNode;
-  final GlobalKey<TooltipState> _warningTooltipKey =
-      GlobalKey<TooltipState>();
+  GlobalKey<TooltipState> _warningTooltipKey = GlobalKey<TooltipState>();
   bool _warningTooltipVisible = false;
   // TODO: Avoid rebuilding entire payload maps once controller exposes targeted update APIs.
 
@@ -1144,6 +1245,9 @@ class _EditableCellState extends State<_EditableCell> {
     }
     setState(() {
       _warningTooltipVisible = visible;
+      if (!visible) {
+        _warningTooltipKey = GlobalKey<TooltipState>();
+      }
     });
     if (visible) {
       _scheduleWarningTooltipShow();
@@ -1165,6 +1269,27 @@ class _EditableCellState extends State<_EditableCell> {
 
   String _normalizeForPayload(String value) {
     return normalizeCsvFieldInput(widget.fieldKey, value, _field);
+  }
+
+  Future<void> _persistIfChanged(BuildContext context, String userValue) async {
+    final String normalizedValue = _normalizeForPayload(userValue);
+    final String previousValue = _field?.normalizedValue ?? '';
+    if (previousValue == normalizedValue) {
+      return;
+    }
+    final Map<String, String?> payload =
+        widget.controller.buildPayload(widget.row);
+    payload[widget.fieldKey] = normalizedValue;
+    try {
+      await widget.controller.editRow(widget.row, payload);
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Úpravu se nepodařilo uložit.')),
+      );
+    }
   }
 
   @override
@@ -1216,39 +1341,14 @@ class _EditableCellState extends State<_EditableCell> {
                     'CsvTableOverview_field_warning_${widget.row.originalIndex}_${widget.fieldKey}'),
                 tooltipStateKey: _warningTooltipKey,
                 messages: scopedMessages,
-                showTooltip: _warningTooltipVisible,
               )
             : null,
       ),
       onFieldSubmitted: (String value) async {
-        final Map<String, String?> payload =
-            widget.controller.buildPayload(widget.row);
-        payload[widget.fieldKey] = _normalizeForPayload(value);
-        try {
-          await widget.controller.editRow(widget.row, payload);
-        } catch (_) {
-          if (!mounted) {
-            return;
-          }
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Úpravu se nepodařilo uložit.')),
-          );
-        }
+        await _persistIfChanged(context, value);
       },
       onTapOutside: (PointerDownEvent _) async {
-        final Map<String, String?> payload =
-            widget.controller.buildPayload(widget.row);
-        payload[widget.fieldKey] = _normalizeForPayload(_controller.text);
-        try {
-          await widget.controller.editRow(widget.row, payload);
-        } catch (_) {
-          if (!mounted) {
-            return;
-          }
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Úpravu se nepodařilo uložit.')),
-          );
-        }
+        await _persistIfChanged(context, _controller.text);
       },
     );
   }
@@ -1260,13 +1360,11 @@ class _FieldWarningIcon extends StatelessWidget {
     required this.iconKey,
     required this.tooltipStateKey,
     required this.messages,
-    required this.showTooltip,
   });
 
   final Key iconKey;
   final GlobalKey<TooltipState> tooltipStateKey;
   final List<CsvReviewMessage> messages;
-  final bool showTooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -1282,9 +1380,6 @@ class _FieldWarningIcon extends StatelessWidget {
       key: iconKey,
       color: Colors.orange,
     );
-    if (!showTooltip) {
-      return icon;
-    }
     final String tooltipMessage = messages
         .map((CsvReviewMessage message) =>
             '${_severityLabel(message.severity)}: ${message.message}')

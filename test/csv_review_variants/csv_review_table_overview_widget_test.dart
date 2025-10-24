@@ -414,6 +414,38 @@ void main() {
   expect(scrolledTableHeaderTop, closeTo(initialTableHeaderTop, 0.1));
   });
 
+  testWidgets('header keeps column labels when filter yields no rows',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CsvReviewTableOverviewScreen(
+          filePath: 'ignored.csv',
+          service: _NoWarnRowsService(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('CsvTableFilter_warn')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Žádné řádky pro vybraný filtr.'),
+      findsOneWidget,
+    );
+
+    final Finder headerFinder =
+        find.byKey(const Key('CsvTableOverview_table_header'));
+    expect(headerFinder, findsOneWidget);
+    expect(
+      find.descendant(
+        of: headerFinder,
+        matching: find.text('Jméno'),
+      ),
+      findsOneWidget,
+    );
+  });
+
   test('controller preserves row index after edits', () async {
     final _MisindexedService service = _MisindexedService();
     final CsvReviewPrototypeController controller =
@@ -623,6 +655,81 @@ class _WidgetFakeService implements CsvReviewService {
         ),
       ],
     };
+  }
+}
+
+class _NoWarnRowsService implements CsvReviewService {
+  _NoWarnRowsService()
+      : _rows = <CsvReviewRow>[
+          _buildRow(1, 'Petr', 'Svoboda', status: CsvRowReviewStatus.ok),
+        ];
+
+  final List<CsvReviewRow> _rows;
+
+  @override
+  Future<CsvImportSession> loadCsv(String path) async {
+    return CsvImportSession(
+      review: CsvImportReview(
+        unparsedColumns: const <String>[],
+        rows: _rows,
+      ),
+      personResult: PersonResult(<Answer>[]),
+    );
+  }
+
+  @override
+  Future<CsvReviewRow> reparseRow(Map<String, String?> updatedFields) async {
+    final CsvReviewRow current = _rows.first;
+    final Map<String, CsvFieldReview> updatedFieldsMap =
+        Map<String, CsvFieldReview>.from(current.fields);
+    updatedFields.forEach((String key, String? value) {
+      final CsvFieldReview? original = updatedFieldsMap[key];
+      if (original == null) {
+        return;
+      }
+      updatedFieldsMap[key] = CsvFieldReview(
+        columnKey: original.columnKey,
+        columnName: original.columnName,
+        status: original.status,
+        originalValue: value ?? original.originalValue,
+        normalizedValue: value ?? original.normalizedValue,
+        inferred: original.inferred,
+        messages: original.messages,
+      );
+    });
+    final CsvReviewRow updated = CsvReviewRow(
+      originalIndex: current.originalIndex,
+      status: current.status,
+      messages: current.messages,
+      fields: updatedFieldsMap,
+      derived: current.derived,
+    );
+    _rows[0] = updated;
+    return updated;
+  }
+
+  @override
+  Future<CsvFinalizeResult> finalizeImport({
+    required CsvImportSession session,
+    required Map<int, CsvRowDecision> decisions,
+  }) async {
+    return CsvFinalizeResult(
+      approvedCount: decisions.values
+          .where((CsvRowDecision decision) => decision == CsvRowDecision.approved)
+          .length,
+      rejectedCount: decisions.values
+          .where((CsvRowDecision decision) => decision == CsvRowDecision.rejected)
+          .length,
+      savedRowIndices: const <int>[],
+      failures: const <CsvFinalizeFailure>[],
+    );
+  }
+
+  @override
+  Future<Map<int, List<CsvDuplicateCandidate>>> findPotentialDuplicates({
+    required CsvImportSession session,
+  }) async {
+    return const <int, List<CsvDuplicateCandidate>>{};
   }
 }
 
