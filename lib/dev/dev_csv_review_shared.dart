@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
+import 'package:denik_zza/screens2/csv_review_variants/import_screen.dart';
 import 'package:denik_zza/screens2/csv_review_variants/table_overview_screen.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:flutter/material.dart';
@@ -32,6 +33,7 @@ String resolveProjectFile(String relativePath) {
 /// Identifiers for available CSV review prototypes.
 enum CsvReviewPrototypeId {
   tableOverview,
+  importFlow,
 }
 
 /// Metadata describing a CSV review prototype variant.
@@ -60,10 +62,21 @@ const Map<CsvReviewPrototypeId, CsvReviewPrototypeEntry>
         'Sticky souhrn, DataTable s inline úpravami a rychlými bulk akcemi.',
     builder: _buildTableOverview,
   ),
+  CsvReviewPrototypeId.importFlow: CsvReviewPrototypeEntry(
+    id: CsvReviewPrototypeId.importFlow,
+    title: 'Importní flow',
+    description:
+        'Výběr CSV souboru a následný přechod do tabulkového přehledu.',
+    builder: _buildImportFlow,
+  ),
 };
 
 Widget _buildTableOverview(String filePath, {CsvReviewService? service}) {
   return CsvReviewTableOverviewScreen(filePath: filePath, service: service);
+}
+
+Widget _buildImportFlow(String filePath, {CsvReviewService? service}) {
+  return const CsvImportScreen();
 }
 
 /// Common Material app used by prototype dev entry points.
