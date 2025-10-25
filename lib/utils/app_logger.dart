@@ -4,6 +4,8 @@ import 'package:logger/logger.dart';
 ///
 /// - Use AppLogger.l everywhere instead of creating new Logger() instances.
 /// - Tests can call [configureForTests] to reduce noise (e.g., only errors).
+const String csvImportFlowLogTag = 'CSV_IMPORT_FLOW';
+
 class AppLogger {
   AppLogger._();
 

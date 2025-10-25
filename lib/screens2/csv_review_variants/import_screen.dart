@@ -197,7 +197,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
         _isPicking = false;
       });
     } catch (error, stackTrace) {
-      _logger.e('Failed to pick CSV file.',
+      _logger.e('$csvImportFlowLogTag: Failed to pick CSV file.',
           error: error, stackTrace: stackTrace);
       if (!mounted) {
         return;
@@ -221,6 +221,10 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
       _isNavigating = true;
     });
 
+    _logger.i(
+      '$csvImportFlowLogTag: Navigating to table overview for ${payload.displayName}.',
+    );
+
     final CsvFinalizeResult? result =
         await Navigator.of(context).push<CsvFinalizeResult?>(
       MaterialPageRoute<CsvFinalizeResult?>(
@@ -243,6 +247,9 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
     });
 
     if (result != null && mounted) {
+      _logger.i(
+        '$csvImportFlowLogTag: Flow returned from review with finalize result (saved=${result.savedCount}, failed=${result.failedCount}).',
+      );
       Navigator.of(context).pop(result);
     }
   }
@@ -264,7 +271,8 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
       final Uint8List? bytes = file.bytes;
       if (bytes == null) {
         _logger.e(
-            'File picker did not provide bytes for web payload. Name: ${file.name}');
+          '$csvImportFlowLogTag: File picker did not provide bytes for web payload. Name: ${file.name}',
+        );
         _showSnackBar('Soubor se nepodařilo načíst z prohlížeče.');
         return null;
       }
@@ -297,7 +305,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
         displayName: displayName,
       );
     } catch (error, stackTrace) {
-      _logger.e('Failed to prepare CSV payload.',
+    _logger.e('$csvImportFlowLogTag: Failed to prepare CSV payload.',
           error: error, stackTrace: stackTrace);
       if (mounted) {
         _showSnackBar(
@@ -333,7 +341,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
       await TempCsvStorage.deleteFile(_tempFilePath!);
     } catch (error, stackTrace) {
       _logger.w(
-        'Failed to delete temporary CSV file created during import.',
+        '$csvImportFlowLogTag: Failed to delete temporary CSV file created during import.',
         error: error,
         stackTrace: stackTrace,
       );

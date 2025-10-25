@@ -5,8 +5,10 @@ import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/services/models/csv_import_payload.dart';
 import 'package:denik_zza/screens2/csv_review/widgets/summary_section.dart';
 import 'package:denik_zza/screens2/csv_review/widgets/unparsed_columns_section.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:logger/logger.dart';
 
 import 'csv_review_shared.dart';
 import 'summary_screen.dart';
@@ -84,6 +86,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
   List<double>? _columnPixelWidths;
   final GlobalKey<TooltipState> _rejectedSummaryTooltipKey =
       GlobalKey<TooltipState>();
+  final Logger _logger = AppLogger.l;
 
   CsvReviewPrototypeController get _controller => widget.controller;
 
@@ -975,11 +978,17 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     }
 
     try {
+      _logger.i(
+        '$csvImportFlowLogTag: Finalize requested (approved=${_controller.approvedCount}, fileLabel=${_controller.importFileLabel ?? 'CSV soubor'}).',
+      );
       final CsvFinalizeResult? result = await _controller.finalizeImport();
       if (!mounted) {
         return;
       }
       if (result == null) {
+        _logger.w(
+          '$csvImportFlowLogTag: Finalize returned null result; keeping user on table overview.',
+        );
         const SnackBar message = SnackBar(
           content: Text('Import nelze dokončit. Zkuste to prosím znovu.'),
         );
@@ -992,15 +1001,23 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
               ? _controller.importFileLabel!
               : 'CSV soubor';
 
+      _logger.i(
+        '$csvImportFlowLogTag: Finalize succeeded (saved=${result.savedCount}, failed=${result.failedCount}). Opening summary.',
+      );
       await CsvImportSummaryScreen.openAfterFinalize(
         context: context,
         result: result,
         importFileLabel: label,
       );
-    } catch (_) {
+    } on Object catch (error, stackTrace) {
       if (!mounted) {
         return;
       }
+      _logger.e(
+        '$csvImportFlowLogTag: Finalize import failed.',
+        error: error,
+        stackTrace: stackTrace,
+      );
       const SnackBar message = SnackBar(
         content: Text('Dokončení importu selhalo. Zkuste to prosím znovu.'),
       );
