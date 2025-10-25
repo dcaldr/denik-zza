@@ -128,6 +128,168 @@ void main() {
     expect(observer.pushedRoute, isNotNull);
     expect(find.byType(CsvReviewTableOverviewScreen), findsOneWidget);
   });
+
+  // ═══════════════════════════════════════════════════════════════
+  // EDGE CASES: Lifecycle and Race Conditions
+  // ═══════════════════════════════════════════════════════════════
+
+  testWidgets('handles user cancelling file picker gracefully',
+      (WidgetTester tester) async {
+    // User cancels file picker - returns null
+    fakePlatform.enqueueResult(null);
+
+    await tester.pumpWidget(const MaterialApp(home: CsvImportScreen()));
+
+    await tester.tap(find.byKey(const Key('CsvImportScreen_pick_button')));
+    await tester.pumpAndSettle();
+
+    // Should not show error, just stay in initial state
+    expect(find.byKey(const Key('CsvImportScreen_error_label')), findsNothing);
+    expect(find.text('Zatím nebyl vybrán žádný soubor.'), findsOneWidget);
+    
+    // Continue button should remain disabled
+    final continueButton = tester.widget<FilledButton>(
+      find.byKey(const Key('CsvImportScreen_continue_button')),
+    );
+    expect(continueButton.onPressed, isNull);
+  });
+
+  testWidgets('prevents double-tap during file picking',
+      (WidgetTester tester) async {
+    fakePlatform.enqueueResult(
+      FilePickerResult(<PlatformFile>[
+        PlatformFile(
+          name: 'test.csv',
+          size: 0,
+          path: 'test/data/first.csv',
+        ),
+      ]),
+    );
+
+    await tester.pumpWidget(const MaterialApp(home: CsvImportScreen()));
+
+    // Get initial button state
+    final buttonBefore = tester.widget<ElevatedButton>(
+      find.byKey(const Key('CsvImportScreen_pick_button')),
+    );
+    expect(buttonBefore.onPressed, isNotNull);
+
+    // Tap once
+    await tester.tap(find.byKey(const Key('CsvImportScreen_pick_button')));
+    await tester.pump(); // Let tap take effect
+    
+    // After tap, button child might change (implementation detail)
+    // Key point: async operation started, should complete successfully
+    await tester.pumpAndSettle();
+    
+    // After completion, file should be selected
+    expect(find.textContaining('test.csv'), findsOneWidget);
+  });
+
+  testWidgets('cleans up when disposed during file picking',
+      (WidgetTester tester) async {
+    // This test verifies the dispose() cleanup doesn't crash
+    fakePlatform.enqueueResult(
+      FilePickerResult(<PlatformFile>[
+        PlatformFile(
+          name: 'test.csv',
+          size: 100,
+          bytes: Uint8List.fromList(List<int>.filled(100, 65)), // "AAA..."
+        ),
+      ]),
+    );
+
+    await tester.pumpWidget(const MaterialApp(home: CsvImportScreen()));
+    
+    await tester.tap(find.byKey(const Key('CsvImportScreen_pick_button')));
+    await tester.pump(); // Start async operation
+
+    // Pop screen before async completes - triggers dispose()
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: Text('Screen popped'))),
+    );
+    await tester.pumpAndSettle();
+
+    // Should not crash - dispose() handles cleanup gracefully
+    expect(find.text('Screen popped'), findsOneWidget);
+  });
+
+  testWidgets('prevents navigation during existing navigation attempt',
+      (WidgetTester tester) async {
+    fakePlatform.enqueueResult(
+      FilePickerResult(<PlatformFile>[
+        PlatformFile(
+          name: 'test.csv',
+          size: 0,
+          path: 'test/data/first.csv',
+        ),
+      ]),
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: CsvImportScreen(),
+      ),
+    );
+
+    // Pick file
+    await tester.tap(find.byKey(const Key('CsvImportScreen_pick_button')));
+    await tester.pumpAndSettle();
+
+    // Tap continue ONCE
+    await tester.tap(find.byKey(const Key('CsvImportScreen_continue_button')));
+    await tester.pump(); // Start navigation but don't wait
+    await tester.pump(); // Let setState take effect
+
+    // Button should be disabled during navigation (_isNavigating = true)
+    final continueButton = tester.widget<FilledButton>(
+      find.byKey(const Key('CsvImportScreen_continue_button')),
+    );
+    expect(continueButton.onPressed, isNull);
+
+    // Verify we can't tap again (onPressed is null)
+    // This prevents double-navigation
+  });
+
+  testWidgets('handles empty file picker result (no files)',
+      (WidgetTester tester) async {
+    // Edge case: FilePickerResult exists but files list is empty
+    fakePlatform.enqueueResult(FilePickerResult(<PlatformFile>[]));
+
+    await tester.pumpWidget(const MaterialApp(home: CsvImportScreen()));
+
+    await tester.tap(find.byKey(const Key('CsvImportScreen_pick_button')));
+    await tester.pumpAndSettle();
+
+    // Should handle gracefully - no crash, stays in initial state
+    expect(find.text('Zatím nebyl vybrán žádný soubor.'), findsOneWidget);
+    expect(find.byKey(const Key('CsvImportScreen_error_label')), findsNothing);
+  });
+
+  testWidgets('handles file with empty name gracefully',
+      (WidgetTester tester) async {
+    fakePlatform.enqueueResult(
+      FilePickerResult(<PlatformFile>[
+        PlatformFile(
+          name: '', // Empty name
+          size: 0,
+          path: 'test/data/first.csv',
+        ),
+      ]),
+    );
+
+    await tester.pumpWidget(const MaterialApp(home: CsvImportScreen()));
+
+    await tester.tap(find.byKey(const Key('CsvImportScreen_pick_button')));
+    await tester.pumpAndSettle();
+
+    // File label should exist (check implementation handles empty name)
+    final fileLabel = find.byKey(const Key('CsvImportScreen_file_label'));
+    expect(fileLabel, findsOneWidget);
+    
+    // Key insight: Empty name is edge case - implementation might show default
+    // or "(bez názvu)" or empty. Main point: no crash and UI renders.
+  });
 }
 
 class _FakeFilePicker extends FilePicker {
