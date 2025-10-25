@@ -3,11 +3,13 @@ import 'package:denik_zza/input/input_hold.dart';
 import 'package:denik_zza/input/input_parser.dart' show ParseStatus;
 import 'package:denik_zza/input/text_tools.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
+import 'package:denik_zza/services/models/csv_import_payload.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:path/path.dart' as p;
 
 /// Signature for building a prototype widget once the controller is ready.
 typedef CsvReviewPrototypeWidgetBuilder = Widget Function(
@@ -20,12 +22,29 @@ typedef CsvReviewPrototypeWidgetBuilder = Widget Function(
 /// mutation helpers backed by [CsvReviewService].
 class CsvReviewPrototypeController extends ChangeNotifier {
   CsvReviewPrototypeController({
-    required this.filePath,
+    required this.payload,
     CsvReviewService? service,
   })  : service = service ?? CsvImportService(),
         _logger = AppLogger.l;
 
-  final String filePath;
+  /// Convenience constructor preserving legacy path-based setup.
+  factory CsvReviewPrototypeController.fromPath({
+    required String path,
+    String? displayName,
+    CsvReviewService? service,
+  }) {
+    final String label = (displayName ?? p.basename(path)).trim();
+    return CsvReviewPrototypeController(
+      payload: CsvImportPayload.fromPath(
+        path: path,
+        displayName: label,
+      ),
+      service: service,
+    );
+  }
+
+  /// Platform-aware description of the source CSV.
+  final CsvImportPayload payload;
   final CsvReviewService service;
   final Logger _logger;
 
@@ -44,6 +63,12 @@ class CsvReviewPrototypeController extends ChangeNotifier {
   Set<int> _loadingRows = <int>{};
   Map<int, List<CsvDuplicateCandidate>> _duplicateMatches =
       <int, List<CsvDuplicateCandidate>>{};
+
+  /// Filename label exposed to the UI.
+  String? get importFileLabel {
+    final String label = payload.displayName.trim();
+    return label.isEmpty ? null : label;
+  }
 
   bool get isLoading => _isLoading;
   bool get isFinalizing => _isFinalizing;
@@ -162,7 +187,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final CsvImportSession loadedSession = await service.loadCsv(filePath);
+    final CsvImportSession loadedSession =
+      await service.loadCsvFromPayload(payload);
       Map<int, List<CsvDuplicateCandidate>> duplicates =
           <int, List<CsvDuplicateCandidate>>{};
       try {
@@ -905,14 +931,19 @@ class DerivedValueDisplay {
 class CsvReviewPrototypeHost extends StatefulWidget {
   const CsvReviewPrototypeHost({
     super.key,
-    required this.filePath,
+    this.filePath,
+    this.payload,
     required this.builder,
     this.service,
     this.loadingBuilder,
     this.errorBuilder,
-  });
+  }) : assert(
+          filePath != null || payload != null,
+          'Either filePath or payload must be provided.',
+        );
 
-  final String filePath;
+  final String? filePath;
+  final CsvImportPayload? payload;
   final CsvReviewPrototypeWidgetBuilder builder;
   final CsvReviewService? service;
   final WidgetBuilder? loadingBuilder;
@@ -928,10 +959,7 @@ class _CsvReviewPrototypeHostState extends State<CsvReviewPrototypeHost> {
   @override
   void initState() {
     super.initState();
-    _controller = CsvReviewPrototypeController(
-      filePath: widget.filePath,
-      service: widget.service,
-    );
+    _controller = _createController();
     _controller.addListener(_handleControllerChanged);
     _controller.load();
   }
@@ -939,14 +967,10 @@ class _CsvReviewPrototypeHostState extends State<CsvReviewPrototypeHost> {
   @override
   void didUpdateWidget(covariant CsvReviewPrototypeHost oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.filePath != oldWidget.filePath ||
-        widget.service != oldWidget.service) {
+    if (_shouldRecreateController(oldWidget)) {
       _controller.removeListener(_handleControllerChanged);
       _controller.dispose();
-      _controller = CsvReviewPrototypeController(
-        filePath: widget.filePath,
-        service: widget.service,
-      );
+      _controller = _createController();
       _controller.addListener(_handleControllerChanged);
       _controller.load();
     }
@@ -963,6 +987,29 @@ class _CsvReviewPrototypeHostState extends State<CsvReviewPrototypeHost> {
     if (mounted) {
       setState(() {});
     }
+  }
+
+  CsvReviewPrototypeController _createController() {
+    if (widget.payload != null) {
+      return CsvReviewPrototypeController(
+        payload: widget.payload!,
+        service: widget.service,
+      );
+    }
+    return CsvReviewPrototypeController.fromPath(
+      path: widget.filePath!,
+      service: widget.service,
+    );
+  }
+
+  bool _shouldRecreateController(CsvReviewPrototypeHost oldWidget) {
+    if (widget.service != oldWidget.service) {
+      return true;
+    }
+    if (widget.payload != null || oldWidget.payload != null) {
+      return widget.payload != oldWidget.payload;
+    }
+    return widget.filePath != oldWidget.filePath;
   }
 
   @override

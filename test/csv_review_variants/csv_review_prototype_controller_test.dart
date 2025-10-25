@@ -2,6 +2,7 @@ import 'package:denik_zza/input/csv_review_models.dart';
 import 'package:denik_zza/input/input_parser.dart';
 import 'package:denik_zza/screens2/csv_review_variants/csv_review_shared.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
+import 'package:denik_zza/services/models/csv_import_payload.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -11,8 +12,8 @@ void main() {
 
     setUp(() {
       service = _FakeCsvReviewService();
-      controller = CsvReviewPrototypeController(
-        filePath: 'ignored.csv',
+      controller = CsvReviewPrototypeController.fromPath(
+        path: 'ignored.csv',
         service: service,
       );
     });
@@ -96,6 +97,14 @@ class _FakeCsvReviewService implements CsvReviewService {
       review: review,
       personResult: PersonResult(<Answer>[]),
     );
+  }
+
+  @override
+  Future<CsvImportSession> loadCsvFromPayload(CsvImportPayload payload) {
+    if (payload.hasPath) {
+      return loadCsv(payload.path!);
+    }
+    throw UnsupportedError('In-memory payloads are not supported in this test.');
   }
 
   @override

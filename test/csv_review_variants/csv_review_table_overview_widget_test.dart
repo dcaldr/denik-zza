@@ -3,6 +3,7 @@ import 'package:denik_zza/input/input_parser.dart';
 import 'package:denik_zza/screens2/csv_review_variants/table_overview_screen.dart';
 import 'package:denik_zza/screens2/csv_review_variants/csv_review_shared.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
+import 'package:denik_zza/services/models/csv_import_payload.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -449,8 +450,8 @@ void main() {
   test('controller preserves row index after edits', () async {
     final _MisindexedService service = _MisindexedService();
     final CsvReviewPrototypeController controller =
-        CsvReviewPrototypeController(
-      filePath: 'ignored.csv',
+        CsvReviewPrototypeController.fromPath(
+      path: 'ignored.csv',
       service: service,
     );
 
@@ -549,6 +550,13 @@ class _WidgetFakeService implements CsvReviewService {
   }
 
   @override
+  Future<CsvImportSession> loadCsvFromPayload(CsvImportPayload payload) {
+    if (payload.path != null && payload.path!.isNotEmpty) {
+      return loadCsv(payload.path!);
+    }
+    throw UnsupportedError('In-memory payloads are not supported in this widget test.');
+  }
+  @override
   Future<CsvReviewRow> reparseRow(Map<String, String?> updatedFields) async {
     lastPayload = Map<String, String?>.from(updatedFields);
     final CsvReviewRow existing = _rows.first;
@@ -608,9 +616,9 @@ class _WidgetFakeService implements CsvReviewService {
       );
     });
 
-  final List<CsvReviewMessage> rowMessages = invalidGender
-    ? <CsvReviewMessage>[genderMessage, rodneCisloMessage]
-    : existing.messages;
+    final List<CsvReviewMessage> rowMessages = invalidGender
+        ? <CsvReviewMessage>[genderMessage, rodneCisloMessage]
+        : existing.messages;
 
     final CsvReviewRow updated = CsvReviewRow(
       originalIndex: existing.originalIndex,
@@ -675,6 +683,14 @@ class _NoWarnRowsService implements CsvReviewService {
       ),
       personResult: PersonResult(<Answer>[]),
     );
+  }
+
+  @override
+  Future<CsvImportSession> loadCsvFromPayload(CsvImportPayload payload) {
+    if (payload.path != null && payload.path!.isNotEmpty) {
+      return loadCsv(payload.path!);
+    }
+    throw UnsupportedError('In-memory payloads are not supported in this widget test.');
   }
 
   @override
@@ -762,6 +778,14 @@ class _MisindexedService implements CsvReviewService {
       ),
       personResult: PersonResult(<Answer>[]),
     );
+  }
+
+  @override
+  Future<CsvImportSession> loadCsvFromPayload(CsvImportPayload payload) {
+    if (payload.path != null && payload.path!.isNotEmpty) {
+      return loadCsv(payload.path!);
+    }
+    throw UnsupportedError('In-memory payloads are not supported in this widget test.');
   }
 
   @override

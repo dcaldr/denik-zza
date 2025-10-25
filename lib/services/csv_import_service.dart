@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:denik_zza/csv/csv_definitions.dart';
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
@@ -6,7 +8,10 @@ import 'package:denik_zza/input/csv_review_models.dart';
 import 'package:denik_zza/input/input_hold.dart';
 import 'package:denik_zza/input/input_parser.dart';
 import 'package:denik_zza/input/text_tools.dart';
+import 'package:denik_zza/services/models/csv_import_payload.dart';
 import 'package:denik_zza/utils/app_logger.dart';
+import 'package:denik_zza/utils/temp_csv_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 
 /// Result bundle returned after loading a CSV file.
@@ -77,6 +82,9 @@ abstract class CsvReviewService {
   /// Loads a CSV file and prepares the review session.
   Future<CsvImportSession> loadCsv(String path);
 
+  /// Loads CSV data using a platform-aware payload abstraction.
+  Future<CsvImportSession> loadCsvFromPayload(CsvImportPayload payload);
+
   /// Recomputes a single review row using updated field values.
   Future<CsvReviewRow> reparseRow(Map<String, String?> updatedFields);
 
@@ -118,6 +126,59 @@ class CsvImportService implements CsvReviewService {
       throw StateError('CSV parsing did not produce review data.');
     }
     return CsvImportSession(review: review, personResult: result);
+  }
+
+  @override
+  Future<CsvImportSession> loadCsvFromPayload(CsvImportPayload payload) async {
+    if (payload.hasPath) {
+      return loadCsv(payload.path!);
+    }
+
+    final Uint8List? inMemoryBytes = payload.bytes;
+    if (inMemoryBytes != null) {
+      if (kIsWeb) {
+        _logger.w(
+          'CSV import via bytes is not supported on web yet. Display name: ${payload.displayName}',
+        );
+        throw UnsupportedError(
+          'Načtení CSV souboru z paměti není ve webové verzi zatím podporováno.',
+        );
+      }
+
+      String? tempPath;
+      try {
+        tempPath = await TempCsvStorage.writeBytes(
+          inMemoryBytes,
+          suggestedName: payload.displayName,
+        );
+        // TODO: cover bytes-to-temp flow in service tests (TASK-5.3).
+        return await loadCsv(tempPath);
+      } catch (error, stackTrace) {
+        _logger.e(
+          'Failed to load CSV from payload.',
+          error: error,
+          stackTrace: stackTrace,
+        );
+        rethrow;
+      } finally {
+        if (tempPath != null) {
+          try {
+            await TempCsvStorage.deleteFile(tempPath);
+          } catch (cleanupError, cleanupStack) {
+            _logger.w(
+              'Failed to delete temporary CSV file.',
+              error: cleanupError,
+              stackTrace: cleanupStack,
+            );
+          }
+        }
+      }
+    }
+
+    _logger.w(
+      'CsvImportPayload missing both path and bytes. Display name: ${payload.displayName}',
+    );
+    throw ArgumentError('Nebyl poskytnut platný CSV soubor.');
   }
 
   /// Recomputes a single row using updated values supplied by the UI.

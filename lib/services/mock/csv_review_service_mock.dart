@@ -1,5 +1,6 @@
 import 'package:denik_zza/input/csv_review_models.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
+import 'package:denik_zza/services/models/csv_import_payload.dart';
 
 /// In-memory mock of [CsvReviewService] for widget tests and UI prototypes.
 ///
@@ -8,11 +9,13 @@ import 'package:denik_zza/services/csv_import_service.dart';
 class CsvReviewServiceMock implements CsvReviewService {
   CsvReviewServiceMock({
     required Future<CsvImportSession> Function(String path) onLoad,
+    Future<CsvImportSession> Function(CsvImportPayload payload)? onLoadPayload,
     Future<CsvReviewRow> Function(Map<String, String?> updatedFields)? onReparse,
     Future<CsvFinalizeResult> Function(CsvImportSession session, Map<int, CsvRowDecision> decisions)?
         onFinalize,
     Future<Map<int, List<CsvDuplicateCandidate>>> Function(CsvImportSession session)? onFindDuplicates,
   })  : _onLoad = onLoad,
+        _onLoadPayload = onLoadPayload,
         _onReparse = onReparse,
         _onFinalize = onFinalize,
         _onFindDuplicates = onFindDuplicates;
@@ -26,6 +29,7 @@ class CsvReviewServiceMock implements CsvReviewService {
   }) {
     return CsvReviewServiceMock(
       onLoad: (_) async => session,
+      onLoadPayload: (_) async => session,
       onReparse: (_) async {
         if (reparseRow != null) {
           return reparseRow;
@@ -47,6 +51,7 @@ class CsvReviewServiceMock implements CsvReviewService {
   }
 
   final Future<CsvImportSession> Function(String path) _onLoad;
+  final Future<CsvImportSession> Function(CsvImportPayload payload)? _onLoadPayload;
   final Future<CsvReviewRow> Function(Map<String, String?> updatedFields)? _onReparse;
   final Future<CsvFinalizeResult> Function(
       CsvImportSession session, Map<int, CsvRowDecision> decisions)? _onFinalize;
@@ -55,6 +60,7 @@ class CsvReviewServiceMock implements CsvReviewService {
 
   int loadInvocations = 0;
   String? lastLoadPath;
+  CsvImportPayload? lastLoadPayload;
   int reparseInvocations = 0;
   Map<String, String?>? lastReparsePayload;
   int finalizeInvocations = 0;
@@ -66,7 +72,28 @@ class CsvReviewServiceMock implements CsvReviewService {
   Future<CsvImportSession> loadCsv(String path) async {
     loadInvocations += 1;
     lastLoadPath = path;
+    lastLoadPayload = null;
     return _onLoad(path);
+  }
+
+  @override
+  Future<CsvImportSession> loadCsvFromPayload(CsvImportPayload payload) async {
+    if (payload.path != null && payload.path!.isNotEmpty) {
+      final CsvImportSession session = await loadCsv(payload.path!);
+      lastLoadPayload = payload;
+      return session;
+    }
+    final Future<CsvImportSession> Function(CsvImportPayload payload)? handler =
+        _onLoadPayload;
+    if (handler == null) {
+      throw UnsupportedError(
+        'CsvReviewServiceMock requires onLoadPayload to handle in-memory CSV payloads.',
+      );
+    }
+    loadInvocations += 1;
+    lastLoadPath = null;
+    lastLoadPayload = payload;
+    return handler(payload);
   }
 
   @override
