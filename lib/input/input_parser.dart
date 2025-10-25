@@ -33,7 +33,7 @@ var loggerNoStack = Logger(
 class InputParser {
   late Future<List<List<String>>?> loadedData; // CSV data loaded from file
   String filePath = ''; // FIXME: change to Path object
-  List<InputHold> definition = CsvDefinitions().mainCsv;
+  List<InputHold> definition = CsvColumnDefinitions.main;
   List<Answer> parsedData = [];
   PersonResult? result;
   CsvImportReview? review;

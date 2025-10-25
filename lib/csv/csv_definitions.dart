@@ -1,31 +1,31 @@
-import 'package:csv/csv.dart';
 import 'package:denik_zza/input/input_hold.dart';
 
+/// Column definitions for CSV import formats.
+/// Use static members instead of instantiation.
+class CsvColumnDefinitions {
+  // Private constructor to prevent instantiation
+  CsvColumnDefinitions._();
 
-/// defines variants for csv files
-class CsvDefinitions{
-  List<InputHold> mainCsv = [
-  JmenoHold(columnName: "jméno"),
-  JmenoHold(columnName: "příjmení"),
-  CisloPojisteniHold(columnName: "rodné číslo"),
-  PohlaviHold(columnName: "pohlaví"),
-  AdresaHold(columnName: "adresa"),
-  DatumNarozeniHold(columnName: "datum narození"),
+  /// Standard participant CSV format with all required fields.
+  static final List<InputHold> main = [
+    JmenoHold(columnName: "jméno"),
+    JmenoHold(columnName: "příjmení"),
+    CisloPojisteniHold(columnName: "rodné číslo"),
+    PohlaviHold(columnName: "pohlaví"),
+    AdresaHold(columnName: "adresa"),
+    DatumNarozeniHold(columnName: "datum narození"),
     JmenoHold(columnName: 'jméno rodič'),
-  TelefonHold(columnName: "telefon rodič"),
-  EmailHold(columnName: "email rodič"),
-  PotvrzeniHold(columnName: "způsobilost"),
-  PojistovnaHold(columnName: "pojišťovna"),
-  TextHold(columnName: "poznámka"),
-];
-  List<String> getColumnNames(List<InputHold> columnsList){
-    final List<String> result = [];
-    for (InputHold item in columnsList) {
-      result.add(item.columnName);
-    }
-    return result;
+    TelefonHold(columnName: "telefon rodič"),
+    EmailHold(columnName: "email rodič"),
+    PotvrzeniHold(columnName: "způsobilost"),
+    PojistovnaHold(columnName: "pojišťovna"),
+    TextHold(columnName: "poznámka"),
+  ];
+
+  /// Extract column names from a list of InputHold definitions.
+  static List<String> extractColumnNames(List<InputHold> columnsList) {
+    return columnsList.map((InputHold item) => item.columnName).toList();
   }
-  String getColumnNamesAsCsv(List<InputHold> columnsList){
-    return const ListToCsvConverter().convert([getColumnNames(columnsList)]);
-  }
+
+  // NOTE: getColumnNamesAsCsv() was deleted - never used in codebase
 }

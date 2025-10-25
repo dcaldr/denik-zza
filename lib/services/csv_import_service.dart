@@ -105,8 +105,7 @@ class CsvImportService implements CsvReviewService {
   CsvImportService({InputParser Function()? parserFactory})
       : _parserFactory = parserFactory ?? InputParser.new,
         _logger = AppLogger.l {
-    final CsvDefinitions definitions = CsvDefinitions();
-    _columnKeyToIndex = _buildColumnKeyIndex(definitions.mainCsv);
+    _columnKeyToIndex = _buildColumnKeyIndex(CsvColumnDefinitions.main);
   }
 
   final InputParser Function() _parserFactory;

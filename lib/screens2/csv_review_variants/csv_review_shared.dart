@@ -17,10 +17,35 @@ typedef CsvReviewPrototypeWidgetBuilder = Widget Function(
   CsvReviewPrototypeController controller,
 );
 
-/// Shared controller used by all CSV review prototype screens. Provides
-/// consistent access to review rows, decision state, duplicate matches, and
-/// mutation helpers backed by [CsvReviewService].
+/// Shared controller for CSV review prototype screens.
+///
+/// Manages comprehensive state for the CSV import review workflow:
+/// - Session loading and initialization
+/// - Row selection and filtering
+/// - User decisions (approve/reject)
+/// - Cell editing and change tracking
+/// - Duplicate detection results
+/// - Finalization orchestration
+///
+/// This is a coordinating controller following Flutter's ChangeNotifier pattern.
+/// It delegates complex operations to [CsvReviewService] and maintains UI state.
+///
+/// Organization (use Ctrl+F with section markers to navigate):
+/// - CONSTRUCTOR & CONFIGURATION
+/// - STATE FIELDS (Core data)
+/// - PUBLIC GETTERS (Read-only access)
+/// - ROW QUERY METHODS (Simple lookups)
+/// - ROW SELECTION MANAGEMENT
+/// - INITIALIZATION & LOADING
+/// - DECISION & APPROVAL OPERATIONS
+/// - ROW EDITING & MODIFICATION
+/// - FINALIZATION
+/// - UTILITY FUNCTIONS (Pure, static)
 class CsvReviewPrototypeController extends ChangeNotifier {
+  // ═══════════════════════════════════════════════════════════════
+  // CONSTRUCTOR & CONFIGURATION
+  // ═══════════════════════════════════════════════════════════════
+
   CsvReviewPrototypeController({
     required this.payload,
     CsvReviewService? service,
@@ -48,21 +73,54 @@ class CsvReviewPrototypeController extends ChangeNotifier {
   final CsvReviewService service;
   final Logger _logger;
 
+  // ═══════════════════════════════════════════════════════════════
+  // STATE FIELDS (Core data managed by this controller)
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Loading states
   bool _isLoading = true;
   bool _isFinalizing = false;
   Object? _loadError;
+
+  /// Core session data loaded from CSV file
   CsvImportSession? _session;
+
+  /// Flat list of all rows, sorted by priority (rejected/warned first)
+  /// Operators see problems immediately with this ordering.
   List<CsvReviewRow> _rows = <CsvReviewRow>[];
+
+  /// Same rows grouped by status for filtered views.
+  /// Invariant: flatten(_groupedRows.values) == _rows
   Map<CsvRowReviewStatus, List<CsvReviewRow>> _groupedRows =
       _emptyGroupedRows();
+
+  /// User decisions (approve/reject) keyed by original row index.
+  /// Sparse map: only rows with explicit decisions are included.
   Map<int, CsvRowDecision> _decisions = <int, CsvRowDecision>{};
+
+  /// Currently selected rows for bulk operations
   Set<int> _selectedRows = <int>{};
+
+  /// Tracks which cells have been edited (rowIndex -> field keys).
+  /// Used for highlighting changes and audit trail.
   final Map<int, Set<String>> _editedCells = <int, Set<String>>{};
+
+  /// Snapshot of initial values for change tracking.
+  /// Medical records context requires knowing what was changed.
   final Map<int, Map<String, String?>> _initialRowValues =
       <int, Map<String, String?>>{};
+
+  /// Rows currently being processed (shows loading indicators)
   Set<int> _loadingRows = <int>{};
+
+  /// Potential duplicate matches found during loading.
+  /// Helps operators identify data quality issues.
   Map<int, List<CsvDuplicateCandidate>> _duplicateMatches =
       <int, List<CsvDuplicateCandidate>>{};
+
+  // ═══════════════════════════════════════════════════════════════
+  // PUBLIC GETTERS (Read-only state access for UI)
+  // ═══════════════════════════════════════════════════════════════
 
   /// Filename label exposed to the UI.
   String? get importFileLabel {
@@ -83,6 +141,9 @@ class CsvReviewPrototypeController extends ChangeNotifier {
   int get selectedRowCount => _selectedRows.length;
   bool get hasRejectedDecisions => _decisions.values
       .any((CsvRowDecision decision) => decision == CsvRowDecision.rejected);
+
+  /// Count of valid rows (not rejected, no duplicates).
+  /// Used to determine if "approve all valid" button should be enabled.
   int get validRowCount {
     int count = 0;
     for (final CsvReviewRow row in _rows) {
@@ -113,9 +174,17 @@ class CsvReviewPrototypeController extends ChangeNotifier {
           entry.value.isNotEmpty)
       .length;
 
+  // ═══════════════════════════════════════════════════════════════
+  // ROW QUERY METHODS (Find rows by various criteria)
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Get decision for specific row (approved/rejected/none).
+  /// Returns CsvRowDecision.none if no decision exists.
   CsvRowDecision decisionForRow(int rowIndex) =>
       _decisions[rowIndex] ?? CsvRowDecision.none;
 
+  /// Check if a row has been edited by the user.
+  /// Returns true if any cell in the row has pending edits.
   bool isRowEdited(int rowIndex) => _editedCells[rowIndex]?.isNotEmpty ?? false;
   bool isCellEdited(int rowIndex, String fieldKey) =>
       _editedCells[rowIndex]?.contains(fieldKey) ?? false;
@@ -124,6 +193,24 @@ class CsvReviewPrototypeController extends ChangeNotifier {
       _duplicateMatches[rowIndex]?.isNotEmpty ?? false;
   bool isRowSelected(int rowIndex) => _selectedRows.contains(rowIndex);
 
+  /// Find row data by row index (0-based from CSV).
+  /// Returns null if row not found - used by UI selection handlers.
+  CsvReviewRow? getRowByIndex(int index) {
+    for (final CsvReviewRow row in _rows) {
+      if (row.originalIndex == index) {
+        return row;
+      }
+    }
+    return null;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // ROW SELECTION MANAGEMENT (Multi-select state coordination)
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Toggle selection for a single row.
+  /// BUSINESS RULE: Cannot select rejected rows (they're already decided).
+  /// This prevents accidental bulk operations on rows meant to be excluded.
   void toggleRowSelection(int rowIndex, bool isSelected) {
     CsvReviewRow? targetRow;
     for (final CsvReviewRow row in _rows) {
@@ -148,6 +235,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     }
   }
 
+  /// Bulk selection update for multiple rows.
+  /// Also enforces the "no selecting rejected rows" rule.
   void setRowsSelected(Iterable<int> rowIndices, bool isSelected) {
     bool changed = false;
     for (final int rowIndex in rowIndices) {
@@ -173,6 +262,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     }
   }
 
+  /// Get rows filtered by review status.
+  /// Used by UI to show grouped views (e.g., "show only rows with issues").
   List<CsvReviewRow> rowsForStatus(CsvRowReviewStatus? status) {
     if (status == null) {
       return List<CsvReviewRow>.unmodifiable(_rows);
@@ -181,6 +272,13 @@ class CsvReviewPrototypeController extends ChangeNotifier {
         _groupedRows[status] ?? const <CsvReviewRow>[]);
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // INITIALIZATION & LOADING (Populate state from CSV file)
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Load CSV data and prepare for review.
+  /// WORKFLOW: Parse CSV → detect duplicates → build row objects → sort by priority
+  /// Sets up all initial state including groupedRows and duplicateMatches.
   Future<void> load() async {
     _isLoading = true;
     _loadError = null;
@@ -246,8 +344,15 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     }
   }
 
+  /// Reload the CSV data from scratch (e.g., after file change).
   Future<void> reload() => load();
 
+  // ═══════════════════════════════════════════════════════════════
+  // DECISION & APPROVAL OPERATIONS (User review workflow actions)
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Record user decision for a single row (approve/reject).
+  /// Setting decision to CsvRowDecision.none removes the decision.
   void updateDecision(int rowIndex, CsvRowDecision decision) {
     if (decision == CsvRowDecision.none) {
       _decisions.remove(rowIndex);
@@ -257,6 +362,9 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Bulk approve all rows with status "ok" (no validation issues).
+  /// BUSINESS RULE: Skip rows with duplicates - user must manually review those.
+  /// This is a convenience feature for clean data scenarios.
   void bulkApproveOk() {
     if (_groupedRows[CsvRowReviewStatus.ok] == null) {
       return;
@@ -270,6 +378,9 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Bulk approve rows with status "ok" or "info" (minor issues acceptable).
+  /// BUSINESS RULE: Skip rows with duplicates - user must manually review those.
+  /// Expands approval criteria to include informational warnings.
   void bulkApproveUpToInfo() {
     const Set<CsvRowReviewStatus> autoStatuses = <CsvRowReviewStatus>{
       CsvRowReviewStatus.ok,
@@ -287,6 +398,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Clear all approved decisions (reset to undecided).
+  /// Rejected decisions remain - only affects approved rows.
   void bulkClearApprovals() {
     _decisions.removeWhere(
       (int _, CsvRowDecision value) => value == CsvRowDecision.approved,
@@ -294,6 +407,7 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Reject all rows in the import - nuclear option for bad data files.
   void bulkRejectAll() {
     for (final CsvReviewRow row in _rows) {
       _decisions[row.originalIndex] = CsvRowDecision.rejected;
@@ -301,6 +415,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Reject only rows that have validation errors (status: rejected).
+  /// Clears incorrect rejections - synchronizes decisions with actual validation.
   void bulkRejectOnlyRejected() {
     for (final CsvReviewRow row in _rows) {
       if (row.status == CsvRowReviewStatus.rejected) {
@@ -312,6 +428,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Approve all valid rows (not rejected, no duplicates).
+  /// Primary workflow action after user reviews issues.
   void approveAllValid() {
     bool changed = false;
     for (final CsvReviewRow row in _rows) {
@@ -334,6 +452,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     }
   }
 
+  /// Approve all currently selected rows (multi-select UI support).
+  /// BUSINESS RULE: Skip rows with duplicates even if selected.
   void approveSelected() {
     if (_selectedRows.isEmpty) {
       return;
@@ -360,6 +480,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     }
   }
 
+  /// Toggle all rejections (reject all OR clear all rejections).
+  /// Convenience method for quick "reject everything" workflows.
   void toggleRejectAll() {
     bool changed = false;
     if (hasRejectedDecisions) {
@@ -380,6 +502,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     }
   }
 
+  /// Helper to clear selection state (used after bulk operations).
+  /// Returns true if selection was modified.
   bool _clearSelection() {
     if (_selectedRows.isEmpty) {
       return false;
@@ -388,6 +512,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     return true;
   }
 
+  /// Helper to clear all rejected decisions (used by toggleRejectAll).
+  /// Returns true if any decisions were removed.
   bool _clearRejectedDecisions() {
     final int before = _decisions.length;
     _decisions.removeWhere(
@@ -396,6 +522,7 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     return before != _decisions.length;
   }
 
+  /// Helper to find row by index (used internally).
   CsvReviewRow? _findRowByIndex(int rowIndex) {
     for (final CsvReviewRow row in _rows) {
       if (row.originalIndex == rowIndex) {
@@ -405,6 +532,7 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     return null;
   }
 
+  /// Helper to check if a status is valid (not rejected).
   bool _isValidStatus(CsvRowReviewStatus status) {
     switch (status) {
       case CsvRowReviewStatus.rejected:
@@ -416,6 +544,13 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // ROW EDITING & MODIFICATION (In-place data corrections)
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Re-parse and validate a row after user edits fields.
+  /// WORKFLOW: Show loading → validate new data → update row in place → refresh grouping
+  /// Preserves original index for decision tracking.
   Future<CsvReviewRow?> editRow(
     CsvReviewRow row,
     Map<String, String?> updatedFields,
@@ -454,6 +589,10 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     }
   }
 
+  /// Apply manual validation warnings for edited rows (prototype UI only).
+  /// BUSINESS LOGIC: If user enters unrecognized gender value, add warning.
+  /// WHY: Gender can be inferred from Czech national ID (rodné číslo), but user
+  /// might override. If override is non-standard, warn them but allow it.
   CsvReviewRow _applyPrototypeWarnings(
     CsvReviewRow updatedRow,
     Map<String, String?> updatedFields,
@@ -481,6 +620,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
       code: genderWarningCode,
     );
 
+    // Update field messages: remove old gender warnings, add new one.
+    // WHY: User might edit gender multiple times - don't accumulate duplicate warnings.
     final Map<String, CsvFieldReview> updatedFieldsMap =
         Map<String, CsvFieldReview>.from(updatedRow.fields);
     final List<CsvReviewMessage> filteredFieldMessages =
@@ -522,6 +663,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
         warning,
       ];
 
+    // If gender was inferred from national ID but user overrode it with non-standard value,
+    // mark inference as not applied (shows user manually changed it).
     final Map<String, CsvDerivedValue> derivedMap =
         Map<String, CsvDerivedValue>.from(updatedRow.derived);
     final CsvDerivedValue? genderDerived =
@@ -534,6 +677,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
       );
     }
 
+    // Escalate row status to "warn" if it was OK or INFO.
+    // WHY: Unrecognized gender deserves user attention before import.
     CsvRowReviewStatus status = updatedRow.status;
     if (status == CsvRowReviewStatus.ok || status == CsvRowReviewStatus.info) {
       status = CsvRowReviewStatus.warn;
@@ -548,6 +693,13 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // FINALIZATION (Commit approved records to database)
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Execute the import - save approved rows to database.
+  /// WORKFLOW: Validate session exists → call service → show finalizing state → return result
+  /// Returns null if no session loaded (shouldn't happen in normal flow).
   Future<CsvFinalizeResult?> finalizeImport() async {
     if (_session == null) {
       return null;
@@ -574,6 +726,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     }
   }
 
+  /// Build a flat string map from row data (for service calls).
+  /// Prefers normalized values over original CSV values.
   Map<String, String?> buildPayload(CsvReviewRow row) {
     final Map<String, String?> result = <String, String?>{};
     row.fields.forEach((String key, CsvFieldReview field) {
@@ -582,6 +736,12 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     return result;
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // UTILITY FUNCTIONS (Private helpers and static logic)
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Replace a row in the list after editing and re-sort/re-group.
+  /// Used internally after editRow() completes validation.
   void _replaceRow(CsvReviewRow updatedRow) {
     final int index = _rows.indexWhere(
         (CsvReviewRow row) => row.originalIndex == updatedRow.originalIndex);
@@ -593,6 +753,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     _groupedRows = _groupRows(_rows);
   }
 
+  /// Track which cells in a row have been modified from baseline.
+  /// Used to show "edited" indicators in UI.
   void _updateEditedCells(
     int rowIndex,
     CsvReviewRow updated,
@@ -618,6 +780,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     }
   }
 
+  /// Capture initial state of all rows for edit tracking.
+  /// Called once during load() to establish baseline.
   void _snapshotInitialRows(List<CsvReviewRow> rows) {
     _initialRowValues
       ..clear()
@@ -633,6 +797,7 @@ class CsvReviewPrototypeController extends ChangeNotifier {
       }));
   }
 
+  /// Extract comparable value from field (normalized preferred).
   String? _valueForComparison(CsvFieldReview? field) {
     if (field == null) {
       return null;
@@ -640,6 +805,10 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     return field.normalizedValue ?? field.originalValue;
   }
 
+  // --- Static utility methods (pure functions) ---
+
+  /// Group rows by their review status for categorized display.
+  /// Returns map with all statuses present (empty lists for unused statuses).
   static Map<CsvRowReviewStatus, List<CsvReviewRow>> _groupRows(
       List<CsvReviewRow> rows) {
     final Map<CsvRowReviewStatus, List<CsvReviewRow>> grouped =
@@ -653,6 +822,9 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     return grouped;
   }
 
+  /// Sort rows: errors first, then warnings, then info, then OK.
+  /// Within same priority, preserve CSV row order (originalIndex).
+  /// This ensures critical issues are always visible at top of lists.
   static void _sortRowsByPriority(List<CsvReviewRow> rows) {
     rows.sort((CsvReviewRow a, CsvReviewRow b) {
       final int priorityA = _statusPriority(a.status);
@@ -664,6 +836,7 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     });
   }
 
+  /// Priority values for sorting: rejected=0 (highest), warn=1, info=2, ok=3 (lowest).
   static int _statusPriority(CsvRowReviewStatus status) {
     switch (status) {
       case CsvRowReviewStatus.rejected:
@@ -677,6 +850,7 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     }
   }
 
+  /// Create empty grouped rows map with all statuses present.
   static Map<CsvRowReviewStatus, List<CsvReviewRow>> _emptyGroupedRows() =>
       <CsvRowReviewStatus, List<CsvReviewRow>>{
         CsvRowReviewStatus.ok: <CsvReviewRow>[],
@@ -685,6 +859,7 @@ class CsvReviewPrototypeController extends ChangeNotifier {
         CsvRowReviewStatus.rejected: <CsvReviewRow>[],
       };
 
+  /// Deep clone duplicate matches map (prevents shared reference issues).
   static Map<int, List<CsvDuplicateCandidate>> _cloneDuplicateMatches(
     Map<int, List<CsvDuplicateCandidate>> source,
   ) {
