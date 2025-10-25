@@ -7,6 +7,8 @@ import 'package:denik_zza/services/models/csv_import_payload.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../utils/csv_test_builders.dart';
+
 void main() {
   testWidgets('table overview renders rows and supports inline actions',
       (WidgetTester tester) async {
@@ -821,6 +823,9 @@ class _MisindexedService implements CsvReviewService {
   }
 }
 
+/// Convenience wrapper around CsvReviewRowBuilder for this test file.
+/// 
+/// Uses positional parameters for backward compatibility with existing test code.
 CsvReviewRow _buildRow(
   int index,
   String firstName,
@@ -831,88 +836,14 @@ CsvReviewRow _buildRow(
   List<CsvReviewMessage> rodneCisloMessages = const <CsvReviewMessage>[],
   List<CsvReviewMessage> genderMessages = const <CsvReviewMessage>[],
 }) {
-  final List<CsvReviewMessage> rowMessages = <CsvReviewMessage>[
-    ...messages,
-    ...rodneCisloMessages,
-    ...genderMessages,
-  ];
-  final bool genderInferred = genderMessages
-      .any((CsvReviewMessage message) => message.code == 'gender_inferred_from_rc');
-  final Map<String, CsvDerivedValue> derived = <String, CsvDerivedValue>{
-    'datum_narozeni': CsvDerivedValue(
-      key: 'datum_narozeni',
-      value: '01.01.2010',
-      applied: true,
-    ),
-  };
-  if (genderInferred) {
-    derived['pohlavi'] = CsvDerivedValue(
-      key: 'pohlavi',
-      value: '1',
-      applied: true,
-    );
-  }
-
-  return CsvReviewRow(
-    originalIndex: index,
+  return CsvReviewRowBuilder.build(
+    index: index,
+    firstName: firstName,
+    lastName: lastName,
     status: status,
-    messages: rowMessages,
-    fields: <String, CsvFieldReview>{
-      'jmeno': CsvFieldReview(
-        columnKey: 'jmeno',
-        columnName: 'Jméno',
-        status: CsvFieldReviewStatus.ok,
-        originalValue: firstName,
-        normalizedValue: firstName,
-        inferred: false,
-      ),
-      'prijmeni': CsvFieldReview(
-        columnKey: 'prijmeni',
-        columnName: 'Příjmení',
-        status: CsvFieldReviewStatus.ok,
-        originalValue: lastName,
-        normalizedValue: lastName,
-        inferred: false,
-      ),
-      'rodne_cislo': CsvFieldReview(
-        columnKey: 'rodne_cislo',
-        columnName: 'Rodné číslo',
-        status: rodneCisloMessages.isNotEmpty
-            ? CsvFieldReviewStatus.warn
-            : CsvFieldReviewStatus.ok,
-        originalValue: '101010/0000',
-        normalizedValue: '1010100000',
-        inferred: false,
-        messages: rodneCisloMessages,
-      ),
-      'pohlavi': CsvFieldReview(
-        columnKey: 'pohlavi',
-        columnName: 'Pohlaví',
-        status: CsvFieldReviewStatus.ok,
-        originalValue: '1',
-        normalizedValue: '1',
-        inferred: genderInferred,
-        messages: genderMessages,
-      ),
-      'datum_narozeni': CsvFieldReview(
-        columnKey: 'datum_narozeni',
-        columnName: 'Datum narození',
-        status: CsvFieldReviewStatus.ok,
-        originalValue: '2010-01-01',
-        normalizedValue: '2010-01-01',
-        inferred: false,
-      ),
-      'zpusobilost': CsvFieldReview(
-        columnKey: 'zpusobilost',
-        columnName: 'Způsobilost',
-        status:
-            messages.isNotEmpty ? CsvFieldReviewStatus.warn : CsvFieldReviewStatus.ok,
-        originalValue: eligible ? 'true' : 'false',
-        normalizedValue: eligible ? 'true' : 'false',
-        inferred: false,
-        messages: messages,
-      ),
-    },
-    derived: derived,
+    eligible: eligible,
+    messages: messages,
+    rodneCisloMessages: rodneCisloMessages,
+    genderMessages: genderMessages,
   );
 }

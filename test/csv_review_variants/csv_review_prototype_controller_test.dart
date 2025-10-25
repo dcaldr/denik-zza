@@ -5,6 +5,8 @@ import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/services/models/csv_import_payload.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../utils/csv_test_builders.dart';
+
 void main() {
   group('CsvReviewPrototypeController', () {
     late _FakeCsvReviewService service;
@@ -63,24 +65,17 @@ void main() {
 class _FakeCsvReviewService implements CsvReviewService {
   _FakeCsvReviewService()
       : _rows = <CsvReviewRow>[
-          _buildRow(
+          CsvReviewRowBuilder.build(
             index: 1,
-            status: CsvRowReviewStatus.ok,
             firstName: 'Alena',
             lastName: 'Nováková',
-            messages: const <CsvReviewMessage>[],
+            status: CsvRowReviewStatus.ok,
           ),
-          _buildRow(
+          CsvReviewRowBuilder.buildWithWarning(
             index: 2,
-            status: CsvRowReviewStatus.warn,
             firstName: 'Jana',
             lastName: 'Svobodová',
-            messages: <CsvReviewMessage>[
-              CsvReviewMessage(
-                severity: CsvReviewMessageSeverity.warn,
-                message: 'Zkontrolujte telefonní číslo.',
-              ),
-            ],
+            warningMessage: 'Zkontrolujte telefonní číslo.',
           ),
         ];
 
@@ -169,7 +164,7 @@ class _FakeCsvReviewService implements CsvReviewService {
   }) async {
     return <int, List<CsvDuplicateCandidate>>{
       1: <CsvDuplicateCandidate>[
-        CsvDuplicateCandidate(
+        CsvDuplicateCandidateBuilder.build(
           participantId: 10,
           displayName: 'Alena Nováková',
           reason: 'Stejné jméno a datum narození',
@@ -177,51 +172,4 @@ class _FakeCsvReviewService implements CsvReviewService {
       ],
     };
   }
-}
-
-CsvReviewRow _buildRow({
-  required int index,
-  required CsvRowReviewStatus status,
-  required String firstName,
-  required String lastName,
-  required List<CsvReviewMessage> messages,
-}) {
-  return CsvReviewRow(
-    originalIndex: index,
-    status: status,
-    messages: messages,
-    fields: <String, CsvFieldReview>{
-      'jmeno': CsvFieldReview(
-        columnKey: 'jmeno',
-        columnName: 'Jméno',
-        status: CsvFieldReviewStatus.ok,
-        originalValue: firstName,
-        normalizedValue: firstName,
-        inferred: false,
-      ),
-      'prijmeni': CsvFieldReview(
-        columnKey: 'prijmeni',
-        columnName: 'Příjmení',
-        status: CsvFieldReviewStatus.ok,
-        originalValue: lastName,
-        normalizedValue: lastName,
-        inferred: false,
-      ),
-      'datum_narozeni': CsvFieldReview(
-        columnKey: 'datum_narozeni',
-        columnName: 'Datum narození',
-        status: CsvFieldReviewStatus.ok,
-        originalValue: '12.03.2010',
-        normalizedValue: '12.03.2010',
-        inferred: false,
-      ),
-    },
-    derived: <String, CsvDerivedValue>{
-      'datum_narozeni': CsvDerivedValue(
-        key: 'datum_narozeni',
-        value: '12.03.2010',
-        applied: true,
-      ),
-    },
-  );
 }
