@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_akce.dart';
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
@@ -309,6 +310,19 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
     _updateSubFoldersForMode();
   }
 
+  /// Set FileManager mode with optional test output path
+  /// 
+  /// Usage:
+  ///   FileManager().setMode(FileManagerMode.inMemory);
+  ///   FileManager().setMode(FileManagerMode.persist, testOutputPath: 'test/outputs');
+  ///   FileManager().setMode(FileManagerMode.production);
+  void setMode(FileManagerMode mode, {String? testOutputPath}) {
+    _mode = mode;
+    _testOutputPath = testOutputPath;
+    isTesting = (mode == FileManagerMode.inMemory);
+    _updateSubFoldersForMode();
+  }
+
   /// Set FileManager to persistent testing mode with specified output path
   void setPersistentTestMode(String testOutputPath) {
     _mode = FileManagerMode.persist;
@@ -507,5 +521,89 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
       } catch (_) {}
       return false;
     }
+  }
+
+  // ========== Temporary CSV File Operations ==========
+
+  /// Writes CSV bytes to a temporary file and returns the absolute path.
+  /// 
+  /// Behavior varies by mode:
+  /// - inMemory: Returns synthetic path, no disk write
+  /// - persist: Writes to test/test_outputs/temp/ for debugging
+  /// - production: Uses path_provider temporary directory
+  /// 
+  /// [bytes] - The CSV data to write
+  /// [suggestedName] - Suggested filename (will be sanitized)
+  /// 
+  /// Returns the absolute path to the created temp file.
+  Future<String> writeTempCsvBytes(
+    Uint8List bytes, {
+    required String suggestedName,
+  }) async {
+    final String sanitized = _sanitizeFileName(suggestedName);
+    final String resolvedName = sanitized.isEmpty ? 'import.csv' : sanitized;
+
+    switch (_mode) {
+      case FileManagerMode.inMemory:
+        // Return synthetic path, don't write to disk
+        logger.d('Temp CSV in memory mode: memory://temp/$resolvedName');
+        return 'memory://temp/$resolvedName';
+
+      case FileManagerMode.persist:
+        // Write to test outputs for debugging
+        final String basePath = _testOutputPath ?? 'test/test_outputs';
+        final Directory tempDir = Directory('$basePath/temp');
+        await tempDir.create(recursive: true);
+        final File target = File('${tempDir.path}/$resolvedName');
+        await target.writeAsBytes(bytes, flush: true);
+        logger.d('Temp CSV written (persist): ${target.path}');
+        return target.path;
+
+      case FileManagerMode.production:
+        // Use path_provider
+        final Directory tempDir = await getTemporaryDirectory();
+        final File target = File('${tempDir.path}/$resolvedName');
+        await target.writeAsBytes(bytes, flush: true);
+        logger.d('Temp CSV written (production): ${target.path}');
+        return target.path;
+    }
+  }
+
+  /// Deletes a temporary file created by [writeTempCsvBytes].
+  /// 
+  /// In inMemory mode, this is a no-op. Errors are logged but swallowed
+  /// since temp file cleanup is non-critical.
+  /// 
+  /// [filePath] - The absolute path returned by writeTempCsvBytes
+  Future<void> deleteTempFile(String filePath) async {
+    if (_mode == FileManagerMode.inMemory) {
+      logger.d('Temp file deletion skipped (memory mode): $filePath');
+      return; // No-op in memory mode
+    }
+
+    final File file = File(filePath);
+    if (await file.exists()) {
+      try {
+        await file.delete();
+        logger.d('Temp file deleted: $filePath');
+      } catch (error) {
+        // Non-critical: log warning but don't throw
+        logger.w('Failed to delete temp file: $filePath', error: error);
+      }
+    } else {
+      logger.d('Temp file does not exist (already cleaned?): $filePath');
+    }
+  }
+
+  /// Sanitizes a filename by removing invalid characters and ensuring .csv extension.
+  String _sanitizeFileName(String input) {
+    final String trimmed = input.trim();
+    if (trimmed.isEmpty) {
+      return '';
+    }
+    // Remove filesystem separators and invalid characters
+    final String withoutSeparators = trimmed.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+    // Ensure .csv extension
+    return withoutSeparators.endsWith('.csv') ? withoutSeparators : '$withoutSeparators.csv';
   }
 }

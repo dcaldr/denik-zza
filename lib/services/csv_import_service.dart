@@ -5,12 +5,12 @@ import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/input/csv_review_models.dart';
+import 'package:denik_zza/input/file_manager.dart';
 import 'package:denik_zza/input/input_hold.dart';
 import 'package:denik_zza/input/input_parser.dart';
 import 'package:denik_zza/input/text_tools.dart';
 import 'package:denik_zza/services/models/csv_import_payload.dart';
 import 'package:denik_zza/utils/app_logger.dart';
-import 'package:denik_zza/utils/temp_csv_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 
@@ -147,7 +147,7 @@ class CsvImportService implements CsvReviewService {
 
       String? tempPath;
       try {
-        tempPath = await TempCsvStorage.writeBytes(
+        tempPath = await FileManager().writeTempCsvBytes(
           inMemoryBytes,
           suggestedName: payload.displayName,
         );
@@ -163,7 +163,7 @@ class CsvImportService implements CsvReviewService {
       } finally {
         if (tempPath != null) {
           try {
-            await TempCsvStorage.deleteFile(tempPath);
+            await FileManager().deleteTempFile(tempPath);
           } catch (cleanupError, cleanupStack) {
             _logger.w(
               'Failed to delete temporary CSV file.',

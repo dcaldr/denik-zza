@@ -4,8 +4,8 @@ import 'dart:typed_data';
 import 'package:denik_zza/screens2/csv_review_variants/table_overview_screen.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/services/models/csv_import_payload.dart';
+import 'package:denik_zza/input/file_manager.dart';
 import 'package:denik_zza/utils/app_logger.dart';
-import 'package:denik_zza/utils/temp_csv_storage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -295,7 +295,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
         throw StateError('No CSV data available for payload.');
       }
       await _cleanupTempFile();
-      final String tempPath = await TempCsvStorage.writeBytes(
+      final String tempPath = await FileManager().writeTempCsvBytes(
         bytes,
         suggestedName: displayName,
       );
@@ -338,7 +338,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
       return;
     }
     try {
-      await TempCsvStorage.deleteFile(_tempFilePath!);
+      await FileManager().deleteTempFile(_tempFilePath!);
     } catch (error, stackTrace) {
       _logger.w(
         '$csvImportFlowLogTag: Failed to delete temporary CSV file created during import.',
