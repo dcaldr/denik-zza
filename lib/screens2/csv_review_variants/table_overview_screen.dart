@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 import 'csv_review_shared.dart';
+import 'summary_screen.dart';
 
 /// Tabular CSV confirmation prototype with sticky summary header and inline
 /// editing.
@@ -906,6 +907,8 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     final bool hasRejections = _controller.hasRejectedDecisions;
     final bool canApproveAllValid = _controller.canApproveAllValid;
     final bool hasRows = _controller.totalRowCount > 0;
+    final bool hasApproved = _controller.approvedCount > 0;
+    final bool isFinalizing = _controller.isFinalizing;
     final String approveSelectedLabel = selectedCount > 0
         ? 'Schválit vybrané ($selectedCount)'
         : 'Schválit vybrané';
@@ -936,8 +939,73 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
           icon: Icon(rejectIcon),
           label: Text(rejectLabel),
         ),
+        FilledButton(
+          key: const Key('CsvTableOverview_action_finalize'),
+          onPressed: !hasRows || !hasApproved || isFinalizing
+              ? null
+              : () => _handleFinalizePressed(context),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              if (isFinalizing) ...<Widget>[
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text('Dokončuji…'),
+              ] else ...<Widget>[
+                const Icon(Icons.cloud_upload),
+                const SizedBox(width: 8),
+                const Text('Dokončit import'),
+              ],
+            ],
+          ),
+        ),
       ],
     );
+  }
+
+  Future<void> _handleFinalizePressed(BuildContext context) async {
+    if (_controller.approvedCount == 0 || _controller.isFinalizing) {
+      return;
+    }
+
+    try {
+      final CsvFinalizeResult? result = await _controller.finalizeImport();
+      if (!mounted) {
+        return;
+      }
+      if (result == null) {
+        const SnackBar message = SnackBar(
+          content: Text('Import nelze dokončit. Zkuste to prosím znovu.'),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(message);
+        return;
+      }
+
+      final String label =
+          _controller.importFileLabel?.trim().isNotEmpty == true
+              ? _controller.importFileLabel!
+              : 'CSV soubor';
+
+      await CsvImportSummaryScreen.openAfterFinalize(
+        context: context,
+        result: result,
+        importFileLabel: label,
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      const SnackBar message = SnackBar(
+        content: Text('Dokončení importu selhalo. Zkuste to prosím znovu.'),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(message);
+    }
   }
 
   Widget _buildDataTable(BuildContext context, List<CsvReviewRow> rows) {
