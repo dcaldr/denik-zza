@@ -47,7 +47,7 @@ class ParticipantDetailPage extends StatelessWidget {
               child: ListView(
                 children: [
                   InfoBubble(label: 'Datum Narození', value: '${ucastnik.datumNarozeni?.day.toString().padLeft(2, '0')}.${ucastnik.datumNarozeni?.month.toString().padLeft(2, '0')}.${ucastnik.datumNarozeni?.year}' ?? 'N/A'),
-                  InfoBubble(label: 'Pohlaví', value: ucastnik.pohlavi == 1 ? 'Muž' : 'Žena'),
+                  InfoBubble(label: 'Pohlaví', value: ucastnik.pohlavi == MemoryOsoba.POHLAVI_MUZ ? 'Muž' : 'Žena'),
                   InfoBubble(label: 'Pojišťovna', value: ucastnik.zdravotniPojistovna ?? 'N/A'),
                   InfoBubble(label: 'Rodné číslo', value: ucastnik.cisloPojisteni ?? 'N/A'),
                   InfoBubble(label: 'Adresa', value: ucastnik.adresa ?? 'N/A'),

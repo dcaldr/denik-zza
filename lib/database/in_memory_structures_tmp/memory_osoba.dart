@@ -3,10 +3,14 @@
 /// Holds all nesserary data for one person, might be later restroctured to be multiple classes
 ///
 class MemoryOsoba {
+  /// Gender constants for pohlavi field
+  static const int POHLAVI_MUZ = 1;
+  static const int POHLAVI_ZENA = 2;
+  
   late int id; // may use -1 means not assigned
   String jmeno;
   String prijmeni;
-  int? pohlavi; // muž ==1 ,žena == 2 // TODO: add named constants for pohlavi
+  int? pohlavi; // muž == POHLAVI_MUZ (1), žena == POHLAVI_ZENA (2)
   String? adresa;
   String? cisloPojisteni;
   DateTime? datumNarozeni;
