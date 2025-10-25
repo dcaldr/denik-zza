@@ -62,7 +62,7 @@ void main() {
   });
 }
 
-class _FakeCsvReviewService implements CsvReviewService {
+class _FakeCsvReviewService implements CsvImportService {
   _FakeCsvReviewService()
       : _rows = <CsvReviewRow>[
           CsvReviewRowBuilder.build(

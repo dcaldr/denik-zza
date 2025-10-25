@@ -5,10 +5,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('CsvImportService', () {
-    late CsvImportService service;
+    late DefaultCsvImportService service;
 
     setUp(() {
-      service = CsvImportService();
+      service = DefaultCsvImportService();
     });
 
     test('loadCsv returns review and person result', () async {

@@ -48,7 +48,7 @@ class CsvReviewPrototypeEntry {
   final CsvReviewPrototypeId id;
   final String title;
   final String description;
-  final Widget Function(String filePath, {CsvReviewService? service}) builder;
+  final Widget Function(String filePath, {CsvImportService? service}) builder;
 }
 
 /// Registry of prototype implementations used by the dev launchers.
@@ -71,11 +71,11 @@ const Map<CsvReviewPrototypeId, CsvReviewPrototypeEntry>
   ),
 };
 
-Widget _buildTableOverview(String filePath, {CsvReviewService? service}) {
+Widget _buildTableOverview(String filePath, {CsvImportService? service}) {
   return CsvReviewTableOverviewScreen(filePath: filePath, service: service);
 }
 
-Widget _buildImportFlow(String filePath, {CsvReviewService? service}) {
+Widget _buildImportFlow(String filePath, {CsvImportService? service}) {
   return const CsvImportScreen();
 }
 

@@ -28,7 +28,7 @@ typedef CsvReviewPrototypeWidgetBuilder = Widget Function(
 /// - Finalization orchestration
 ///
 /// This is a coordinating controller following Flutter's ChangeNotifier pattern.
-/// It delegates complex operations to [CsvReviewService] and maintains UI state.
+/// It delegates complex operations to [CsvImportService] and maintains UI state.
 ///
 /// Organization (use Ctrl+F with section markers to navigate):
 /// - CONSTRUCTOR & CONFIGURATION
@@ -48,15 +48,15 @@ class CsvReviewPrototypeController extends ChangeNotifier {
 
   CsvReviewPrototypeController({
     required this.payload,
-    CsvReviewService? service,
-  })  : service = service ?? CsvImportService(),
+    CsvImportService? service,
+  })  : service = service ?? DefaultCsvImportService(),
         _logger = AppLogger.l;
 
   /// Convenience constructor preserving legacy path-based setup.
   factory CsvReviewPrototypeController.fromPath({
     required String path,
     String? displayName,
-    CsvReviewService? service,
+    CsvImportService? service,
   }) {
     final String label = (displayName ?? p.basename(path)).trim();
     return CsvReviewPrototypeController(
@@ -70,7 +70,7 @@ class CsvReviewPrototypeController extends ChangeNotifier {
 
   /// Platform-aware description of the source CSV.
   final CsvImportPayload payload;
-  final CsvReviewService service;
+  final CsvImportService service;
   final Logger _logger;
 
   // ═══════════════════════════════════════════════════════════════
@@ -1120,7 +1120,7 @@ class CsvReviewPrototypeHost extends StatefulWidget {
   final String? filePath;
   final CsvImportPayload? payload;
   final CsvReviewPrototypeWidgetBuilder builder;
-  final CsvReviewService? service;
+  final CsvImportService? service;
   final WidgetBuilder? loadingBuilder;
   final Widget Function(BuildContext context, Object error)? errorBuilder;
 

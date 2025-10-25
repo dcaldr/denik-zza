@@ -2,11 +2,11 @@ import 'package:denik_zza/input/csv_review_models.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/services/models/csv_import_payload.dart';
 
-/// In-memory mock of [CsvReviewService] for widget tests and UI prototypes.
+/// In-memory mock of [CsvImportService] for widget tests and UI prototypes.
 ///
 /// The mock records invocation metadata and allows callers to provide
 /// custom handlers for CSV loading and row re-parse operations.
-class CsvReviewServiceMock implements CsvReviewService {
+class CsvReviewServiceMock implements CsvImportService {
   CsvReviewServiceMock({
     required Future<CsvImportSession> Function(String path) onLoad,
     Future<CsvImportSession> Function(CsvImportPayload payload)? onLoadPayload,

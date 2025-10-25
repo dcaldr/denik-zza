@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 Future<void> _pumpReviewScreen(
   WidgetTester tester, {
-  required CsvReviewService service,
+  required CsvImportService service,
   String filePath = 'sample.csv',
 }) async {
   final TestWidgetsFlutterBinding binding = TestWidgetsFlutterBinding.ensureInitialized();

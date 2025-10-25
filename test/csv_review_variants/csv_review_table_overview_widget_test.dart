@@ -482,7 +482,7 @@ void main() {
   });
 }
 
-class _WidgetFakeService implements CsvReviewService {
+class _WidgetFakeService implements CsvImportService {
   _WidgetFakeService()
       : _rows = <CsvReviewRow>[
           _buildRow(
@@ -668,7 +668,7 @@ class _WidgetFakeService implements CsvReviewService {
   }
 }
 
-class _NoWarnRowsService implements CsvReviewService {
+class _NoWarnRowsService implements CsvImportService {
   _NoWarnRowsService()
       : _rows = <CsvReviewRow>[
           _buildRow(1, 'Petr', 'Svoboda', status: CsvRowReviewStatus.ok),
@@ -751,7 +751,7 @@ class _NoWarnRowsService implements CsvReviewService {
   }
 }
 
-class _MisindexedService implements CsvReviewService {
+class _MisindexedService implements CsvImportService {
   _MisindexedService()
       : _rows = <CsvReviewRow>[
           _buildRow(1, 'Alena', 'Nováková'),

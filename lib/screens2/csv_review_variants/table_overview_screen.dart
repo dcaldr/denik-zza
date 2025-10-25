@@ -28,7 +28,7 @@ class CsvReviewTableOverviewScreen extends StatelessWidget {
 
   final String? filePath;
   final CsvImportPayload? payload;
-  final CsvReviewService? service;
+  final CsvImportService? service;
 
   @override
   Widget build(BuildContext context) {

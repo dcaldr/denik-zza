@@ -77,8 +77,8 @@ class CsvFinalizeFailure {
   final String message;
 }
 
-/// Contract used by the UI layer to obtain CSV review data.
-abstract class CsvReviewService {
+/// Contract used by the UI layer to obtain CSV import and review data.
+abstract class CsvImportService {
   /// Loads a CSV file and prepares the review session.
   Future<CsvImportSession> loadCsv(String path);
 
@@ -100,9 +100,9 @@ abstract class CsvReviewService {
   });
 }
 
-/// Service coordinating CSV parsing and review DTO generation.
-class CsvImportService implements CsvReviewService {
-  CsvImportService({InputParser Function()? parserFactory})
+/// Default service implementation coordinating CSV parsing and review DTO generation.
+class DefaultCsvImportService implements CsvImportService {
+  DefaultCsvImportService({InputParser Function()? parserFactory})
       : _parserFactory = parserFactory ?? InputParser.new,
         _logger = AppLogger.l {
     _columnKeyToIndex = _buildColumnKeyIndex(CsvColumnDefinitions.main);

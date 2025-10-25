@@ -17,11 +17,11 @@ class CsvReviewScreen extends StatefulWidget {
   CsvReviewScreen({
     super.key,
     required this.filePath,
-    CsvReviewService? service,
-  }) : service = service ?? CsvImportService();
+    CsvImportService? service,
+  }) : service = service ?? DefaultCsvImportService();
 
   final String filePath;
-  final CsvReviewService service;
+  final CsvImportService service;
 
   @override
   State<CsvReviewScreen> createState() => _CsvReviewScreenState();

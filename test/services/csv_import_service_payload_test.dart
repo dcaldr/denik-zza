@@ -9,10 +9,10 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late CsvImportService service;
+  late DefaultCsvImportService service;
 
   setUp(() async {
-    service = CsvImportService();
+    service = DefaultCsvImportService();
     // Set FileManager to persist mode for test observability
     FileManager().setMode(
       FileManagerMode.persist,
