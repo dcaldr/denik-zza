@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:denik_zza/input/csv_review_models.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
+import 'package:denik_zza/services/models/csv_import_payload.dart';
 import 'package:denik_zza/screens2/csv_review/widgets/summary_section.dart';
 import 'package:denik_zza/screens2/csv_review/widgets/unparsed_columns_section.dart';
 import 'package:flutter/material.dart';
@@ -14,17 +15,23 @@ import 'csv_review_shared.dart';
 class CsvReviewTableOverviewScreen extends StatelessWidget {
   const CsvReviewTableOverviewScreen({
     super.key,
-    required this.filePath,
+    this.filePath,
+    this.payload,
     this.service,
-  });
+  }) : assert(
+          filePath != null || payload != null,
+          'Either filePath or payload must be provided.',
+        );
 
-  final String filePath;
+  final String? filePath;
+  final CsvImportPayload? payload;
   final CsvReviewService? service;
 
   @override
   Widget build(BuildContext context) {
     return CsvReviewPrototypeHost(
       filePath: filePath,
+      payload: payload,
       service: service,
       builder: (BuildContext context, CsvReviewPrototypeController controller) {
         return _TableOverviewScaffold(controller: controller);
@@ -148,6 +155,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
           child.visitChildren(findTable);
         }
       }
+
       renderBox.visitChildren(findTable);
       List<double>? measuredColumns;
       if (renderTable != null) {
@@ -282,10 +290,10 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
                         _buildTitleRow(context),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         _buildSummaryPanel(context),
                         _buildUnparsedColumnsSection(),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         _buildFilterRow(context),
                       ],
                     ),
@@ -366,7 +374,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                         ),
                         */
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                       child: SizedBox(
                         width: double.infinity,
                         child: _buildFooterButtons(context),
@@ -426,6 +434,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
 
   Widget _buildTitleRow(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final String? fileLabel = _controller.importFileLabel;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -437,7 +446,17 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                 'Tabulkový přehled CSV',
                 style: theme.textTheme.headlineSmall,
               ),
-              const SizedBox(height: 4),
+              if (fileLabel != null && fileLabel.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 2),
+                Text(
+                  'Soubor: $fileLabel',
+                  key: const Key('CsvTableOverview_file_label'),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 2),
               Text(
                 'Rychle prohlédněte importované záznamy a upravte je na jednom místě.',
                 style: theme.textTheme.bodyMedium,
@@ -470,7 +489,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
       elevation: 0,
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Wrap(
           key: const Key('CsvTableOverview_summary_content'),
           spacing: 16,
@@ -529,8 +548,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
             InkWell(
               key: const Key('CsvTableOverview_summary_warn_toggle'),
               borderRadius: badgeRadius,
-              onTap: () =>
-                  _handleSummaryStatusTap(CsvRowReviewStatus.warn),
+              onTap: () => _handleSummaryStatusTap(CsvRowReviewStatus.warn),
               child: SummaryBadge(
                 key: const Key('CsvTableOverview_summary_warn_count'),
                 label: 'Varování',
@@ -541,8 +559,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
             InkWell(
               key: const Key('CsvTableOverview_summary_info_toggle'),
               borderRadius: badgeRadius,
-              onTap: () =>
-                  _handleSummaryStatusTap(CsvRowReviewStatus.info),
+              onTap: () => _handleSummaryStatusTap(CsvRowReviewStatus.info),
               child: SummaryBadge(
                 key: const Key('CsvTableOverview_summary_info_count'),
                 label: 'Informace',
@@ -623,7 +640,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     if (indexSet.isEmpty) {
       return;
     }
-  final List<int> indices = indexSet.toList()..sort();
+    final List<int> indices = indexSet.toList()..sort();
     final bool allSelected = indices.every(_controller.isRowSelected);
     _controller.setRowsSelected(indices, !allSelected);
   }
@@ -655,7 +672,8 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
             : const <CsvReviewRow>[]);
     final List<DataColumn> currentColumns =
         _buildDataColumns(context, headerSourceRows);
-    final double targetWidth = math.max(_tableBodyWidth ?? minTableWidth, minTableWidth);
+    final double targetWidth =
+        math.max(_tableBodyWidth ?? minTableWidth, minTableWidth);
     final List<double>? measuredHeaderWidths =
         columnWidths != null && columnWidths.length == currentColumns.length
             ? columnWidths
@@ -663,7 +681,8 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     final List<double> effectiveColumnWidths = measuredHeaderWidths ??
         _fallbackHeaderColumnWidths(context, currentColumns, targetWidth);
     final double computedWidth = effectiveColumnWidths.isNotEmpty
-        ? effectiveColumnWidths.fold<double>(0, (double sum, double value) => sum + value)
+        ? effectiveColumnWidths.fold<double>(
+            0, (double sum, double value) => sum + value)
         : targetWidth;
     final Widget headerRow = currentColumns.isEmpty
         ? const SizedBox.shrink()
@@ -746,7 +765,8 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     final ThemeData theme = Theme.of(context);
     final List<Widget> cells = <Widget>[];
     for (int i = 0; i < columns.length; i++) {
-      final double width = i < columnWidths.length ? columnWidths[i] : columnWidths.last;
+      final double width =
+          i < columnWidths.length ? columnWidths[i] : columnWidths.last;
       final Widget label = columns[i].label;
       final AlignmentGeometry alignment =
           i == 0 ? Alignment.center : AlignmentDirectional.centerStart;
@@ -785,9 +805,8 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     if (columns.isEmpty) {
       return const <double>[];
     }
-    final double resolvedTargetWidth = targetWidth <= 0
-        ? columns.length * 120.0
-        : targetWidth;
+    final double resolvedTargetWidth =
+        targetWidth <= 0 ? columns.length * 120.0 : targetWidth;
     final TextStyle headerStyle =
         Theme.of(context).textTheme.titleSmall ?? const TextStyle(fontSize: 14);
     final List<double> baseWidths = <double>[];
@@ -825,12 +844,15 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     final List<double> result = List<double>.from(baseWidths, growable: false);
     if (baseTotal < resolvedTargetWidth) {
       final double extra = resolvedTargetWidth - baseTotal;
-      final int adjustableCount = result.length <= 1 ? result.length : result.length - 1;
+      final int adjustableCount =
+          result.length <= 1 ? result.length : result.length - 1;
       if (adjustableCount == 0) {
         result[0] += extra;
         return result;
       }
-      final double adjustableBase = result.skip(1).fold<double>(0, (double sum, double value) => sum + value);
+      final double adjustableBase = result
+          .skip(1)
+          .fold<double>(0, (double sum, double value) => sum + value);
       for (int i = 1; i < result.length; i++) {
         final double share = adjustableBase == 0
             ? extra / adjustableCount
@@ -1113,7 +1135,6 @@ class _StatusCell extends StatelessWidget {
       child: chip,
     );
   }
-
 }
 
 String _severityLabel(CsvReviewMessageSeverity severity) {
@@ -1352,7 +1373,6 @@ class _EditableCellState extends State<_EditableCell> {
       },
     );
   }
-
 }
 
 class _FieldWarningIcon extends StatelessWidget {
