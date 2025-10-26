@@ -126,20 +126,40 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
     final Color textColor = hasSelection
         ? theme.colorScheme.onSurface
         : theme.colorScheme.onSurfaceVariant;
-    final String label = hasSelection
-        ? 'Vybraný soubor: ${_selectedFileName ?? "(bez názvu)"}'
-        : 'Zatím nebyl vybrán žádný soubor.';
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor),
-      ),
-      child: Text(
-        label,
-        key: const Key('CsvImportScreen_file_label'),
-        style: theme.textTheme.bodyLarge?.copyWith(color: textColor),
+    
+    // Make the entire container clickable, but only filename selectable
+    return InkWell(
+      key: const Key('CsvImportScreen_file_box'),
+      onTap: _isPicking ? null : _handlePickPressed,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor),
+        ),
+        child: hasSelection
+            ? Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: <Widget>[
+                  Text(
+                    'Vybraný soubor: ',
+                    key: const Key('CsvImportScreen_file_label_prefix'),
+                    style: theme.textTheme.bodyLarge?.copyWith(color: textColor),
+                  ),
+                  SelectableText(
+                    _selectedFileName ?? "(bez názvu)",
+                    key: const Key('CsvImportScreen_file_name'),
+                    style: theme.textTheme.bodyLarge?.copyWith(color: textColor),
+                  ),
+                ],
+              )
+            : Text(
+                'Zatím nebyl vybrán žádný soubor.',
+                key: const Key('CsvImportScreen_file_label_empty'),
+                style: theme.textTheme.bodyLarge?.copyWith(color: textColor),
+              ),
       ),
     );
   }
