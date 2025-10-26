@@ -17,6 +17,10 @@ Color statusColor(BuildContext context, CsvRowReviewStatus status) {
 }
 
 /// Returns a localized label that matches the given row status.
+/// 
+/// Note: [CsvRowReviewStatus.ok] returns "V pořádku" (in order/perfect) instead
+/// of "Platné" (valid) to avoid confusion with the "Schválit všechny platné" 
+/// button which approves all non-rejected rows (warn+info+ok), not just ok rows.
 String statusLabel(CsvRowReviewStatus status) {
   switch (status) {
     case CsvRowReviewStatus.rejected:
@@ -26,7 +30,7 @@ String statusLabel(CsvRowReviewStatus status) {
     case CsvRowReviewStatus.info:
       return 'Informace';
     case CsvRowReviewStatus.ok:
-      return 'Platné';
+      return 'V pořádku';
   }
 }
 

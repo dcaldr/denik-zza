@@ -577,7 +577,10 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
               onTap: _handleSummaryValidTap,
               child: SummaryBadge(
                 key: const Key('CsvTableOverview_summary_ok_count'),
-                label: 'Platné',
+                // "V pořádku" = perfect records with no issues
+                // Avoids ambiguity with "Schválit všechny platné" button
+                // which approves all non-rejected rows (warn+info+ok)
+                label: 'V pořádku',
                 count: validCount,
                 color: statusColor(theme, CsvRowReviewStatus.ok),
               ),

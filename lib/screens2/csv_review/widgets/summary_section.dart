@@ -52,7 +52,7 @@ class SummarySection extends StatelessWidget {
                   ),
                   SummaryBadge(
                     key: const Key('CsvReviewScreen_summary_ok_count'),
-                    label: 'Platné',
+                    label: 'V pořádku',
                     count: groupedRows[CsvRowReviewStatus.ok]!.length,
                     color: statusColor(context, CsvRowReviewStatus.ok),
                   ),

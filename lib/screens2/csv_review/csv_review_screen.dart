@@ -594,7 +594,9 @@ const List<_StatusFilter> _statusFilters = <_StatusFilter>[
   ),
   _StatusFilter(
     key: 'CsvReviewScreen_tab_ok',
-    label: 'Platné',
+    // "V pořádku" used for consistency with summary badge
+    // Avoids confusion with "Schválit platné" bulk action buttons
+    label: 'V pořádku',
     status: CsvRowReviewStatus.ok,
   ),
   _StatusFilter(
