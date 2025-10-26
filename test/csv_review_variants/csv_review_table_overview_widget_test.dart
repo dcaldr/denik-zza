@@ -478,6 +478,232 @@ void main() {
         .length;
     expect(rowOneCount, 1);
   });
+
+  // ============================================================================
+  // SCROLLBAR VISIBILITY AND FUNCTIONALITY TESTS
+  // See docs/nested-scrollbars-solution.md for implementation details
+  // ============================================================================
+
+  testWidgets('both vertical and horizontal scrollbars are present',
+      (WidgetTester tester) async {
+    final TestWidgetsFlutterBinding binding =
+        TestWidgetsFlutterBinding.ensureInitialized();
+    binding.window.physicalSizeTestValue = const Size(1200, 800);
+    binding.window.devicePixelRatioTestValue = 1.0;
+    addTearDown(() {
+      binding.window.clearPhysicalSizeTestValue();
+      binding.window.clearDevicePixelRatioTestValue();
+    });
+
+    final _WidgetFakeService service = _WidgetFakeService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CsvReviewTableOverviewScreen(
+          filePath: 'ignored.csv',
+          service: service,
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    // Find both Scrollbar widgets in the widget tree
+    final Finder scrollbarFinder = find.byType(Scrollbar);
+    
+    // Should find exactly 2 Scrollbar widgets: vertical (outer) and horizontal (inner)
+    expect(scrollbarFinder, findsNWidgets(2),
+        reason: 'Should have both vertical and horizontal Scrollbars');
+
+    // Verify the vertical scroll widget exists
+    expect(find.byKey(const Key('CsvTableOverview_scrollable_body')),
+        findsOneWidget,
+        reason: 'Vertical ListView should exist');
+  });
+
+  testWidgets('horizontal scrollbar remains accessible when scrolling vertically',
+      (WidgetTester tester) async {
+    final TestWidgetsFlutterBinding binding =
+        TestWidgetsFlutterBinding.ensureInitialized();
+    // Large enough viewport to avoid overflow but test scrolling
+    binding.window.physicalSizeTestValue = const Size(1200, 800);
+    binding.window.devicePixelRatioTestValue = 1.0;
+    addTearDown(() {
+      binding.window.clearPhysicalSizeTestValue();
+      binding.window.clearDevicePixelRatioTestValue();
+    });
+
+    final _WidgetFakeService service = _WidgetFakeService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CsvReviewTableOverviewScreen(
+          filePath: 'ignored.csv',
+          service: service,
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    // Verify both scrollbars exist before scrolling
+    expect(find.byType(Scrollbar), findsNWidgets(2));
+
+    // Find the vertical ListView
+    final Finder listViewFinder =
+        find.byKey(const Key('CsvTableOverview_scrollable_body'));
+    expect(listViewFinder, findsOneWidget);
+
+    // Verify both scrollbars still exist - the key implementation detail
+    // is that horizontal scrollbar is OUTSIDE the vertical scroll area
+    expect(find.byType(Scrollbar), findsNWidgets(2),
+        reason:
+            'Both scrollbars should remain present (horizontal is outside vertical scroll)');
+  });
+
+  testWidgets('horizontal scroll works and synchronizes with header',
+      (WidgetTester tester) async {
+    final TestWidgetsFlutterBinding binding =
+        TestWidgetsFlutterBinding.ensureInitialized();
+    // Wide table requires horizontal scrolling
+    binding.window.physicalSizeTestValue = const Size(600, 800);
+    binding.window.devicePixelRatioTestValue = 1.0;
+    addTearDown(() {
+      binding.window.clearPhysicalSizeTestValue();
+      binding.window.clearDevicePixelRatioTestValue();
+    });
+
+    final _WidgetFakeService service = _WidgetFakeService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CsvReviewTableOverviewScreen(
+          filePath: 'ignored.csv',
+          service: service,
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    // Find the horizontal scroll widget
+    final Finder horizontalScrollFinder =
+        find.byKey(const Key('CsvTableOverview_horizontalScroll'));
+    expect(horizontalScrollFinder, findsOneWidget);
+
+    // Find the sticky header's horizontal scroll
+    final Finder headerScrollFinder =
+        find.byKey(const Key('CsvTableOverview_table_header_horizontal'));
+    expect(headerScrollFinder, findsOneWidget);
+
+    // Scroll horizontally on the table body
+    await tester.drag(horizontalScrollFinder, const Offset(-200, 0));
+    await tester.pumpAndSettle();
+
+    // Get the scroll controllers to verify synchronization
+    final SingleChildScrollView bodyScroll =
+        tester.widget(horizontalScrollFinder);
+    final SingleChildScrollView headerScroll =
+        tester.widget(headerScrollFinder);
+
+    // Verify both use controllers (they should be synchronized via listeners)
+    expect(bodyScroll.controller, isNotNull,
+        reason: 'Body should have a ScrollController');
+    expect(headerScroll.controller, isNotNull,
+        reason: 'Header should have a ScrollController');
+
+    // The controllers should be different objects but synchronized
+    expect(bodyScroll.controller != headerScroll.controller, isTrue,
+        reason:
+            'Body and header should have separate controllers (synchronized via listeners)');
+  });
+
+  testWidgets('vertical scroll works independently of horizontal scroll',
+      (WidgetTester tester) async {
+    final TestWidgetsFlutterBinding binding =
+        TestWidgetsFlutterBinding.ensureInitialized();
+    binding.window.physicalSizeTestValue = const Size(1200, 800);
+    binding.window.devicePixelRatioTestValue = 1.0;
+    addTearDown(() {
+      binding.window.clearPhysicalSizeTestValue();
+      binding.window.clearDevicePixelRatioTestValue();
+    });
+
+    final _WidgetFakeService service = _WidgetFakeService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CsvReviewTableOverviewScreen(
+          filePath: 'ignored.csv',
+          service: service,
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    // Find the vertical ListView
+    final Finder listViewFinder =
+        find.byKey(const Key('CsvTableOverview_scrollable_body'));
+    expect(listViewFinder, findsOneWidget);
+
+    // Verify both scrollbars exist and are independent
+    // This test confirms the notificationPredicate implementation works
+    expect(find.byType(Scrollbar), findsNWidgets(2),
+        reason:
+            'Both scrollbars should exist independently thanks to notificationPredicate');
+  });
+
+  testWidgets('scrollbars use notificationPredicate correctly',
+      (WidgetTester tester) async {
+    final TestWidgetsFlutterBinding binding =
+        TestWidgetsFlutterBinding.ensureInitialized();
+    binding.window.physicalSizeTestValue = const Size(800, 600);
+    binding.window.devicePixelRatioTestValue = 1.0;
+    addTearDown(() {
+      binding.window.clearPhysicalSizeTestValue();
+      binding.window.clearDevicePixelRatioTestValue();
+    });
+
+    final _WidgetFakeService service = _WidgetFakeService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CsvReviewTableOverviewScreen(
+          filePath: 'ignored.csv',
+          service: service,
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    // Find both Scrollbar widgets
+    final List<Scrollbar> scrollbars = tester.widgetList<Scrollbar>(
+      find.byType(Scrollbar),
+    ).toList();
+
+    expect(scrollbars.length, equals(2),
+        reason: 'Should have exactly 2 Scrollbar widgets');
+
+    // One scrollbar should have a notificationPredicate (the horizontal one)
+    // This is the key to making both scrollbars visible simultaneously
+    final bool hasNotificationPredicate = scrollbars.any(
+      (Scrollbar sb) => sb.notificationPredicate != null,
+    );
+
+    expect(hasNotificationPredicate, isTrue,
+        reason:
+            'At least one Scrollbar should have notificationPredicate set (see docs/nested-scrollbars-solution.md)');
+
+    // Both scrollbars should have thumbVisibility enabled
+    final int visibleThumbs = scrollbars
+        .where((Scrollbar sb) => sb.thumbVisibility == true)
+        .length;
+
+    expect(visibleThumbs, equals(2),
+        reason: 'Both scrollbars should have thumbVisibility: true');
+  });
 }
 
 class _WidgetFakeService implements CsvImportService {

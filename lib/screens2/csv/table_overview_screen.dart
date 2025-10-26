@@ -80,7 +80,8 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
   late List<_TableFilter> _filters;
   late List<String> _columnOrder;
   String? _duplicateIndicatorFieldKey;
-  late final ScrollController _horizontalScrollController;
+  late final ScrollController _headerScrollController;
+  late final ScrollController _bodyScrollController;
   late final ScrollController _verticalScrollController;
   final GlobalKey _tableBodyKey = GlobalKey();
   double? _tableBodyWidth;
@@ -115,8 +116,31 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     ];
     _activeStatus = null;
     _columnOrder = _resolveColumnOrder();
-    _horizontalScrollController = ScrollController();
+    
+    // Separate controllers for header and body to enable visible scrollbar
+    _headerScrollController = ScrollController();
+    _bodyScrollController = ScrollController();
     _verticalScrollController = ScrollController();
+    
+    // Synchronize scrolling between header and body
+    _bodyScrollController.addListener(_syncBodyToHeader);
+    _headerScrollController.addListener(_syncHeaderToBody);
+  }
+
+  void _syncBodyToHeader() {
+    if (_bodyScrollController.hasClients && _headerScrollController.hasClients) {
+      if (_headerScrollController.offset != _bodyScrollController.offset) {
+        _headerScrollController.jumpTo(_bodyScrollController.offset);
+      }
+    }
+  }
+
+  void _syncHeaderToBody() {
+    if (_headerScrollController.hasClients && _bodyScrollController.hasClients) {
+      if (_bodyScrollController.offset != _headerScrollController.offset) {
+        _bodyScrollController.jumpTo(_headerScrollController.offset);
+      }
+    }
   }
 
   @override
@@ -129,7 +153,10 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
 
   @override
   void dispose() {
-    _horizontalScrollController.dispose();
+    _bodyScrollController.removeListener(_syncBodyToHeader);
+    _headerScrollController.removeListener(_syncHeaderToBody);
+    _headerScrollController.dispose();
+    _bodyScrollController.dispose();
     _verticalScrollController.dispose();
     super.dispose();
   }
@@ -299,17 +326,17 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
                         _buildTitleRow(context),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 2),
                         _buildSummaryPanel(context),
                         _buildUnparsedColumnsSection(),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 2),
                         _buildFilterRow(context),
                       ],
                     ),
                   ),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Divider(height: 16),
+                    child: Divider(height: 4),
                   ),
                   Expanded(
                     child: Stack(
@@ -317,18 +344,23 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                         Scrollbar(
                           controller: _verticalScrollController,
                           thumbVisibility: true,
-                          child: ListView(
-                            key: const Key('CsvTableOverview_scrollable_body'),
-                            controller: _verticalScrollController,
-                            padding: EdgeInsets.only(
-                              left: 16,
-                              right: 16,
-                              top: listTopPadding,
-                              bottom: bottomListPadding,
+                          child: Scrollbar(
+                            controller: _bodyScrollController,
+                            thumbVisibility: true,
+                            notificationPredicate: (notif) => notif.depth == 1,
+                            child: ListView(
+                              key: const Key('CsvTableOverview_scrollable_body'),
+                              controller: _verticalScrollController,
+                              padding: EdgeInsets.only(
+                                left: 16,
+                                right: 16,
+                                top: listTopPadding,
+                                bottom: bottomListPadding,
+                              ),
+                              children: <Widget>[
+                                _buildTableBodySection(context, minTableWidth),
+                              ],
                             ),
-                            children: <Widget>[
-                              _buildTableBodySection(context, minTableWidth),
-                            ],
                           ),
                         ),
                         Positioned(
@@ -716,7 +748,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
               height: _tableHeaderHeight,
               child: SingleChildScrollView(
                 key: const Key('CsvTableOverview_table_header_horizontal'),
-                controller: _horizontalScrollController,
+                controller: _headerScrollController,
                 scrollDirection: Axis.horizontal,
                 child: SizedBox(
                   width: computedWidth,
@@ -753,7 +785,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
       padding: const EdgeInsets.only(bottom: 8),
       child: SingleChildScrollView(
         key: const Key('CsvTableOverview_horizontalScroll'),
-        controller: _horizontalScrollController,
+        controller: _bodyScrollController,
         scrollDirection: Axis.horizontal,
         child: ConstrainedBox(
           key: _tableBodyKey,
