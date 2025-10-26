@@ -9,6 +9,10 @@ import 'package:path/path.dart' as p;
 /// Boots an in-memory database so CSV review dev mains never touch
 /// production storage. Returns the configured [AppDatabase] so callers can
 /// optionally seed data.
+///
+/// @deprecated Use [DevEnvironment.initialize()] instead for consistent setup
+/// across all dev entry points. This provides rich test data automatically.
+@Deprecated('Use DevEnvironment.initialize() instead')
 Future<AppDatabase> configureCsvReviewDevDatabase() async {
   DatabaseWrapper.setTestMode();
   final AppDatabase database = AppDatabase.testInMemory();
