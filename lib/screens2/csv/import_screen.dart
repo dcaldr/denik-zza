@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:denik_zza/screens2/csv/table_overview_screen.dart';
+import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/services/models/csv_import_payload.dart';
 import 'package:denik_zza/input/file_manager.dart';
@@ -55,6 +56,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
       appBar: AppBar(
         title: const Text('Import CSV'),
       ),
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),

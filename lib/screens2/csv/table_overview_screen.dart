@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:denik_zza/input/csv_review_models.dart';
+import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/services/models/csv_import_payload.dart';
 import 'package:denik_zza/utils/app_logger.dart';
@@ -277,6 +278,10 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
       });
     }
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Tabulkový přehled CSV'),
+      ),
+      drawer: const AppDrawer(),
       body: _controller.session == null
           ? const SizedBox.shrink()
           : SafeArea(
@@ -446,12 +451,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(
-                'Tabulkový přehled CSV',
-                style: theme.textTheme.headlineSmall,
-              ),
               if (fileLabel != null && fileLabel.isNotEmpty) ...<Widget>[
-                const SizedBox(height: 2),
                 Text(
                   'Soubor: $fileLabel',
                   key: const Key('CsvTableOverview_file_label'),
@@ -459,8 +459,8 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
+                const SizedBox(height: 2),
               ],
-              const SizedBox(height: 2),
               Text(
                 'Rychle prohlédněte importované záznamy a upravte je na jednom místě.',
                 style: theme.textTheme.bodyMedium,

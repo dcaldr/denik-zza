@@ -1,3 +1,4 @@
+import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:flutter/material.dart';
 
@@ -44,6 +45,7 @@ class CsvImportSummaryScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Shrnutí importu'),
       ),
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
