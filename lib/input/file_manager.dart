@@ -425,10 +425,17 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
   /// Returns directory where zpusobilosti are stored for current event
   ///
   /// Use in cooperation when getting zpusobilost files from [MemoryOsoba] instances
-  /// If [eventDir] is null, throws an exception
+  /// If [eventDir] is null in non-inMemory modes, throws an exception
   Future<Directory> getZpusobilostFolder() async {
+    // In inMemory mode, return synthetic directory (matches writeTempCsvBytes pattern)
+    if (_mode == FileManagerMode.inMemory) {
+      logger.d('Zpusobilost folder in memory mode: memory://zpusobilosti');
+      return Directory('memory://zpusobilosti');
+    }
+    
+    // In persistent modes, require eventDir to be set
     if (eventDir == null) {
-      if (_mode != FileManagerMode.inMemory) logger.e('Event directory is null', stackTrace: StackTrace.current);
+      logger.e('Event directory is null', stackTrace: StackTrace.current);
       logger.i('FileManager mode: ${_mode.value}');
       return throw Exception('Event directory is null');
     }

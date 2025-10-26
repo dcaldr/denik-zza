@@ -1,5 +1,6 @@
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/input/file_manager.dart';
 import 'package:drift/drift.dart';
 
 /// Unified development environment setup for all dev mains.
@@ -45,54 +46,66 @@ class DevEnvironment {
   ///
   /// Returns the initialized [AppDatabase] instance.
   static Future<AppDatabase> initialize() async {
-    // Create in-memory test database
-    DatabaseWrapper.setTestMode();
+    // Create in-memory test database (MUST happen before setTestMode/useTestDriftDatabase)
     final AppDatabase database = AppDatabase.testInMemory();
-    DatabaseWrapper.useTestDriftDatabase(database);
     
-    // 1. Create test event (matches HardcodedTestSetup pattern)
-    final now = DateTime.now();
-    final eventCompanion = ZzaActionsCompanion(
-      actionTitle: const Value('Test Dev Event'),
-      actionDescription: const Value('Development test event with auto-setup'),
-      dateFrom: Value(now),
-      dateTo: Value(now.add(const Duration(days: 7))),
-    );
-    final eventId = await database.addZzaAction(eventCompanion);
-    
-    // 2. CRITICAL: Set as current event in cache (like HardcodedTestSetup)
-    // This makes getCurrentActionID() work and fixes null errors!
-    await database.updateCache(CacheCompanion(
-      id: const Value(1),
-      currentActionID: Value(eventId),
-      pinnedActionID: const Value(null),
-    ));
-    
-    // 3. Create test paramedic (like HardcodedTestSetup)
-    // Required for foreign key constraints on medical records
-    await database.addParamedic(ParamedicsCompanion(
-      firstName: const Value('Test'),
-      lastName: const Value('Paramedic'),
-      address: const Value('Test Address 1'),
-      birthDate: Value(DateTime(1990, 1, 1)),
-      phoneNumber: const Value('+420000000000'),
-      username: const Value('tester1'),
-    ));
-    
-    // 4. Create insurance companies (like HardcodedTestSetup)
-    // These will be available for participant creation
-    await database.addInsuranceCompany(
-      const InsuranceCompaniesCompanion(
-        name: Value('Všeobecná zdravotní pojišťovna'),
-      ),
-    );
-    await database.addInsuranceCompany(
-      const InsuranceCompaniesCompanion(
-        name: Value('Oborová zdravotní pojišťovna'),
-      ),
-    );
-    
-    return database;
+    try {
+      // Ensure the app uses this database instance (so UI + services see same data)
+      DatabaseWrapper.setTestMode();
+      DatabaseWrapper.useTestDriftDatabase(database);
+      
+      // Configure FileManager for in-memory mode (prevents disk writes during dev)
+      FileManager(isTesting: true);
+      
+      // 1. Create test event (matches HardcodedTestSetup pattern)
+      final now = DateTime.now();
+      final eventCompanion = ZzaActionsCompanion(
+        actionTitle: const Value('Test Dev Event'),
+        actionDescription: const Value('Development test event with auto-setup'),
+        dateFrom: Value(now),
+        dateTo: Value(now.add(const Duration(days: 7))),
+      );
+      final eventId = await database.addZzaAction(eventCompanion);
+      
+      // 2. CRITICAL: Set as current event in cache (like HardcodedTestSetup)
+      // This makes getCurrentActionID() work and fixes null errors!
+      await database.updateCache(CacheCompanion(
+        id: const Value(1),
+        currentActionID: Value(eventId),
+        pinnedActionID: const Value(null),
+      ));
+      
+      // 3. Create test paramedic (like HardcodedTestSetup)
+      // Required for foreign key constraints on medical records
+      await database.addParamedic(ParamedicsCompanion(
+        firstName: const Value('Test'),
+        lastName: const Value('Paramedic'),
+        address: const Value('Test Address 1'),
+        birthDate: Value(DateTime(1990, 1, 1)),
+        phoneNumber: const Value('+420000000000'),
+        username: const Value('tester1'),
+      ));
+      
+      // 4. Create insurance companies (like HardcodedTestSetup)
+      // These will be available for participant creation
+      await database.addInsuranceCompany(
+        const InsuranceCompaniesCompanion(
+          name: Value('Všeobecná zdravotní pojišťovna'),
+        ),
+      );
+      await database.addInsuranceCompany(
+        const InsuranceCompaniesCompanion(
+          name: Value('Oborová zdravotní pojišťovna'),
+        ),
+      );
+      
+      return database;
+      
+    } catch (e) {
+      // Match HardcodedTestSetup error handling for consistent debugging
+      print('❌ Error setting up dev environment: $e');
+      rethrow;
+    }
   }
   
   /// Initialize with full rich test data (10 participants + records).
