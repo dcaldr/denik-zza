@@ -390,32 +390,10 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    /*
-                        // Legacy footer preserved for potential rollback during prototyping.
-                        BulkActionBar(
-                          key: const Key('CsvTableOverview_bulkActions'),
-                          approvedCount: _controller.approvedCount,
-                          rejectedCount: _controller.rejectedCount,
-                          onApproveOk: _controller.bulkApproveOk,
-                          onApproveUpToInfo: _controller.bulkApproveUpToInfo,
-                          onClearApprovals: _controller.bulkClearApprovals,
-                          onRejectAll: _controller.bulkRejectAll,
-                          onRejectOnlyRejected: _controller.bulkRejectOnlyRejected,
-                        ),
-                        FinalizeCard(
-                          key: const Key('CsvTableOverview_finalize'),
-                          approvedCount: _controller.approvedCount,
-                          rejectedCount: _controller.rejectedCount,
-                          undecidedCount: _controller.undecidedCount,
-                          duplicateCount: _controller.duplicateRowCount,
-                          isFinalizing: _controller.isFinalizing,
-                          onFinalize: () async {
-                            await _controller.finalizeImport();
-                          },
-                        ),
-                        */
+                    // Thin divider for visual separation from scrollbar
+                    const Divider(height: 1, thickness: 1),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                       child: SizedBox(
                         width: double.infinity,
                         child: _buildFooterButtons(context),
@@ -953,18 +931,21 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
       spacing: 12,
       runSpacing: 12,
       children: <Widget>[
-        FilledButton.icon(
+        // SECONDARY ACTION (medium emphasis) - Select all valid rows
+        OutlinedButton.icon(
           key: const Key('CsvTableOverview_action_select_all_valid'),
           onPressed: hasRows ? _controller.selectAllValid : null,
           icon: const Icon(Icons.checklist),
           label: const Text('Označit všechny platné'),
         ),
-        FilledButton.icon(
+        // TERTIARY ACTION (low emphasis) - Deselect all (destructive)
+        TextButton.icon(
           key: const Key('CsvTableOverview_action_deselect_all'),
           onPressed: selectedCount > 0 ? _controller.deselectAll : null,
           icon: const Icon(Icons.clear_all),
           label: const Text('Odznačit vše'),
         ),
+        // PRIMARY ACTION (high emphasis) - Finalize import
         FilledButton(
           key: const Key('CsvTableOverview_action_finalize'),
           onPressed: !hasRows || selectedCount == 0 || isFinalizing
