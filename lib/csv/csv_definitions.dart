@@ -23,6 +23,9 @@ class CsvColumnDefinitions {
   ];
 
   /// Extract column names from a list of InputHold definitions.
+  /// 
+  /// Reserved for future use: Will be used to generate CSV header display
+  /// on the upload/import page to show users the expected column format.
   static List<String> extractColumnNames(List<InputHold> columnsList) {
     return columnsList.map((InputHold item) => item.columnName).toList();
   }
