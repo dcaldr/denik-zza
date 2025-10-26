@@ -964,22 +964,29 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
   }
 
   Future<void> _handleFinalizePressed(BuildContext context) async {
-    if (_controller.approvedCount == 0 || _controller.isFinalizing) {
+    _logger.d('Finalize button pressed - selectedCount: ${_controller.selectedRowCount}, isFinalizing: ${_controller.isFinalizing}');
+    
+    if (_controller.selectedRowCount == 0 || _controller.isFinalizing) {
+      _logger.w('Finalize aborted - selectedCount is 0 or already finalizing');
       return;
     }
 
     try {
       _logger.i(
-        '$csvImportFlowLogTag: Finalize requested (approved=${_controller.approvedCount}, fileLabel=${_controller.importFileLabel ?? 'CSV soubor'}).',
+        '$csvImportFlowLogTag: Finalize requested (selected=${_controller.selectedRowCount}, fileLabel=${_controller.importFileLabel ?? 'CSV soubor'}).',
       );
       final CsvFinalizeResult? result = await _controller.finalizeImport();
+      _logger.d('Finalize result received: savedCount=${result?.savedCount}, failedCount=${result?.failedCount}');
+      
       if (!mounted) {
+        _logger.w('Widget not mounted after finalize');
         return;
       }
       if (result == null) {
         _logger.w(
           '$csvImportFlowLogTag: Finalize returned null result; keeping user on table overview.',
         );
+        if (!mounted) return;
         const SnackBar message = SnackBar(
           content: Text('Import nelze dokončit. Zkuste to prosím znovu.'),
         );
@@ -995,20 +1002,22 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
       _logger.i(
         '$csvImportFlowLogTag: Finalize succeeded (saved=${result.savedCount}, failed=${result.failedCount}). Opening summary.',
       );
+      
+      if (!mounted) return;
+      _logger.d('About to navigate to summary screen...');
       await CsvImportSummaryScreen.openAfterFinalize(
         context: context,
         result: result,
         importFileLabel: label,
       );
+      _logger.d('Navigation completed');
     } on Object catch (error, stackTrace) {
-      if (!mounted) {
-        return;
-      }
       _logger.e(
         '$csvImportFlowLogTag: Finalize import failed.',
         error: error,
         stackTrace: stackTrace,
       );
+      if (!mounted) return;
       const SnackBar message = SnackBar(
         content: Text('Dokončení importu selhalo. Zkuste to prosím znovu.'),
       );
@@ -1404,9 +1413,7 @@ class _EditableCellState extends State<_EditableCell> {
     try {
       await widget.controller.editRow(widget.row, payload);
     } catch (_) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Úpravu se nepodařilo uložit.')),
       );
