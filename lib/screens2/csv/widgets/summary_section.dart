@@ -1,5 +1,5 @@
 import 'package:denik_zza/input/csv_review_models.dart';
-import 'package:denik_zza/screens2/csv_review_variants/csv_review_shared.dart';
+import 'package:denik_zza/screens2/csv/csv_review_shared.dart';
 import 'package:flutter/material.dart';
 
 /// Card that summarizes row counts for the current CSV review session.

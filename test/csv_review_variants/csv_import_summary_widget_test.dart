@@ -1,4 +1,4 @@
-import 'package:denik_zza/screens2/csv_review_variants/summary_screen.dart';
+import 'package:denik_zza/screens2/csv/summary_screen.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

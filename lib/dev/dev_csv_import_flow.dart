@@ -1,5 +1,5 @@
 import 'package:denik_zza/dev/dev_csv_review_shared.dart';
-import 'package:denik_zza/screens2/csv_review_variants/import_screen.dart';
+import 'package:denik_zza/screens2/csv/import_screen.dart';
 import 'package:flutter/material.dart';
 
 Future<void> main() async {

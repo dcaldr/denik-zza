@@ -1,7 +1,7 @@
 import 'package:denik_zza/input/csv_review_models.dart';
 import 'package:denik_zza/input/input_parser.dart';
-import 'package:denik_zza/screens2/csv_review_variants/table_overview_screen.dart';
-import 'package:denik_zza/screens2/csv_review_variants/csv_review_shared.dart';
+import 'package:denik_zza/screens2/csv/table_overview_screen.dart';
+import 'package:denik_zza/screens2/csv/csv_review_shared.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/services/models/csv_import_payload.dart';
 import 'package:flutter/material.dart';

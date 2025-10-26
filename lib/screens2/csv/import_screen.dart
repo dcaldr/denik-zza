@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:denik_zza/screens2/csv_review_variants/table_overview_screen.dart';
+import 'package:denik_zza/screens2/csv/table_overview_screen.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/services/models/csv_import_payload.dart';
 import 'package:denik_zza/input/file_manager.dart';
