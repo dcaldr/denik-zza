@@ -910,17 +910,11 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
 
   Widget _buildFooterButtons(BuildContext context) {
     final int selectedCount = _controller.selectedRowCount;
-    final bool hasRejections = _controller.hasRejectedDecisions;
-    final bool canApproveAllValid = _controller.canApproveAllValid;
     final bool hasRows = _controller.totalRowCount > 0;
-    final bool hasApproved = _controller.approvedCount > 0;
     final bool isFinalizing = _controller.isFinalizing;
-    final String approveSelectedLabel = selectedCount > 0
-        ? 'Schválit vybrané ($selectedCount)'
-        : 'Schválit vybrané';
-    final String rejectLabel =
-        hasRejections ? 'Zrušit odmítnutí' : 'Odmítnout vše';
-    final IconData rejectIcon = hasRejections ? Icons.undo : Icons.block;
+    final String finalizeLabel = selectedCount > 0
+        ? 'Dokončit import ($selectedCount)'
+        : 'Dokončit import';
 
     return Wrap(
       alignment: WrapAlignment.end,
@@ -928,26 +922,20 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
       runSpacing: 12,
       children: <Widget>[
         FilledButton.icon(
-          key: const Key('CsvTableOverview_action_approve_all_valid'),
-          onPressed: canApproveAllValid ? _controller.approveAllValid : null,
-          icon: const Icon(Icons.library_add_check),
-          label: const Text('Schválit všechny platné'),
-        ),
-        OutlinedButton.icon(
-          key: const Key('CsvTableOverview_action_approve_selected'),
-          onPressed: selectedCount == 0 ? null : _controller.approveSelected,
-          icon: const Icon(Icons.task_alt),
-          label: Text(approveSelectedLabel),
+          key: const Key('CsvTableOverview_action_select_all_valid'),
+          onPressed: hasRows ? _controller.selectAllValid : null,
+          icon: const Icon(Icons.checklist),
+          label: const Text('Označit všechny platné'),
         ),
         FilledButton.icon(
-          key: const Key('CsvTableOverview_action_reject_toggle'),
-          onPressed: hasRows ? _controller.toggleRejectAll : null,
-          icon: Icon(rejectIcon),
-          label: Text(rejectLabel),
+          key: const Key('CsvTableOverview_action_deselect_all'),
+          onPressed: selectedCount > 0 ? _controller.deselectAll : null,
+          icon: const Icon(Icons.clear_all),
+          label: const Text('Odznačit vše'),
         ),
         FilledButton(
           key: const Key('CsvTableOverview_action_finalize'),
-          onPressed: !hasRows || !hasApproved || isFinalizing
+          onPressed: !hasRows || selectedCount == 0 || isFinalizing
               ? null
               : () => _handleFinalizePressed(context),
           child: Row(
@@ -966,7 +954,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
               ] else ...<Widget>[
                 const Icon(Icons.cloud_upload),
                 const SizedBox(width: 8),
-                const Text('Dokončit import'),
+                Text(finalizeLabel),
               ],
             ],
           ),
@@ -1114,8 +1102,25 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     List<CsvReviewRow> rows,
   ) {
     final CsvReviewRow? sample = rows.isNotEmpty ? rows.first : null;
+    final int selectedCount = _controller.selectedRowCount;
+    final int totalValidRows = _controller.validRowCount;
+    final bool allSelected = selectedCount > 0 && selectedCount == totalValidRows;
+    
     return <DataColumn>[
-      const DataColumn(label: SizedBox()),
+      DataColumn(
+        label: Checkbox(
+          key: const Key('CsvTableOverview_header_checkbox'),
+          tristate: true,
+          value: selectedCount == 0 ? false : (allSelected ? true : null),
+          onChanged: (bool? value) {
+            if (value == true || value == null) {
+              _controller.selectAllValid();
+            } else {
+              _controller.deselectAll();
+            }
+          },
+        ),
+      ),
       const DataColumn(label: Text('Stav')),
       ..._columnOrder.map(
         (String key) => DataColumn(

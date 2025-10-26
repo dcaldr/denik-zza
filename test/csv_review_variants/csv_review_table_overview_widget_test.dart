@@ -73,16 +73,14 @@ void main() {
     );
     expect(find.text('neocekavany sloupec'), findsOneWidget);
 
-    expect(find.byKey(const Key('CsvTableOverview_action_approve_all_valid')),
+    // New simplified button structure
+    expect(find.byKey(const Key('CsvTableOverview_action_select_all_valid')),
         findsOneWidget);
-    final Finder approveSelectedFinder =
-        find.byKey(const Key('CsvTableOverview_action_approve_selected'));
-    expect(approveSelectedFinder, findsOneWidget);
-    final OutlinedButton approveSelectedButton =
-        tester.widget<OutlinedButton>(approveSelectedFinder);
-    expect(approveSelectedButton.onPressed, isNull);
-    expect(find.byKey(const Key('CsvTableOverview_action_reject_toggle')),
+    expect(find.byKey(const Key('CsvTableOverview_action_deselect_all')),
         findsOneWidget);
+    // Header checkbox exists (may be duplicated due to sticky header implementation)
+    expect(find.byKey(const Key('CsvTableOverview_header_checkbox')),
+        findsAtLeastNWidgets(1));
 
     expect(find.byKey(const Key('CsvTableOverview_table')), findsOneWidget);
     expect(find.text('Duplicitní?'), findsNothing);

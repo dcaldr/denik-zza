@@ -428,9 +428,9 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Approve all valid rows (not rejected, no duplicates).
-  /// Primary workflow action after user reviews issues.
-  void approveAllValid() {
+  /// Select all valid rows (not rejected, no duplicates).
+  /// Renamed from approveAllValid - now just selects rows without hidden approval state.
+  void selectAllValid() {
     bool changed = false;
     for (final CsvReviewRow row in _rows) {
       if (!_isValidStatus(row.status)) {
@@ -439,65 +439,20 @@ class CsvReviewPrototypeController extends ChangeNotifier {
       if (hasDuplicate(row.originalIndex)) {
         continue;
       }
-      if (_decisions[row.originalIndex] != CsvRowDecision.approved) {
-        _decisions[row.originalIndex] = CsvRowDecision.approved;
+      if (!_selectedRows.contains(row.originalIndex)) {
+        _selectedRows.add(row.originalIndex);
         changed = true;
       }
-    }
-    if (_clearSelection()) {
-      changed = true;
     }
     if (changed) {
       notifyListeners();
     }
   }
 
-  /// Approve all currently selected rows (multi-select UI support).
-  /// BUSINESS RULE: Skip rows with duplicates even if selected.
-  void approveSelected() {
-    if (_selectedRows.isEmpty) {
-      return;
-    }
-    bool changed = false;
-    for (final int rowIndex in List<int>.from(_selectedRows)) {
-      final CsvReviewRow? row = _findRowByIndex(rowIndex);
-      if (row == null) {
-        continue;
-      }
-      if (hasDuplicate(rowIndex)) {
-        continue;
-      }
-      if (_decisions[rowIndex] != CsvRowDecision.approved) {
-        _decisions[rowIndex] = CsvRowDecision.approved;
-        changed = true;
-      }
-    }
+  /// Deselect all rows.
+  /// Renamed from toggleRejectAll - now simply clears selection.
+  void deselectAll() {
     if (_clearSelection()) {
-      changed = true;
-    }
-    if (changed) {
-      notifyListeners();
-    }
-  }
-
-  /// Toggle all rejections (reject all OR clear all rejections).
-  /// Convenience method for quick "reject everything" workflows.
-  void toggleRejectAll() {
-    bool changed = false;
-    if (hasRejectedDecisions) {
-      changed = _clearRejectedDecisions();
-    } else {
-      for (final CsvReviewRow row in _rows) {
-        if (_decisions[row.originalIndex] != CsvRowDecision.rejected) {
-          _decisions[row.originalIndex] = CsvRowDecision.rejected;
-          changed = true;
-        }
-      }
-    }
-    if (_clearSelection()) {
-      changed = true;
-    }
-    if (changed) {
       notifyListeners();
     }
   }
@@ -510,16 +465,6 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     }
     _selectedRows.clear();
     return true;
-  }
-
-  /// Helper to clear all rejected decisions (used by toggleRejectAll).
-  /// Returns true if any decisions were removed.
-  bool _clearRejectedDecisions() {
-    final int before = _decisions.length;
-    _decisions.removeWhere(
-      (int _, CsvRowDecision decision) => decision == CsvRowDecision.rejected,
-    );
-    return before != _decisions.length;
   }
 
   /// Helper to find row by index (used internally).
@@ -697,8 +642,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
   // FINALIZATION (Commit approved records to database)
   // ═══════════════════════════════════════════════════════════════
 
-  /// Execute the import - save approved rows to database.
-  /// WORKFLOW: Validate session exists → call service → show finalizing state → return result
+  /// Execute the import - save SELECTED rows to database.
+  /// WORKFLOW: Validate session exists → build decisions from selection → call service → return result
   /// Returns null if no session loaded (shouldn't happen in normal flow).
   Future<CsvFinalizeResult?> finalizeImport() async {
     if (_session == null) {
@@ -707,9 +652,15 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     _isFinalizing = true;
     notifyListeners();
     try {
+      // Build approval decisions from selected rows
+      final Map<int, CsvRowDecision> decisions = <int, CsvRowDecision>{};
+      for (final int rowIndex in _selectedRows) {
+        decisions[rowIndex] = CsvRowDecision.approved;
+      }
+      
       final CsvFinalizeResult result = await service.finalizeImport(
         session: _session!,
-        decisions: _decisions,
+        decisions: decisions,
       );
       _isFinalizing = false;
       notifyListeners();
