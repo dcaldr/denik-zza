@@ -1017,7 +1017,11 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
   }
 
   Widget _buildDataTable(BuildContext context, List<CsvReviewRow> rows) {
-    final List<DataColumn> columns = _buildDataColumns(context, rows);
+    final List<DataColumn> columns = _buildDataColumns(
+      context,
+      rows,
+      includeSelectAllCheckbox: false,
+    );
 
     return DataTable(
       key: const Key('CsvTableOverview_table'),
@@ -1099,8 +1103,9 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
 
   List<DataColumn> _buildDataColumns(
     BuildContext context,
-    List<CsvReviewRow> rows,
-  ) {
+    List<CsvReviewRow> rows, {
+    bool includeSelectAllCheckbox = true,
+  }) {
     final CsvReviewRow? sample = rows.isNotEmpty ? rows.first : null;
     final int selectedCount = _controller.selectedRowCount;
     final int totalValidRows = _controller.validRowCount;
@@ -1108,18 +1113,20 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     
     return <DataColumn>[
       DataColumn(
-        label: Checkbox(
-          key: const Key('CsvTableOverview_header_checkbox'),
-          tristate: true,
-          value: selectedCount == 0 ? false : (allSelected ? true : null),
-          onChanged: (bool? value) {
-            if (value == true || value == null) {
-              _controller.selectAllValid();
-            } else {
-              _controller.deselectAll();
-            }
-          },
-        ),
+        label: includeSelectAllCheckbox
+            ? Checkbox(
+                key: const Key('CsvTableOverview_header_checkbox'),
+                tristate: true,
+                value: selectedCount == 0 ? false : (allSelected ? true : null),
+                onChanged: (bool? value) {
+                  if (value == true || value == null) {
+                    _controller.selectAllValid();
+                  } else {
+                    _controller.deselectAll();
+                  }
+                },
+              )
+            : const SizedBox.shrink(),
       ),
       const DataColumn(label: Text('Stav')),
       ..._columnOrder.map(
