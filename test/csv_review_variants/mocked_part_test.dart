@@ -49,20 +49,29 @@ void main() {
       // Build approval decisions
       final decisions = <int, CsvRowDecision>{};
       for (final row in session.review.rows) {
-        if (row.status == CsvRowReviewStatus.ok) {
+        // Valid = not rejected (includes ok, info, warn)
+        if (row.status != CsvRowReviewStatus.rejected) {
           decisions[row.originalIndex] = CsvRowDecision.approved;
         }
       }
 
-      // Attempt to finalize - should fail or handle null gracefully
-      // In the bug scenario, this crashed with null check operator error
-      expect(
-        () async => await service.finalizeImport(
-          session: session,
-          decisions: decisions,
-        ),
-        throwsA(isA<TypeError>()), // Null check operator throws TypeError
+      // Attempt to finalize - should now return result with failures instead of throwing
+      // The bug fix moved error handling from unhandled exception to graceful failure reporting
+      final result = await service.finalizeImport(
+        session: session,
+        decisions: decisions,
       );
+
+      // Should report failures for all rows (since no current event exists)
+      expect(result.savedCount, 0, reason: 'Should save no rows when no current event exists');
+      expect(result.failedCount, greaterThan(0), reason: 'Should report failures for all approved rows');
+      expect(result.failures.length, equals(decisions.length), reason: 'Every approved row should fail');
+      
+      // Verify failures contain error information
+      for (final failure in result.failures) {
+        expect(failure.originalIndex, greaterThan(0));
+        expect(failure.message, isNotEmpty);
+      }
     });
 
     test('successfully imports participants when current event exists', () async {
@@ -78,10 +87,11 @@ void main() {
       final session = await service.loadCsv('test/data/first.csv');
       expect(session.review.rows, isNotEmpty);
 
-      // Approve all valid rows
+      // Approve all VALID rows (all statuses except rejected)
       final decisions = <int, CsvRowDecision>{};
       for (final row in session.review.rows) {
-        if (row.status == CsvRowReviewStatus.ok) {
+        // Valid = not rejected (includes ok, info, warn)
+        if (row.status != CsvRowReviewStatus.rejected) {
           decisions[row.originalIndex] = CsvRowDecision.approved;
         }
       }
@@ -153,16 +163,22 @@ void main() {
       final session = await service.loadCsv('test/data/multi_person_shuffled_order.csv');
       expect(session.review.rows, isNotEmpty);
 
-      // Approve all valid rows
+      // Approve all VALID rows (all statuses except rejected)
+      // According to CsvRowReviewStatus documentation:
+      // - ok: No issues
+      // - info: Informational messages
+      // - warn: Warnings but still processable
+      // - rejected: Should NOT be approved (invalid data)
       final decisions = <int, CsvRowDecision>{};
       int validCount = 0;
       for (final row in session.review.rows) {
-        if (row.status == CsvRowReviewStatus.ok) {
+        // Count all rows that are NOT rejected as valid
+        if (row.status != CsvRowReviewStatus.rejected) {
           decisions[row.originalIndex] = CsvRowDecision.approved;
           validCount++;
         }
       }
-      expect(validCount, greaterThan(0));
+      expect(validCount, greaterThan(0), reason: 'Should have at least one valid (non-rejected) row');
 
       // Finalize - this used to crash with null check operator error!
       final result = await service.finalizeImport(
