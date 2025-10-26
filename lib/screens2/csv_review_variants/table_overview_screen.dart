@@ -3,8 +3,6 @@ import 'dart:math' as math;
 import 'package:denik_zza/input/csv_review_models.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/services/models/csv_import_payload.dart';
-import 'package:denik_zza/screens2/csv_review/widgets/summary_section.dart';
-import 'package:denik_zza/screens2/csv_review/widgets/unparsed_columns_section.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -12,6 +10,8 @@ import 'package:logger/logger.dart';
 
 import 'csv_review_shared.dart';
 import 'summary_screen.dart';
+import 'widgets/summary_section.dart';
+import 'widgets/unparsed_columns_section.dart';
 
 /// Tabular CSV confirmation prototype with sticky summary header and inline
 /// editing.
