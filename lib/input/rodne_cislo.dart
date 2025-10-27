@@ -146,11 +146,15 @@ class RodneCislo {
   // Generator Methods for Testing
   // =====================================================
 
-  /// Generates a valid rodné číslo for a specific year
-  /// 
+  /// Generates a valid rodné číslo for a specific year.
+  ///
   /// [year] - Birth year (1950-2030)
   /// [isFemale] - Optional gender specification (random if null)
-  /// Returns a valid RodneCislo instance
+  /// Returns a valid [RodneCislo] instance.
+  ///
+  /// This helper underpins test fixture creation. See
+  /// `docs/testing-database-setup.md` (section *Rodné číslo generators*) for
+  /// guidance on consistent usage within test setups.
   static RodneCislo generateForYear(int year, {bool? isFemale}) {
     final random = Random();
     
@@ -162,11 +166,14 @@ class RodneCislo {
     return generateForDate(DateTime(year, month, day), isFemale: isFemale);
   }
 
-  /// Generates a valid rodné číslo for a specific date
-  /// 
+  /// Generates a valid rodné číslo for a specific date.
+  ///
   /// [birthDate] - Exact birth date
   /// [isFemale] - Optional gender specification (random if null)
-  /// Returns a valid RodneCislo instance
+  /// Returns a valid [RodneCislo] instance.
+  ///
+  /// Refer to `docs/testing-database-setup.md` for fixture patterns that call
+  /// this helper when constructing deterministic test data.
   static RodneCislo generateForDate(DateTime birthDate, {bool? isFemale}) {
     final random = Random();
     

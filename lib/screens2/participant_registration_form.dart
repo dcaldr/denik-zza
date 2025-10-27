@@ -181,13 +181,20 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
   }
 
   MemoryOsoba createMemoryOsoba() {
+    // Use DatumNarozeniHold validator for consistent date parsing (same as CSV import)
+    // This prevents crashes on invalid dates and provides proper validation
+    DateTime? parsedDate;
+    if (_controllers['datumNarozeni']!.text.isNotEmpty) {
+      final validator = _validators['datumNarozeni'] as DatumNarozeniHold;
+      validator.addInput(_controllers['datumNarozeni']!.text);
+      parsedDate = validator.getOutput();
+    }
+    
     return MemoryOsoba.fullNamed(
       id: widget.osoba?.id,
       jmeno: _controllers['jmeno']!.text,
       prijmeni: _controllers['prijmeni']!.text,
-      datumNarozeni: _controllers['datumNarozeni']!.text.isNotEmpty
-          ? DateFormat('dd.MM.yyyy').parse(_controllers['datumNarozeni']!.text)
-          : widget.osoba?.datumNarozeni,
+      datumNarozeni: parsedDate ?? widget.osoba?.datumNarozeni,
       adresa: _controllers['adresa']!.text.isNotEmpty
           ? _controllers['adresa']!.text
           : widget.osoba?.adresa,
@@ -225,6 +232,7 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  // TODO: Surface the same checksum/format warnings shown in CSV review so camp staff get inline feedback when manual entry fails the rodné číslo validation.
   void guessAndFillFields(String inText) {
     if (inText.length >= 6) {
       RodneCislo rc = RodneCislo(inText);

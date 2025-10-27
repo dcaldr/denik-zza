@@ -8,6 +8,7 @@ In time before the event start, can be huge for preparing
 2) adding people in event* (name+surname at the min)
 3) adding preexisting info to people*
 
+
 ## intake
 Time and persistence critical part of workflow --> people are queing and medic is approving them in
 the workflow must be quick, persistent, correct 

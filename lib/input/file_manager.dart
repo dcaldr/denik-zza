@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_akce.dart';
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:logger/logger.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// File Manager Mode enumeration following DatabaseWrapper pattern
@@ -52,7 +54,7 @@ class FileManager {
   /// entire app directory
   Directory? homeDir;
   Directory? eventDir;
-  Logger logger = Logger();
+  Logger logger = AppLogger.l;
   
   /// DEPRECATED: Use _mode instead. Maintained for backward compatibility.
   /// if true, [FileManager] is in testing mode and does not create directories
@@ -64,15 +66,38 @@ class FileManager {
   /// Optional path for persistent testing mode
   String? _testOutputPath;
   
-  List<String> subFolders = ['backup', 'zpusobilosti', 'vysetreni']; //FIXME - duplicate maybe keep only the one in factory
+  /// Set of subdirectories that should be created in each event directory
+  List<String> subFolders = []; // Set by _updateSubFoldersForMode()
 
-  FileManager._internal() : isTesting = false, _mode = FileManagerMode.production;
+  /// Lightweight toggle: when true, run IO sanity check during changeEvent()
+  bool _ioCheckOnChange = false;
+
+  /// Standard event subdirectories for persistent modes
+  static const List<String> _standardSubFolders = ['backup', 'zpusobilosti', 'vysetreni'];
+
+  FileManager._internal() : isTesting = false, _mode = FileManagerMode.production {
+    _updateSubFoldersForMode();
+  }
+
+  /// Updates subFolders based on current mode - centralized logic
+  void _updateSubFoldersForMode() {
+    switch (_mode) {
+      case FileManagerMode.inMemory:
+        subFolders = [];
+        break;
+      case FileManagerMode.persist:
+      case FileManagerMode.production:
+        subFolders = List.from(_standardSubFolders);
+        break;
+    }
+  }
 
   factory FileManager({Directory? homeDir, bool? isTesting, String? testOutputPath}) {
     // Handle backward compatibility for isTesting parameter
     if (isTesting != null) {
       _instance.isTesting = isTesting;
       _instance._mode = isTesting ? FileManagerMode.inMemory : FileManagerMode.production;
+      _instance._updateSubFoldersForMode();
     }
     
     // Handle testOutputPath parameter for persistent testing
@@ -80,15 +105,16 @@ class FileManager {
       _instance._testOutputPath = testOutputPath;
       _instance._mode = FileManagerMode.persist;
       _instance.isTesting = false; // persist mode is not the old "isTesting" concept
+      _instance._updateSubFoldersForMode();
     }
     
     _instance.homeDir = homeDir;
-    if (_instance._mode == FileManagerMode.inMemory) {
-      _instance.subFolders = [];
-    } else {
-      _instance.subFolders = ['backup', 'zpusobilosti', 'vysetreni']; //FIXME: dirt fix - duplicate code
-    }
     return _instance;
+  }
+
+  /// Enable or disable IO sanity checks in changeEvent()
+  void setIoCheckOnChange(bool enabled) {
+    _ioCheckOnChange = enabled;
   }
 
   Future<Directory?> getHomeDir() async {
@@ -162,8 +188,19 @@ class FileManager {
       logger.e('Error creating event directory: $eventDirCandidate $e');
       return null;
     }
-    changeEvent();
-    return createSubfolders(eventDirCandidate);
+    // Ensure subfolders exist
+    final created = await createSubfolders(eventDirCandidate);
+    if (created == null) {
+      return null;
+    }
+    // Run quick IO sanity check on creation
+    final ok = await verifyWritableReadable(created);
+    if (!ok) {
+      logger.e('IO sanity check failed for new event directory: ${created.path}');
+      return null;
+    }
+    eventDir = created;
+    return created;
   }
 
   Future<Directory?> createSubfolders(Directory baseDir) async {
@@ -270,7 +307,20 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
   void setTestMode() {
     _mode = FileManagerMode.inMemory;
     isTesting = true;
-    subFolders = [];
+    _updateSubFoldersForMode();
+  }
+
+  /// Set FileManager mode with optional test output path
+  /// 
+  /// Usage:
+  ///   FileManager().setMode(FileManagerMode.inMemory);
+  ///   FileManager().setMode(FileManagerMode.persist, testOutputPath: 'test/outputs');
+  ///   FileManager().setMode(FileManagerMode.production);
+  void setMode(FileManagerMode mode, {String? testOutputPath}) {
+    _mode = mode;
+    _testOutputPath = testOutputPath;
+    isTesting = (mode == FileManagerMode.inMemory);
+    _updateSubFoldersForMode();
   }
 
   /// Set FileManager to persistent testing mode with specified output path
@@ -278,7 +328,7 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
     _mode = FileManagerMode.persist;
     _testOutputPath = testOutputPath;
     isTesting = false; // persist mode is different from legacy isTesting
-    subFolders = ['backup', 'zpusobilosti', 'vysetreni'];
+    _updateSubFoldersForMode();
   }
 
   /// Reset FileManager to production mode
@@ -286,7 +336,7 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
     _mode = FileManagerMode.production;
     _testOutputPath = null;
     isTesting = false;
-    subFolders = ['backup', 'zpusobilosti', 'vysetreni'];
+    _updateSubFoldersForMode();
   }
 
   /// Get FileManager configuration summary for debugging
@@ -321,10 +371,8 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
     }
     // if event hasn't been created yet
     if (event.domovskyAdresarPath == null || event.domovskyAdresarPath!.isEmpty) {
-      logger.i('Event directory not found in db');
-      eventDir = await createNewEventDataDir(event.nadpis);
-      event.domovskyAdresarPath = eventDir?.path;
-      db.updateEvent(action: event);
+      logger.w('Event directory path not set in DB; awaiting explicit creation elsewhere.');
+      eventDir = null;
       return;
     }
     // if in db but not in class - check folder structure
@@ -332,6 +380,12 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
     Directory? candidate = Directory(event.domovskyAdresarPath!);
     await _checkEventDirectoryExists(candidate);
     await _validateSubfolders(candidate);
+    if (_ioCheckOnChange) {
+      final ok = await verifyWritableReadable(candidate);
+      if (!ok) {
+        logger.w('IO sanity check failed for existing event directory: ${candidate.path}');
+      }
+    }
     eventDir = candidate;
   }
 
@@ -343,15 +397,19 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
     }
 
     try {
-      final path = await getDbFilePath();
-      if (path == null) {
+      final dbDir = await getDbFilePath();
+      if (dbDir == null) {
         logger.e('Error getting db path');
         return;
       }
-      final dbFile = File('$path/denik_zza.db');
+      final dbFile = File('$dbDir/db.sqlite');
+      if (!await dbFile.exists()) {
+        logger.e('Database file not found for backup: ${dbFile.path}');
+        return;
+      }
       final backupDir = Directory('${eventDir!.path}/backup');
       await backupDir.create(recursive: true);
-      final newName = await nameCollisionSolver(backupDir, 'denik_zza_backup.db');
+      final newName = await nameCollisionSolver(backupDir, 'db_backup.sqlite');
       if (newName == null) {
         logger.e('Error resolving name collision for backup file');
         return;
@@ -367,10 +425,17 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
   /// Returns directory where zpusobilosti are stored for current event
   ///
   /// Use in cooperation when getting zpusobilost files from [MemoryOsoba] instances
-  /// If [eventDir] is null, throws an exception
+  /// If [eventDir] is null in non-inMemory modes, throws an exception
   Future<Directory> getZpusobilostFolder() async {
+    // In inMemory mode, return synthetic directory (matches writeTempCsvBytes pattern)
+    if (_mode == FileManagerMode.inMemory) {
+      logger.d('Zpusobilost folder in memory mode: memory://zpusobilosti');
+      return Directory('memory://zpusobilosti');
+    }
+    
+    // In persistent modes, require eventDir to be set
     if (eventDir == null) {
-      if (_mode != FileManagerMode.inMemory) logger.e('Event directory is null', stackTrace: StackTrace.current);
+      logger.e('Event directory is null', stackTrace: StackTrace.current);
       logger.i('FileManager mode: ${_mode.value}');
       return throw Exception('Event directory is null');
     }
@@ -444,5 +509,108 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
         throw FileSystemException('Subfolder not found: $subFolder in ${candidate.path}');
       }
     }
+  }
+
+  /// Quick IO sanity check: create/write/read/delete a tiny probe file in [dir].
+  Future<bool> verifyWritableReadable(Directory dir) async {
+    final probe = File('${dir.path}/.io_probe');
+    try {
+      await probe.writeAsString('probe');
+      final content = await probe.readAsString();
+      await probe.delete();
+      return content == 'probe';
+    } catch (e, st) {
+      logger.e('IO probe failed in ${dir.path}', error: e, stackTrace: st);
+      try {
+        if (await probe.exists()) {
+          await probe.delete();
+        }
+      } catch (_) {}
+      return false;
+    }
+  }
+
+  // ========== Temporary CSV File Operations ==========
+
+  /// Writes CSV bytes to a temporary file and returns the absolute path.
+  /// 
+  /// Behavior varies by mode:
+  /// - inMemory: Returns synthetic path, no disk write
+  /// - persist: Writes to test/test_outputs/temp/ for debugging
+  /// - production: Uses path_provider temporary directory
+  /// 
+  /// [bytes] - The CSV data to write
+  /// [suggestedName] - Suggested filename (will be sanitized)
+  /// 
+  /// Returns the absolute path to the created temp file.
+  Future<String> writeTempCsvBytes(
+    Uint8List bytes, {
+    required String suggestedName,
+  }) async {
+    final String sanitized = _sanitizeFileName(suggestedName);
+    final String resolvedName = sanitized.isEmpty ? 'import.csv' : sanitized;
+
+    switch (_mode) {
+      case FileManagerMode.inMemory:
+        // Return synthetic path, don't write to disk
+        logger.d('Temp CSV in memory mode: memory://temp/$resolvedName');
+        return 'memory://temp/$resolvedName';
+
+      case FileManagerMode.persist:
+        // Write to test outputs for debugging
+        final String basePath = _testOutputPath ?? 'test/test_outputs';
+        final Directory tempDir = Directory('$basePath/temp');
+        await tempDir.create(recursive: true);
+        final File target = File('${tempDir.path}/$resolvedName');
+        await target.writeAsBytes(bytes, flush: true);
+        logger.d('Temp CSV written (persist): ${target.path}');
+        return target.path;
+
+      case FileManagerMode.production:
+        // Use path_provider
+        final Directory tempDir = await getTemporaryDirectory();
+        final File target = File('${tempDir.path}/$resolvedName');
+        await target.writeAsBytes(bytes, flush: true);
+        logger.d('Temp CSV written (production): ${target.path}');
+        return target.path;
+    }
+  }
+
+  /// Deletes a temporary file created by [writeTempCsvBytes].
+  /// 
+  /// In inMemory mode, this is a no-op. Errors are logged but swallowed
+  /// since temp file cleanup is non-critical.
+  /// 
+  /// [filePath] - The absolute path returned by writeTempCsvBytes
+  Future<void> deleteTempFile(String filePath) async {
+    if (_mode == FileManagerMode.inMemory) {
+      logger.d('Temp file deletion skipped (memory mode): $filePath');
+      return; // No-op in memory mode
+    }
+
+    final File file = File(filePath);
+    if (await file.exists()) {
+      try {
+        await file.delete();
+        logger.d('Temp file deleted: $filePath');
+      } catch (error) {
+        // Non-critical: log warning but don't throw
+        logger.w('Failed to delete temp file: $filePath', error: error);
+      }
+    } else {
+      logger.d('Temp file does not exist (already cleaned?): $filePath');
+    }
+  }
+
+  /// Sanitizes a filename by removing invalid characters and ensuring .csv extension.
+  String _sanitizeFileName(String input) {
+    final String trimmed = input.trim();
+    if (trimmed.isEmpty) {
+      return '';
+    }
+    // Remove filesystem separators and invalid characters
+    final String withoutSeparators = trimmed.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+    // Ensure .csv extension
+    return withoutSeparators.endsWith('.csv') ? withoutSeparators : '$withoutSeparators.csv';
   }
 }

@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:denik_zza/screens2/new_record_page.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'utils/database_test_helper.dart';
 import 'setup_templates/hardcoded_setup.dart';
@@ -396,6 +397,20 @@ void main() {
   });
 
   group('Helper Function Tests', () {
+    late AppDatabase helperDb;
+
+    setUp(() async {
+      // Ensure the wrapper provides a valid in-memory database for this group
+      DatabaseWrapper.setTestMode();
+      helperDb = AppDatabase.testInMemory();
+      DatabaseWrapper.useTestDriftDatabase(helperDb);
+    });
+
+    tearDown(() async {
+      await helperDb.close();
+      DatabaseWrapper.resetToProduction();
+    });
+
     // Test the helper functions themselves to ensure they work correctly
     testWidgets('helper functions work correctly', (WidgetTester tester) async {
       // Test basic helper functions

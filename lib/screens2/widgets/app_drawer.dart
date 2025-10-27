@@ -1,3 +1,4 @@
+import 'package:denik_zza/screens2/csv/import_screen.dart';
 import 'package:denik_zza/screens2/event_list.dart';
 import 'package:denik_zza/screens2/event_registration_form.dart';
 import 'package:denik_zza/screens2/intake_form.dart';
@@ -41,7 +42,19 @@ class AppDrawer extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => const ParticipantRegistrationPage()),
               );
             },
-          ),          ListTile(
+          ),
+          ListTile(
+            key: const Key('AppDrawer_csv_import'),
+            title: const Text('Import CSV'),
+            subtitle: const Text('Hromadný import účastníků'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CsvImportScreen()),
+              );
+            },
+          ),
+          ListTile(
             title: const Text('Příjmací formulář'),
             onTap: () {
               Navigator.push(

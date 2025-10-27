@@ -1,33 +1,84 @@
-# Input
-Validace & input csv, a vstupů obecně 
-- hlavní validace bude probíhat zde (ne až v databázi)
-- věk, rok narození ...
-- Bude dobrý zkusit najít nějakou knihovnu pro ulehčení práce
+# Input Module
 
-# Nápad na řešení validace dat
-rozhodně se nemusí použít spíš to je jenom odrazový můstek (a nedělal jsem k tomu nějaký silný research)
-Prakticky jsem jenom prokrastivnoval učení se na účetnictví :/
-## Obecně
-- mít něco jako ```verifyInputRecord()``` co by se dalo použít třeba i pro ruční vkládání dat dále v aplikaci
--  možná zkusit "chain of responsibility" pattern https://refactoring.guru/design-patterns/behavioral-patterns 
-  - tj. brát to po kousích a třeba "čištění dat" (odebrání mezer/velkých písmen atd) by se dalo totiž použít několikrát
-- Udělat si třídu (?+ enum) na odpověď volajícímu 
-  - Typ:{ Ok, Info(např. malé písmeno na začátku jména ), Warning (asi chyba ale fungující např. divný formát rč), Error (fakt problém např. nelze sparsovat datum)}
-  - \+ Message (zpráva uživateli, pokud potřeba)
-  - \+ vrátit upravenou kolonku/ záznam _-- tady si nejsem jistý jak, když to jsou různé typy, rád se ale případně přidám do diskuse_
-  - možná třeba na pojišťovny udělat třídu nebo nějaké porovnání/přirovnání (?)
-### Možné kroky:
-1) zkontrolovat že první řádek csv sedí - jinak to moc nedává smysl (šlo by přeskládat, ale to je zbytečně těžké asi)
-2) zavolat na každý řádek methodu co jí vyhodnotí  (asi počítat s dalším použitím v aplikaci)>
-3) pro každé políčko udělat pipeline (počítat s dalším použitím v aplikaci)
-   1) vyčistit data (mezery uvozovky  atd.) (pro většinu asi bude stejný asi krom dat )
-   2) zkusit naparsovat na dále očekávaný formát (např. rč. xxx/nnn == xxxnnn atd; pojišťovna 207 == OZP...)
-   3) Verifikovat že dává smysl (např. rok_narození < současný rok atd. )
-   4) Vrátit upravený záznam spolu s informací jak to dopadlo
-4) methoda řádku vygeneruje objekt co se dá použít v aplikaci/ databázi (teď to je MemoryOsoba)
+This module handles data validation, CSV import processing, and file management for the Deník ZZA application.
 
- ** v podstatě lze na začátku pro tu pipeline použít jenom prázdné funkce co si to předají a později až dodat logiku
-## další položky:
+## Quick Links
+
+- **📄 [CSV Import Documentation](../../docs/csv-import.md)** - Comprehensive guide to CSV processing, field validation, and import workflows
+- **📁 [FileManager Documentation](../../docs/filemanager.md)** - File operations, backup management, and operational modes
+
+## Module Overview
+
+### CSV Processing
+- **Parser**: `input_parser.dart` - Main CSV processing engine with sparse data support
+- **Readers**: `csv_reader.dart` - File reading and header detection
+- **Validators**: `input_hold.dart` - Field-specific validation classes
+- **Definitions**: `csv_definitions.dart` - Column mapping and structure
+- **Text Tools**: `text_tools.dart` - Date parsing, text normalization utilities
+
+### File Management  
+- **FileManager**: `file_manager.dart` - Event directories, backups, multi-mode operation
+- **Features**: Database backup, directory lifecycle, IO validation
+
+### Data Models
+- **RodneCislo**: `rodne_cislo.dart` - Czech national ID validation and processing
+- **Response**: `response.dart` - Status and message handling
+
+## Key Features Implemented
+
+### ✅ Robust CSV Import
+- **Minimal CSV support**: Works with only jméno + příjmení fields
+- **Header mapping tolerance**: Order-independent, extra columns supported
+- **Field validation**: Email, phone, insurance, date parsing with business defaults
+- **Error handling**: Clear status messages, graceful failure modes
+
+### ✅ FileManager Reliability
+- **Multi-mode operation**: InMemory/Persist/Production modes
+- **Database backup**: Safe copying with collision resolution
+- **Directory management**: Single creation, proper lifecycle
+- **Test integration**: Configurable paths, mode consistency
+
+### ✅ Data Validation
+- **Date parsing robustness**: Component validation, no silent normalization
+- **Field-specific validators**: Shared between CSV and UI forms
+- **Cross-line isolation**: No state bleeding between CSV rows
+- **Default handling**: Business-meaningful defaults (e.g., způsobilost → false)
+
+## Architecture Notes
+
+This module follows the established project pattern:
+- **Service Layer Integration**: Used by services, not directly by UI widgets
+- **Database Wrapper**: All DB access through `DatabaseWrapper.getDatabase()`
+- **Logging**: Uses `Logger` package, no `print()` statements
+- **Testing**: Extensive test coverage with helper utilities
+
+## Legacy Notes
+
+The original design concepts below were the foundation for the current implementation:
+
+### Historical Design Vision *(Implemented)*
+- ✅ `verifyInputRecord()` pattern - now implemented as InputHold validation pipeline
+- ✅ Chain of responsibility - implemented through fresh() instances and validation stages  
+- ✅ Status response system - ParseStatus enum with Ok/Info/Warning/Error states
+- ✅ Message handling - comprehensive error/warning messages for users
+- ✅ Data cleaning pipeline - normalization in addInput() methods
+- ✅ Type-safe parsing - InputHold subclasses for different data types
+- ✅ Reusable validation - shared between CSV import and registration forms
+
+### Implementation Evolution
+The current system evolved from these concepts into a robust, production-ready CSV import and file management system with comprehensive test coverage and documentation.
+
+---
+
+## Development Guidelines
+
+When modifying this module:
+
+1. **Read the documentation first** - Both CSV and FileManager docs contain critical details
+2. **Use test helpers** - `test/utils/` contains utilities for consistent test setup
+3. **Follow service patterns** - No direct DB access, use DatabaseWrapper
+4. **Maintain compatibility** - Validators are shared with registration forms
+5. **Test thoroughly** - Changes affect both CSV import and manual data entry
 - TODO: add fix/workaround/catch for bad db state -- ie records pointing to non-existent participant
   - stalo se že v průběhu testování existoval záznam odkazující na osobu s id 1, ale osoba s id 1 neexistovala. V okamžiku přidání došlo ke spojení osamocených starých záznamů s tím novým.
 

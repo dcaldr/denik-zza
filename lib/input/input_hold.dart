@@ -1,12 +1,14 @@
 import 'package:denik_zza/input/rodne_cislo.dart';
 import 'package:logger/logger.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 
 import 'input_parser.dart';
 import 'text_tools.dart';
+import 'poistovny.dart';
 
 /// This class parses one data item and validates input according to specific rules
 abstract class InputHold {
-  final Logger _logger = Logger();
+  final Logger _logger = AppLogger.l;
   late dynamic pureInput;
   String input = "";
   dynamic output;
@@ -41,6 +43,10 @@ abstract class InputHold {
   InputHold.empty(this.columnName) {
     status = ParseStatus.empty;
   }
+
+  /// Returns a new empty instance of the same concrete type, preserving columnName
+  /// Implemented by each subclass to allow cloning the definition list per parsed line
+  InputHold fresh();
 
   dynamic getOutput() {
     return output;
@@ -106,6 +112,8 @@ class JmenoHold extends InputHold {
   JmenoHold({String columnName = "jméno"}) : super(columnName);
   JmenoHold.full(dynamic pureInput, {String columnName = "jméno"}) : super.full(pureInput, columnName);
   @override
+  InputHold fresh() => JmenoHold(columnName: columnName);
+  @override
   dynamic _converter() {
     status = ParseStatus.ok;
     return input;
@@ -115,10 +123,12 @@ class JmenoHold extends InputHold {
 /// Validates gender input and converts to numeric format (1=male, 2=female)
 class PohlaviHold extends InputHold {
   List<String> possibleMuz = ["m", "1", "muž", "chlapec", "kluk"];
-  List<String> possibleZena = ["ž", "2", "žena", "dívka", "holka"];
+  List<String> possibleZena = ["ž", "2", "žena", "dívka", "holka","f"];
 
   PohlaviHold({String columnName = "pohlaví"}) : super(columnName);
   PohlaviHold.full(dynamic pureInput, {String columnName = "pohlaví"}) : super.full(pureInput, columnName);
+  @override
+  InputHold fresh() => PohlaviHold(columnName: columnName);
 
   @override
   _converter() {
@@ -143,6 +153,8 @@ class PohlaviHold extends InputHold {
 class AdresaHold extends InputHold {
   AdresaHold({String columnName = "adresa"}) : super(columnName);
   AdresaHold.full(dynamic pureInput, {String columnName = "adresa"}) : super.full(pureInput, columnName);
+  @override
+  InputHold fresh() => AdresaHold(columnName: columnName);
 
   @override
   _converter() {
@@ -153,21 +165,51 @@ class AdresaHold extends InputHold {
 /// Validates Czech national identification number (rodné číslo)
 class CisloPojisteniHold extends InputHold {
   CisloPojisteniHold({String columnName = "rodné číslo"}) : super(columnName);
-  CisloPojisteniHold.full(dynamic pureInput, {String columnName = "rodné číslo"}) : super.full(pureInput, columnName);
+  CisloPojisteniHold.full(dynamic pureInput, {String columnName = "rodné číslo"}) : super(columnName) {
+    this.pureInput = pureInput;
+    
+    if (pureInput == null) {
+      status = ParseStatus.empty;
+      output = RodneCislo(""); // Create empty RodneCislo instead of null
+      return;
+    }
+
+    if (pureInput is int || pureInput is double) {
+      input = pureInput.toString();
+    } else {
+      input = pureInput.trim();
+    }
+
+    // Always call _converter(), even for empty input
+    output = _converter();
+    status ??= ParseStatus.empty;
+  }
+  
+  @override
+  InputHold fresh() => CisloPojisteniHold(columnName: columnName);
 
   @override
   _converter() {
+    // Handle empty input by creating an empty RodneCislo
+    if (input.isEmpty) {
+      RodneCislo rc = RodneCislo("");
+      status = ParseStatus.ok;
+      output = rc;
+      return rc;
+    }
+    
     RodneCislo rc = RodneCislo(input);
     if (!rc.hasValidFormat) {
       status = ParseStatus.bad;
+      output = rc;
       return rc;
     }
     if (!rc.hasValidSum) {
       status = ParseStatus.warn;
-      output = rc.getRc();
+      output = rc;
     } else {
       status = ParseStatus.ok;
-      output = rc.getRc();
+      output = rc;
     }
     return rc;
   }
@@ -191,22 +233,51 @@ class CisloPojisteniHold extends InputHold {
 class DatumNarozeniHold extends InputHold {
   DatumNarozeniHold({String columnName = "datum narození"}) : super(columnName);
   DatumNarozeniHold.full(dynamic pureInput, {String columnName = "datum narození"}) : super.full(pureInput, columnName);
+  @override
+  InputHold fresh() => DatumNarozeniHold(columnName: columnName);
 
   @override
   _converter() {
+    // Handle empty input with warning status - same level as computed dates
+    if (input.isEmpty) {
+      status = ParseStatus.warn;
+      return null;
+    }
+    
     DateTime? date = TextTools.parseDate(input);
     if (date == null) {
-      status = ParseStatus.bad;
+      // Per policy: date parsing should WARN (no silent normalization), not hard-fail
+      status = ParseStatus.warn;
       return null;
     }
     status = ParseStatus.ok;
     return date;
+  }
+  
+  /// Custom validator to provide specific message for missing birth date
+  @override
+  String? validator(String? input) {
+    addInput(input);
+    _converter();
+    if (status == ParseStatus.ok) {
+      return null;
+    } else if (status == ParseStatus.bad) {
+      return "$columnName má nesprávná data";
+    } else if (status == ParseStatus.warn) {
+      if (this.input.isEmpty) {
+        return "datum narození je extrémně doporučeno";
+      }
+      return "Warning: Please check the input";
+    }
+    return "Unknown error";
   }
 }
 /// Validates telephone number format
 class TelefonHold extends InputHold {
   TelefonHold({String columnName = "telefon rodič"}) : super(columnName);
   TelefonHold.full(dynamic pureInput, {String columnName = "telefon rodič"}) : super.full(pureInput, columnName);
+  @override
+  InputHold fresh() => TelefonHold(columnName: columnName);
 
   @override
   _converter() {
@@ -219,6 +290,8 @@ class TelefonHold extends InputHold {
 class EmailHold extends InputHold {
   EmailHold({String columnName = "email rodič"}) : super(columnName);
   EmailHold.full(dynamic pureInput, {String columnName = "email rodič"}) : super.full(pureInput, columnName);
+  @override
+  InputHold fresh() => EmailHold(columnName: columnName);
 
   @override
   _converter() {
@@ -237,10 +310,64 @@ class EmailHold extends InputHold {
 /// Validates confirmation/checkbox input (yes/no values)
 class PotvrzeniHold extends InputHold {
   PotvrzeniHold({String columnName = "potvrzení"}) : super(columnName);
-  PotvrzeniHold.full(dynamic pureInput, {String columnName = "potvrzení"}) : super.full(pureInput, columnName);
+  PotvrzeniHold.full(dynamic pureInput, {String columnName = "potvrzení"}) : super(columnName) {
+    this.pureInput = pureInput;
+    
+    if (pureInput == null) {
+      status = ParseStatus.ok;
+      output = false; // Default to false when null
+      return;
+    }
+
+    if (pureInput is int || pureInput is double) {
+      input = pureInput.toString();
+    } else {
+      input = pureInput.trim();
+    }
+
+    // Always call _converter(), even for empty input
+    output = _converter();
+    status ??= ParseStatus.empty;
+  }
+  
+  @override
+  InputHold fresh() => PotvrzeniHold(columnName: columnName);
   
   List<String> possibleYes = ["ano", "yes", "y", "1", "true"];
   List<String> possibleNo = ["ne", "no", "n", "0", "false"];
+
+  @override
+  dynamic addInput(dynamic intake) {
+    pureInput = intake;
+
+    if (pureInput == null) {
+      status = ParseStatus.ok;
+      output = false; // Default to false for null input
+      return output;
+    }
+
+    if (pureInput is int || pureInput is double) {
+      input = pureInput.toString();
+    } else {
+      input = pureInput.trim();
+    }
+
+    // Special handling for empty input - default to false (making způsobilost unrequired)
+    if (input.isEmpty) {
+      status = ParseStatus.ok;
+      output = false;
+      return output;
+    }
+
+    try {
+      output = _converter();
+    } catch (e) {
+      status = ParseStatus.bad;
+      output = null;
+    }
+    
+    return output;
+  }
 
   @override
   _converter() {
@@ -261,6 +388,28 @@ class PotvrzeniHold extends InputHold {
 class PojistovnaHold extends InputHold {
   PojistovnaHold({String columnName = "pojišťovna"}) : super(columnName);
   PojistovnaHold.full(dynamic pureInput, {String columnName = "pojišťovna"}) : super.full(pureInput, columnName);
+  @override
+  InputHold fresh() => PojistovnaHold(columnName: columnName);
+  
+  @override
+  _converter() {
+    // Empty is acceptable, treat as OK with null output
+    if (input.isEmpty) {
+      status = ParseStatus.ok;
+      return null;
+    }
+    final mapped = canonicalizeInsurance(input);
+    status = ParseStatus.ok;
+    return mapped;
+  }
+}
+
+/// Validates general text input (notes, comments)
+class TextHold extends InputHold {
+  TextHold({String columnName = "poznámka"}) : super(columnName);
+  TextHold.full(dynamic pureInput, {String columnName = "poznámka"}) : super.full(pureInput, columnName);
+  @override
+  InputHold fresh() => TextHold(columnName: columnName);
   
   @override
   _converter() {
@@ -269,14 +418,5 @@ class PojistovnaHold extends InputHold {
   }
 }
 
-/// Validates general text input (notes, comments)
-class TextHold extends InputHold {
-  TextHold({String columnName = "poznámka"}) : super(columnName);
-  TextHold.full(dynamic pureInput, {String columnName = "poznámka"}) : super.full(pureInput, columnName);
-  
-  @override
-  _converter() {
-    status = ParseStatus.ok;
-    return input;
-  }
-}
+/// Internal helper to represent an insurance with its synonyms.
+// _InsuranceEntry removed from here - moved to lib/input/poistovny.dart

@@ -74,6 +74,15 @@ class AddParticipantPageState extends State<AddParticipantPage> {
   TextEditingController eligibleConfirmationController = TextEditingController();
 
   /// Handles the logic for CSV import action.
+  /// TODO: CRITICAL - Implement proper CSV import with conflict resolution
+  /// Current implementation is placeholder only
+  /// Required features:
+  /// - File picker for CSV selection
+  /// - Parse CSV using InputParser
+  /// - Detect conflicts with existing participants in database
+  /// - Show import preview with conflict resolution options
+  /// - Batch import with progress tracking
+  /// - See docs/csv-import.md for detailed requirements
   void _handleCsvImport() {
     showDialog(
       context: context,

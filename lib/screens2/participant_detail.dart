@@ -76,7 +76,7 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
           children: [
             _buildInfoCard('Osobní údaje', [
               _buildInfoRow('Datum narození:', '${widget.participant.datumNarozeni?.day.toString().padLeft(2, '0')}.${widget.participant.datumNarozeni?.month.toString().padLeft(2, '0')}.${widget.participant.datumNarozeni?.year}'), //TODO: TD2
-              _buildInfoRow('Pohlaví:', widget.participant.pohlavi == 1 ? 'Muž' : 'Žena'),
+              _buildInfoRow('Pohlaví:', widget.participant.pohlavi == MemoryOsoba.POHLAVI_MUZ ? 'Muž' : 'Žena'),
               _buildInfoRow('Adresa:', widget.participant.adresa ?? 'N/A'),
             ]),
             _buildInfoCard('Pojišťovací údaje', [

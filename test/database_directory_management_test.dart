@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:drift/drift.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'utils/database_test_helper.dart';
+import 'utils/test_configuration.dart';
 
 void main() {
   // Initialize Flutter binding for tests that might use Flutter services
@@ -13,7 +14,7 @@ void main() {
     late String testDbDir;
 
     setUpAll(() {
-      testDbDir = DatabaseTestHelper.getTestDatabaseDirectory();
+      testDbDir = Directory(DatabaseTestHelper.getTestDatabaseDirectory()).absolute.path;
     });
 
     tearDownAll(() async {
@@ -22,17 +23,32 @@ void main() {
     });
 
     test('should create test databases in dedicated directory', () async {
+      // This scenario requires on-disk persistence. When TEST_MODE is not
+      // set to `persist`, we skip to avoid flaky assumptions about the FS.
+      if (!TestConfiguration.isPersist) {
+        markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
+      }
       // Create a file-based test database
       database = DatabaseTestHelper.createTestDatabase(TestDatabaseType.file);
       
       // Verify the test database directory exists
       final dir = Directory(testDbDir);
       expect(dir.existsSync(), isTrue, reason: 'Test database directory should exist');
-      
-      // Verify database files are created in the correct location
-      final files = dir.listSync().whereType<File>().map((f) => f.path).toList();
-      final testDbFiles = files.where((path) => path.contains('testDB') && path.endsWith('.db')).toList();
-      
+
+      // Wait for at least one file to appear
+      Future<List<String>> listDbFiles() async {
+        final files = dir.listSync().whereType<File>().map((f) => f.path).toList();
+        return files.where((path) => path.contains('testDB') && path.endsWith('.db')).toList();
+      }
+      var testDbFiles = await listDbFiles();
+      const totalWaitMs = 2000;
+      const stepMs = 100;
+      int waited = 0;
+      while (waited < totalWaitMs && testDbFiles.isEmpty) {
+        await Future.delayed(const Duration(milliseconds: stepMs));
+        waited += stepMs;
+        testDbFiles = await listDbFiles();
+      }
       expect(testDbFiles.length, greaterThan(0), reason: 'Should have at least one test database file');
       
       // Verify the database is functional
@@ -46,9 +62,11 @@ void main() {
     });
 
     test('should create databases with unique filenames', () async {
+      if (!TestConfiguration.isPersist) {
+        markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
+      }
       // Create multiple databases quickly
-      final databases = <AppDatabase>[];
-      final createdPaths = <String>[];
+  final databases = <AppDatabase>[];
       
       try {
         for (int i = 0; i < 3; i++) {
@@ -59,11 +77,22 @@ void main() {
           await Future.delayed(const Duration(milliseconds: 1));
         }
         
-        // Check that test files exist and have unique names
+        // Poll the directory for files to ensure background creation has finished
         final dir = Directory(testDbDir);
-        final files = dir.listSync().whereType<File>();
-        final testDbFiles = files.where((f) => f.path.contains('testDB') && f.path.endsWith('.db')).toList();
-        
+        Future<List<File>> listFiles() async => dir
+            .listSync()
+            .whereType<File>()
+            .where((f) => f.path.contains('testDB') && f.path.endsWith('.db'))
+            .toList();
+        var testDbFiles = await listFiles();
+        const totalWaitMs = 3000;
+        const stepMs = 100;
+        int waited = 0;
+        while (waited < totalWaitMs && testDbFiles.length < 3) {
+          await Future.delayed(const Duration(milliseconds: stepMs));
+          waited += stepMs;
+          testDbFiles = await listFiles();
+        }
         expect(testDbFiles.length, greaterThanOrEqualTo(3), reason: 'Should have at least 3 test database files');
         
         // Verify all filenames are unique
@@ -86,46 +115,72 @@ void main() {
     });
 
     test('should successfully clean up test database files', () async {
-      // Create some test databases
+      // IMPORTANT: We only clean up files created by THIS test. In persist
+      // mode, files are generally kept for manual inspection. This test is a
+      // targeted cleanup proof, not a policy to wipe all test outputs.
+      if (!TestConfiguration.isPersist) {
+        markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
+      }
+      // Create some test databases and record their exact file paths
       final databases = <AppDatabase>[];
-      late List<File> filesBefore;
-      
+      final createdPaths = <String>[];
+
       try {
         for (int i = 0; i < 2; i++) {
-          databases.add(DatabaseTestHelper.createTestDatabase(TestDatabaseType.file));
+          final db = DatabaseTestHelper.createTestDatabase(TestDatabaseType.file);
+          databases.add(db);
+          // Force the lazy connection to open and the file to be created on disk
+          await db.customSelect('SELECT 1').get();
+          final path = DatabaseTestHelper.getDatabaseFilePath(db);
+          if (path != null) {
+            createdPaths.add(path);
+          }
           await Future.delayed(const Duration(milliseconds: 1));
         }
-        
-        // Verify files exist
-        final dir = Directory(testDbDir);
-        filesBefore = dir.listSync().whereType<File>()
-            .where((f) => f.path.contains('testDB') && f.path.endsWith('.db'))
-            .toList();
-        expect(filesBefore.length, greaterThanOrEqualTo(2));
-        
+
+        // Verify created files exist (poll to account for background creation)
+        const totalWaitMs = 3000;
+        const stepMs = 100;
+        int waited = 0;
+        while (waited < totalWaitMs) {
+          final allExist = createdPaths.every((p) => File(p).existsSync());
+          if (allExist) break;
+          await Future.delayed(const Duration(milliseconds: stepMs));
+          waited += stepMs;
+        }
+        expect(createdPaths.length, equals(2), reason: 'Should have recorded both created database file paths');
+        for (final p in createdPaths) {
+          expect(File(p).existsSync(), isTrue, reason: 'Created DB file should exist: $p');
+        }
       } finally {
         // Close databases
         for (final db in databases) {
           await db.close();
         }
       }
-      
-      // Clean up using the helper method
-      await DatabaseTestHelper.cleanupTestDatabaseDirectory();
-      
-      // Verify cleanup worked (directory might still exist but should have fewer or no test files)
-      final dir = Directory(testDbDir);
-      if (dir.existsSync()) {
-        final filesAfter = dir.listSync().whereType<File>()
-            .where((f) => f.path.contains('testDB') && f.path.endsWith('.db'))
-            .toList();
-        // Note: We can't guarantee all files are gone because other tests might be running
-        // but we can verify the cleanup method doesn't crash
-        expect(filesAfter.length, lessThanOrEqualTo(filesBefore.length));
+
+      // Targeted cleanup: Only delete the files this test created to avoid cross-test interference
+      await DatabaseTestHelper.cleanupSpecificTestFiles(createdPaths);
+
+      // Verify the specific files are gone (with small retry loop for Windows locks)
+      const verifyTotalMs = 2000;
+      const verifyStepMs = 100;
+      int verifyWaited = 0;
+      while (verifyWaited < verifyTotalMs) {
+        final anyExist = createdPaths.any((p) => File(p).existsSync());
+        if (!anyExist) break;
+        await Future.delayed(const Duration(milliseconds: verifyStepMs));
+        verifyWaited += verifyStepMs;
+      }
+      for (final p in createdPaths) {
+        expect(File(p).existsSync(), isFalse, reason: 'Cleanup should remove created DB file: $p');
       }
     });
 
     test('should handle directory creation gracefully', () async {
+      if (!TestConfiguration.isPersist) {
+        markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
+      }
       // Instead of deleting the shared test directory (which might be in use),
       // test with a unique subdirectory that we can safely delete
       final uniqueSubDir = Directory('${testDbDir}/graceful_test_${DateTime.now().millisecondsSinceEpoch}');
@@ -166,11 +221,14 @@ void main() {
         }
       } catch (e) {
         // Ignore cleanup errors - this is just a test artifact
-        print('Warning: Could not clean up test subdirectory: $e');
+  // print('Warning: Could not clean up test subdirectory: $e');
       }
     });
 
     test('should isolate file databases between tests', () async {
+      if (!TestConfiguration.isPersist) {
+        markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
+      }
       // Create first database and add data
       final db1 = DatabaseTestHelper.createTestDatabase(TestDatabaseType.file);
       await db1.customStatement('CREATE TABLE test_isolation (id INTEGER PRIMARY KEY, value TEXT)');

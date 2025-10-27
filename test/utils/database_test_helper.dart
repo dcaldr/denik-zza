@@ -1,5 +1,6 @@
 import 'dart:io';
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' as drift;
+import 'package:path/path.dart' as p;
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'test_configuration.dart';
 import 'test_output_manager.dart';
@@ -12,9 +13,15 @@ TestDatabaseType? _globalTestDatabaseOverride;
 
 /// Cache for singleton database instances to avoid Drift warnings
 final Map<String, AppDatabase> _databaseInstances = {};
+// Reverse map to reliably resolve file path from an AppDatabase instance
+final Map<AppDatabase, String> _pathByInstance = {};
 
-/// Flag to track if drift warnings have been disabled for tests
-bool _driftWarningsDisabled = false;
+/// Monotonic counter to strengthen uniqueness of file test DB filenames
+int _fileDbCounter = 0;
+
+/// Flag kept for backward-compatibility; no longer needed since warning
+/// suppression is handled globally in flutter_test_config.dart
+bool _driftWarningsDisabled = true;
 
 /// Database Test Helper for Drift Database Testing
 /// 
@@ -50,17 +57,9 @@ bool _driftWarningsDisabled = false;
 /// Drift's "multiple database instances" warnings.
 class DatabaseTestHelper {
   
-  /// Disable Drift warnings for test environments
-  /// 
-  /// Call this once at the beginning of your test suite to suppress
-  /// Drift's multiple database instance warnings, which are expected
-  /// in test environments where we create many isolated databases.
-  static void disableDriftWarnings() {
-    if (!_driftWarningsDisabled) {
-      driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
-      _driftWarningsDisabled = true;
-    }
-  }
+  /// Deprecated: Warning suppression is configured globally in
+  /// test/flutter_test_config.dart. This is now a no-op.
+  static void disableDriftWarnings() {}
   
   /// Creates a test database instance based on the specified type
   /// 
@@ -80,9 +79,6 @@ class DatabaseTestHelper {
   /// });
   /// ```
   static AppDatabase createTestDatabase(TestDatabaseType type) {
-    // Automatically disable Drift warnings for tests
-    disableDriftWarnings();
-    
     // Check for global override first
     final effectiveType = _globalTestDatabaseOverride ?? type;
     
@@ -105,26 +101,40 @@ class DatabaseTestHelper {
   /// Create a file-based test database (persistent, real SQLite file)
   /// Each test gets a unique file to ensure isolation
   static AppDatabase _createFileDatabase() {
-    // Create unique test database file with human-readable timestamp + counter
-    final timestamp = DateTime.now();
-    final formattedDate = '${timestamp.year.toString().substring(2)}-${timestamp.month.toString().padLeft(2, '0')}-${timestamp.day.toString().padLeft(2, '0')}';
-    final uniqueId = timestamp.millisecondsSinceEpoch % 100000; // Anti-collision number
-    
-    // Create test database in dedicated directory
-    final testDbDir = Directory('./test/test_dbs');
+    // Create unique test database file with human-readable date + high-entropy numeric id
+    // Ensure the chosen filename doesn't already exist on disk to make tests deterministic.
+    final testDbDir = Directory('./test/test_dbs').absolute;
     if (!testDbDir.existsSync()) {
       testDbDir.createSync(recursive: true);
     }
-    
-    final testDbPath = '${testDbDir.path}/test_${formattedDate}_testDB_$uniqueId.db';
-    
-    // Check if we already have this instance cached
-    if (_databaseInstances.containsKey(testDbPath)) {
-      return _databaseInstances[testDbPath]!;
+
+    String buildPath() {
+      final now = DateTime.now();
+      final formattedDate = '${now.year.toString().substring(2)}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      // Use microseconds for greater entropy and add a counter suffix to avoid same-microsecond collisions.
+      final counter = (_fileDbCounter++ % 1000);
+      final numericId = (now.microsecondsSinceEpoch % 100000000) * 1000 + counter; // digits only
+  return p.join(testDbDir.path, 'test_${formattedDate}_testDB_$numericId.db');
     }
-    
+
+    // Find a non-existing path (defensive against collisions across the whole run)
+    String testDbPath = buildPath();
+    int attempts = 0;
+    while (File(testDbPath).existsSync() && attempts < 10) {
+      // Small sleep isn't possible here (sync function), so regenerate id using a bumped counter
+      testDbPath = buildPath();
+      attempts++;
+    }
+
+    // If we somehow generated an existing path that's already cached, regenerate as well
+    while (_databaseInstances.containsKey(testDbPath) && attempts < 20) {
+      testDbPath = buildPath();
+      attempts++;
+    }
+
     final database = AppDatabase(testDbPath);
     _databaseInstances[testDbPath] = database;
+    _pathByInstance[database] = testDbPath;
     return database;
   }
   
@@ -188,8 +198,9 @@ class DatabaseTestHelper {
           await database.close();
         }
       } else {
-        // For file databases, always close and remove from cache
-        _databaseInstances.remove(keyToRemove);
+  // For file databases, always close and remove from cache
+  _databaseInstances.remove(keyToRemove);
+  _pathByInstance.remove(database);
         await database.close();
         
         // Cleanup is optional and disabled by default to preserve test data
@@ -206,6 +217,7 @@ class DatabaseTestHelper {
       }
     } else {
       // If not found in cache, just close it
+      _pathByInstance.remove(database);
       await database.close();
     }
   }
@@ -228,6 +240,7 @@ class DatabaseTestHelper {
   static Future<void> clearAllDatabaseInstances() async {
     final databases = List.from(_databaseInstances.values);
     _databaseInstances.clear();
+    _pathByInstance.clear();
     
     for (final database in databases) {
       try {
@@ -237,6 +250,29 @@ class DatabaseTestHelper {
       }
     }
   }
+
+  /// Get the on-disk file path for a given AppDatabase created by this helper.
+  ///
+  /// Returns null for memory databases or if the database wasn't created
+  /// by this helper. Useful in tests to assert file existence deterministically
+  /// without relying on directory diffs under parallel test execution.
+  static String? getDatabaseFilePath(AppDatabase database) {
+    // Fast path: direct instance->path mapping
+    final direct = _pathByInstance[database];
+    if (direct != null) return direct;
+
+    // Fallback: scan the old map by identity
+    for (final entry in _databaseInstances.entries) {
+      if (identical(entry.value, database)) {
+        final key = entry.key;
+        if (key.contains(Platform.pathSeparator) && key.toLowerCase().endsWith('.db')) {
+          return key;
+        }
+        return null;
+      }
+    }
+    return null;
+  }
   
   /// Optional: Clean up test database files with specific patterns
   /// 
@@ -244,21 +280,124 @@ class DatabaseTestHelper {
   /// By default, test databases are preserved for debugging and analysis.
   static Future<void> cleanupTestDatabaseDirectory({String? filePattern}) async {
     final testDbDir = Directory('./test/test_dbs');
-    if (testDbDir.existsSync()) {
+    if (!testDbDir.existsSync()) return;
+
+    // 1) Proactively close any cached DB instances pointing into this directory to release file locks (esp. on Windows)
+    final toClose = <String, AppDatabase>{};
+    _databaseInstances.forEach((path, db) {
+      // Skip non-file keys (like potential 'memory')
+      if (!path.contains(Platform.pathSeparator)) return;
+      if (!File(path).path.startsWith(testDbDir.path)) return;
+      if (filePattern != null) {
+        final name = path.split(Platform.pathSeparator).last;
+        if (!name.contains(filePattern)) return;
+      }
+      toClose[path] = db;
+    });
+    for (final entry in toClose.entries) {
       try {
-        final files = testDbDir.listSync().whereType<File>();
-        for (final file in files) {
-          final fileName = file.path.split(Platform.pathSeparator).last;
-          if (filePattern != null && fileName.contains(filePattern)) {
-            try {
-              await file.delete();
-            } catch (e) {
-              // Ignore individual file deletion errors
-            }
-          }
+        await entry.value.close();
+      } catch (_) {
+        // ignore
+      } finally {
+        _databaseInstances.remove(entry.key);
+        _pathByInstance.remove(entry.value);
+      }
+    }
+
+    // Helper to delete a file with retries and also its SQLite sidecars
+    Future<void> deleteWithRetries(File f) async {
+      // Delete SQLite sidecar files first to avoid locks (-wal, -shm, -journal)
+      final basePath = f.path;
+      for (final suffix in const ['-wal', '-shm', '-journal']) {
+        final sidecar = File('$basePath$suffix');
+        if (await sidecar.exists()) {
+          try { await sidecar.delete(); } catch (_) {}
         }
-      } catch (e) {
-        // Ignore directory access errors
+      }
+
+      const maxAttempts = 8;
+      const delayMs = 150;
+      for (var attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          if (await f.exists()) {
+            await f.delete();
+          }
+          // Verify gone
+          if (!await f.exists()) {
+            return;
+          }
+        } catch (_) {
+          // swallow and retry
+        }
+        await Future.delayed(const Duration(milliseconds: delayMs));
+      }
+    }
+
+    // 2) Delete matching files (with retries)
+    try {
+      final files = testDbDir.listSync().whereType<File>();
+      for (final file in files) {
+        final fileName = file.path.split(Platform.pathSeparator).last;
+        if (filePattern != null && !fileName.contains(filePattern)) {
+          continue;
+        }
+        await deleteWithRetries(file);
+      }
+    } catch (_) {
+      // Ignore directory access errors
+    }
+  }
+
+  /// Targeted cleanup: Delete only the specific database files provided.
+  ///
+  /// This avoids cross-test interference when tests run in parallel by cleaning
+  /// up exactly the files a test created instead of globbing a whole directory.
+  static Future<void> cleanupSpecificTestFiles(List<String> absolutePaths) async {
+    // Close any cached instances first to release file locks
+    final toClose = <String, AppDatabase>{};
+    for (final path in absolutePaths) {
+      final db = _databaseInstances[path];
+      if (db != null) toClose[path] = db;
+    }
+    for (final entry in toClose.entries) {
+      try { await entry.value.close(); } catch (_) {} finally { _databaseInstances.remove(entry.key); _pathByInstance.remove(entry.value); }
+    }
+
+    // Local helper to delete a file with retries and sidecars
+    Future<void> deleteWithRetries(File f) async {
+      final basePath = f.path;
+      for (final suffix in const ['-wal', '-shm', '-journal']) {
+        final sidecar = File('$basePath$suffix');
+        if (await sidecar.exists()) {
+          try { await sidecar.delete(); } catch (_) {}
+        }
+      }
+
+      const maxAttempts = 8;
+      const delayMs = 150;
+      for (var attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          if (await f.exists()) {
+            await f.delete();
+          }
+          if (!await f.exists()) {
+            return;
+          }
+        } catch (_) {
+          // swallow and retry
+        }
+        await Future.delayed(const Duration(milliseconds: delayMs));
+      }
+    }
+
+    // Delete provided files
+    for (final path in absolutePaths) {
+      try {
+        final file = File(path);
+        await deleteWithRetries(file);
+      } catch (_) {
+        // ignore individual file deletion issues
       }
     }
   }
@@ -307,9 +446,6 @@ class DatabaseTestHelper {
   /// });
   /// ```
   static Future<AppDatabase> createUnifiedTestDatabase() async {
-    // Automatically disable Drift warnings for tests
-    disableDriftWarnings();
-    
     final testMode = TestConfiguration.getTestMode();
     
     switch (testMode) {
@@ -415,7 +551,7 @@ class TestDatabaseUtils {
       firstName: firstName,
       lastName: lastName,
       zzaActionFK: zzaActionFK ?? 1, // Default to action ID 1 if not specified
-      insuranceCompanyFK: insuranceCompanyFK != null ? Value(insuranceCompanyFK) : const Value.absent(),
+      insuranceCompanyFK: insuranceCompanyFK != null ? drift.Value(insuranceCompanyFK) : const drift.Value.absent(),
     );
   }
   

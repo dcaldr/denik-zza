@@ -16,20 +16,19 @@ String errorMsg ='' ;
 CsvReader(this._path){
   canLoadFile();
 }
-/// removes first line from csv table (column names)
-Future<List<List<String>>?> removeFirstLine(List<List<String>>? csvTable) async{
-  if(csvTable == null){
-    return null;
-  }
-  csvTable.removeAt(0);
-  return csvTable;
-}
 
-
-
-/// reaads first line (coulmn names) in "raw" format
+/// reaads first line (column names) in "raw" format from file contents
    List<String>? getHeader(){
-    return CsvParserSettings().converter.convert(_path!)[0].map((e) => e.toString()).toList(); //note: :DD
+    if(!canLoadFile()){
+      return null;
+    }
+    final file = File(_path!);
+    final data = file.readAsStringSync();
+    final table = CsvParserSettings().converter.convert(data);
+    if(table.isEmpty){
+      return null;
+    }
+    return table.first.map((e) => e.toString()).toList();
   }
   /// pulls data from file into memory
 /// returns null if file was not processed
@@ -39,55 +38,57 @@ Future<List<List<String>>?> removeFirstLine(List<List<String>>? csvTable) async{
       return null;
     }
     File file = File(_path!);
-    String data = await file.readAsString(); // note: learn "asynchronous prefetching" or "fire and forget"
-    // TODO: do tests on settings
+    String data = await file.readAsString();
+    
     // parsing csv
     List<List<String>>? csvTable =  CsvParserSettings().converter.convert(data);
-    csvTable = await removeFirstLine(csvTable);
+    csvTable = _removeFirstLine(csvTable);
 
 
    // return CsvParserSettings().converter.convert(data);
     return csvTable;
   }
-  /// when file is found not ok this gets called,
-/// it is for possible future changes
-  bool setBadFile(){
-     wasPathOk = false;
-     return false;
-  }
-  /// when file is found ok this gets called,
-///   it is for possible future changes
-  bool setGoodFile(){
-    wasPathOk = true;
-    errorMsg = '';
-    return true;
-  }
-
 
   /// test if file exist and is readable
   /// can be called to provide quick response
     bool canLoadFile() {
      if(_path == null){
-     return setBadFile();
+       wasPathOk = false;
+       return false;
      }
      if (_path.isEmpty) {
-      return setBadFile();
+       wasPathOk = false;
+       return false;
      }
       File file = File(_path);
       if (!file.existsSync()) {
-       return setBadFile(); // File does not exist
+        wasPathOk = false;
+        return false; // File does not exist
       }
       try {
-        file.openRead().listen((_) {}).cancel(); // Attempt to read and immediately cancel to not actually process data
+        // Synchronous open/close to avoid leaving pending async subscriptions that may lock the file on Windows
+        final raf = file.openSync(mode: FileMode.read);
+        raf.closeSync();
         wasPathOk = true;
+        errorMsg = '';
         return true;
       } catch (e) {
         errorMsg = e.toString();
-       return setBadFile();
+        wasPathOk = false;
+        return false;
       }
-      return setBadFile();
 
     }
+
+/// removes first line from csv table (column names)
+  List<List<String>>? _removeFirstLine(List<List<String>>? csvTable) {
+    if(csvTable == null){
+      return null;
+    }
+    csvTable.removeAt(0);
+    return csvTable;
+  }
+
 
 
 }

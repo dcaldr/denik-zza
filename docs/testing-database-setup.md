@@ -199,6 +199,20 @@ Recommended patterns:
 - Prefer the `TestingSetupHelper.setupGroup()` wrapper in tests for consistent setup/teardown across modes.
 - Persist artifacts are placed in `test/test_outputs/` and are ignored by git.
 
+### Rodné číslo generators for fixtures
+
+When preparing participant fixtures, reuse the generator helpers in
+`lib/input/rodne_cislo.dart` instead of hard-coding values. The static methods
+`RodneCislo.generateForDate` and `RodneCislo.generateForYear` apply the same
+validation rules as the parser and prevent accidental checksum mistakes.
+
+- Prefer `generateForDate` when you need deterministic birth dates for tests.
+- Use `generateForYear` in data-factory style helpers when only the birth year
+  matters; supply `isFemale` to control gender encoding deterministically.
+
+👉 See the inline DartDoc on these helpers for usage snippets and a reminder to
+align with this section when creating new test data factories.
+
 
 Force all tests to use the same database type (useful for CI/CD):
 
@@ -354,6 +368,53 @@ void main() {
 
 **Issue**: Persist mode created a directory named like a file (e.g., `foo.db/db.sqlite`)
 **Solution**: Fixed in `AppDatabase` — paths ending with `.db` are now treated as file paths. If you pass a directory, `db.sqlite` is added automatically.
+
+### Drift lifecycle: "Can't re-open a database after closing it"
+
+Symptom:
+- StateError with message similar to: Can't re-open a database after closing it. Please create a new database connection and open that instead.
+
+Why it happens (official Drift behavior):
+- After you close a Drift executor/connection (e.g. the underlying `DelegatedDatabase`), Drift intentionally prevents re-opening it. A closed executor is terminal by design to protect from race conditions. Source: Drift `DelegatedDatabase.ensureOpen` throws this StateError on closed executors.
+
+How to fix (do this):
+- Never attempt to reuse a previously closed `AppDatabase` or `QueryExecutor`.
+- In tests, create a fresh `AppDatabase` per test (or per group) and close it in `tearDown()`. Use our helpers:
+  - Fast unit tests: `final db = AppDatabase.testInMemory();` (already uses `closeStreamsSynchronously: true`).
+  - Unified helper: `final db = await UnifiedTestSetup.createDatabase();` and `await db.close();` in tearDown.
+- For app-level tests using `DatabaseWrapper`, call `DatabaseWrapper.setTestMode()` in `setUp()` and `DatabaseWrapper.resetToProduction()` in `tearDown()` to avoid touching the production singleton.
+- Do not call `close()` on the production singleton instance used by the real app. If you need a closed lifecycle for a test, use an injected/in-memory database instance instead.
+
+Notes and extras:
+- If you hot-restart in dev on desktop and suspect zombie native connections, you can guard with:
+  ```dart
+  assert(() { NativeDatabase.closeExistingInstances(); return true; }());
+  ```
+  Place this in `main()` for debug builds only. Avoid this in production or when active connections are in use.
+
+### Drift warning: "created the database class AppDatabase multiple times"
+
+Symptom:
+- Warning logs from Drift indicating that a database class was created multiple times (often seen in tests).
+
+What it means:
+- Drift recommends using a singleton database per `QueryExecutor`. Creating multiple `AppDatabase` instances is legal but can increase the chance of mishandled lifecycles or shared executors.
+
+Our approach in tests:
+- We intentionally create fresh, isolated `AppDatabase` instances in tests for reliability. To keep logs clean, we enable the official runtime option in the global test bootstrap (`test/flutter_test_config.dart`) so it runs before any database is created:
+  ```dart
+  // test/flutter_test_config.dart
+  import 'package:drift/drift.dart';
+  Future<void> testExecutable(Future<void> Function() testMain) async {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true; // tests only
+    return testMain();
+  }
+  ```
+  Do not set this in production or development builds.
+
+If you still see the warning:
+- Ensure you are not reusing the same `QueryExecutor` across multiple `AppDatabase` instances concurrently.
+- Prefer per-test databases via `AppDatabase.testInMemory()` and close them deterministically in `tearDown()`.
 
 ### Debugging
 

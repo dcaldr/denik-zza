@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' as drift;
 import 'package:drift/native.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 
@@ -12,8 +12,6 @@ TestDatabaseType? _globalTestDatabaseOverride;
 /// Cache for singleton database instances to avoid Drift warnings
 final Map<String, AppDatabase> _databaseInstances = {};
 
-/// Flag to track if drift warnings have been disabled for tests
-bool _driftWarningsDisabled = false;
 
 /// Database Test Helper for Drift Database Testing
 /// 
@@ -43,12 +41,7 @@ class DatabaseTestHelper {
   /// Call this once at the beginning of your test suite to suppress
   /// Drift's multiple database instance warnings, which are expected
   /// in test environments where we create many isolated databases.
-  static void disableDriftWarnings() {
-    if (!_driftWarningsDisabled) {
-      driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
-      _driftWarningsDisabled = true;
-    }
-  }
+  static void disableDriftWarnings() {}
   
   /// Creates a test database instance based on the specified type
   /// 
@@ -68,8 +61,7 @@ class DatabaseTestHelper {
   /// });
   /// ```
   static AppDatabase createTestDatabase(TestDatabaseType type) {
-    // Automatically disable Drift warnings for tests
-    disableDriftWarnings();
+  // Warning suppression is applied globally in flutter_test_config.dart
     
     // Check for global override first
     final effectiveType = _globalTestDatabaseOverride ?? type;
@@ -293,7 +285,7 @@ class TestDatabaseUtils {
       firstName: firstName,
       lastName: lastName,
       zzaActionFK: zzaActionFK ?? 1, // Default to action ID 1 if not specified
-      insuranceCompanyFK: insuranceCompanyFK != null ? Value(insuranceCompanyFK) : const Value.absent(),
+      insuranceCompanyFK: insuranceCompanyFK != null ? drift.Value(insuranceCompanyFK) : const drift.Value.absent(),
     );
   }
   

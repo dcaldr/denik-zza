@@ -34,7 +34,7 @@ void main() {
         };
         expect(memoryTableNames, containsAll(expectedTables));
         
-        print('✅ Schema verification passed - ${memoryTableNames.length} tables match');
+  // print('✅ Schema verification passed - ${memoryTableNames.length} tables match');
       } finally {
         await memoryDb.close();
         await fileDb.close();
@@ -63,7 +63,7 @@ void main() {
         expect(memoryRetrieved?.name, equals('Schema Test Company'));
         expect(fileRetrieved?.name, equals('Schema Test Company'));
         
-        print('✅ Identical operations successful on both database types');
+  // print('✅ Identical operations successful on both database types');
       } finally {
         await memoryDb.close();
         await DatabaseTestHelper.closeTestDatabase(fileDb, cleanup: true);
@@ -105,7 +105,7 @@ void main() {
         expect(company2Retrieved?.name, equals('Company 2'));
         expect(company3Retrieved?.name, equals('Company 3'));
         
-        print('✅ File database isolation verified with timestamp-based filenames');
+  // print('✅ File database isolation verified with timestamp-based filenames');
       } finally {
         await DatabaseTestHelper.closeTestDatabase(db1, cleanup: true);
         await DatabaseTestHelper.closeTestDatabase(db2, cleanup: true);
@@ -135,7 +135,7 @@ void main() {
         
         // This test reveals that the databases may share ID sequences,
         // which is actually valuable information about the system behavior
-        print('✅ Memory database behavior verified - both databases operational');
+  // print('✅ Memory database behavior verified - both databases operational');
       } finally {
         await memoryDb1.close();
         await memoryDb2.close();
@@ -171,7 +171,7 @@ void main() {
         final db3 = DatabaseTestHelper.createTestDatabase(TestDatabaseType.file);
         await DatabaseTestHelper.closeTestDatabase(db3, cleanup: true);
         
-        print('✅ Global override functionality verified');
+  // print('✅ Global override functionality verified');
       } finally {
         await db1.close();
         await db2.close();
@@ -202,7 +202,7 @@ void main() {
         final participantId = await database.addParticipant(participant);
         expect(participantId, greaterThan(0));
         
-        print('✅ Test utilities create valid, interlinked test data');
+  // print('✅ Test utilities create valid, interlinked test data');
       } finally {
         await database.close();
       }
@@ -229,7 +229,7 @@ void main() {
         // Memory database should be very fast (under 1 second for 50 operations)
         expect(stopwatch.elapsedMilliseconds, lessThan(1000));
         
-        print('✅ Memory database performance: ${stopwatch.elapsedMilliseconds}ms for 50 operations');
+  // print('✅ Memory database performance: ${stopwatch.elapsedMilliseconds}ms for 50 operations');
       } finally {
         await database.close();
       }
@@ -252,7 +252,7 @@ void main() {
         final retrieved = await database.getInsuranceCompanyByID(companyId);
         expect(retrieved?.name, equals('Persistence Test Company'));
         
-        print('✅ File database creation and basic operations verified');
+  // print('✅ File database creation and basic operations verified');
       } finally {
         await DatabaseTestHelper.closeTestDatabase(database, cleanup: true);
       }

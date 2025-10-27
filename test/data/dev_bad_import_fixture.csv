@@ -1,0 +1,11 @@
+jméno,příjmení,rodné číslo,pohlaví,adresa,datum narození,jméno rodič,telefon rodič,email rodič,způsobilost,pojišťovna,poznámka
+Lucie,Přesná,120101/1230,1,Praha 1,01.01.2012,Lada Přesná,601123456,lada.presna@example.com,1,VZP,Plně validní řádek
+Eva,BezÚdajů,125101/2345,,Brno 2,,Eva Máma,602222333,eva.mama@example.com,1,OZP,Chybí pohlaví a datum
+Pavel,BezRC,,1,Ostrava,03.03.2011,Pavel Táta,603333444,pavel.tata@example.com,1,CPZP,Chybějící rodné číslo
+Radka,Formátová,120101ABC,2,Plzeň,04.04.2010,Radka Máma,604444555,radka.mama@example.com,1,VZP,Neplatný formát rodného čísla
+Jan,Kontrola,120101/1235,1,Liberec,01.01.2012,Jan Táta,605555666,jan.tata@example.com,1,OZP,Pro kontrolu checksumu
+Soňa,Pohlaví,120101/1234,2,Olomouc,01.01.2012,Soňa Máma,606666777,sona.mama@example.com,1,VZP,Pohlaví se neshoduje
+Tomáš,Datum,120101/1234,1,Zlín,02.01.2012,Tomáš Máma,607777888,tomas.mama@example.com,1,CPZP,Datum narození se neshoduje
+Blanka,Emailová,125510/1234,2,Pardubice,10.05.2012,Blanka Máma,608888999,ne-email,1,VZP,Neplatný email
+,BezJména,120101/1234,1,Praha,01.01.2012,Bez Jména Máma,609999000,bez.jmena@example.com,1,VZP,Chybí jméno
+Klara,,120101/1234,1,Praha,01.01.2012,Klara Máma,601000111,klara@example.com,1,VZP,Chybí příjmení
