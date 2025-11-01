@@ -5,8 +5,11 @@ import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 
 /// Dev screen showing side-by-side menu layout comparison:
-/// - Left: Current AppDrawer implementation
-/// - Right: Collapsible sections with ExpansionTile
+/// - Option A: Original flat structure (historical reference)
+/// - Option B: Collapsible sections alternative
+/// - Option C: Current production implementation (Phase-based hybrid)
+/// 
+/// NOTE: Option C is now the active production menu in app_drawer.dart
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DevEnvironment.initialize();
@@ -45,7 +48,7 @@ class MenuComparisonScreen extends StatelessWidget {
                       child: Column(
                         children: [
                           Text(
-                            'A) Současné menu (AppDrawer)',
+                            'A) Původní struktura',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -53,10 +56,11 @@ class MenuComparisonScreen extends StatelessWidget {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'Standardní rozvržení - současná navigace',
+                            'Plochý seznam - historická reference',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.black54,
+                              fontStyle: FontStyle.italic,
                             ),
                           ),
                         ],
@@ -88,7 +92,7 @@ class MenuComparisonScreen extends StatelessWidget {
                       child: Column(
                         children: [
                           Text(
-                            'B) Sbalitelné sekce',
+                            'B) Alternativa: Sbalitelné sekce',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -96,7 +100,7 @@ class MenuComparisonScreen extends StatelessWidget {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'Skládací sekce - úspora místa',
+                            'Úspora místa - nevybráno',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.black54,
@@ -127,19 +131,26 @@ class MenuComparisonScreen extends StatelessWidget {
                     key: const Key('MenuComparison_rightTitle'),
                     padding: const EdgeInsets.all(16.0),
                     color: Colors.orange.shade50,
-                    child: const Center(
+                    child: Center(
                       child: Column(
                         children: [
-                          Text(
-                            'C) Fázový hybrid',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.check_circle, color: Colors.green.shade700, size: 20),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'C) AKTUÁLNÍ - Fázový hybrid',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Podle fází - zaměřeno na workflow',
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Produkční implementace - zaměřeno na workflow',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.black54,
@@ -600,6 +611,7 @@ class _PhaseBasedMenuPreviewState extends State<_PhaseBasedMenuPreview> {
               border: Border(
                 left: BorderSide(color: Colors.deepOrange, width: 3),
               ),
+              borderRadius: BorderRadius.circular(8),
               boxShadow: [
                 BoxShadow(
                   color: Colors.orange.shade200,

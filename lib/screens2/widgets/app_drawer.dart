@@ -8,7 +8,8 @@ import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:denik_zza/print_ops2/print_center.dart';
 import 'package:flutter/material.dart';
 
-/// Simplified menu drawer with state-based item enabling
+/// Phase-based hybrid menu drawer with workflow-focused design
+/// Option C: Main workflow items always visible, supporting sections collapsible
 /// MVP approach: StatelessWidget + FutureBuilder for clean async state checking
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -62,21 +63,21 @@ class AppDrawer extends StatelessWidget {
             padding: EdgeInsets.zero,
             children: [
               _buildHeader(context),
-              _buildSectionHeader('UDÁLOSTI'),
-              _buildEventList(context),
-              _buildAddEvent(context),
-              const Divider(key: Key('AppDrawer_divider_1')),
               
-              _buildSectionHeader('ÚČASTNÍCI'),
-              _buildParticipantList(context, hasEvent),
-              _buildNewParticipant(context, hasEvent),
-              _buildCsvImport(context, hasEvent),
-              const Divider(key: Key('AppDrawer_divider_2')),
-              
-              _buildSectionHeader('ZÁZNAMY'),
+              // HLAVNÍ: BĚHEM AKCE - Always visible main workflow section
+              _buildMainWorkflowHeader(),
               _buildNewRecord(context, hasEvent, hasParticipants),
-              _buildIntakeForm(context, hasEvent, hasParticipants),
+              _buildParticipantList(context, hasEvent),
               _buildPrintCenter(context, hasEvent),
+              
+              const SizedBox(height: 8),
+              const Divider(height: 1),
+              
+              // PŘÍPRAVA AKCE - Collapsible pre-event setup section
+              _buildPrepSection(context, hasEvent),
+              
+              // ZDRAVOTNICKÝ FILTR - Collapsible medical screening section
+              _buildMedicalSection(context, hasEvent, hasParticipants),
             ],
           ),
         );
@@ -106,42 +107,94 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: Colors.grey,
-          letterSpacing: 0.5,
+  /// Build highlighted main workflow section header with rounded corners
+  Widget _buildMainWorkflowHeader() {
+    return Container(
+      key: const Key('AppDrawer_hlavniSection'),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.orange.shade100, Colors.orange.shade50],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        border: Border(
+          left: BorderSide(color: Colors.deepOrange, width: 3),
+        ),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.shade200,
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.star, color: Colors.deepOrange, size: 18),
+          SizedBox(width: 8),
+          Text(
+            'HLAVNÍ: BĚHEM AKCE',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.deepOrange,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  // UDÁLOSTI section
-  Widget _buildEventList(BuildContext context) {
-    return ListTile(
-      key: const Key('AppDrawer_event_list'),
-      leading: const Icon(Icons.event_note),
-      title: const Text('Seznam akcí'),
-      onTap: () {
-        Navigator.pop(context);
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => EventList()),
-        );
-      },
+  /// Build collapsible pre-event preparation section
+  Widget _buildPrepSection(BuildContext context, bool hasEvent) {
+    return ExpansionTile(
+      key: const Key('AppDrawer_priprava'),
+      leading: const Icon(Icons.event_available),
+      title: const Text(
+        'PŘÍPRAVA AKCE',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      initiallyExpanded: false,
+      children: [
+        _buildAddEvent(context),
+        _buildEventList(context),
+        _buildNewParticipant(context, hasEvent),
+        _buildCsvImport(context, hasEvent),
+      ],
     );
   }
 
+  /// Build collapsible medical screening section
+  Widget _buildMedicalSection(BuildContext context, bool hasEvent, bool hasParticipants) {
+    return ExpansionTile(
+      key: const Key('AppDrawer_filtr'),
+      leading: const Icon(Icons.medical_services),
+      title: const Text(
+        'ZDRAVOTNICKÝ FILTR',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      initiallyExpanded: false,
+      children: [
+        _buildIntakeForm(context, hasEvent, hasParticipants),
+      ],
+    );
+  }
+
+  // PŘÍPRAVA AKCE section items
   Widget _buildAddEvent(BuildContext context) {
     return ListTile(
       key: const Key('AppDrawer_add_event'),
-      leading: const Icon(Icons.add_circle),
-      title: const Text('Přidat akci'),
+      leading: const Icon(Icons.add_circle_outline),
+      title: const Text('Nová akce', style: TextStyle(fontSize: 15)),
       onTap: () {
         Navigator.pop(context);
         Navigator.push(
@@ -152,26 +205,74 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  // ÚČASTNÍCI section
-  Widget _buildParticipantList(BuildContext context, bool hasEvent) {
+  Widget _buildEventList(BuildContext context) {
     return ListTile(
-      key: const Key('AppDrawer_participant_list'),
-      leading: const Icon(Icons.people),
-      title: const Text('Seznam účastníků'),
-      subtitle: const Text('Připravujeme', style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic)),
-      enabled: false, // Screen doesn't exist yet
-      onTap: null,
+      key: const Key('AppDrawer_event_list'),
+      leading: const Icon(Icons.event_note),
+      title: const Text('Seznam akcí', style: TextStyle(fontSize: 15)),
+      onTap: () {
+        Navigator.pop(context);
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => EventList()),
+        );
+      },
     );
   }
 
+  // HLAVNÍ section: Participant list (main workflow item)
+  Widget _buildParticipantList(BuildContext context, bool hasEvent) {
+    return ListTile(
+      key: const Key('AppDrawer_participant_list'),
+      leading: Icon(Icons.people, color: hasEvent ? null : Colors.grey.shade400),
+      title: Text(
+        'Seznam účastníků',
+        style: TextStyle(
+          fontSize: 15,
+          color: hasEvent ? null : Colors.grey.shade500,
+        ),
+      ),
+      subtitle: !hasEvent
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.warning_amber, size: 16, color: Colors.orange.shade700),
+                const SizedBox(width: 4),
+                Text(
+                  'Vytvořte akci nejdříve',
+                  style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                ),
+              ],
+            )
+          : null,
+      enabled: hasEvent,
+      onTap: hasEvent
+          ? () {
+              Navigator.pop(context);
+              // TODO: Navigate to participant list screen when implemented
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Seznam účastníků - připravujeme')),
+              );
+            }
+          : null,
+    );
+  }
+
+  // PŘÍPRAVA section: Registration (requires event)
   Widget _buildNewParticipant(BuildContext context, bool hasEvent) {
     return ListTile(
       key: const Key('AppDrawer_new_participant'),
-      leading: const Icon(Icons.person_add),
-      title: const Text('Nový Účastník'),
+      leading: Icon(Icons.person_add, color: hasEvent ? null : Colors.grey.shade400),
+      title: Text(
+        'Registrace účastníka',
+        style: TextStyle(
+          fontSize: 15,
+          color: hasEvent ? null : Colors.grey.shade500,
+        ),
+      ),
       subtitle: hasEvent 
           ? null 
-          : const Text('Vyžaduje vybranou akci', style: TextStyle(fontSize: 11, color: Colors.grey)),
+          : const Text('Vyžaduje akci', style: TextStyle(fontSize: 11, color: Colors.grey)),
       enabled: hasEvent,
       onTap: hasEvent
           ? () {
@@ -188,11 +289,17 @@ class AppDrawer extends StatelessWidget {
   Widget _buildCsvImport(BuildContext context, bool hasEvent) {
     return ListTile(
       key: const Key('AppDrawer_csv_import'),
-      leading: const Icon(Icons.table_chart),
-      title: const Text('Import CSV'),
+      leading: Icon(Icons.upload_file, color: hasEvent ? null : Colors.grey.shade400),
+      title: Text(
+        'Import CSV',
+        style: TextStyle(
+          fontSize: 15,
+          color: hasEvent ? null : Colors.grey.shade500,
+        ),
+      ),
       subtitle: hasEvent
-          ? const Text('Hromadný import účastníků', style: TextStyle(fontSize: 11))
-          : const Text('Vyžaduje vybranou akci', style: TextStyle(fontSize: 11, color: Colors.grey)),
+          ? null
+          : const Text('Vyžaduje akci', style: TextStyle(fontSize: 11, color: Colors.grey)),
       enabled: hasEvent,
       onTap: hasEvent
           ? () {
@@ -206,15 +313,35 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  // ZÁZNAMY section
+  // HLAVNÍ section: New injury record (primary workflow action)
   Widget _buildNewRecord(BuildContext context, bool hasEvent, bool hasParticipants) {
     final enabled = hasEvent && hasParticipants;
     return ListTile(
       key: const Key('AppDrawer_new_record'),
-      leading: const Icon(Icons.local_hospital),
-      title: const Text('Nový záznam úrazu'),
+      leading: Icon(
+        Icons.add_circle,
+        color: enabled ? Colors.deepOrange : Colors.grey.shade400,
+      ),
+      title: Text(
+        'Nový záznam úrazu',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 15,
+          color: enabled ? null : Colors.grey.shade500,
+        ),
+      ),
       subtitle: !enabled
-          ? const Text('Vyžaduje akci a účastníky', style: TextStyle(fontSize: 11, color: Colors.grey))
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.warning_amber, size: 16, color: Colors.orange.shade700),
+                const SizedBox(width: 4),
+                Text(
+                  !hasEvent ? 'Vytvořte akci nejdříve' : 'Přidejte účastníky',
+                  style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                ),
+              ],
+            )
           : null,
       enabled: enabled,
       onTap: enabled
@@ -229,12 +356,22 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
+  // ZDRAVOTNICKÝ FILTR section: Intake form
   Widget _buildIntakeForm(BuildContext context, bool hasEvent, bool hasParticipants) {
     final enabled = hasEvent && hasParticipants;
     return ListTile(
       key: const Key('AppDrawer_intake_form'),
-      leading: const Icon(Icons.assignment),
-      title: const Text('Přijímací formulář'),
+      leading: Icon(
+        Icons.assignment_turned_in,
+        color: enabled ? null : Colors.grey.shade400,
+      ),
+      title: Text(
+        'Příjímací formulář',
+        style: TextStyle(
+          fontSize: 15,
+          color: enabled ? null : Colors.grey.shade500,
+        ),
+      ),
       subtitle: !enabled
           ? const Text('Vyžaduje akci a účastníky', style: TextStyle(fontSize: 11, color: Colors.grey))
           : null,
@@ -251,15 +388,31 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  // NÁSTROJE section
+  // HLAVNÍ section: Print center
   Widget _buildPrintCenter(BuildContext context, bool hasEvent) {
     return ListTile(
       key: const Key('AppDrawer_print_center'),
-      leading: const Icon(Icons.print),
-      title: const Text('Tisk Centrum'),
+      leading: Icon(Icons.print, color: hasEvent ? null : Colors.grey.shade400),
+      title: Text(
+        'Tisk centrum',
+        style: TextStyle(
+          fontSize: 15,
+          color: hasEvent ? null : Colors.grey.shade500,
+        ),
+      ),
       subtitle: hasEvent
           ? null
-          : const Text('Vyžaduje vybranou akci', style: TextStyle(fontSize: 11, color: Colors.grey)),
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.warning_amber, size: 16, color: Colors.orange.shade700),
+                const SizedBox(width: 4),
+                Text(
+                  'Vytvořte akci nejdříve',
+                  style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                ),
+              ],
+            ),
       enabled: hasEvent,
       onTap: hasEvent
           ? () {
