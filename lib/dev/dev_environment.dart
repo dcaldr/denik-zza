@@ -2,6 +2,8 @@ import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/input/file_manager.dart';
 import 'package:drift/drift.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 /// Unified development environment setup for all dev mains.
 ///
@@ -46,6 +48,10 @@ class DevEnvironment {
   ///
   /// Returns the initialized [AppDatabase] instance.
   static Future<AppDatabase> initialize() async {
+    // Initialize Czech locale for date formatting (fixes LocaleDataException)
+    Intl.defaultLocale = 'cs_CZ';
+    await initializeDateFormatting('cs_CZ', null);
+    
     // Create in-memory test database (MUST happen before setTestMode/useTestDriftDatabase)
     final AppDatabase database = AppDatabase.testInMemory();
     
