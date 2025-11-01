@@ -42,12 +42,24 @@ class MenuComparisonScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(16.0),
                     color: Colors.blue.shade50,
                     child: const Center(
-                      child: Text(
-                        'A) Současné menu (AppDrawer)',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'A) Současné menu (AppDrawer)',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Standardní rozvržení - současná navigace',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -58,6 +70,7 @@ class MenuComparisonScreen extends StatelessWidget {
               ),
             ),
           ),
+          VerticalDivider(width: 1, thickness: 1, color: Colors.grey.shade300),
           
           // Middle: Collapsible sections version
           Expanded(
@@ -72,12 +85,24 @@ class MenuComparisonScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(16.0),
                     color: Colors.green.shade50,
                     child: const Center(
-                      child: Text(
-                        'B) Sbalitelné sekce',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'B) Sbalitelné sekce',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Skládací sekce - úspora místa',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -88,6 +113,7 @@ class MenuComparisonScreen extends StatelessWidget {
               ),
             ),
           ),
+          VerticalDivider(width: 1, thickness: 1, color: Colors.grey.shade300),
           
           // Right side: Phase-based hybrid version
           Expanded(
@@ -102,12 +128,24 @@ class MenuComparisonScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(16.0),
                     color: Colors.orange.shade50,
                     child: const Center(
-                      child: Text(
-                        'C) Fázový hybrid',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'C) Fázový hybrid',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Podle fází - zaměřeno na workflow',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -211,7 +249,12 @@ class _CollapsibleMenuPreviewState extends State<_CollapsibleMenuPreview> {
           ExpansionTile(
             key: const Key('CollapsibleMenu_udalostiSection'),
             leading: const Icon(Icons.event),
-            title: const Text('UDÁLOSTI'),
+            title: const Text('UDÁLOSTI',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             initiallyExpanded: true,
             children: [
               ListTile(
@@ -241,13 +284,39 @@ class _CollapsibleMenuPreviewState extends State<_CollapsibleMenuPreview> {
           ExpansionTile(
             key: const Key('CollapsibleMenu_ucastniciSection'),
             leading: const Icon(Icons.people),
-            title: const Text('ÚČASTNÍCI'),
+            title: const Text('ÚČASTNÍCI',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             initiallyExpanded: true,
             children: [
               ListTile(
                 key: const Key('CollapsibleMenu_participantsList'),
-                leading: const Icon(Icons.people),
-                title: const Text('Seznam účastníků'),
+                leading: Icon(Icons.people, 
+                  color: hasEvent ? null : Colors.grey.shade400),
+                title: Text('Seznam účastníků',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: hasEvent ? null : Colors.grey.shade500,
+                  ),
+                ),
+                subtitle: !hasEvent
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.warning_amber, 
+                            size: 16, 
+                            color: Colors.orange.shade700),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Vytvořte akci nejdříve',
+                            style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                          ),
+                        ],
+                      )
+                    : null,
                 enabled: hasEvent,
                 onTap: hasEvent
                     ? () {
@@ -259,8 +328,29 @@ class _CollapsibleMenuPreviewState extends State<_CollapsibleMenuPreview> {
               ),
               ListTile(
                 key: const Key('CollapsibleMenu_newParticipant'),
-                leading: const Icon(Icons.person_add),
-                title: const Text('Registrace účastníka'),
+                leading: Icon(Icons.person_add,
+                  color: hasEvent ? null : Colors.grey.shade400),
+                title: Text('Registrace účastníka',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: hasEvent ? null : Colors.grey.shade500,
+                  ),
+                ),
+                subtitle: !hasEvent
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.warning_amber, 
+                            size: 16, 
+                            color: Colors.orange.shade700),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Vytvořte akci nejdříve',
+                            style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                          ),
+                        ],
+                      )
+                    : null,
                 enabled: hasEvent,
                 onTap: hasEvent
                     ? () {
@@ -272,8 +362,29 @@ class _CollapsibleMenuPreviewState extends State<_CollapsibleMenuPreview> {
               ),
               ListTile(
                 key: const Key('CollapsibleMenu_csvImport'),
-                leading: const Icon(Icons.upload_file),
-                title: const Text('Import CSV'),
+                leading: Icon(Icons.upload_file,
+                  color: hasEvent ? null : Colors.grey.shade400),
+                title: Text('Import CSV',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: hasEvent ? null : Colors.grey.shade500,
+                  ),
+                ),
+                subtitle: !hasEvent
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.warning_amber, 
+                            size: 16, 
+                            color: Colors.orange.shade700),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Vytvořte akci nejdříve',
+                            style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                          ),
+                        ],
+                      )
+                    : null,
                 enabled: hasEvent,
                 onTap: hasEvent
                     ? () {
@@ -290,13 +401,39 @@ class _CollapsibleMenuPreviewState extends State<_CollapsibleMenuPreview> {
           ExpansionTile(
             key: const Key('CollapsibleMenu_zaznamySection'),
             leading: const Icon(Icons.medical_services),
-            title: const Text('ZÁZNAMY'),
+            title: const Text('ZÁZNAMY',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             initiallyExpanded: true,
             children: [
               ListTile(
                 key: const Key('CollapsibleMenu_newRecord'),
-                leading: const Icon(Icons.add),
-                title: const Text('Nový záznam úrazu'),
+                leading: Icon(Icons.add,
+                  color: (hasEvent && hasParticipants) ? null : Colors.grey.shade400),
+                title: Text('Nový záznam úrazu',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: (hasEvent && hasParticipants) ? null : Colors.grey.shade500,
+                  ),
+                ),
+                subtitle: (!hasEvent || !hasParticipants)
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.warning_amber, 
+                            size: 16, 
+                            color: Colors.orange.shade700),
+                          const SizedBox(width: 4),
+                          Text(
+                            !hasEvent ? 'Vytvořte akci nejdříve' : 'Přidejte účastníky',
+                            style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                          ),
+                        ],
+                      )
+                    : null,
                 enabled: hasEvent && hasParticipants,
                 onTap: hasEvent && hasParticipants
                     ? () {
@@ -308,8 +445,29 @@ class _CollapsibleMenuPreviewState extends State<_CollapsibleMenuPreview> {
               ),
               ListTile(
                 key: const Key('CollapsibleMenu_intakeForm'),
-                leading: const Icon(Icons.assignment),
-                title: const Text('Příjímací formulář'),
+                leading: Icon(Icons.assignment,
+                  color: (hasEvent && hasParticipants) ? null : Colors.grey.shade400),
+                title: Text('Příjímací formulář',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: (hasEvent && hasParticipants) ? null : Colors.grey.shade500,
+                  ),
+                ),
+                subtitle: (!hasEvent || !hasParticipants)
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.warning_amber, 
+                            size: 16, 
+                            color: Colors.orange.shade700),
+                          const SizedBox(width: 4),
+                          Text(
+                            !hasEvent ? 'Vytvořte akci nejdříve' : 'Přidejte účastníky',
+                            style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                          ),
+                        ],
+                      )
+                    : null,
                 enabled: hasEvent && hasParticipants,
                 onTap: hasEvent && hasParticipants
                     ? () {
@@ -321,8 +479,29 @@ class _CollapsibleMenuPreviewState extends State<_CollapsibleMenuPreview> {
               ),
               ListTile(
                 key: const Key('CollapsibleMenu_printCenter'),
-                leading: const Icon(Icons.print),
-                title: const Text('Tisk centrum'),
+                leading: Icon(Icons.print,
+                  color: hasEvent ? null : Colors.grey.shade400),
+                title: Text('Tisk centrum',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: hasEvent ? null : Colors.grey.shade500,
+                  ),
+                ),
+                subtitle: !hasEvent
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.warning_amber, 
+                            size: 16, 
+                            color: Colors.orange.shade700),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Vytvořte akci nejdříve',
+                            style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                          ),
+                        ],
+                      )
+                    : null,
                 enabled: hasEvent,
                 onTap: hasEvent
                     ? () {
@@ -411,37 +590,67 @@ class _PhaseBasedMenuPreviewState extends State<_PhaseBasedMenuPreview> {
           // HLAVNÍ WORKFLOW section - always visible, never collapses
           Container(
             key: const Key('PhaseMenu_hlavniSection'),
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.orange.shade50,
+              gradient: LinearGradient(
+                colors: [Colors.orange.shade100, Colors.orange.shade50],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               border: Border(
-                top: BorderSide(color: Colors.orange.shade200, width: 2),
-                bottom: BorderSide(color: Colors.orange.shade200, width: 2),
+                left: BorderSide(color: Colors.deepOrange, width: 3),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.orange.shade200,
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
+                ),
+              ],
             ),
-            child: const Text(
-              'HLAVNÍ: BĚHEM AKCE',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.deepOrange,
-                letterSpacing: 0.5,
-              ),
+            child: const Row(
+              children: [
+                Icon(Icons.star, color: Colors.deepOrange, size: 18),
+                SizedBox(width: 8),
+                Text(
+                  'HLAVNÍ: BĚHEM AKCE',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.deepOrange,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
             ),
           ),
           ListTile(
             key: const Key('PhaseMenu_newRecord'),
-            leading: const Icon(Icons.add_circle, color: Colors.deepOrange),
-            title: const Text(
+            leading: Icon(Icons.add_circle, 
+              color: (hasEvent && hasParticipants) ? Colors.deepOrange : Colors.grey.shade400),
+            title: Text(
               'Nový záznam úrazu',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                color: (hasEvent && hasParticipants) ? null : Colors.grey.shade500,
+              ),
             ),
             subtitle: !hasEvent || !hasParticipants
-                ? Text(
-                    !hasEvent 
-                      ? '⚠️ Vytvořte akci nejdříve' 
-                      : '⚠️ Přidejte účastníky',
-                    style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.warning_amber, 
+                        size: 16, 
+                        color: Colors.orange.shade700),
+                      const SizedBox(width: 4),
+                      Text(
+                        !hasEvent 
+                          ? 'Vytvořte akci nejdříve' 
+                          : 'Přidejte účastníky',
+                        style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                      ),
+                    ],
                   )
                 : null,
             enabled: hasEvent && hasParticipants,
@@ -455,12 +664,27 @@ class _PhaseBasedMenuPreviewState extends State<_PhaseBasedMenuPreview> {
           ),
           ListTile(
             key: const Key('PhaseMenu_participantsList'),
-            leading: const Icon(Icons.people),
-            title: const Text('Seznam účastníků'),
+            leading: Icon(Icons.people,
+              color: hasEvent ? null : Colors.grey.shade400),
+            title: Text('Seznam účastníků',
+              style: TextStyle(
+                fontSize: 15,
+                color: hasEvent ? null : Colors.grey.shade500,
+              ),
+            ),
             subtitle: !hasEvent
-                ? Text(
-                    '⚠️ Vytvořte akci nejdříve',
-                    style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.warning_amber, 
+                        size: 16, 
+                        color: Colors.orange.shade700),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Vytvořte akci nejdříve',
+                        style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                      ),
+                    ],
                   )
                 : null,
             enabled: hasEvent,
@@ -474,12 +698,27 @@ class _PhaseBasedMenuPreviewState extends State<_PhaseBasedMenuPreview> {
           ),
           ListTile(
             key: const Key('PhaseMenu_printCenterMain'),
-            leading: const Icon(Icons.print),
-            title: const Text('Tisk centrum'),
+            leading: Icon(Icons.print,
+              color: hasEvent ? null : Colors.grey.shade400),
+            title: Text('Tisk centrum',
+              style: TextStyle(
+                fontSize: 15,
+                color: hasEvent ? null : Colors.grey.shade500,
+              ),
+            ),
             subtitle: !hasEvent
-                ? Text(
-                    '⚠️ Vytvořte akci nejdříve',
-                    style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.warning_amber, 
+                        size: 16, 
+                        color: Colors.orange.shade700),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Vytvořte akci nejdříve',
+                        style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                      ),
+                    ],
                   )
                 : null,
             enabled: hasEvent,
@@ -492,13 +731,19 @@ class _PhaseBasedMenuPreviewState extends State<_PhaseBasedMenuPreview> {
                 : null,
           ),
 
+          const SizedBox(height: 8),
           const Divider(height: 1),
 
           // PŘÍPRAVA AKCE section - collapsible
           ExpansionTile(
             key: const Key('PhaseMenu_priprava'),
             leading: const Icon(Icons.event_available),
-            title: const Text('PŘÍPRAVA AKCE'),
+            title: const Text('PŘÍPRAVA AKCE',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             initiallyExpanded: false,
             children: [
               ListTile(
@@ -523,8 +768,14 @@ class _PhaseBasedMenuPreviewState extends State<_PhaseBasedMenuPreview> {
               ),
               ListTile(
                 key: const Key('PhaseMenu_newParticipant'),
-                leading: const Icon(Icons.person_add),
-                title: const Text('Registrace účastníka'),
+                leading: Icon(Icons.person_add,
+                  color: hasEvent ? null : Colors.grey.shade400),
+                title: Text('Registrace účastníka',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: hasEvent ? null : Colors.grey.shade500,
+                  ),
+                ),
                 enabled: hasEvent,
                 subtitle: !hasEvent
                     ? const Text('Vyžaduje akci', style: TextStyle(fontSize: 11, color: Colors.grey))
@@ -539,8 +790,14 @@ class _PhaseBasedMenuPreviewState extends State<_PhaseBasedMenuPreview> {
               ),
               ListTile(
                 key: const Key('PhaseMenu_csvImport'),
-                leading: const Icon(Icons.upload_file),
-                title: const Text('Import CSV'),
+                leading: Icon(Icons.upload_file,
+                  color: hasEvent ? null : Colors.grey.shade400),
+                title: Text('Import CSV',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: hasEvent ? null : Colors.grey.shade500,
+                  ),
+                ),
                 enabled: hasEvent,
                 subtitle: !hasEvent
                     ? const Text('Vyžaduje akci', style: TextStyle(fontSize: 11, color: Colors.grey))
@@ -560,13 +817,24 @@ class _PhaseBasedMenuPreviewState extends State<_PhaseBasedMenuPreview> {
           ExpansionTile(
             key: const Key('PhaseMenu_filtr'),
             leading: const Icon(Icons.medical_services),
-            title: const Text('ZDRAVOTNICKÝ FILTR'),
+            title: const Text('ZDRAVOTNICKÝ FILTR',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             initiallyExpanded: false,
             children: [
               ListTile(
                 key: const Key('PhaseMenu_intakeForm'),
-                leading: const Icon(Icons.assignment_turned_in),
-                title: const Text('Příjímací formulář'),
+                leading: Icon(Icons.assignment_turned_in,
+                  color: (hasEvent && hasParticipants) ? null : Colors.grey.shade400),
+                title: Text('Příjímací formulář',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: (hasEvent && hasParticipants) ? null : Colors.grey.shade500,
+                  ),
+                ),
                 enabled: hasEvent && hasParticipants,
                 subtitle: !hasEvent || !hasParticipants
                     ? const Text('Vyžaduje akci a účastníky', style: TextStyle(fontSize: 11, color: Colors.grey))
@@ -586,13 +854,24 @@ class _PhaseBasedMenuPreviewState extends State<_PhaseBasedMenuPreview> {
           ExpansionTile(
             key: const Key('PhaseMenu_nastroje'),
             leading: const Icon(Icons.build),
-            title: const Text('NÁSTROJE'),
+            title: const Text('NÁSTROJE',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             initiallyExpanded: false,
             children: [
               ListTile(
                 key: const Key('PhaseMenu_printCenterTools'),
-                leading: const Icon(Icons.print),
-                title: const Text('Tisk centrum'),
+                leading: Icon(Icons.print,
+                  color: hasEvent ? null : Colors.grey.shade400),
+                title: Text('Tisk centrum',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: hasEvent ? null : Colors.grey.shade500,
+                  ),
+                ),
                 subtitle: const Text('Duplicated for demo', style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic)),
                 enabled: hasEvent,
                 onTap: hasEvent
