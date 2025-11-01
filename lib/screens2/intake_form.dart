@@ -11,14 +11,15 @@ import '../input/file_manager.dart';
 
 /// IntakeForm widget for managing participant check-in process
 /// Handles person selection, form editing, restrictions, and file uploads
-class IntakeForm extends StatefulWidget {
-  const IntakeForm({super.key});
+@Deprecated('Use ImprovedIntakeForm instead')
+class OldIntakeForm extends StatefulWidget {
+  const OldIntakeForm({super.key});
 
   @override
-  State<IntakeForm> createState() => _IntakeFormState();
+  State<OldIntakeForm> createState() => _OldIntakeFormState();
 }
 
-class _IntakeFormState extends State<IntakeForm> {
+class _OldIntakeFormState extends State<OldIntakeForm> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   
   // Selected person and related data

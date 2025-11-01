@@ -9,14 +9,14 @@ import 'package:denik_zza/screens2/controllers/intake_controller.dart';
 
 /// Improved IntakeForm widget using IntakeController for business logic
 /// This version separates UI concerns from business logic
-class TmpIntakeFormImproved extends StatefulWidget {
-  const TmpIntakeFormImproved({super.key});
+class NewIntakeFormImproved extends StatefulWidget {
+  const NewIntakeFormImproved({super.key});
 
   @override
-  State<TmpIntakeFormImproved> createState() => _TmpIntakeFormImprovedState();
+  State<NewIntakeFormImproved> createState() => _NewIntakeFormImprovedState();
 }
 
-class _TmpIntakeFormImprovedState extends State<TmpIntakeFormImproved> {
+class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   // Controller for business logic
