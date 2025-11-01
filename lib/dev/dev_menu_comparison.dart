@@ -43,9 +43,9 @@ class MenuComparisonScreen extends StatelessWidget {
                     color: Colors.blue.shade50,
                     child: const Center(
                       child: Text(
-                        'Současné menu (AppDrawer)',
+                        'A) Současné menu (AppDrawer)',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -59,7 +59,37 @@ class MenuComparisonScreen extends StatelessWidget {
             ),
           ),
           
-          // Right side: Collapsible sections version
+          // Middle: Collapsible sections version
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    key: const Key('MenuComparison_middleTitle'),
+                    padding: const EdgeInsets.all(16.0),
+                    color: Colors.green.shade50,
+                    child: const Center(
+                      child: Text(
+                        'B) Sbalitelné sekce',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Expanded(
+                    child: _CollapsibleMenuPreview(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          // Right side: Phase-based hybrid version
           Expanded(
             child: Container(
               decoration: BoxDecoration(
@@ -70,19 +100,19 @@ class MenuComparisonScreen extends StatelessWidget {
                   Container(
                     key: const Key('MenuComparison_rightTitle'),
                     padding: const EdgeInsets.all(16.0),
-                    color: Colors.green.shade50,
+                    color: Colors.orange.shade50,
                     child: const Center(
                       child: Text(
-                        'Sbalitelné sekce (ExpansionTile)',
+                        'C) Fázový hybrid',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ),
                   const Expanded(
-                    child: _CollapsibleMenuPreview(),
+                    child: _PhaseBasedMenuPreview(),
                   ),
                 ],
               ),
@@ -196,26 +226,13 @@ class _CollapsibleMenuPreviewState extends State<_CollapsibleMenuPreview> {
               ),
               ListTile(
                 key: const Key('CollapsibleMenu_eventsList'),
-                leading: const Icon(Icons.list),
+                leading: const Icon(Icons.event_note),
                 title: const Text('Seznam akcí'),
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Seznam akcí')),
                   );
                 },
-              ),
-              ListTile(
-                key: const Key('CollapsibleMenu_eventDetail'),
-                leading: const Icon(Icons.info_outline),
-                title: const Text('Detail akce'),
-                enabled: hasEvent,
-                onTap: hasEvent
-                    ? () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Detail akce')),
-                        );
-                      }
-                    : null,
               ),
             ],
           ),
@@ -229,7 +246,7 @@ class _CollapsibleMenuPreviewState extends State<_CollapsibleMenuPreview> {
             children: [
               ListTile(
                 key: const Key('CollapsibleMenu_participantsList'),
-                leading: const Icon(Icons.list),
+                leading: const Icon(Icons.people),
                 title: const Text('Seznam účastníků'),
                 enabled: hasEvent,
                 onTap: hasEvent
@@ -241,40 +258,27 @@ class _CollapsibleMenuPreviewState extends State<_CollapsibleMenuPreview> {
                     : null,
               ),
               ListTile(
-                key: const Key('CollapsibleMenu_participantDetail'),
-                leading: const Icon(Icons.person),
-                title: const Text('Detail účastníka'),
-                enabled: hasParticipants,
-                onTap: hasParticipants
+                key: const Key('CollapsibleMenu_newParticipant'),
+                leading: const Icon(Icons.person_add),
+                title: const Text('Registrace účastníka'),
+                enabled: hasEvent,
+                onTap: hasEvent
                     ? () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Detail účastníka')),
+                          const SnackBar(content: Text('Registrace účastníka')),
                         );
                       }
                     : null,
               ),
               ListTile(
-                key: const Key('CollapsibleMenu_editParticipant'),
-                leading: const Icon(Icons.edit),
-                title: const Text('Úprava účastníka'),
-                enabled: hasParticipants,
-                onTap: hasParticipants
+                key: const Key('CollapsibleMenu_csvImport'),
+                leading: const Icon(Icons.upload_file),
+                title: const Text('Import CSV'),
+                enabled: hasEvent,
+                onTap: hasEvent
                     ? () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Úprava účastníka')),
-                        );
-                      }
-                    : null,
-              ),
-              ListTile(
-                key: const Key('CollapsibleMenu_searchParticipants'),
-                leading: const Icon(Icons.search),
-                title: const Text('Vyhledávání účastníků'),
-                enabled: hasParticipants,
-                onTap: hasParticipants
-                    ? () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Vyhledávání účastníků')),
+                          const SnackBar(content: Text('Import CSV')),
                         );
                       }
                     : null,
@@ -292,25 +296,38 @@ class _CollapsibleMenuPreviewState extends State<_CollapsibleMenuPreview> {
               ListTile(
                 key: const Key('CollapsibleMenu_newRecord'),
                 leading: const Icon(Icons.add),
-                title: const Text('Nový záznam'),
-                enabled: hasEvent,
-                onTap: hasEvent
+                title: const Text('Nový záznam úrazu'),
+                enabled: hasEvent && hasParticipants,
+                onTap: hasEvent && hasParticipants
                     ? () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Nový záznam')),
+                          const SnackBar(content: Text('Nový záznam úrazu')),
                         );
                       }
                     : null,
               ),
               ListTile(
-                key: const Key('CollapsibleMenu_recordsList'),
-                leading: const Icon(Icons.list_alt),
-                title: const Text('Seznam záznamů úrazů'),
+                key: const Key('CollapsibleMenu_intakeForm'),
+                leading: const Icon(Icons.assignment),
+                title: const Text('Příjímací formulář'),
+                enabled: hasEvent && hasParticipants,
+                onTap: hasEvent && hasParticipants
+                    ? () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Příjímací formulář')),
+                        );
+                      }
+                    : null,
+              ),
+              ListTile(
+                key: const Key('CollapsibleMenu_printCenter'),
+                leading: const Icon(Icons.print),
+                title: const Text('Tisk centrum'),
                 enabled: hasEvent,
                 onTap: hasEvent
                     ? () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Seznam záznamů úrazů')),
+                          const SnackBar(content: Text('Tisk centrum')),
                         );
                       }
                     : null,
@@ -318,98 +335,278 @@ class _CollapsibleMenuPreviewState extends State<_CollapsibleMenuPreview> {
             ],
           ),
 
-          // NÁSTROJE section - collapsible
+
+        ],
+      ),
+    );
+  }
+}
+
+/// Preview of phase-based hybrid menu (Option C)
+class _PhaseBasedMenuPreview extends StatefulWidget {
+  const _PhaseBasedMenuPreview();
+
+  @override
+  State<_PhaseBasedMenuPreview> createState() => _PhaseBasedMenuPreviewState();
+}
+
+class _PhaseBasedMenuPreviewState extends State<_PhaseBasedMenuPreview> {
+  bool hasEvent = false;
+  bool hasParticipants = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkState();
+  }
+
+  Future<void> _checkState() async {
+    final db = DatabaseWrapper.getDatabase();
+    final event = await db.getCurrentAction();
+    final participants = await db.getParticipantsByCurrentEvent();
+    
+    if (!mounted) return;
+    setState(() {
+      hasEvent = event != null;
+      hasParticipants = participants.isNotEmpty;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          // Header
+          DrawerHeader(
+            key: const Key('PhaseMenu_header'),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'Deník ZZA',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Fázový hybrid',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // HLAVNÍ WORKFLOW section - always visible, never collapses
+          Container(
+            key: const Key('PhaseMenu_hlavniSection'),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            decoration: BoxDecoration(
+              color: Colors.orange.shade50,
+              border: Border(
+                top: BorderSide(color: Colors.orange.shade200, width: 2),
+                bottom: BorderSide(color: Colors.orange.shade200, width: 2),
+              ),
+            ),
+            child: const Text(
+              'HLAVNÍ: BĚHEM AKCE',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.deepOrange,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+          ListTile(
+            key: const Key('PhaseMenu_newRecord'),
+            leading: const Icon(Icons.add_circle, color: Colors.deepOrange),
+            title: const Text(
+              'Nový záznam úrazu',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: !hasEvent || !hasParticipants
+                ? Text(
+                    !hasEvent 
+                      ? '⚠️ Vytvořte akci nejdříve' 
+                      : '⚠️ Přidejte účastníky',
+                    style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                  )
+                : null,
+            enabled: hasEvent && hasParticipants,
+            onTap: hasEvent && hasParticipants
+                ? () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Nový záznam úrazu')),
+                    );
+                  }
+                : null,
+          ),
+          ListTile(
+            key: const Key('PhaseMenu_participantsList'),
+            leading: const Icon(Icons.people),
+            title: const Text('Seznam účastníků'),
+            subtitle: !hasEvent
+                ? Text(
+                    '⚠️ Vytvořte akci nejdříve',
+                    style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                  )
+                : null,
+            enabled: hasEvent,
+            onTap: hasEvent
+                ? () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Seznam účastníků')),
+                    );
+                  }
+                : null,
+          ),
+          ListTile(
+            key: const Key('PhaseMenu_printCenterMain'),
+            leading: const Icon(Icons.print),
+            title: const Text('Tisk centrum'),
+            subtitle: !hasEvent
+                ? Text(
+                    '⚠️ Vytvořte akci nejdříve',
+                    style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                  )
+                : null,
+            enabled: hasEvent,
+            onTap: hasEvent
+                ? () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Tisk centrum (hlavní)')),
+                    );
+                  }
+                : null,
+          ),
+
+          const Divider(height: 1),
+
+          // PŘÍPRAVA AKCE section - collapsible
           ExpansionTile(
-            key: const Key('CollapsibleMenu_nastroje'),
+            key: const Key('PhaseMenu_priprava'),
+            leading: const Icon(Icons.event_available),
+            title: const Text('PŘÍPRAVA AKCE'),
+            initiallyExpanded: false,
+            children: [
+              ListTile(
+                key: const Key('PhaseMenu_newEvent'),
+                leading: const Icon(Icons.add_circle_outline),
+                title: const Text('Nová akce'),
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Nová akce')),
+                  );
+                },
+              ),
+              ListTile(
+                key: const Key('PhaseMenu_eventsList'),
+                leading: const Icon(Icons.event_note),
+                title: const Text('Seznam akcí'),
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Seznam akcí')),
+                  );
+                },
+              ),
+              ListTile(
+                key: const Key('PhaseMenu_newParticipant'),
+                leading: const Icon(Icons.person_add),
+                title: const Text('Registrace účastníka'),
+                enabled: hasEvent,
+                subtitle: !hasEvent
+                    ? const Text('Vyžaduje akci', style: TextStyle(fontSize: 11, color: Colors.grey))
+                    : null,
+                onTap: hasEvent
+                    ? () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Registrace účastníka')),
+                        );
+                      }
+                    : null,
+              ),
+              ListTile(
+                key: const Key('PhaseMenu_csvImport'),
+                leading: const Icon(Icons.upload_file),
+                title: const Text('Import CSV'),
+                enabled: hasEvent,
+                subtitle: !hasEvent
+                    ? const Text('Vyžaduje akci', style: TextStyle(fontSize: 11, color: Colors.grey))
+                    : null,
+                onTap: hasEvent
+                    ? () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Import CSV')),
+                        );
+                      }
+                    : null,
+              ),
+            ],
+          ),
+
+          // ZDRAVOTNICKÝ FILTR section - collapsible
+          ExpansionTile(
+            key: const Key('PhaseMenu_filtr'),
+            leading: const Icon(Icons.medical_services),
+            title: const Text('ZDRAVOTNICKÝ FILTR'),
+            initiallyExpanded: false,
+            children: [
+              ListTile(
+                key: const Key('PhaseMenu_intakeForm'),
+                leading: const Icon(Icons.assignment_turned_in),
+                title: const Text('Příjímací formulář'),
+                enabled: hasEvent && hasParticipants,
+                subtitle: !hasEvent || !hasParticipants
+                    ? const Text('Vyžaduje akci a účastníky', style: TextStyle(fontSize: 11, color: Colors.grey))
+                    : null,
+                onTap: hasEvent && hasParticipants
+                    ? () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Příjímací formulář')),
+                        );
+                      }
+                    : null,
+              ),
+            ],
+          ),
+
+          // NÁSTROJE section - collapsible (for demo showing Print in multiple places)
+          ExpansionTile(
+            key: const Key('PhaseMenu_nastroje'),
             leading: const Icon(Icons.build),
             title: const Text('NÁSTROJE'),
             initiallyExpanded: false,
             children: [
               ListTile(
-                key: const Key('CollapsibleMenu_csvImport'),
-                leading: const Icon(Icons.upload_file),
-                title: const Text('Import CSV'),
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Import CSV')),
-                  );
-                },
-              ),
-              ListTile(
-                key: const Key('CollapsibleMenu_fileManager'),
-                leading: const Icon(Icons.folder_open),
-                title: const Text('Správce souborů'),
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Správce souborů')),
-                  );
-                },
-              ),
-              ListTile(
-                key: const Key('CollapsibleMenu_printTest'),
+                key: const Key('PhaseMenu_printCenterTools'),
                 leading: const Icon(Icons.print),
-                title: const Text('Test tisku'),
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Test tisku')),
-                  );
-                },
-              ),
-            ],
-          ),
-
-          // PŘIPRAVUJEME section - collapsible, initially collapsed
-          ExpansionTile(
-            key: const Key('CollapsibleMenu_pripravujemeSection'),
-            leading: const Icon(Icons.construction),
-            title: const Text('PŘIPRAVUJEME'),
-            initiallyExpanded: false,
-            children: [
-              _buildPlaceholderItem(
-                key: 'CollapsibleMenu_placeholderDetailEvent',
-                icon: Icons.event_note,
-                title: 'Detail akce (připravujeme)',
-              ),
-              _buildPlaceholderItem(
-                key: 'CollapsibleMenu_placeholderDetailParticipant',
-                icon: Icons.person_outline,
-                title: 'Detail účastníka (připravujeme)',
-              ),
-              _buildPlaceholderItem(
-                key: 'CollapsibleMenu_placeholderEditParticipant',
-                icon: Icons.edit_note,
-                title: 'Úprava účastníka (připravujeme)',
-              ),
-              _buildPlaceholderItem(
-                key: 'CollapsibleMenu_placeholderSearchParticipants',
-                icon: Icons.person_search,
-                title: 'Vyhledávání účastníků (připravujeme)',
-              ),
-              _buildPlaceholderItem(
-                key: 'CollapsibleMenu_placeholderRecordsList',
-                icon: Icons.medical_information,
-                title: 'Seznam záznamů úrazů (připravujeme)',
+                title: const Text('Tisk centrum'),
+                subtitle: const Text('Duplicated for demo', style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic)),
+                enabled: hasEvent,
+                onTap: hasEvent
+                    ? () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Tisk centrum (nástroje)')),
+                        );
+                      }
+                    : null,
               ),
             ],
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildPlaceholderItem({
-    required String key,
-    required IconData icon,
-    required String title,
-  }) {
-    return ListTile(
-      key: Key(key),
-      leading: Icon(icon, color: Colors.grey),
-      title: Text(
-        title,
-        style: const TextStyle(color: Colors.grey),
-      ),
-      enabled: false,
     );
   }
 }
