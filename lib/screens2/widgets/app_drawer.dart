@@ -4,6 +4,7 @@ import 'package:denik_zza/screens2/event_list.dart';
 import 'package:denik_zza/screens2/event_registration_form.dart';
 import 'package:denik_zza/screens2/intake_form_improved.dart';
 import 'package:denik_zza/screens2/new_record_page.dart';
+import 'package:denik_zza/screens2/participant_list_screen.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:denik_zza/print_ops2/print_center.dart';
 import 'package:flutter/material.dart';
@@ -249,9 +250,11 @@ class AppDrawer extends StatelessWidget {
       onTap: hasEvent
           ? () {
               Navigator.pop(context);
-              // TODO: Navigate to participant list screen when implemented
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Seznam účastníků - připravujeme')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ParticipantListScreen(),
+                ),
               );
             }
           : null,
