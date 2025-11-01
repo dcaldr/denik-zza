@@ -5,22 +5,32 @@ main purpose is documenting findings unrelated to open task and writing them dow
 
 ## just notes in no order
 
-- seznam akcí
-  - -> list of participants needs to work search (at least in intake form was already done) etc  (see other parts of app if thjis wasnt already done )
-- nový záznam úrazu
+- *seznam akcí*
+  - -> list of participants needs to work search (at least in intake form was already done) etc  (see other parts of app if this wasn't already done ) - and have its own screen 
+- *nový záznam úrazu*
   - at least put it to menu preferably to AppBar (the top bar)
   - and try to document its ui style  
-- seznam účastníků
+  - fix historie úrazů and some other elements not properly showing up (being cut off by other elements)
+  - some shadowing is weird maybe remove shadowing altogether 
+  - english in search tool 
+  - the box where čas záznamu is is good but expect adding more controls there so it cannot take all the box 
+  - ?? add place for notes ?? 
+  - resizing widow causes overflow issues probably multiple 
+- *seznam účastníků*
   - probably also to the menu
-- registrace účastníka
+- *registrace účastníka*
   - should default fit the screen w/o scroll (take max one screen)
-- Intake form should by default fit the screen w/o scroll
+- *Intake form*
+  -  should by default fit the screen w/o scroll
+  -  maybe the second row interferes with fitting to screen?? not sure 
+  -  "search for person" is not in czech 
+  -  "enter restriction" is not in czech and also for léky same as for Omezení 
   - and use all horizontal space (there appears to be 3 empty column )
   - has nice action buttons
-- print center
+- *print center*
   - tykání is bad !!
 - deduplicate přijímací formulář
-- menu UI styling
+- menu UI styling - **DONE**
 - add db protections
   - see menu structure below for securing proper state/context
   - document max lengths for fields in db model
