@@ -80,6 +80,14 @@ class AppDrawer extends StatelessWidget {
               
               _buildSectionHeader('NÁSTROJE'),
               _buildPrintCenter(context, hasEvent),
+              const Divider(key: Key('AppDrawer_divider_4')),
+              
+              _buildSectionHeader('PŘIPRAVUJEME'),
+              _buildDetailEventScreen(context),
+              _buildDetailParticipantScreen(context),
+              _buildEditParticipantScreen(context),
+              _buildSearchParticipantsScreen(context),
+              _buildRecordListScreen(context),
             ],
           ),
         );
@@ -273,6 +281,73 @@ class AppDrawer extends StatelessWidget {
               );
             }
           : null,
+    );
+  }
+
+  // PŘIPRAVUJEME section - Grayed-out placeholders for missing screens
+  
+  /// Detail akce - Shows detailed information about a specific event
+  /// TODO: Implement event detail screen
+  Widget _buildDetailEventScreen(BuildContext context) {
+    return ListTile(
+      key: const Key('AppDrawer_event_detail'),
+      leading: const Icon(Icons.event),
+      title: const Text('Detail akce'),
+      subtitle: const Text('Připravujeme', style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.grey)),
+      enabled: false,
+      onTap: null,
+    );
+  }
+
+  /// Detail účastníka - Shows detailed information about a specific participant
+  /// TODO: Implement participant detail screen
+  Widget _buildDetailParticipantScreen(BuildContext context) {
+    return ListTile(
+      key: const Key('AppDrawer_participant_detail'),
+      leading: const Icon(Icons.person),
+      title: const Text('Detail účastníka'),
+      subtitle: const Text('Připravujeme', style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.grey)),
+      enabled: false,
+      onTap: null,
+    );
+  }
+
+  /// Úprava účastníka - Edit participant information
+  /// TODO: Implement participant edit screen
+  Widget _buildEditParticipantScreen(BuildContext context) {
+    return ListTile(
+      key: const Key('AppDrawer_participant_edit'),
+      leading: const Icon(Icons.edit),
+      title: const Text('Úprava účastníka'),
+      subtitle: const Text('Připravujeme', style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.grey)),
+      enabled: false,
+      onTap: null,
+    );
+  }
+
+  /// Vyhledávání účastníků - Search functionality for participants list
+  /// TODO: Implement search in participant list (mentioned in todo.md)
+  Widget _buildSearchParticipantsScreen(BuildContext context) {
+    return ListTile(
+      key: const Key('AppDrawer_participant_search'),
+      leading: const Icon(Icons.search),
+      title: const Text('Vyhledávání účastníků'),
+      subtitle: const Text('Připravujeme - funkce pro seznam účastníků', style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.grey)),
+      enabled: false,
+      onTap: null,
+    );
+  }
+
+  /// Seznam záznamů úrazů - List of all medical/injury records
+  /// TODO: Implement records list screen
+  Widget _buildRecordListScreen(BuildContext context) {
+    return ListTile(
+      key: const Key('AppDrawer_record_list'),
+      leading: const Icon(Icons.list_alt),
+      title: const Text('Seznam záznamů úrazů'),
+      subtitle: const Text('Připravujeme', style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.grey)),
+      enabled: false,
+      onTap: null,
     );
   }
 }
