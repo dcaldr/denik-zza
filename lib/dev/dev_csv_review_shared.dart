@@ -32,6 +32,23 @@ String resolveProjectFile(String relativePath) {
 }
 
 /// Simple MaterialApp builder for dev entry points.
+/// 
+/// @deprecated Use the unified dev UI components instead:
+/// ```dart
+/// import 'package:denik_zza/dev/ui/dev_app_builder.dart';
+/// 
+/// // Simple version (no banner):
+/// runApp(buildDevApp(title: 'My Dev App', home: MyScreen()));
+/// 
+/// // With banner (recommended):
+/// runApp(buildDevAppWithBanner(
+///   title: 'My Dev App',
+///   bannerMessage: 'Testing Feature X',
+///   bannerIcon: Icons.science,
+///   home: MyScreen(),
+/// ));
+/// ```
+@Deprecated('Use buildDevApp() or buildDevAppWithBanner() from lib/dev/ui/dev_app_builder.dart instead')
 MaterialApp buildDevApp({
   required String title,
   required Widget home,

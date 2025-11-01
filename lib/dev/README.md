@@ -2,20 +2,32 @@
 
 Quick-start dev environments for rapid feature prototyping and testing.
 
+## 🎨 NEW: Unified Dev UI Components
+
+All dev entry points now use unified UI components from `lib/dev/ui/`:
+- **Orange dev mode banner** - Persistent visual indicator
+- **Consistent theme** - Orange AppBar across all dev apps
+- **Auto Czech localization** - No manual setup needed
+
+See `lib/dev/ui/README.md` for full documentation.
+
 ## 🚀 Quick Start Pattern
 
-All dev mains now use the unified `DevEnvironment.initialize()`:
+All dev mains use `DevEnvironment.initialize()` + `buildDevAppWithBanner()`:
 
 ```dart
 import 'package:denik_zza/dev/dev_environment.dart';
-import 'package:denik_zza/dev/dev_csv_review_shared.dart';
+import 'package:denik_zza/dev/ui/dev_app_builder.dart';
+import 'package:flutter/material.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await DevEnvironment.initialize(); // ← One line setup!
+  await DevEnvironment.initialize(); // ← Data setup
   
-  runApp(buildDevApp(
+  runApp(buildDevAppWithBanner(     // ← UI setup with banner
     title: 'My Dev App',
+    bannerMessage: 'Testing Feature X',
+    bannerIcon: Icons.science,
     home: MyDevScreen(),
   ));
 }
