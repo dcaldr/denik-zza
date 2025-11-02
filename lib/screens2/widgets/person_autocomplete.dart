@@ -84,7 +84,7 @@ class _PersonAutocompleteState extends State<PersonAutocomplete> {
               focusNode: focusNode,
               decoration: InputDecoration(
                 prefixIcon: const Icon(Icons.search),
-                hintText: 'Search for a person',
+                hintText: 'Vyhledat osobu',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),

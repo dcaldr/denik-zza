@@ -426,7 +426,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                 const SizedBox(width: 4),
                                 Expanded(
                                   child: Text(
-                                    'Vyhledat',
+                                    'Vyhledat osobu',
                                     style: TextStyle(
                                       fontSize: isCompact ? 11 : 12,
                                       fontWeight: FontWeight.w500,
