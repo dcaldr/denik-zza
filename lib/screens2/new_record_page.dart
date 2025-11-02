@@ -471,35 +471,21 @@ class NewRecordPageState extends State<NewRecordPage> {
                 ),
                 SizedBox(height: spacing),
                 
-                // Display existing records (enhanced professional container styling)
+                // Display existing records (compact)
                 Expanded(
-                  flex: 1, // Minimized to make room for form
+                  flex: isCompact ? 1 : 2, // Reduced to take less vertical space
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.grey.shade50,
-                          Colors.white,
-                        ],
-                      ),
+                      color: Colors.grey.shade50,
                       borderRadius: BorderRadius.circular(8.0),
                       border: Border.all(color: Colors.grey.shade300, width: 1),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.shade200,
-                          blurRadius: 3,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
                     child: Column(
                       children: [
-                        // Header for records list
+                        // Header for records list (compact)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
                           decoration: BoxDecoration(
                             color: Colors.grey.shade100,
                             borderRadius: const BorderRadius.only(
@@ -512,23 +498,16 @@ class NewRecordPageState extends State<NewRecordPage> {
                           ),
                           child: Row(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade200,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Icon(
-                                  Icons.history,
-                                  color: Colors.grey.shade700,
-                                  size: isCompact ? 14 : 16,
-                                ),
+                              Icon(
+                                Icons.history,
+                                color: Colors.grey.shade600,
+                                size: 14,
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 6),
                               Text(
                                 'Historie úrazů',
                                 style: TextStyle(
-                                  fontSize: isCompact ? 12 : 13,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.grey.shade700,
                                 ),
@@ -585,9 +564,9 @@ class NewRecordPageState extends State<NewRecordPage> {
                 
                 SizedBox(height: spacing),
                 
-                // Form for new record (prioritized input area)
+                // Form for new record (main focus)
                 Expanded(
-                  flex: isCompact ? 3 : 5, // Increased flex to accommodate better spacing
+                  flex: isCompact ? 5 : 7, // More space for form (main focus)
                   child: Opacity(
                     opacity: _selectedParticipant != null ? 1.0 : 0.4,
                     child: Form(
@@ -687,13 +666,13 @@ class NewRecordPageState extends State<NewRecordPage> {
                               color: Colors.black87,
                             ),
                             decoration: InputDecoration(
-                              labelText: 'Nadpis',
+                              labelText: 'Nadpis * (povinné)',
                               labelStyle: TextStyle(
                                 color: Colors.blue.shade700,
                                 fontWeight: FontWeight.w500,
                               ),
                               hintText: _selectedParticipant != null 
-                                  ? 'Typ úrazu nebo stížnosti (např. "Odřenina kolena", "Bolest hlavy")'
+                                  ? 'Povinné - typ úrazu nebo stížnosti (např. "Odřenina kolena", "Bolest hlavy")'
                                   : 'Vyberte účastníka pro pokračování',
                               hintStyle: TextStyle(
                                 color: Colors.grey.shade500,

@@ -130,101 +130,227 @@ class _RecordListWidgetState extends State<RecordListWidget> {
   }
 }
 
-/// Individual record item widget - similar to ZraneniListItem from old system
-class RecordListItem extends StatelessWidget {
+/// Compact, flexible record item - defaults to single line, expands on tap
+class RecordListItem extends StatefulWidget {
   final MemoryZaznam record;
 
   const RecordListItem({super.key, required this.record});
 
   @override
+  State<RecordListItem> createState() => _RecordListItemState();
+}
+
+class _RecordListItemState extends State<RecordListItem> {
+  bool _isExpanded = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 4.0),
-      elevation: 2,
-      child: SizedBox(
-        width: double.infinity, // Ensure full width
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header row with title and date/time
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _isExpanded = !_isExpanded;
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 1.0, horizontal: 2.0),
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            bottom: BorderSide(color: Colors.grey.shade200, width: 1),
+          ),
+        ),
+        child: _isExpanded ? _buildExpandedView() : _buildCompactView(),
+      ),
+    );
+  }
+
+  /// Compact single-line view: [Time] Title - Description...
+  Widget _buildCompactView() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Time badge (compact)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.blue.shade50,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            _formatTime(widget.record.casZaznamu),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Colors.blue.shade700,
+            ),
+          ),
+        ),
+        
+        const SizedBox(width: 8),
+        
+        // Title (bold, limited width)
+        Flexible(
+          flex: 2,
+          child: Text(
+            widget.record.nazev ?? 'Bez nadpisu',
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              color: Colors.black87,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        
+        // Separator
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Text(
+            '—',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade400,
+            ),
+          ),
+        ),
+        
+        // Description preview (flex takes remaining space)
+        Flexible(
+          flex: 3,
+          child: Text(
+            widget.record.popis ?? '--',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        
+        // Print indicator (minimal)
+        if (widget.record.isPrinted)
+          Padding(
+            padding: const EdgeInsets.only(left: 6),
+            child: Icon(
+              Icons.print,
+              size: 14,
+              color: Colors.green.shade400,
+            ),
+          ),
+        
+        // Expand indicator
+        Icon(
+          Icons.chevron_right,
+          size: 16,
+          color: Colors.grey.shade400,
+        ),
+      ],
+    );
+  }
+
+  /// Expanded multi-line view with full details
+  Widget _buildExpandedView() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header row
+        Row(
+          children: [
+            // Date and time
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Title with improved styling
-                  Expanded(
-                    child: Text(
-                      record.nazev ?? 'Bez nadpisu',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                        color: Colors.black87,
-                      ),
-                    ),
+                  Icon(
+                    Icons.access_time,
+                    size: 12,
+                    color: Colors.blue.shade700,
                   ),
-                  const SizedBox(width: 12),
-                  // Date and time on one line with icon
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.blue.shade200, width: 1),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          size: 14,
-                          color: Colors.blue.shade700,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${_formatDate(record.casZaznamu)} ${_formatTime(record.casZaznamu)}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.blue.shade700,
-                          ),
-                        ),
-                      ],
+                  const SizedBox(width: 4),
+                  Text(
+                    '${_formatDate(widget.record.casZaznamu)} ${_formatTime(widget.record.casZaznamu)}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.blue.shade700,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              // Description with better formatting
-              Text(
-                record.popis ?? '--',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black54,
-                  height: 1.3,
+            ),
+            
+            const Spacer(),
+            
+            // Print status
+            if (widget.record.isPrinted)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(4),
                 ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.print,
+                      size: 12,
+                      color: Colors.green.shade600,
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      'Vytištěno',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.green.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-          // Print status icon in trailing position
-          trailing: record.isPrinted
-              ? Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.print,
-                    size: 18,
-                    color: Colors.green.shade600,
-                  ),
-                )
-              : null,
+            
+            // Collapse indicator
+            Icon(
+              Icons.expand_less,
+              size: 18,
+              color: Colors.grey.shade400,
+            ),
+          ],
         ),
-      ),
+        
+        const SizedBox(height: 8),
+        
+        // Title
+        Text(
+          widget.record.nazev ?? 'Bez nadpisu',
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: Colors.black87,
+          ),
+        ),
+        
+        const SizedBox(height: 6),
+        
+        // Full description
+        Text(
+          widget.record.popis ?? '--',
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.grey.shade700,
+            height: 1.4,
+          ),
+        ),
+      ],
     );
   }
 
