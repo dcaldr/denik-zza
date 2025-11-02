@@ -17,7 +17,7 @@ main purpose is documenting findings unrelated to open task and writing them dow
   - ?? add place for notes ?? 
   - resizing widow causes overflow issues probably multiple 
 - *seznam účastníků*
-  - probably also to the menu
+  - probably also to the menu *maybe done* 
 - *registrace účastníka*
   - should default fit the screen w/o scroll (take max one screen)
 - *Intake form*

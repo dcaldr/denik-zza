@@ -55,6 +55,17 @@ flutter test --coverage
 flutter test --reporter expanded
 ```
 
+## ⚠️ Known Testing Limitations
+
+**CRITICAL:** See [fixme.md](./fixme.md) for known issues with widget testing that affect ALL interactive tests.
+
+**Key Limitation:** `tester.enterText()` bypasses focus mechanism and doesn't simulate real keyboard input. This means:
+- Focus loss bugs won't be caught by widget tests
+- Tests can pass 100% while features are unusable for real users
+- Interactive widgets need integration tests for real interaction validation
+
+**Action Required:** Review fixme.md before writing tests for interactive widgets (TextField, buttons, gestures).
+
 ## Test Best Practices
 
 ### Database Testing
