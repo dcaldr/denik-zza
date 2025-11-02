@@ -33,6 +33,29 @@ test/
 - Complete user flow tests
 - Database + UI integration
 
+### Feature Contract Tests
+**Purpose:** Catch accidental breaking changes to critical user-facing features.
+
+**When to use:** For features that might break during refactoring/renaming without obvious failures.
+
+**What they test:**
+- Observable behavior (dropdown appears, fields present, interactions work)
+- Functional issues (missing data, broken callbacks, layout problems like scroll overflow)
+- **NOT** pixel-perfect styling (use golden tests for that)
+
+**Naming pattern:**
+```dart
+group('Feature Contracts -', () {
+  group('WidgetName -', () {
+    testWidgets('must <behavior> when <condition>', (tester) async {});
+  });
+});
+```
+
+**Examples:** `person_autocomplete_test.dart` contains Feature Contract tests protecting dropdown behavior.
+
+**Key rule:** If test fails unexpectedly → Fix the code, not the test (unless requirements changed).
+
 ## Running Tests
 
 ### All Tests
