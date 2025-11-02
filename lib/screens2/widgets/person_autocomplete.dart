@@ -20,8 +20,8 @@ class PersonAutocomplete extends StatefulWidget {
 
 class _PersonAutocompleteState extends State<PersonAutocomplete> {
 
-  // Show first name, last name, and ID for person identification
-  static String _displayStringForOption(MemoryOsoba option) => '${option.jmeno} ${option.prijmeni} ${option.id}';
+  // Show first name, last name for display string
+  static String _displayStringForOption(MemoryOsoba option) => '${option.jmeno} ${option.prijmeni}';
   
   @override
   Widget build(BuildContext context) {
@@ -29,6 +29,35 @@ class _PersonAutocompleteState extends State<PersonAutocomplete> {
       children: [
         Autocomplete<MemoryOsoba>(
           displayStringForOption: _displayStringForOption,
+          optionsViewBuilder: (context, onSelected, options) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4.0,
+                child: SizedBox(
+                  width: 300,
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    itemBuilder: (context, index) {
+                      final option = options.elementAt(index);
+                      return InkWell(
+                        onTap: () => onSelected(option),
+                        child: ListTile(
+                          title: Text('${option.jmeno} ${option.prijmeni}'),
+                          trailing: Text(
+                            '${option.datumNarozeni != null ? "${option.datumNarozeni!.day.toString().padLeft(2, '0')}.${option.datumNarozeni!.month.toString().padLeft(2, '0')}.${option.datumNarozeni!.year} | " : ""}ID: ${option.id}',
+                            style: TextStyle(color: Colors.grey, fontSize: 12),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
           optionsBuilder: (TextEditingValue textEditingValue) {
             if (textEditingValue.text.isEmpty) {
               return const Iterable<MemoryOsoba>.empty();
