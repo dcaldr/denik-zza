@@ -6,12 +6,14 @@ class PersonAutocomplete extends StatefulWidget {
   final PersonSelectedCallback onPersonSelected;
   final IntakeRefreshCallback onRefresh;
   final List<MemoryOsoba> availablePersons;
+  final Key? textFieldKey;
 
   const PersonAutocomplete({
     super.key, 
     required this.onPersonSelected, 
     required this.onRefresh,
     required this.availablePersons,
+    this.textFieldKey,
   });
 
   @override
@@ -61,11 +63,12 @@ class _PersonAutocompleteState extends State<PersonAutocomplete> {
             _searchController = textEditingController;
             _focusNode = focusNode;
             return TextField(
+              key: widget.textFieldKey,
               controller: textEditingController,
               focusNode: focusNode,
               decoration: InputDecoration(
                 prefixIcon: const Icon(Icons.search),
-                hintText: 'Search for a person',
+                hintText: 'Hledat osobu...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),

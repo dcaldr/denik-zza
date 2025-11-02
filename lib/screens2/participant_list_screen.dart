@@ -4,6 +4,7 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/widgets/participant_list_item.dart';
+import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 
 /// Screen displaying list of participants for the current event with search functionality
@@ -22,27 +23,84 @@ class ParticipantListScreen extends StatefulWidget {
 
 class _ParticipantListScreenState extends State<ParticipantListScreen> {
   final DatabaseInterface _database = DatabaseWrapper.getDatabase();
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
+  List<MemoryOsoba> _allParticipants = [];
+  List<MemoryOsoba> _displayedParticipants = [];
 
   @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadParticipants();
   }
 
-  /// Filter participants based on search query
-  List<MemoryOsoba> _filterParticipants(List<MemoryOsoba> participants) {
-    if (_searchQuery.isEmpty) {
-      return participants;
+  Future<void> _loadParticipants() async {
+    final participants = await _database.getParticipantsByCurrentEvent();
+    if (!mounted) return;
+    setState(() {
+      _allParticipants = participants;
+      _displayedParticipants = participants;
+    });
+  }
+
+  void _handlePersonSelected(MemoryOsoba person) {
+    // When person selected from dropdown, show only that person
+    setState(() {
+      _displayedParticipants = [person];
+    });
+  }
+
+  Widget _buildParticipantsList() {
+    if (_allParticipants.isEmpty) {
+      return Center(
+        key: const Key('ParticipantList_empty'),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.people_outline, size: 48, color: Colors.grey),
+            const SizedBox(height: 16),
+            const Text(
+              'Žádní účastníci',
+              style: TextStyle(fontSize: 18, color: Colors.grey),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              onPressed: () => _navigateToAddParticipant(context),
+              icon: const Icon(Icons.person_add),
+              label: const Text('Přidat účastníka'),
+            ),
+          ],
+        ),
+      );
     }
 
-    final query = _searchQuery.toLowerCase();
-    return participants.where((person) {
-      return person.jmeno.toLowerCase().contains(query) ||
-             person.prijmeni.toLowerCase().contains(query) ||
-             (person.cisloPojisteni?.toLowerCase().contains(query) ?? false);
-    }).toList();
+    if (_displayedParticipants.isEmpty) {
+      return const Center(
+        key: Key('ParticipantList_noResults'),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 48, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'Žádné výsledky',
+              style: TextStyle(fontSize: 18, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      key: const Key('ParticipantList_listView'),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      itemCount: _displayedParticipants.length,
+      itemBuilder: (context, index) {
+        return ParticipantListItem(
+          osoba: _displayedParticipants[index],
+          index: index,
+        );
+      },
+    );
   }
 
   @override
@@ -63,113 +121,20 @@ class _ParticipantListScreenState extends State<ParticipantListScreen> {
       drawer: const AppDrawer(),
       body: Column(
         children: [
-          // Search field
+          // Search field using PersonAutocomplete widget (stable focus management)
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              key: const Key('ParticipantList_searchField'),
-              controller: _searchController,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search),
-                hintText: 'Hledat účastníka...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
+            child: PersonAutocomplete(
+              key: const Key('ParticipantList_autocomplete'),
+              textFieldKey: const Key('ParticipantList_searchField'),
+              availablePersons: _allParticipants,
+              onPersonSelected: _handlePersonSelected,
+              onRefresh: _loadParticipants,
             ),
           ),
           // Participants list
           Expanded(
-            child: FutureBuilder<List<MemoryOsoba>>(
-              future: _database.getParticipantsByCurrentEvent(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    key: Key('ParticipantList_loading'),
-                    child: CircularProgressIndicator(),
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  return Center(
-                    key: const Key('ParticipantList_error'),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Chyba: ${snapshot.error}',
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                final allParticipants = snapshot.data ?? [];
-                
-                if (allParticipants.isEmpty) {
-                  return Center(
-                    key: const Key('ParticipantList_empty'),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.people_outline, size: 48, color: Colors.grey),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Žádní účastníci',
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
-                        ),
-                        const SizedBox(height: 8),
-                        ElevatedButton.icon(
-                          onPressed: () => _navigateToAddParticipant(context),
-                          icon: const Icon(Icons.person_add),
-                          label: const Text('Přidat účastníka'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                final filteredParticipants = _filterParticipants(allParticipants);
-
-                if (filteredParticipants.isEmpty && _searchQuery.isNotEmpty) {
-                  return Center(
-                    key: const Key('ParticipantList_noResults'),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.search_off, size: 48, color: Colors.grey),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Žádné výsledky pro "$_searchQuery"',
-                          style: const TextStyle(fontSize: 18, color: Colors.grey),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  key: const Key('ParticipantList_listView'),
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  itemCount: filteredParticipants.length,
-                  itemBuilder: (context, index) {
-                    return ParticipantListItem(
-                      osoba: filteredParticipants[index],
-                      index: index,
-                    );
-                  },
-                );
-              },
-            ),
+            child: _buildParticipantsList(),
           ),
         ],
       ),
