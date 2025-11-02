@@ -389,7 +389,6 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: PersonAutocomplete(
-              textFieldKey: const Key('test_autocomplete'),
               availablePersons: testPersons,
               onPersonSelected: (_) {},
               onRefresh: () async {},

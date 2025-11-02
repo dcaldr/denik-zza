@@ -10,6 +10,10 @@
 
 **⚠️ Review this checklist before writing tests for interactive widgets, forms, or user input**
 
+### Some silently lost features: 
+- dropdown functionality  
+
+
 ### Interactive Widget Testing Gaps
 
 - [x] **Focus Management**: `tester.enterText()` bypasses focus mechanism - TextField focus loss bugs not detected

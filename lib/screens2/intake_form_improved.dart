@@ -135,6 +135,8 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
                     selectedPerson: _controller.selectedPerson,
                     onFileUploaded: _onFileUploaded,
                     zpusobilostFolder: _controller.zpusobilostFolder,
+                    omezeniLogic: _controller.omezeniLogic,
+                    lekLogic: _controller.lekLogic,
                     participantRegistrationForm: _participantRegistrationForm!,
                   ),
                 ),

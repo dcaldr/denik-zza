@@ -4,11 +4,15 @@ import '../../database/in_memory_structures_tmp/memory_osoba.dart';
 import '../participant_registration_form.dart';
 import 'file_viewer_logic.dart';
 import 'file_viewer_screen_widget.dart';
+import 'memory_restriction_widget.dart';
+import 'restrictions_widget.dart';
 
 class IntakeMainContent extends StatelessWidget {
   final MemoryOsoba? selectedPerson;
   final Function(String) onFileUploaded;
   final Directory? zpusobilostFolder;
+  final MemoryOmezeniLogic omezeniLogic;
+  final MemoryLekLogic lekLogic;
   final ParticipantRegistrationForm participantRegistrationForm;
 
   const IntakeMainContent({
@@ -16,6 +20,8 @@ class IntakeMainContent extends StatelessWidget {
     required this.selectedPerson,
     required this.onFileUploaded,
     required this.zpusobilostFolder,
+    required this.omezeniLogic,
+    required this.lekLogic,
     required this.participantRegistrationForm,
   });
 
@@ -44,6 +50,26 @@ class IntakeMainContent extends StatelessWidget {
         Transform.scale(
           scale: 0.85,
           child: participantRegistrationForm,
+        ),
+        Transform.scale(
+          scale: 0.85,
+          child: Row(
+            children: [
+              Expanded(
+                child: RestrictionsWidget(
+                  logic: omezeniLogic,
+                  participantId: selectedPerson?.id,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: RestrictionsWidget(
+                  logic: lekLogic,
+                  participantId: selectedPerson?.id,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
