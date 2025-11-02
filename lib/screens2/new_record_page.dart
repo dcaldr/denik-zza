@@ -301,7 +301,7 @@ class NewRecordPageState extends State<NewRecordPage> {
         title: const Text('Nový záznam úrazu'),
         // Removed disabled edit button and placeholder info button for cleaner interface
       ),
-    body: LayoutBuilder(
+      body: LayoutBuilder(
         builder: (context, constraints) {
       // Adjust spacing and layout based on available height
       final isCompact = constraints.maxHeight <= 600;
@@ -654,19 +654,8 @@ class NewRecordPageState extends State<NewRecordPage> {
                         ),
                         SizedBox(height: titleSpacing),
                         
-                        // Title field (enhanced professional styling)
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8.0),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.blue.shade100.withOpacity(0.3),
-                                blurRadius: 2,
-                                offset: const Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                          child: TextFormField(
+                        // Title field
+                        TextFormField(
                             key: const Key('title_field'),
                             controller: _titleController,
                             enabled: _selectedParticipant != null,
@@ -737,23 +726,12 @@ class NewRecordPageState extends State<NewRecordPage> {
                               }
                               return null;
                             },
-                          ),
                         ),
                         SizedBox(height: titleSpacing),
                         
                         // Description field (proper multi-line with good UX)
-                        Container(
+                        SizedBox(
                           height: isCompact ? 90 : 120, // Increased height for at least 3 rows
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8.0),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.blue.shade100.withOpacity(0.3),
-                                blurRadius: 2,
-                                offset: const Offset(0, 1),
-                              ),
-                            ],
-                          ),
                           child: TextFormField(
                             key: const Key('description_field'),
                             controller: _descriptionController,
@@ -815,7 +793,6 @@ class NewRecordPageState extends State<NewRecordPage> {
                             },
                           ),
                         ),
-                        SizedBox(height: titleSpacing),
                               ],
                             ),
                           ),
@@ -907,17 +884,17 @@ class NewRecordPageState extends State<NewRecordPage> {
                             ],
                           ),
                         ),
-                        ],
-                      ), // Close Column (Form child)
+                        ], // Close Column (Form child)
+                      ), // Close Form Column widget
                     ), // Close Form widget
                   ), // Close Opacity widget
-                ), // Close Expanded widget
-            ],
-          ),
-        );
-      },
-    ),
-  );
+                ), // Close Expanded widget (form section)
+              ],
+            ), // Close outer Column
+          ); // Close Padding and return
+        },
+      ), // Close LayoutBuilder
+    ); // Close Scaffold
   }
 }
 
