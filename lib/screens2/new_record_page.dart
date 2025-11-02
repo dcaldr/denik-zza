@@ -21,6 +21,7 @@ class NewRecordPageState extends State<NewRecordPage> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _poznamkaController = TextEditingController();
   final _recordService = RecordService();
 
   bool _isSaving = false;
@@ -36,9 +37,15 @@ class NewRecordPageState extends State<NewRecordPage> {
     super.initState();
     _selectedParticipant = widget.participant;
     
+    // Load participant's poznámka if participant was provided
+    if (_selectedParticipant != null) {
+      _poznamkaController.text = _selectedParticipant!.poznamka ?? '';
+    }
+    
     // Track unsaved changes
     _titleController.addListener(_trackChanges);
     _descriptionController.addListener(_trackChanges);
+    _poznamkaController.addListener(_trackChanges);
     
     // Load available participants
     _loadAvailableParticipants();
@@ -49,7 +56,8 @@ class NewRecordPageState extends State<NewRecordPage> {
   void _trackChanges() {
     setState(() {
       _hasUnsavedChanges = _titleController.text.trim().isNotEmpty || 
-                          _descriptionController.text.trim().isNotEmpty;
+                          _descriptionController.text.trim().isNotEmpty ||
+                          _poznamkaController.text.trim().isNotEmpty;
     });
   }
 
@@ -82,6 +90,9 @@ class NewRecordPageState extends State<NewRecordPage> {
       _titleController.clear();
       _descriptionController.clear();
       
+      // Load participant's poznámka into the field
+      _poznamkaController.text = participant.poznamka ?? '';
+      
       // Only clear timestamp if there were unsaved changes
       // Preserve manually set timestamps when no unsaved changes exist
       if (_hasUnsavedChanges) {
@@ -102,6 +113,7 @@ class NewRecordPageState extends State<NewRecordPage> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _poznamkaController.dispose();
     super.dispose();
   }
 
@@ -228,6 +240,13 @@ class NewRecordPageState extends State<NewRecordPage> {
       try {
         await _recordService.addRecord(newRecord);
         
+        // Update participant's poznámka if it changed
+        if (_selectedParticipant!.poznamka != _poznamkaController.text.trim()) {
+          _selectedParticipant!.poznamka = _poznamkaController.text.trim();
+          final db = DatabaseWrapper.getDatabase();
+          await db.updateParticipant(osoba: _selectedParticipant!);
+        }
+        
         // Refresh the record list by triggering a rebuild
         setState(() {
           _refreshCounter++;
@@ -236,6 +255,7 @@ class NewRecordPageState extends State<NewRecordPage> {
         // Clear the form after successful save, but keep custom timestamp as tests expect it preserved
         _titleController.clear();
         _descriptionController.clear();
+        // Don't clear poznámka - it stays with the participant
         setState(() {
           // Do not reset _selectedDate/_selectedTime to preserve manually set timestamp in UI
           _hasUnsavedChanges = false; // Reset unsaved changes flag
@@ -729,68 +749,135 @@ class NewRecordPageState extends State<NewRecordPage> {
                         ),
                         SizedBox(height: titleSpacing),
                         
-                        // Description field (proper multi-line with good UX)
+                        // Description and Note side-by-side
                         SizedBox(
-                          height: isCompact ? 90 : 120, // Increased height for at least 3 rows
-                          child: TextFormField(
-                            key: const Key('description_field'),
-                            controller: _descriptionController,
-                            enabled: _selectedParticipant != null,
-                            maxLines: null,
-                            minLines: null, // Must be null when expands is true
-                            maxLength: 1024,
-                            expands: true, // Fill the container height
-                            textAlignVertical: TextAlignVertical.top,
-                            style: TextStyle(
-                              fontSize: isCompact ? 13 : 14,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.black87,
-                              height: 1.4,
-                            ),
-                            decoration: InputDecoration(
-                              labelText: 'Popis úrazu a ošetření',
-                              labelStyle: TextStyle(
-                                color: Colors.blue.shade700,
-                                fontWeight: FontWeight.w500,
+                          height: isCompact ? 90 : 120,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Description field (main focus - wider)
+                              Expanded(
+                                flex: 4,
+                                child: TextFormField(
+                                  key: const Key('description_field'),
+                                  controller: _descriptionController,
+                                  enabled: _selectedParticipant != null,
+                                  maxLines: null,
+                                  minLines: null,
+                                  maxLength: 1024,
+                                  expands: true,
+                                  textAlignVertical: TextAlignVertical.top,
+                                  style: TextStyle(
+                                    fontSize: isCompact ? 13 : 14,
+                                    fontWeight: FontWeight.w400,
+                                    color: Colors.black87,
+                                    height: 1.4,
+                                  ),
+                                  decoration: InputDecoration(
+                                    labelText: 'Popis úrazu a ošetření',
+                                    labelStyle: TextStyle(
+                                      color: Colors.blue.shade700,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    hintText: 'Co se stalo, jak k úrazu došlo, jaké ošetření bylo poskytnuto...',
+                                    hintStyle: TextStyle(
+                                      color: Colors.grey.shade500,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      borderSide: BorderSide(color: Colors.blue.shade200),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      borderSide: BorderSide(color: Colors.blue.shade200),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
+                                    ),
+                                    errorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      borderSide: const BorderSide(color: Colors.red, width: 2),
+                                    ),
+                                    contentPadding: EdgeInsets.all(isCompact ? 12 : 16),
+                                    alignLabelWithHint: true,
+                                    counterStyle: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 11,
+                                    ),
+                                    errorMaxLines: 1,
+                                    errorStyle: const TextStyle(fontSize: 11, height: 0.8),
+                                  ),
+                                  validator: (value) {
+                                    if (value != null && value.length > 1024) {
+                                      return 'Popis nesmí být delší než 1024 znaků';
+                                    }
+                                    return null;
+                                  },
+                                ),
                               ),
-                              hintText: 'Co se stalo, jak k úrazu došlo, jaké ošetření bylo poskytnuto...',
-                              hintStyle: TextStyle(
-                                color: Colors.grey.shade500,
-                                fontStyle: FontStyle.italic,
+                              
+                              const SizedBox(width: 12),
+                              
+                              // Poznámka field (side note - narrower, sticky note style)
+                              Expanded(
+                                flex: 1,
+                                child: TextFormField(
+                                  key: const Key('poznamka_field'),
+                                  controller: _poznamkaController,
+                                  enabled: _selectedParticipant != null,
+                                  maxLines: null,
+                                  minLines: null,
+                                  expands: true,
+                                  textAlignVertical: TextAlignVertical.top,
+                                  style: TextStyle(
+                                    fontSize: isCompact ? 11 : 12,
+                                    fontWeight: FontWeight.w400,
+                                    color: Colors.black87,
+                                    height: 1.3,
+                                  ),
+                                  decoration: InputDecoration(
+                                    labelText: 'Poznámka',
+                                    labelStyle: TextStyle(
+                                      color: Colors.amber.shade800,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: isCompact ? 11 : 12,
+                                    ),
+                                    hintText: 'Alergie, léky...',
+                                    hintStyle: TextStyle(
+                                      color: Colors.amber.shade700,
+                                      fontStyle: FontStyle.italic,
+                                      fontSize: 11,
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.yellow.shade50,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(6.0),
+                                      borderSide: BorderSide(color: Colors.amber.shade300, width: 1.5),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(6.0),
+                                      borderSide: BorderSide(color: Colors.amber.shade300, width: 1.5),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(6.0),
+                                      borderSide: BorderSide(color: Colors.amber.shade600, width: 2),
+                                    ),
+                                    contentPadding: EdgeInsets.all(isCompact ? 8 : 10),
+                                    alignLabelWithHint: true,
+                                    helperText: 'Netiskne se',
+                                    helperStyle: TextStyle(
+                                      color: Colors.amber.shade700,
+                                      fontSize: 9,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ),
                               ),
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(color: Colors.blue.shade200),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(color: Colors.blue.shade200),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
-                              ),
-                              errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: const BorderSide(color: Colors.red, width: 2),
-                              ),
-                              contentPadding: EdgeInsets.all(isCompact ? 12 : 16), // More generous padding
-                              alignLabelWithHint: true,
-                              counterStyle: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 11,
-                              ),
-                              errorMaxLines: 1,
-                              errorStyle: const TextStyle(fontSize: 11, height: 0.8),
-                            ),
-                            validator: (value) {
-                              if (value != null && value.length > 1024) {
-                                return 'Popis nesmí být delší než 1024 znaků';
-                              }
-                              return null;
-                            },
+                            ],
                           ),
                         ),
                               ],
