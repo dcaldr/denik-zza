@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_akce.dart';
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/widgets/participant_list_item.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
+import 'package:denik_zza/screens2/event_detail.dart';
 
 /// Screen displaying list of participants for the current event with search functionality
 /// 
@@ -25,11 +27,21 @@ class _ParticipantListScreenState extends State<ParticipantListScreen> {
   final DatabaseInterface _database = DatabaseWrapper.getDatabase();
   List<MemoryOsoba> _allParticipants = [];
   List<MemoryOsoba> _displayedParticipants = [];
+  MemoryAction? _currentAction;
 
   @override
   void initState() {
     super.initState();
     _loadParticipants();
+    _loadCurrentAction();
+  }
+
+  Future<void> _loadCurrentAction() async {
+    final action = await _database.getCurrentAction();
+    if (!mounted) return;
+    setState(() {
+      _currentAction = action;
+    });
   }
 
   Future<void> _loadParticipants() async {
@@ -111,9 +123,18 @@ class _ParticipantListScreenState extends State<ParticipantListScreen> {
         key: const Key('ParticipantList_appBar'),
         title: const Text('Seznam účastníků'),
         actions: [
+          // Navigate to current action/event detail
+          if (_currentAction != null)
+            IconButton(
+              key: const Key('ParticipantList_eventDetailButton'),
+              icon: const Icon(Icons.event),
+              tooltip: 'Detail akce',
+              onPressed: () => _navigateToActionDetail(context),
+            ),
           IconButton(
             key: const Key('ParticipantList_addButton'),
             icon: const Icon(Icons.person_add),
+            tooltip: 'Přidat účastníka',
             onPressed: () => _navigateToAddParticipant(context),
           ),
         ],
@@ -146,6 +167,17 @@ class _ParticipantListScreenState extends State<ParticipantListScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => const ParticipantRegistrationPage(),
+      ),
+    );
+  }
+
+  void _navigateToActionDetail(BuildContext context) {
+    if (_currentAction == null) return;
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ActionDetail(action: _currentAction!),
       ),
     );
   }

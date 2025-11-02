@@ -3,6 +3,7 @@ import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/screens/participants/add_participant_page.dart';
 import 'package:denik_zza/screens2/widgets/participant_list_item.dart';
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 
 import '../../database/database_wrapper.dart';
 import '../../database/in_memory_structures_tmp/memory_akce.dart';
@@ -22,12 +23,46 @@ class _ActionDetailState extends State<ActionDetail> {
   /// Database instance for interacting with the data.
   final DatabaseInterface database = DatabaseWrapper.getDatabase();
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode(); // Stable focus node
   String _searchQuery = '';
+  
+  // Data state management - load once in initState, filter in memory
+  List<MemoryOsoba> _allParticipants = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadParticipants();
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose(); // Dispose focus node
     super.dispose();
+  }
+
+  /// Load participants once in initState, not in build()
+  /// This prevents TextField from being recreated on setState
+  Future<void> _loadParticipants() async {
+    try {
+      final participants = await database.getParticipantsByEvent(widget.action.idAkce!);
+      if (!mounted) return;
+      setState(() {
+        _allParticipants = participants;
+        _isLoading = false;
+        _error = null;
+      });
+    } catch (e) {
+      Logger().e('Chyba při načítání účastníků akce', error: e);
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
   }
 
   /// Filters participants based on search query
@@ -62,17 +97,12 @@ class _ActionDetailState extends State<ActionDetail> {
         ],
       ),
 
-      // Using FutureBuilder to asynchronously fetch and display a list of participants
-      body: FutureBuilder<List<MemoryOsoba>>(
-        future: database.getParticipantsByEvent(widget.action.idAkce!),
-        builder:
-            (BuildContext context, AsyncSnapshot<List<MemoryOsoba>> snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const CircularProgressIndicator();
-          } else if (snapshot.hasError) {
-            return Text('Error: ${snapshot.error}');
-          } else {
-            return SingleChildScrollView(
+      // Load data in initState, not FutureBuilder - prevents TextField recreation
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Center(child: Text('Chyba: $_error'))
+              : SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
@@ -88,7 +118,7 @@ class _ActionDetailState extends State<ActionDetail> {
                     Row(
                       children: [
                         const Icon(Icons.people, size: 50),
-                        Text('Počet účastníků: ${snapshot.data!.length}'),
+                        Text('Počet účastníků: ${_allParticipants.length}'),
                       ],
                     ),
                     Row(
@@ -113,6 +143,7 @@ class _ActionDetailState extends State<ActionDetail> {
                           child: TextField(
                             key: const Key('EventDetail_searchField'),
                             controller: _searchController,
+                            focusNode: _searchFocusNode, // Use stable focus node
                             decoration: const InputDecoration(
                               hintText: 'Hledat účastníka...',
                               prefixIcon: Icon(Icons.search),
@@ -153,7 +184,7 @@ class _ActionDetailState extends State<ActionDetail> {
                     ),
                     const SizedBox(height: 10),
                     // Apply search filter
-                    ..._filterParticipants(snapshot.data!)
+                    ..._filterParticipants(_allParticipants)
                         .asMap()
                         .entries
                         .map((entry) => ParticipantListItem(
@@ -161,7 +192,7 @@ class _ActionDetailState extends State<ActionDetail> {
                               index: entry.key,
                             )),
                     // Show message if no results
-                    if (_searchQuery.isNotEmpty && _filterParticipants(snapshot.data!).isEmpty)
+                    if (_searchQuery.isNotEmpty && _filterParticipants(_allParticipants).isEmpty)
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.all(20.0),
@@ -180,10 +211,7 @@ class _ActionDetailState extends State<ActionDetail> {
                   ],
                 ),
               ),
-            );
-          }
-        },
-      ),
+            ),
     );
   }
 }
