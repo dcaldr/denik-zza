@@ -4,7 +4,6 @@ import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/widgets/intake_bottom_row.dart';
 import 'package:denik_zza/screens2/widgets/intake_main_content.dart';
 import 'package:denik_zza/screens2/widgets/intake_person_row.dart';
-import 'package:denik_zza/screens2/widgets/memory_restriction_widget.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 import '../database/database_wrapper.dart';
@@ -26,10 +25,6 @@ class _OldIntakeFormState extends State<OldIntakeForm> {
   // Selected person and related data
   MemoryOsoba? selectedPerson;
   Directory? zpusobilostFolder;
-  
-  // Business logic instances (needed for IntakeMainContent)
-  final MemoryOmezeniLogic _omezeniLogic = MemoryOmezeniLogic();
-  final MemoryLekLogic _lekLogic = MemoryLekLogic();
   
   // Form validation function
   bool Function()? _validateParticipantForm;
@@ -152,8 +147,6 @@ class _OldIntakeFormState extends State<OldIntakeForm> {
                             selectedPerson: selectedPerson,
                             onFileUploaded: _onFileUploaded,
                             zpusobilostFolder: zpusobilostFolder,
-                            omezeniLogic: _omezeniLogic,
-                            lekLogic: _lekLogic,
                             participantRegistrationForm: _participantRegistrationForm!,
                           ),
                       ],
