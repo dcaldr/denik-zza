@@ -438,7 +438,8 @@ class NewRecordPageState extends State<NewRecordPage> {
                             ),
                             const SizedBox(height: 4),
                             PersonAutocomplete(
-                              key: const Key('participant_autocomplete'),
+                              key: const Key('NewRecordPage_participantAutocomplete'),
+                              textFieldKey: const Key('NewRecordPage_participantSearchField'),
                               onPersonSelected: _onParticipantSelected,
                               onRefresh: _onRefresh,
                               availablePersons: _availableParticipants,
