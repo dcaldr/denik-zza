@@ -211,97 +211,127 @@ void main() {
     ///
     /// See copilot-instructions.md "Feature Contract Tests" section for methodology.
     group('Feature Contracts -', () {
-      group('Health Info Display -', () {
-        testWidgets('must show health items when participant selected', (WidgetTester tester) async {
-          // Create participant with health data
-          final participant = MemoryOsoba.basic('Test', 'Person')..id = 1;
-          
-          await tester.pumpWidget(createWidgetWithParticipant(participant));
-          await tester.pumpAndSettle();
+      testWidgets('must show health items when participant selected', (WidgetTester tester) async {
+        // Create participant with health data
+        final participant = MemoryOsoba.basic('Test', 'Person')..id = 1;
+        
+        await tester.pumpWidget(createWidgetWithParticipant(participant));
+        await tester.pumpAndSettle();
 
-          // Critical: Health section must be visible (not hidden behind collapsed state)
-          // This catches if health info becomes hidden by default accidentally
-          expect(find.byKey(const Key('NewRecordPage_birthdate_info_icon')), findsOneWidget,
-            reason: 'Age info icon must be present when participant has birthdate');
-        });
-
-        testWidgets('must show compact collapse button when >6 health items', (WidgetTester tester) async {
-          // This would require mock data setup - documented as TODO
-          // TODO: Add test with participant having >6 health items to verify collapse button appears
-        });
-
-        testWidgets('must display print icons in datetime row', (WidgetTester tester) async {
-          await tester.pumpWidget(createTestableWidget());
-          await tester.pumpAndSettle();
-
-          // Critical: Print icons must be present and disabled by default
-          expect(find.byKey(const Key('NewRecordPage_print_full_button')), findsOneWidget,
-            reason: 'Full print button must be visible in datetime row');
-          expect(find.byKey(const Key('NewRecordPage_print_append_button')), findsOneWidget,
-            reason: 'Append print button must be visible in datetime row');
-        });
-
-        testWidgets('must show dev warning badge', (WidgetTester tester) async {
-          await tester.pumpWidget(createTestableWidget());
-          await tester.pumpAndSettle();
-
-          // Critical: Dev warning must be visible to indicate mock data
-          expect(find.text('USES MOCKUPS !!'), findsOneWidget,
-            reason: 'Dev warning badge must be present until real data entry implemented');
-        });
-
-        testWidgets('must show způsobilost chip when flag is true', (WidgetTester tester) async {
-          // TODO: Add test with participant having zpusobilost=true
-          // Verify způsobilost chip appears in datetime row
-        });
-
-        testWidgets('must allow clicking health chips to expand full text', (WidgetTester tester) async {
-          // TODO: Add test that clicks a truncated health chip and verifies overlay shows
-          // This protects the critical "click to expand" behavior
-        });
-
-        testWidgets('must show age with clickable info icon', (WidgetTester tester) async {
-          final participant = MemoryOsoba.basic('Jan', 'Novák')
-            ..id = 1
-            ..datumNarozeni = DateTime(2007, 9, 8);
-          
-          await tester.pumpWidget(createWidgetWithParticipant(participant));
-          await tester.pumpAndSettle();
-
-          // Age must be displayed
-          expect(find.textContaining('let'), findsOneWidget,
-            reason: 'Age text must be visible when birthdate present');
-          
-          // Info icon must be clickable
-          expect(find.byKey(const Key('NewRecordPage_birthdate_info_icon')), findsOneWidget,
-            reason: 'Birthdate info icon must be present and clickable');
-        });
+        // Critical: Health section must be visible (not hidden behind collapsed state)
+        // This catches if health info becomes hidden by default accidentally
+        expect(find.byKey(const Key('NewRecordPage_birthdate_info_icon')), findsOneWidget,
+          reason: 'Age info icon must be present when participant has birthdate');
       });
 
-      group('Layout & Overflow -', () {
-        testWidgets('must not overflow datetime row with all buttons', (WidgetTester tester) async {
-          await tester.pumpWidget(createTestableWidget());
-          await tester.pumpAndSettle();
+      testWidgets('must show compact collapse button when >6 health items', (WidgetTester tester) async {
+        // This would require mock data setup - documented as TODO
+        // TODO: Add test with participant having >6 health items to verify collapse button appears
+      });
 
-          // Critical: Datetime row must handle: Změnit + 2 print icons + způsobilost without overflow
-          expect(tester.takeException(), isNull,
-            reason: 'DateTime row must not overflow even with all buttons visible');
-        });
+      testWidgets('must display print icons in datetime row', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestableWidget());
+        await tester.pumpAndSettle();
 
-        testWidgets('must handle narrow screen widths gracefully', (WidgetTester tester) async {
-          // Set narrow screen size
-          await tester.binding.setSurfaceSize(const Size(400, 800));
-          
-          await tester.pumpWidget(createTestableWidget());
-          await tester.pumpAndSettle();
+        // Critical: Print icons must be present and disabled by default
+        expect(find.byKey(const Key('NewRecordPage_print_full_button')), findsOneWidget,
+          reason: 'Full print button must be visible in datetime row');
+        expect(find.byKey(const Key('NewRecordPage_print_append_button')), findsOneWidget,
+          reason: 'Append print button must be visible in datetime row');
+      });
 
-          expect(tester.takeException(), isNull,
-            reason: 'UI must adapt to narrow screens without overflow');
-          
-          // Reset to default size
-          await tester.binding.setSurfaceSize(null);
-        });
+      testWidgets('must show dev warning badge', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestableWidget());
+        await tester.pumpAndSettle();
+
+        // Critical: Dev warning must be visible to indicate mock data
+        expect(find.text('USES MOCKUPS !!'), findsOneWidget,
+          reason: 'Dev warning badge must be present until real data entry implemented');
+      });
+
+      testWidgets('must show způsobilost chip when flag is true', (WidgetTester tester) async {
+        // TODO: Add test with participant having zpusobilost=true
+        // Verify způsobilost chip appears in datetime row
+      });
+
+      testWidgets('must allow clicking health chips to expand full text', (WidgetTester tester) async {
+        // TODO: Add test that clicks a truncated health chip and verifies overlay shows
+        // This protects the critical "click to expand" behavior
+      });
+
+      testWidgets('must show age with clickable info icon', (WidgetTester tester) async {
+        final participant = MemoryOsoba.basic('Jan', 'Novák')
+          ..id = 1
+          ..datumNarozeni = DateTime(2007, 9, 8);
+        
+        await tester.pumpWidget(createWidgetWithParticipant(participant));
+        await tester.pumpAndSettle();
+
+        // Age must be displayed
+        expect(find.textContaining('let'), findsOneWidget,
+          reason: 'Age text must be visible when birthdate present');
+        
+        // Info icon must be clickable
+        expect(find.byKey(const Key('NewRecordPage_birthdate_info_icon')), findsOneWidget,
+          reason: 'Birthdate info icon must be present and clickable');
+      });
+
+      testWidgets('must not overflow datetime row with all buttons', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestableWidget());
+        await tester.pumpAndSettle();
+
+        // Critical: Datetime row must handle: Změnit + 2 print icons + způsobilost without overflow
+        expect(tester.takeException(), isNull,
+          reason: 'DateTime row must not overflow even with all buttons visible');
+      });
+
+      testWidgets('must handle narrow screen widths gracefully', (WidgetTester tester) async {
+        // Set narrow screen size
+        await tester.binding.setSurfaceSize(const Size(400, 800));
+        
+        await tester.pumpWidget(createTestableWidget());
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull,
+          reason: 'UI must adapt to narrow screens without overflow');
+        
+        // Reset to default size
+        await tester.binding.setSurfaceSize(null);
       });
     });
+
+    // Normal tests for recent UI changes
+    testWidgets('should allow tapping datetime area when participant selected', (WidgetTester tester) async {
+      final participant = MemoryOsoba.basic('Jan', 'Novák')..id = 1;
+      
+      await tester.pumpWidget(createWidgetWithParticipant(participant));
+      await tester.pumpAndSettle();
+
+      // Datetime area should be clickable
+      final datetimeButton = find.byKey(const Key('datetime_change_button'));
+      expect(datetimeButton, findsOneWidget);
+      
+      // Verify it's enabled (has onTap)
+      final inkWell = tester.widget<InkWell>(datetimeButton);
+      expect(inkWell.onTap, isNotNull,
+        reason: 'DateTime area should be tappable when participant selected');
+    });
+
+    testWidgets('should disable datetime editing when no participant selected', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestableWidget());
+      await tester.pumpAndSettle();
+
+      // DateTime button exists but is disabled
+      final datetimeButton = find.byKey(const Key('datetime_change_button'));
+      expect(datetimeButton, findsOneWidget);
+      
+      final inkWell = tester.widget<InkWell>(datetimeButton);
+      expect(inkWell.onTap, isNull,
+        reason: 'DateTime area should be disabled when no participant selected');
+    });
+
+    // Note: Time-first picker behavior cannot be tested in widget tests
+    // as showTimePicker/showDatePicker are framework dialogs.
+    // Manual testing confirms time picker appears first, then date picker.
   });
 }
