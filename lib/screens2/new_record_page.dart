@@ -7,32 +7,34 @@ import 'package:denik_zza/screens2/services/record_service.dart';
 import 'package:denik_zza/screens2/widgets/record_list_widget.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'package:denik_zza/screens2/widgets/dev_mock_data_badge.dart';
+import 'package:denik_zza/screens2/widgets/file_viewer_screen_widget.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:intl/intl.dart';
 
 /// Enhanced new record page that matches the old system functionality
 /// but with improved architecture and validation
 ///
-/// ## TODO: Features pending wiring/implementation
+/// ## TODO: Features pending implementation
 ///
 /// ### Printing (print_ops2/ integration)
-/// - [ ] Wire `_printFullRecord()` to print_ops2/ services
-/// - [ ] Wire `_printAppendRecord()` to print_ops2/ services  
-/// - [ ] Implement save tracking (store saved record ID in state)
-/// - [ ] Enable print buttons after successful save (_canPrint() returns true)
-/// - [ ] Mark records as printed (wasPrinted=true) after print
-///
+/// **Status:** Complex integration - NOT directly implementable
+/// - PrintCenter screen exists with full workflow (participant selection, mode, preview)
+/// - Consider: Navigate to PrintCenter screen instead of inline printing
+/// - Alternative: Add "Print" button that opens PrintCenter with this participant pre-selected
+/// 
 /// ### File Viewer (způsobilost documents)
-/// - [ ] Wire `_showZpusobilostPlaceholder()` to FileViewerScreen
-/// - [ ] Check eligibleConfirmationPath field
-/// - [ ] Open JPG/PDF viewer for způsobilost documents
-/// - [ ] Handle missing file paths gracefully
+/// **Status:** ✅ IMPLEMENTED
+/// - [x] Wired to FileViewerScreen
+/// - [x] Uses potvrzeniPath field from MemoryOsoba
+/// - [x] Opens JPG/PDF viewer for způsobilost documents
+/// - [x] Handles missing file paths gracefully
 ///
 /// ### Health Data Entry (real data workflow)
-/// - [ ] Replace DevEnvironment mock data with real entry forms
-/// - [ ] Create UI for adding/editing omezení, alergie, léky
-/// - [ ] Implement proper validation and save workflows
-/// - [ ] Remove "USES MOCKUPS !!" badge when real data entry is complete
+/// **Status:** Larger scope feature - requires new UI
+/// - Current: Health data DISPLAY works (loads from database correctly)
+/// - Missing: UI forms for adding/editing omezení, alergie, léky
+/// - Note: DevMockDataBadge shown because dev environment uses mock data, not because UI uses mocks
+/// - Requires: New screens/dialogs for health data CRUD operations
 class NewRecordPage extends StatefulWidget {
   final MemoryOsoba? participant;
 
@@ -184,7 +186,7 @@ class NewRecordPageState extends State<NewRecordPage> {
     return ', $age let';
   }
 
-  /// Builds health info row with 6-item collapse logic and compact toggle
+  /// Builds health info row with responsive collapse logic
   Widget _buildHealthInfoRow() {
     // Filter omezeni by type: 1=omezeni, 2=alergie
     final alergieList = _omezeniList.where((o) => o.typOmezeni == 2).toList();
@@ -225,14 +227,9 @@ class NewRecordPageState extends State<NewRecordPage> {
         ),
     ];
     
-    // Collapse logic: show first 6 items when collapsed, all when expanded
-    // TODO: Make collapse more flexible and space-aware:
-    // - Option 1: Calculate available space dynamically using LayoutBuilder
-    // - Option 2: Show items that fit in 2 rows, collapse rest (not fixed 6)
-    // - Option 3: Adaptive: Desktop shows all, mobile shows 4-6 with collapse
-    // - Option 4: User preference: Remember expanded/collapsed state per session
-    // Current: Simple 6-item threshold works for most cases, but could be smarter
-    const maxCollapsedItems = 6;
+    // Responsive collapse: adapt threshold to screen size
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxCollapsedItems = screenWidth < 600 ? 4 : (screenWidth < 900 ? 6 : 8);
     final totalItems = allHealthChips.length;
     final shouldShowCollapseButton = totalItems > maxCollapsedItems;
     final visibleChips = (_healthInfoExpanded || !shouldShowCollapseButton)
@@ -392,36 +389,35 @@ class NewRecordPageState extends State<NewRecordPage> {
     );
   }
 
-  /// Shows způsobilost placeholder (TODO: wire to FileViewerScreen)
-  void _showZpusobilostPlaceholder() {
-    // TODO: Replace with FileViewerScreen when wiring complete
-    // Expected behavior:
-    // 1. Check if _selectedParticipant.eligibleConfirmationPath is not null
-    // 2. Open file viewer with the JPG/PDF document
-    // 3. Allow user to view/zoom the document
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Způsobilost'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text('TODO: Zobrazit dokument způsobilosti'),
-            SizedBox(height: 8),
-            Text(
-              '(Čeká na integraci s FileViewerScreen)',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+  /// Opens file viewer for způsobilost document
+  void _showZpusobilostDocument() {
+    if (_selectedParticipant?.potvrzeniPath == null || 
+        _selectedParticipant!.potvrzeniPath!.isEmpty) {
+      // Show error if no document path
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Chybí dokument'),
+          content: const Text('Pro tohoto účastníka není k dispozici dokument způsobilosti.'),
+          actions: [
+            TextButton(
+              key: const Key('NewRecordPage_zpusobilost_missing_close'),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Zavřít'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            key: const Key('NewRecordPage_zpusobilost_dialog_close'),
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Zavřít'),
-          ),
-        ],
+      );
+      return;
+    }
+
+    // Navigate to file viewer
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FileViewerScreen(
+          initialFilePath: _selectedParticipant!.potvrzeniPath!,
+        ),
       ),
     );
   }
@@ -1094,7 +1090,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                 const SizedBox(width: 8),
                                 InkWell(
                                   key: const Key('NewRecordPage_zpusobilost_icon'),
-                                  onTap: _showZpusobilostPlaceholder,
+                                  onTap: _showZpusobilostDocument,
                                   borderRadius: BorderRadius.circular(6),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
