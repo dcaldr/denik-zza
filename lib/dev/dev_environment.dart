@@ -1,5 +1,7 @@
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_lek.dart';
 import 'package:denik_zza/input/file_manager.dart';
 import 'package:drift/drift.dart';
 import 'package:intl/intl.dart';
@@ -115,6 +117,9 @@ class DevEnvironment {
       
       // 6. Create medical records (like HardcodedTestSetup)
       await _createCzechMedicalRecords(database, participantIds, testParamedicId);
+      
+      // 7. Create health data (alergie, omezení, léky) for UI testing
+      await _createTestHealthData(participantIds);
       
       return database;
       
@@ -309,6 +314,71 @@ class DevEnvironment {
         wasPrinted: const Value(false),
       );
       await database.addRecord(companion);
+    }
+  }
+
+  /// Creates test health data (omezení, alergie, léky) for UI testing.
+  /// 
+  /// **MOCK DATA FOR UI TESTING** - This creates intentionally long strings
+  /// (>30 chars) to test truncation behavior in NewRecordPage health chips.
+  /// 
+  /// Targets Antonín Dvořák (participantIds[3]) with:
+  /// - Alergie: Multiple items to test comma-separated display
+  /// - Omezení: Long description to test truncation and overlay
+  /// - Léky: Standard medications
+  /// 
+  /// TODO: Replace with real health data entry workflow when implemented
+  static Future<void> _createTestHealthData(
+    List<int> participantIds,
+  ) async {
+    // Use DatabaseWrapper to get interface (has addOmezeni/addLek methods)
+    final dbInterface = DatabaseWrapper.getDatabase();
+    
+    // Target participant: Antonín Dvořák (index 3)
+    final antoninId = participantIds[3];
+
+    // Alergie (typOmezeni=2) - Test truncation with >30 chars
+    await dbInterface.addOmezeni(
+      MemoryOmezeni(
+        idOsoby: antoninId,
+        omezeni: 'arašídy, penicilín, aspirin, ibuprofén, kočky',
+        typOmezeni: 2, // 2 = alergie
+      ),
+    );
+
+    // Omezení (typOmezeni=1) - Test truncation with very long text
+    await dbInterface.addOmezeni(
+      MemoryOmezeni(
+        idOsoby: antoninId,
+        omezeni: 'epilepsie - nesmí na slunce po 12:00, musí pít každou hodinu, '
+            'vyžaduje pravidelný odpočinek',
+        typOmezeni: 1, // 1 = omezení
+      ),
+    );
+
+    // Léky - Test with many medications to verify collapse/expand behavior
+    // MemoryLek constructor: (id, nazev, popisDavkovani, bereSam, kdy, [poznamkaLek, wasPrinted])
+    final medications = [
+      {'nazev': 'Ibalgin 400mg (ráno a večer)', 'popis': '1 tableta po jídle'},
+      {'nazev': 'Paralen 500mg', 'popis': 'Při teplotě nad 38°C'},
+      {'nazev': 'Aspirin 100mg', 'popis': 'Ráno na lačno'},
+      {'nazev': 'Vitamin D3 2000IU', 'popis': 'Jednou denně'},
+      {'nazev': 'Omega-3 kapsle', 'popis': 'S jídlem'},
+      {'nazev': 'Probiotika', 'popis': 'Před jídlem'},
+      {'nazev': 'Antihistaminikum cetirizin', 'popis': 'Večer před spánkem'},
+      {'nazev': 'Ventolin inhaler', 'popis': 'Při potřebě'},
+    ];
+    
+    for (var med in medications) {
+      final lek = MemoryLek(
+        null,
+        med['nazev']!,
+        med['popis']!,
+        false,
+        null,
+      );
+      lek.idOsoby = antoninId;
+      await dbInterface.addLek(lek);
     }
   }
   

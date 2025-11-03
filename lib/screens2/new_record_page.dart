@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_lek.dart';
 import 'package:denik_zza/screens2/services/record_service.dart';
 import 'package:denik_zza/screens2/widgets/record_list_widget.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:intl/intl.dart';
 
 /// Enhanced new record page that matches the old system functionality
 /// but with improved architecture and validation
@@ -31,15 +34,21 @@ class NewRecordPageState extends State<NewRecordPage> {
   MemoryOsoba? _selectedParticipant;
   bool _hasUnsavedChanges = false;
   List<MemoryOsoba> _availableParticipants = [];
+  
+  // Health info loaded separately
+  List<MemoryOmezeni> _omezeniList = [];
+  List<MemoryLek> _lekyList = [];
+  bool _healthInfoExpanded = false; // Controls whether to show all health items
 
   @override
   void initState() {
     super.initState();
     _selectedParticipant = widget.participant;
     
-    // Load participant's poznámka if participant was provided
+    // Load participant's health data if participant was provided
     if (_selectedParticipant != null) {
       _poznamkaController.text = _selectedParticipant!.poznamka ?? '';
+      _loadParticipantHealthData(_selectedParticipant!.id);
     }
     
     // Track unsaved changes
@@ -103,6 +112,9 @@ class NewRecordPageState extends State<NewRecordPage> {
       // Reset unsaved changes flag since we're starting fresh with new participant
       _hasUnsavedChanges = false;
     });
+    
+    // Load health data for new participant
+    _loadParticipantHealthData(participant.id);
   }
 
   void _onRefresh() {
@@ -115,6 +127,368 @@ class NewRecordPageState extends State<NewRecordPage> {
     _descriptionController.dispose();
     _poznamkaController.dispose();
     super.dispose();
+  }
+
+  /// Loads health data for selected participant
+  Future<void> _loadParticipantHealthData(int participantId) async {
+    try {
+      final database = DatabaseWrapper.getDatabase();
+      final omezeni = await database.getOmezeniByParticipantID(participantId);
+      final leky = await database.getLekyByParticipantID(participantId);
+      
+      setState(() {
+        _omezeniList = omezeni;
+        _lekyList = leky;
+      });
+    } catch (e) {
+      // Silent fail - health info is optional
+    }
+  }
+
+  /// Formats age display with hover/click for full birthdate
+  String _formatAge() {
+    if (_selectedParticipant?.datumNarozeni == null) return '';
+    
+    final birthDate = _selectedParticipant!.datumNarozeni!;
+    final now = DateTime.now();
+    int age = now.year - birthDate.year;
+    
+    // Adjust if birthday hasn't occurred yet this year
+    if (now.month < birthDate.month || 
+        (now.month == birthDate.month && now.day < birthDate.day)) {
+      age--;
+    }
+    
+    return ', $age let';
+  }
+
+  /// Builds health info row with flexible Wrap layout and collapse/expand
+  Widget _buildHealthInfoRow() {
+    // Filter omezeni by type: 1=omezeni, 2=alergie
+    final alergieList = _omezeniList.where((o) => o.typOmezeni == 2).toList();
+    final omezeniList = _omezeniList.where((o) => o.typOmezeni == 1).toList();
+    
+    if (alergieList.isEmpty && omezeniList.isEmpty && _lekyList.isEmpty) {
+      return const SizedBox.shrink(); // No health info to show
+    }
+    
+    // Build all health items
+    final List<Widget> allHealthChips = [
+      // Alergie
+      for (var alergie in alergieList)
+        _buildHealthChip(
+          icon: Icons.warning_amber,
+          iconColor: Colors.red,
+          backgroundColor: Colors.red.shade50,
+          text: alergie.omezeni,
+          maxChars: 30,
+        ),
+      // Omezení
+      for (var omezeni in omezeniList)
+        _buildHealthChip(
+          icon: Icons.block,
+          iconColor: Colors.orange,
+          backgroundColor: Colors.orange.shade50,
+          text: omezeni.omezeni,
+          maxChars: 30,
+        ),
+      // Léky
+      for (var lek in _lekyList)
+        _buildHealthChip(
+          icon: Icons.medication,
+          iconColor: Colors.blue,
+          backgroundColor: Colors.blue.shade50,
+          text: lek.nazev,
+          maxChars: 30,
+        ),
+      // Způsobilost indicator (UI-only for now)
+      if (_selectedParticipant?.zpusobilost == true)
+        InkWell(
+          key: const Key('NewRecordPage_zpusobilost_icon'),
+          onTap: _showZpusobilostPlaceholder,
+          borderRadius: BorderRadius.circular(6),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: Colors.blue.shade300),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.info_outline, size: 14, color: Colors.blue.shade700),
+                const SizedBox(width: 4),
+                Text(
+                  'Způsobilý',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+    ];
+    
+    // Collapse logic: show max 6 items when collapsed
+    const maxCollapsedItems = 6;
+    final totalItems = allHealthChips.length;
+    final shouldShowCollapseButton = totalItems > maxCollapsedItems;
+    final visibleChips = (_healthInfoExpanded || !shouldShowCollapseButton)
+        ? allHealthChips
+        : allHealthChips.take(maxCollapsedItems).toList();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 6,
+          runSpacing: 4,
+          children: visibleChips,
+        ),
+        // Show more/less button
+        if (shouldShowCollapseButton) ...[
+          const SizedBox(height: 4),
+          InkWell(
+            key: const Key('NewRecordPage_health_info_toggle'),
+            onTap: () {
+              setState(() {
+                _healthInfoExpanded = !_healthInfoExpanded;
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _healthInfoExpanded ? Icons.expand_less : Icons.expand_more,
+                    size: 16,
+                    color: Colors.blue.shade700,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _healthInfoExpanded 
+                        ? 'Zobrazit méně' 
+                        : 'Zobrazit více (${totalItems - maxCollapsedItems} dalších)',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.blue.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Builds a health info chip with truncation
+  Widget _buildHealthChip({
+    required IconData icon,
+    required Color iconColor,
+    required Color backgroundColor,
+    required String text,
+    required int maxChars,
+  }) {
+    final truncated = text.length > maxChars;
+    final displayText = truncated ? '${text.substring(0, maxChars)}...' : text;
+    
+    return InkWell(
+      onTap: truncated ? () => _showHealthDetailOverlay(text, icon, iconColor) : null,
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: iconColor.withOpacity(0.3), width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: iconColor),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                displayText,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Shows overlay with full health info text
+  void _showHealthDetailOverlay(String fullText, IconData icon, Color iconColor) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: iconColor, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                fullText,
+                style: const TextStyle(fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Zavřít'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Shows full birthdate information in a dialog
+  void _showBirthdateInfo() {
+    if (_selectedParticipant?.datumNarozeni == null) return;
+    
+    final birthDate = _selectedParticipant!.datumNarozeni!;
+    final formatted = DateFormat('d. MMMM yyyy', 'cs_CZ').format(birthDate);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Datum narození'),
+        content: Text(
+          formatted,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+        actions: [
+          TextButton(
+            key: const Key('NewRecordPage_birthdate_dialog_close'),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Zavřít'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Shows způsobilost placeholder (TODO: wire to FileViewerScreen)
+  void _showZpusobilostPlaceholder() {
+    // TODO: Replace with FileViewerScreen when wiring complete
+    // Expected behavior:
+    // 1. Check if _selectedParticipant.eligibleConfirmationPath is not null
+    // 2. Open file viewer with the JPG/PDF document
+    // 3. Allow user to view/zoom the document
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Způsobilost'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text('TODO: Zobrazit dokument způsobilosti'),
+            SizedBox(height: 8),
+            Text(
+              '(Čeká na integraci s FileViewerScreen)',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            key: const Key('NewRecordPage_zpusobilost_dialog_close'),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Zavřít'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Builds a print icon button with consistent styling
+  Widget _buildPrintIconButton({
+    required Key key,
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback? onPressed,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: IconButton(
+        key: key,
+        icon: Icon(icon),
+        iconSize: 20,
+        onPressed: onPressed,
+        color: onPressed != null ? Colors.blue.shade700 : Colors.grey.shade400,
+        style: IconButton.styleFrom(
+          padding: const EdgeInsets.all(8),
+          minimumSize: const Size(36, 36),
+          backgroundColor: onPressed != null 
+              ? Colors.blue.shade50 
+              : Colors.grey.shade100,
+        ),
+      ),
+    );
+  }
+
+  /// Check if printing is available (record must be saved)
+  bool _canPrint() {
+    // TODO: Track saved record ID - for now, disable until save functionality is wired
+    // Printing should only be enabled after a record is saved to the database
+    return false; // Disabled until save tracking is implemented
+  }
+
+  /// Print full record (initial print)
+  Future<void> _printFullRecord() async {
+    // TODO: Wire to print_ops2/ services
+    // Expected flow:
+    // 1. Get saved record ID from state
+    // 2. Call print service with mode='full'
+    // 3. Generate PDF with all participant info + record details
+    // 4. Show print dialog
+    // 5. Mark record as printed (wasPrinted=true)
+    
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('TODO: Implementovat tisk záznamu'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  /// Print append mode (add to existing printout)
+  Future<void> _printAppendRecord() async {
+    // TODO: Wire to print_ops2/ services
+    // Expected flow:
+    // 1. Get saved record ID from state
+    // 2. Call print service with mode='append'
+    // 3. Generate PDF with only new record details (no header/participant info)
+    // 4. Show print dialog
+    // 5. Mark record as printed (wasPrinted=true)
+    
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('TODO: Implementovat přitisk záznamu'),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   /// Combined date and time picker (better UX than separate pickers)
@@ -414,16 +788,42 @@ class NewRecordPageState extends State<NewRecordPage> {
                                   ),
                               ],
                             ),
-                            Text(
-                              _selectedParticipant != null
-                                  ? '${_selectedParticipant!.jmeno} ${_selectedParticipant!.prijmeni}'
-                                  : 'Vyberte účastníka...',
-                              style: TextStyle(
-                                fontSize: isCompact ? 15 : 16, 
-                                fontWeight: FontWeight.bold,
-                                color: _selectedParticipant != null ? Colors.black87 : Colors.grey.shade600,
-                              ),
+                            Row(
+                              children: [
+                                Text(
+                                  _selectedParticipant != null
+                                      ? '${_selectedParticipant!.jmeno} ${_selectedParticipant!.prijmeni}${_formatAge()}'
+                                      : 'Vyberte účastníka...',
+                                  style: TextStyle(
+                                    fontSize: isCompact ? 14 : 15,  // Reduced from 15-16 for compactness
+                                    fontWeight: FontWeight.bold,
+                                    color: _selectedParticipant != null ? Colors.black87 : Colors.grey.shade600,
+                                  ),
+                                ),
+                                // Info icon to show full birthdate on tap
+                                if (_selectedParticipant?.datumNarozeni != null) ...[
+                                  const SizedBox(width: 4),
+                                  InkWell(
+                                    key: const Key('NewRecordPage_birthdate_info_icon'),
+                                    onTap: _showBirthdateInfo,
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(2),
+                                      child: Icon(
+                                        Icons.info_outline,
+                                        size: 14,
+                                        color: Colors.blue.shade600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
+                            // Health info (alergie, omezení, léky) - only if participant selected
+                            if (_selectedParticipant != null) ...[
+                              const SizedBox(height: 4),
+                              _buildHealthInfoRow(),
+                            ],
                           ],
                         ),
                       ),
@@ -647,6 +1047,21 @@ class NewRecordPageState extends State<NewRecordPage> {
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
+                              ),
+                              // Print icons - disabled until record is saved
+                              const SizedBox(width: 8),
+                              _buildPrintIconButton(
+                                key: const Key('NewRecordPage_print_full_button'),
+                                icon: Icons.print,
+                                tooltip: 'Tisknout záznam',
+                                onPressed: _canPrint() ? _printFullRecord : null,
+                              ),
+                              const SizedBox(width: 4),
+                              _buildPrintIconButton(
+                                key: const Key('NewRecordPage_print_append_button'),
+                                icon: Icons.add_to_photos,
+                                tooltip: 'Přitisknout k existujícímu',
+                                onPressed: _canPrint() ? _printAppendRecord : null,
                               ),
                             ],
                           ),
