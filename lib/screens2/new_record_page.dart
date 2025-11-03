@@ -6,11 +6,33 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_lek.dart';
 import 'package:denik_zza/screens2/services/record_service.dart';
 import 'package:denik_zza/screens2/widgets/record_list_widget.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
+import 'package:denik_zza/screens2/widgets/dev_mock_data_badge.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:intl/intl.dart';
 
 /// Enhanced new record page that matches the old system functionality
 /// but with improved architecture and validation
+///
+/// ## TODO: Features pending wiring/implementation
+///
+/// ### Printing (print_ops2/ integration)
+/// - [ ] Wire `_printFullRecord()` to print_ops2/ services
+/// - [ ] Wire `_printAppendRecord()` to print_ops2/ services  
+/// - [ ] Implement save tracking (store saved record ID in state)
+/// - [ ] Enable print buttons after successful save (_canPrint() returns true)
+/// - [ ] Mark records as printed (wasPrinted=true) after print
+///
+/// ### File Viewer (způsobilost documents)
+/// - [ ] Wire `_showZpusobilostPlaceholder()` to FileViewerScreen
+/// - [ ] Check eligibleConfirmationPath field
+/// - [ ] Open JPG/PDF viewer for způsobilost documents
+/// - [ ] Handle missing file paths gracefully
+///
+/// ### Health Data Entry (real data workflow)
+/// - [ ] Replace DevEnvironment mock data with real entry forms
+/// - [ ] Create UI for adding/editing omezení, alergie, léky
+/// - [ ] Implement proper validation and save workflows
+/// - [ ] Remove "USES MOCKUPS !!" badge when real data entry is complete
 class NewRecordPage extends StatefulWidget {
   final MemoryOsoba? participant;
 
@@ -162,7 +184,7 @@ class NewRecordPageState extends State<NewRecordPage> {
     return ', $age let';
   }
 
-  /// Builds health info row with flexible Wrap layout and collapse/expand
+  /// Builds health info row with 6-item collapse logic and compact toggle
   Widget _buildHealthInfoRow() {
     // Filter omezeni by type: 1=omezeni, 2=alergie
     final alergieList = _omezeniList.where((o) => o.typOmezeni == 2).toList();
@@ -172,8 +194,8 @@ class NewRecordPageState extends State<NewRecordPage> {
       return const SizedBox.shrink(); // No health info to show
     }
     
-    // Build all health items
-    final List<Widget> allHealthChips = [
+    // Build all health chip widgets
+    final allHealthChips = <Widget>[
       // Alergie
       for (var alergie in alergieList)
         _buildHealthChip(
@@ -201,39 +223,15 @@ class NewRecordPageState extends State<NewRecordPage> {
           text: lek.nazev,
           maxChars: 30,
         ),
-      // Způsobilost indicator (UI-only for now)
-      if (_selectedParticipant?.zpusobilost == true)
-        InkWell(
-          key: const Key('NewRecordPage_zpusobilost_icon'),
-          onTap: _showZpusobilostPlaceholder,
-          borderRadius: BorderRadius.circular(6),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: Colors.blue.shade300),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.info_outline, size: 14, color: Colors.blue.shade700),
-                const SizedBox(width: 4),
-                Text(
-                  'Způsobilý',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
     ];
     
-    // Collapse logic: show max 6 items when collapsed
+    // Collapse logic: show first 6 items when collapsed, all when expanded
+    // TODO: Make collapse more flexible and space-aware:
+    // - Option 1: Calculate available space dynamically using LayoutBuilder
+    // - Option 2: Show items that fit in 2 rows, collapse rest (not fixed 6)
+    // - Option 3: Adaptive: Desktop shows all, mobile shows 4-6 with collapse
+    // - Option 4: User preference: Remember expanded/collapsed state per session
+    // Current: Simple 6-item threshold works for most cases, but could be smarter
     const maxCollapsedItems = 6;
     final totalItems = allHealthChips.length;
     final shouldShowCollapseButton = totalItems > maxCollapsedItems;
@@ -241,51 +239,59 @@ class NewRecordPageState extends State<NewRecordPage> {
         ? allHealthChips
         : allHealthChips.take(maxCollapsedItems).toList();
     
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
       children: [
-        Wrap(
-          spacing: 6,
-          runSpacing: 4,
-          children: visibleChips,
-        ),
-        // Show more/less button
-        if (shouldShowCollapseButton) ...[
-          const SizedBox(height: 4),
-          InkWell(
-            key: const Key('NewRecordPage_health_info_toggle'),
-            onTap: () {
-              setState(() {
-                _healthInfoExpanded = !_healthInfoExpanded;
-              });
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _healthInfoExpanded ? Icons.expand_less : Icons.expand_more,
-                    size: 16,
-                    color: Colors.blue.shade700,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _healthInfoExpanded 
-                        ? 'Zobrazit méně' 
-                        : 'Zobrazit více (${totalItems - maxCollapsedItems} dalších)',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.blue.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+        ...visibleChips,
+        // Compact collapse button (only if more than 6 items)
+        if (shouldShowCollapseButton)
+          _buildCompactCollapseButton(
+            hiddenCount: totalItems - maxCollapsedItems,
           ),
-        ],
       ],
+    );
+  }
+
+  /// Builds compact collapse/expand button for health info
+  Widget _buildCompactCollapseButton({required int hiddenCount}) {
+    return InkWell(
+      key: const Key('NewRecordPage_health_info_toggle'),
+      onTap: () {
+        setState(() {
+          _healthInfoExpanded = !_healthInfoExpanded;
+        });
+      },
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _healthInfoExpanded ? Icons.expand_less : Icons.more_horiz,
+              size: 14,
+              color: Colors.grey.shade700,
+            ),
+            if (!_healthInfoExpanded) ...[
+              const SizedBox(width: 2),
+              Text(
+                '+$hiddenCount',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -757,6 +763,9 @@ class NewRecordPageState extends State<NewRecordPage> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
+                                // Dev warning: Mock data badge (reusable widget)
+                                const DevMockDataBadge(),
+                                const SizedBox(width: 8),
                                 // Unsaved changes warning badge
                                 if (_hasUnsavedChanges)
                                   Container(
@@ -819,7 +828,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                 ],
                               ],
                             ),
-                            // Health info (alergie, omezení, léky) - only if participant selected
+                            // Health info (alergie, omezení, léky) - shows first 6 items by default, expandable
                             if (_selectedParticipant != null) ...[
                               const SizedBox(height: 4),
                               _buildHealthInfoRow(),
@@ -1063,6 +1072,38 @@ class NewRecordPageState extends State<NewRecordPage> {
                                 tooltip: 'Přitisknout k existujícímu',
                                 onPressed: _canPrint() ? _printAppendRecord : null,
                               ),
+                              // Způsobilost indicator (moved from health info section)
+                              if (_selectedParticipant?.zpusobilost == true) ...[
+                                const SizedBox(width: 8),
+                                InkWell(
+                                  key: const Key('NewRecordPage_zpusobilost_icon'),
+                                  onTap: _showZpusobilostPlaceholder,
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.shade50,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: Colors.blue.shade300),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.info_outline, size: 14, color: Colors.blue.shade700),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Způsobilost',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.black87,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
