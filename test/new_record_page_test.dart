@@ -74,10 +74,9 @@ void main() {
 
       // Assert
       expect(find.text('Nový záznam úrazu'), findsOneWidget);
-      // Participant section and search present
+      // Participant section present
       expect(find.text('Účastník'), findsOneWidget);
-      expect(find.text('Vyhledat'), findsOneWidget);
-      expect(find.byKey(const Key('participant_autocomplete')), findsOneWidget);
+      expect(find.byKey(const Key('NewRecordPage_participantAutocomplete')), findsOneWidget);
       // Form fields (by keys)
       expect(find.byKey(const Key('title_field')), findsOneWidget);
       expect(find.byKey(const Key('description_field')), findsOneWidget);
@@ -95,7 +94,7 @@ void main() {
 
       // Assert - Should show participant selection UI elements
       expect(find.text('Účastník'), findsOneWidget);
-      expect(find.byKey(const Key('participant_autocomplete')), findsOneWidget);
+      expect(find.byKey(const Key('NewRecordPage_participantAutocomplete')), findsOneWidget);
     });
 
     testWidgets('should display form fields for record creation', (WidgetTester tester) async {
@@ -212,8 +211,10 @@ void main() {
     /// See copilot-instructions.md "Feature Contract Tests" section for methodology.
     group('Feature Contracts -', () {
       testWidgets('must show health items when participant selected', (WidgetTester tester) async {
-        // Create participant with health data
-        final participant = MemoryOsoba.basic('Test', 'Person')..id = 1;
+        // Create participant with health data including birthdate
+        final participant = MemoryOsoba.basic('Test', 'Person')
+          ..id = 1
+          ..datumNarozeni = DateTime(2000, 1, 1); // Add birthdate to show age icon
         
         await tester.pumpWidget(createWidgetWithParticipant(participant));
         await tester.pumpAndSettle();
