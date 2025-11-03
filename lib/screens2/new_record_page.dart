@@ -453,6 +453,38 @@ class NewRecordPageState extends State<NewRecordPage> {
     );
   }
 
+  /// Check if způsobilost document is available
+  bool _hasZpusobilostDocument() {
+    return _selectedParticipant?.potvrzeniPath != null && 
+           _selectedParticipant!.potvrzeniPath!.isNotEmpty;
+  }
+
+  /// Builds způsobilost document button
+  Widget _buildZpusobilostButton() {
+    final hasDocument = _hasZpusobilostDocument();
+    final tooltip = hasDocument 
+        ? 'Zobrazit dokument způsobilosti' 
+        : 'Dokument způsobilosti nebyl nahrán';
+    
+    return Tooltip(
+      message: tooltip,
+      child: IconButton(
+        key: const Key('NewRecordPage_zpusobilost_button'),
+        icon: const Icon(Icons.description_outlined),
+        iconSize: 20,
+        onPressed: hasDocument ? _showZpusobilostDocument : null,
+        color: hasDocument ? Colors.green.shade700 : Colors.grey.shade400,
+        style: IconButton.styleFrom(
+          padding: const EdgeInsets.all(8),
+          minimumSize: const Size(36, 36),
+          backgroundColor: hasDocument 
+              ? Colors.green.shade50 
+              : Colors.grey.shade100,
+        ),
+      ),
+    );
+  }
+
   /// Check if printing is available (participant must be selected)
   bool _canPrint() {
     return _selectedParticipant != null;
@@ -1011,7 +1043,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                           child: Row(
                             children: [
                               // Clickable datetime section (icon + label + datetime)
-                              Flexible(
+                              Expanded(
                                 child: InkWell(
                                   key: const Key('datetime_change_button'),
                                   onTap: _selectedParticipant != null ? _selectDateTime : null,
@@ -1078,9 +1110,9 @@ class NewRecordPageState extends State<NewRecordPage> {
                                 ),
                               ),
                               ),
-                              const Spacer(),
-                              // Print icons - disabled until record is saved
-                              const SizedBox(width: 8),
+                              // Spacer to push action buttons to far right
+                              const SizedBox(width: 24),
+                              // Action buttons (print + způsobilost) - grouped at far right
                               _buildPrintIconButton(
                                 key: const Key('NewRecordPage_print_full_button'),
                                 icon: Icons.print,
@@ -1094,37 +1126,10 @@ class NewRecordPageState extends State<NewRecordPage> {
                                 tooltip: 'Přitisknout k existujícímu',
                                 onPressed: _canPrint() ? _printAppendRecord : null,
                               ),
-                              // Způsobilost indicator (moved from health info section)
-                              if (_selectedParticipant?.zpusobilost == true) ...[
-                                const SizedBox(width: 8),
-                                InkWell(
-                                  key: const Key('NewRecordPage_zpusobilost_icon'),
-                                  onTap: _showZpusobilostDocument,
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.shade50,
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: Colors.blue.shade300),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.info_outline, size: 14, color: Colors.blue.shade700),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          'Způsobilost',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.black87,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                              // Způsobilost document button (far right)
+                              if (_selectedParticipant != null) ...[
+                                const SizedBox(width: 4),
+                                _buildZpusobilostButton(),
                               ],
                             ],
                           ),
