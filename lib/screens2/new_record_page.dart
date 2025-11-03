@@ -1032,18 +1032,19 @@ class NewRecordPageState extends State<NewRecordPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                        // Optional date and time selection (enhanced professional styling)
-                        Container(
-                          padding: const EdgeInsets.all(16.0), // Increased padding for better spacing
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade50.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(12.0), // More rounded corners
-                            border: Border.all(color: Colors.blue.shade200.withOpacity(0.5), width: 1),
-                          ),
-                          child: Row(
-                            children: [
-                              // Clickable datetime section (icon + label + datetime)
-                              Expanded(
+                        // Date/time section with action buttons - datetime in blue box, buttons at far right
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Blue box wraps ONLY the datetime section (tight fit)
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.all(16.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50.withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(12.0),
+                                  border: Border.all(color: Colors.blue.shade200.withOpacity(0.5), width: 1),
+                                ),
                                 child: InkWell(
                                   key: const Key('datetime_change_button'),
                                   onTap: _selectedParticipant != null ? _selectDateTime : null,
@@ -1066,73 +1067,76 @@ class NewRecordPageState extends State<NewRecordPage> {
                                       const SizedBox(width: 12),
                                       Flexible(
                                         child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Čas záznamu',
-                                          style: TextStyle(
-                                            fontSize: isCompact ? 12 : 13,
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.blue.shade700,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Flexible(
-                                              child: Text(
-                                                _formatSelectedDateTime(),
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
-                                                  fontSize: isCompact ? 14 : 15,
-                                                  fontWeight: FontWeight.w400,
-                                                  color: _selectedParticipant != null 
-                                                      ? Colors.black87 
-                                                      : Colors.grey.shade400,
-                                                ),
+                                            Text(
+                                              'Čas záznamu',
+                                              style: TextStyle(
+                                                fontSize: isCompact ? 12 : 13,
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.blue.shade700,
                                               ),
                                             ),
-                                            const SizedBox(width: 4),
-                                            Icon(
-                                              Icons.edit_outlined,
-                                              size: 16,
-                                              color: _selectedParticipant != null 
-                                                  ? Colors.blue.shade700 
-                                                  : Colors.grey.shade400,
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Flexible(
+                                                  child: Text(
+                                                    _formatSelectedDateTime(),
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                      fontSize: isCompact ? 14 : 15,
+                                                      fontWeight: FontWeight.w400,
+                                                      color: _selectedParticipant != null 
+                                                          ? Colors.black87 
+                                                          : Colors.grey.shade400,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Icon(
+                                                  Icons.edit_outlined,
+                                                  size: 16,
+                                                  color: _selectedParticipant != null 
+                                                      ? Colors.blue.shade700 
+                                                      : Colors.grey.shade400,
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
-                                      ],
-                                        ),
                                       ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
-                              ),
-                              // Spacer to push action buttons to far right
-                              const SizedBox(width: 24),
-                              // Action buttons (print + způsobilost) - grouped at far right
-                              _buildPrintIconButton(
-                                key: const Key('NewRecordPage_print_full_button'),
-                                icon: Icons.print,
-                                tooltip: 'Tisknout záznam',
-                                onPressed: _canPrint() ? _printFullRecord : null,
-                              ),
-                              const SizedBox(width: 4),
-                              _buildPrintIconButton(
-                                key: const Key('NewRecordPage_print_append_button'),
-                                icon: Icons.add_to_photos,
-                                tooltip: 'Přitisknout k existujícímu',
-                                onPressed: _canPrint() ? _printAppendRecord : null,
-                              ),
-                              // Způsobilost document button (far right)
-                              if (_selectedParticipant != null) ...[
+                            ),
+                            // Group all action buttons together on the right
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _buildPrintIconButton(
+                                  key: const Key('NewRecordPage_print_full_button'),
+                                  icon: Icons.print,
+                                  tooltip: 'Tisknout záznam',
+                                  onPressed: _canPrint() ? _printFullRecord : null,
+                                ),
                                 const SizedBox(width: 4),
-                                _buildZpusobilostButton(),
+                                _buildPrintIconButton(
+                                  key: const Key('NewRecordPage_print_append_button'),
+                                  icon: Icons.add_to_photos,
+                                  tooltip: 'Přitisknout k existujícímu',
+                                  onPressed: _canPrint() ? _printAppendRecord : null,
+                                ),
+                                // Způsobilost document button (far right)
+                                if (_selectedParticipant != null) ...[
+                                  const SizedBox(width: 4),
+                                  _buildZpusobilostButton(),
+                                ],
                               ],
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                         SizedBox(height: titleSpacing),
                         
