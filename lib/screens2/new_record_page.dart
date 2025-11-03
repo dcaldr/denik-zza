@@ -1080,6 +1080,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                             const SizedBox(height: 4),
                                             Row(
                                               mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment: CrossAxisAlignment.center,
                                               children: [
                                                 Flexible(
                                                   child: Text(
@@ -1088,6 +1089,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                                     style: TextStyle(
                                                       fontSize: isCompact ? 14 : 15,
                                                       fontWeight: FontWeight.w400,
+                                                      height: 1.2, // Prevent text clipping
                                                       color: _selectedParticipant != null 
                                                           ? Colors.black87 
                                                           : Colors.grey.shade400,
@@ -1102,6 +1104,33 @@ class NewRecordPageState extends State<NewRecordPage> {
                                                       ? Colors.blue.shade700 
                                                       : Colors.grey.shade400,
                                                 ),
+                                                // Only show reset button if datetime was modified
+                                                if (_selectedDate != null || _selectedTime != null) ...[
+                                                  const SizedBox(width: 6),
+                                                  InkWell(
+                                                    key: const Key('datetime_reset_button'),
+                                                    onTap: _selectedParticipant != null ? () {
+                                                      setState(() {
+                                                        _selectedDate = null;
+                                                        _selectedTime = null;
+                                                      });
+                                                    } : null,
+                                                    borderRadius: BorderRadius.circular(4),
+                                                    child: Tooltip(
+                                                      message: 'Reset na aktuální čas',
+                                                      child: Padding(
+                                                        padding: const EdgeInsets.all(2),
+                                                        child: Icon(
+                                                          Icons.refresh,
+                                                          size: 16,
+                                                          color: _selectedParticipant != null 
+                                                              ? Colors.blue.shade700 
+                                                              : Colors.grey.shade400,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ],
                                             ),
                                           ],
