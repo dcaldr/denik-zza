@@ -100,7 +100,7 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
                                   _addItem(value);
                                 },
                                 decoration: const InputDecoration(
-                                  labelText: 'Enter restriction',
+                                  labelText: 'Zadejte položku',
                                   border: OutlineInputBorder(),
                                 ),
                               );
@@ -149,7 +149,7 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
                               _addItem(value);
                             },
                             decoration: const InputDecoration(
-                              labelText: 'Enter restriction',
+                              labelText: 'Zadejte položku',
                               border: OutlineInputBorder(),
                             ),
                           );

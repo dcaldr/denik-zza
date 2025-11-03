@@ -41,7 +41,7 @@ class MemoryOmezeniLogic implements LogicInterface {
 
   @override
   String getText() {
-    return 'Omezení';
+    return 'Omezení a alergie';
   }
 
   @override
