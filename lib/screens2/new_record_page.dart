@@ -499,32 +499,32 @@ class NewRecordPageState extends State<NewRecordPage> {
 
   /// Combined date and time picker (better UX than separate pickers)
   Future<void> _selectDateTime() async {
-    // First, show date picker
-    DateTime? pickedDate = await showDatePicker(
+    // First, show TIME picker (more important for injury records)
+    TimeOfDay? pickedTime = await showTimePicker(
       context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
+      initialTime: _selectedTime ?? TimeOfDay.now(),
     );
 
-    if (pickedDate != null) {
-      // If date was selected, immediately show time picker
-      TimeOfDay? pickedTime = await showTimePicker(
+    if (pickedTime != null) {
+      // If time was selected, then show date picker
+      DateTime? pickedDate = await showDatePicker(
         context: context,
-        initialTime: _selectedTime ?? TimeOfDay.now(),
+        initialDate: _selectedDate ?? DateTime.now(),
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2101),
       );
 
-      if (pickedTime != null) {
-        // Both date and time selected
+      if (pickedDate != null) {
+        // Both time and date selected
         setState(() {
-          _selectedDate = pickedDate;
           _selectedTime = pickedTime;
+          _selectedDate = pickedDate;
         });
       } else {
-        // Only date selected, use current time
+        // Only time selected, use current date
         setState(() {
-          _selectedDate = pickedDate;
-          _selectedTime = null; // Will use current time when saving
+          _selectedTime = pickedTime;
+          _selectedDate = null; // Will use current date when saving
         });
       }
     }
@@ -999,64 +999,68 @@ class NewRecordPageState extends State<NewRecordPage> {
                           ),
                           child: Row(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(8), // Increased padding
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade100,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Icon(
-                                  Icons.schedule,
-                                  color: Colors.blue.shade700,
-                                  size: isCompact ? 16 : 18, // Slightly larger icon
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              // Clickable datetime section (icon + label + datetime)
+                              InkWell(
+                                key: const Key('datetime_change_button'),
+                                onTap: _selectedParticipant != null ? _selectDateTime : null,
+                                borderRadius: BorderRadius.circular(8),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Text(
-                                      'Čas záznamu',
-                                      style: TextStyle(
-                                        fontSize: isCompact ? 12 : 13, // Slightly larger text
-                                        fontWeight: FontWeight.w500,
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue.shade100,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Icon(
+                                        Icons.schedule,
                                         color: Colors.blue.shade700,
+                                        size: isCompact ? 16 : 18,
                                       ),
                                     ),
-                                    const SizedBox(height: 4), // Add some spacing
-                                    Text(
-                                      _formatSelectedDateTime(),
-                                      style: TextStyle(
-                                        fontSize: isCompact ? 14 : 15, // Larger display text
-                                        fontWeight: FontWeight.w400,
-                                        color: Colors.black87,
-                                      ),
+                                    const SizedBox(width: 12),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Čas záznamu',
+                                          style: TextStyle(
+                                            fontSize: isCompact ? 12 : 13,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.blue.shade700,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              _formatSelectedDateTime(),
+                                              style: TextStyle(
+                                                fontSize: isCompact ? 14 : 15,
+                                                fontWeight: FontWeight.w400,
+                                                color: _selectedParticipant != null 
+                                                    ? Colors.black87 
+                                                    : Colors.grey.shade400,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Icon(
+                                              Icons.edit_outlined,
+                                              size: 16,
+                                              color: _selectedParticipant != null 
+                                                  ? Colors.blue.shade700 
+                                                  : Colors.grey.shade400,
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              FilledButton.tonal(
-                                key: const Key('datetime_change_button'),
-                                onPressed: _selectedParticipant != null ? _selectDateTime : null,
-                                style: FilledButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: isCompact ? 12 : 16,
-                                    vertical: isCompact ? 8 : 10, // Better vertical padding
-                                  ),
-                                  minimumSize: Size.zero,
-                                  backgroundColor: Colors.blue.shade100,
-                                  foregroundColor: Colors.blue.shade700,
-                                ),
-                                child: Text(
-                                  'Změnit',
-                                  style: TextStyle(
-                                    fontSize: isCompact ? 12 : 13,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
+                              const Spacer(),
                               // Print icons - disabled until record is saved
                               const SizedBox(width: 8),
                               _buildPrintIconButton(

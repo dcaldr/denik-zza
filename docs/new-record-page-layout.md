@@ -16,8 +16,8 @@
 │ [15:23] Odřenina kolena — Při fotbale...                  │
 │ [Včera 10:15] Bolest hlavy — Po slunění...                │
 ├──────────────────────────────────────────────────────────────┤
-│ ⏰ Čas záznamu [📄] [➕] [ℹ️ Způsobilost]     [Změnit]    │ ← Compact
-│ 17. ledna 2025, 14:23                                      │
+│ ⏰ Čas záznamu                                             │ ← Compact
+│ 17. ledna 2025, 14:23 ✏️     [📄] [➕] [ℹ️ Způsobilost]   │
 ├──────────────────────────────────────────────────────────────┤
 │ Nadpis * (povinné)                                         │ ← flex 5-7
 │ [___________________________________________]              │
@@ -65,9 +65,20 @@
 - Info icon (ⓘ) clickable
 - Shows full birthdate in dialog
 
+### DateTime Editing ✅
+
+**Clickable datetime area**: Icon + label + datetime text as one unit
+- Entire datetime section clickable (icon, "Čas záznamu", datetime + edit icon)
+- InkWell with ripple effect on tap
+- Small edit icon (Icons.edit_outlined, 16px) indicates editability
+- `Spacer()` pushes print/způsobilost icons to right
+- Disabled state: grey color when no participant selected
+- Larger touch target (better UX than text-only)
+- No separate button needed - cleaner, more compact design
+
 ### Print Icons ✅
 
-**Location**: DateTime row (next to Změnit button)
+**Location**: DateTime row (right side)
 - 📄 Full print - all participant records
 - ➕ Append print - add to existing printout
 - **Disabled** until record is saved
@@ -158,6 +169,16 @@ User feedback: "the collapsable logic you removed WAS supposed to stay!"
 - Old: `[▼ Zobrazit více (5 dalších)]` - 180px
 - New: `[⋯ +5]` when collapsed, `[▲]` when expanded - 50px
 - **3.6x space savings** while maintaining clarity
+
+### Why Inline DateTime Editing?
+Problem: "Změnit" button was on opposite side of screen from datetime text
+- **Option A**: Move button left - still creates visual clutter
+- **Option B**: Make datetime clickable (CHOSEN) - modern, compact, clear
+- Inline editing pattern: Common in modern UIs (Material Design 3)
+- Edit icon (✏️) provides visual affordance
+- Saves ~80px horizontal space vs button
+- Reduces gap between datetime and print/způsobilost actions
+- Better visual grouping: datetime editing separate from document actions
 
 ### Why Print Icons in DateTime Row?
 User feedback: "won't it be unintuitive if hidden?"

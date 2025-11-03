@@ -25,13 +25,37 @@ class RecordListWidget extends StatefulWidget {
 
 class _RecordListWidgetState extends State<RecordListWidget> {
   final ParticipantService _participantService = ParticipantService();
+  final ScrollController _scrollController = ScrollController();
   List<MemoryZaznam> _records = [];
   bool _isLoading = false;
+  bool _hasMoreBelow = false;
 
   @override
   void initState() {
     super.initState();
     _fetchRecords();
+    _scrollController.addListener(_updateScrollIndicator);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_updateScrollIndicator);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _updateScrollIndicator() {
+    if (!_scrollController.hasClients) return;
+    
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    final hasMore = currentScroll < maxScroll - 10; // 10px threshold
+    
+    if (hasMore != _hasMoreBelow) {
+      setState(() {
+        _hasMoreBelow = hasMore;
+      });
+    }
   }
 
   Future<void> _fetchRecords() async {
@@ -44,6 +68,11 @@ class _RecordListWidgetState extends State<RecordListWidget> {
       setState(() {
         _records = records;
         _isLoading = false;
+      });
+      
+      // Check if scrollable after rebuild
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _updateScrollIndicator();
       });
     } catch (error) {
       setState(() {
@@ -118,14 +147,71 @@ class _RecordListWidgetState extends State<RecordListWidget> {
       );
     }
 
-    return ListView.builder(
-      shrinkWrap: true, // Important: Allow ListView to size itself
-      physics: const ClampingScrollPhysics(), // Prevent scrolling conflicts
-      itemCount: _records.length,
-      itemBuilder: (context, index) {
-        final record = _records[index];
-        return RecordListItem(record: record);
-      },
+    return Stack(
+      children: [
+        ListView.builder(
+          controller: _scrollController,
+          shrinkWrap: true, // Important: Allow ListView to size itself
+          physics: const ClampingScrollPhysics(), // Prevent scrolling conflicts
+          itemCount: _records.length,
+          itemBuilder: (context, index) {
+            final record = _records[index];
+            return RecordListItem(record: record);
+          },
+        ),
+        
+        // Bottom fade indicator when there's more content below
+        if (_hasMoreBelow)
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: IgnorePointer(
+              child: Container(
+                height: 40,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.grey.shade50.withOpacity(0.0),
+                      Colors.grey.shade50.withOpacity(0.9),
+                      Colors.grey.shade50,
+                    ],
+                  ),
+                ),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.keyboard_arrow_down,
+                          size: 14,
+                          color: Colors.blue.shade600,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          'více',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.blue.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
