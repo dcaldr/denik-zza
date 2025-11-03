@@ -332,7 +332,7 @@ void main() {
     });
 
     group('Datetime Reset Button -', () {
-      testWidgets('must not show reset button in default state', (WidgetTester tester) async {
+      testWidgets('must not show reset button in default state with pre-selected participant', (WidgetTester tester) async {
         final participant = MemoryOsoba.basic('Jan', 'Novák')..id = 1;
         await tester.pumpWidget(createWidgetWithParticipant(participant));
         await tester.pumpAndSettle();
@@ -344,6 +344,40 @@ void main() {
         // Default text should be shown
         expect(find.text('Datum a čas (aktuální)'), findsOneWidget,
           reason: 'Should show default datetime text in initial state');
+      });
+
+      testWidgets('must render PersonAutocomplete widget when no participant pre-selected', (WidgetTester tester) async {
+        // This test verifies autocomplete widget is present and user can interact with it
+        // Actual autocomplete selection flow is complex to test (requires database setup)
+        // and is better covered by integration tests or manual testing
+        await tester.pumpWidget(createTestableWidget());
+        await tester.pumpAndSettle();
+
+        // Initially no reset button (no participant, datetime disabled)
+        expect(find.byKey(const Key('datetime_reset_button')), findsNothing);
+
+        // Verify PersonAutocomplete widget is rendered with correct key
+        final autocompleteWidget = find.byKey(const Key('NewRecordPage_participantAutocomplete'));
+        expect(autocompleteWidget, findsOneWidget,
+          reason: 'PersonAutocomplete widget must be present for manual participant selection');
+        
+        // Verify TextField is accessible within autocomplete
+        final autocompleteField = find.descendant(
+          of: autocompleteWidget,
+          matching: find.byType(TextField),
+        );
+        expect(autocompleteField, findsOneWidget,
+          reason: 'Autocomplete must have TextField for typing participant name');
+        
+        // Contract: When no participant selected, datetime controls disabled
+        final datetimeButton = find.byKey(const Key('datetime_change_button'));
+        final inkWell = tester.widget<InkWell>(datetimeButton);
+        expect(inkWell.onTap, isNull,
+          reason: 'Datetime must be disabled without participant');
+        
+        // Contract: Reset button only shows when datetime modified (currently impossible without participant)
+        expect(find.byKey(const Key('datetime_reset_button')), findsNothing,
+          reason: 'Reset button must not show when datetime controls disabled');
       });
     });
 
