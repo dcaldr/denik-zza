@@ -754,12 +754,15 @@ class NewRecordPageState extends State<NewRecordPage> {
                           children: [
                             Row(
                               children: [
-                                Text(
-                                  'Účastník',
-                                  style: TextStyle(
-                                    fontSize: isCompact ? 12 : 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.blue.shade700,
+                                Flexible(
+                                  child: Text(
+                                    'Účastník',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: isCompact ? 12 : 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.blue.shade700,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -799,14 +802,17 @@ class NewRecordPageState extends State<NewRecordPage> {
                             ),
                             Row(
                               children: [
-                                Text(
-                                  _selectedParticipant != null
-                                      ? '${_selectedParticipant!.jmeno} ${_selectedParticipant!.prijmeni}${_formatAge()}'
-                                      : 'Vyberte účastníka...',
-                                  style: TextStyle(
-                                    fontSize: isCompact ? 14 : 15,  // Reduced from 15-16 for compactness
-                                    fontWeight: FontWeight.bold,
-                                    color: _selectedParticipant != null ? Colors.black87 : Colors.grey.shade600,
+                                Flexible(
+                                  child: Text(
+                                    _selectedParticipant != null
+                                        ? '${_selectedParticipant!.jmeno} ${_selectedParticipant!.prijmeni}${_formatAge()}'
+                                        : 'Vyberte účastníka...',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: isCompact ? 14 : 15,  // Reduced from 15-16 for compactness
+                                      fontWeight: FontWeight.bold,
+                                      color: _selectedParticipant != null ? Colors.black87 : Colors.grey.shade600,
+                                    ),
                                   ),
                                 ),
                                 // Info icon to show full birthdate on tap
@@ -1000,27 +1006,29 @@ class NewRecordPageState extends State<NewRecordPage> {
                           child: Row(
                             children: [
                               // Clickable datetime section (icon + label + datetime)
-                              InkWell(
-                                key: const Key('datetime_change_button'),
-                                onTap: _selectedParticipant != null ? _selectDateTime : null,
-                                borderRadius: BorderRadius.circular(8),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue.shade100,
-                                        borderRadius: BorderRadius.circular(6),
+                              Flexible(
+                                child: InkWell(
+                                  key: const Key('datetime_change_button'),
+                                  onTap: _selectedParticipant != null ? _selectDateTime : null,
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.shade100,
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Icon(
+                                          Icons.schedule,
+                                          color: Colors.blue.shade700,
+                                          size: isCompact ? 16 : 18,
+                                        ),
                                       ),
-                                      child: Icon(
-                                        Icons.schedule,
-                                        color: Colors.blue.shade700,
-                                        size: isCompact ? 16 : 18,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Column(
+                                      const SizedBox(width: 12),
+                                      Flexible(
+                                        child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
@@ -1035,14 +1043,17 @@ class NewRecordPageState extends State<NewRecordPage> {
                                         Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            Text(
-                                              _formatSelectedDateTime(),
-                                              style: TextStyle(
-                                                fontSize: isCompact ? 14 : 15,
-                                                fontWeight: FontWeight.w400,
-                                                color: _selectedParticipant != null 
-                                                    ? Colors.black87 
-                                                    : Colors.grey.shade400,
+                                            Flexible(
+                                              child: Text(
+                                                _formatSelectedDateTime(),
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontSize: isCompact ? 14 : 15,
+                                                  fontWeight: FontWeight.w400,
+                                                  color: _selectedParticipant != null 
+                                                      ? Colors.black87 
+                                                      : Colors.grey.shade400,
+                                                ),
                                               ),
                                             ),
                                             const SizedBox(width: 4),
@@ -1056,9 +1067,11 @@ class NewRecordPageState extends State<NewRecordPage> {
                                           ],
                                         ),
                                       ],
-                                    ),
+                                        ),
+                                      ),
                                   ],
                                 ),
+                              ),
                               ),
                               const Spacer(),
                               // Print icons - disabled until record is saved
