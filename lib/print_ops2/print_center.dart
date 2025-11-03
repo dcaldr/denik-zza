@@ -245,13 +245,35 @@ class PrintCenterPage extends StatelessWidget {
 // -----------------------------------------------------------------------------
 
 class PersonAndModeFlowPage extends StatefulWidget {
-  const PersonAndModeFlowPage({super.key});
+  final MemoryOsoba? initialParticipant;
+  final PrintMode? initialMode;
+  
+  const PersonAndModeFlowPage({
+    super.key, 
+    this.initialParticipant,
+    this.initialMode,
+  });
 
   @override
   State<PersonAndModeFlowPage> createState() => _PersonAndModeFlowPageState();
 }
 
 class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-select participant and mode if provided
+    if (widget.initialParticipant != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctrl = context.read<PrintCenterController>();
+        ctrl.selectParticipant(widget.initialParticipant!);
+        if (widget.initialMode != null) {
+          ctrl.changeMode(widget.initialMode!);
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart';
@@ -9,6 +10,9 @@ import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'package:denik_zza/screens2/widgets/dev_mock_data_badge.dart';
 import 'package:denik_zza/screens2/widgets/file_viewer_screen_widget.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/print_ops2/print_center.dart';
+import 'package:denik_zza/print_ops2/print_center_controller.dart';
+import 'package:denik_zza/print_ops2/print_center_service.dart';
 import 'package:intl/intl.dart';
 
 /// Enhanced new record page that matches the old system functionality
@@ -17,10 +21,11 @@ import 'package:intl/intl.dart';
 /// ## TODO: Features pending implementation
 ///
 /// ### Printing (print_ops2/ integration)
-/// **Status:** Complex integration - NOT directly implementable
-/// - PrintCenter screen exists with full workflow (participant selection, mode, preview)
-/// - Consider: Navigate to PrintCenter screen instead of inline printing
-/// - Alternative: Add "Print" button that opens PrintCenter with this participant pre-selected
+/// **Status:** ✅ IMPLEMENTED
+/// - [x] Print buttons enabled when participant selected
+/// - [x] Navigate to PersonAndModeFlowPage with pre-selected participant
+/// - [x] Support both full print and append print modes
+/// - [x] PrintCenter handles all PDF generation and printing logic
 /// 
 /// ### File Viewer (způsobilost documents)
 /// **Status:** ✅ IMPLEMENTED
@@ -448,47 +453,51 @@ class NewRecordPageState extends State<NewRecordPage> {
     );
   }
 
-  /// Check if printing is available (record must be saved)
+  /// Check if printing is available (participant must be selected)
   bool _canPrint() {
-    // TODO: Track saved record ID - for now, disable until save functionality is wired
-    // Printing should only be enabled after a record is saved to the database
-    return false; // Disabled until save tracking is implemented
+    return _selectedParticipant != null;
   }
 
-  /// Print full record (initial print)
+  /// Print full record (navigate to PrintCenter with full mode)
   Future<void> _printFullRecord() async {
-    // TODO: Wire to print_ops2/ services
-    // Expected flow:
-    // 1. Get saved record ID from state
-    // 2. Call print service with mode='full'
-    // 3. Generate PDF with all participant info + record details
-    // 4. Show print dialog
-    // 5. Mark record as printed (wasPrinted=true)
+    if (_selectedParticipant == null || !mounted) return;
     
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('TODO: Implementovat tisk záznamu'),
-        duration: Duration(seconds: 2),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChangeNotifierProvider(
+          create: (_) {
+            final ctrl = PrintCenterController(PrintCenterService());
+            ctrl.init();
+            return ctrl;
+          },
+          child: PersonAndModeFlowPage(
+            initialParticipant: _selectedParticipant,
+            initialMode: PrintMode.full,
+          ),
+        ),
       ),
     );
   }
 
-  /// Print append mode (add to existing printout)
+  /// Print append mode (navigate to PrintCenter with append mode)
   Future<void> _printAppendRecord() async {
-    // TODO: Wire to print_ops2/ services
-    // Expected flow:
-    // 1. Get saved record ID from state
-    // 2. Call print service with mode='append'
-    // 3. Generate PDF with only new record details (no header/participant info)
-    // 4. Show print dialog
-    // 5. Mark record as printed (wasPrinted=true)
+    if (_selectedParticipant == null || !mounted) return;
     
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('TODO: Implementovat přitisk záznamu'),
-        duration: Duration(seconds: 2),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChangeNotifierProvider(
+          create: (_) {
+            final ctrl = PrintCenterController(PrintCenterService());
+            ctrl.init();
+            return ctrl;
+          },
+          child: PersonAndModeFlowPage(
+            initialParticipant: _selectedParticipant,
+            initialMode: PrintMode.append,
+          ),
+        ),
       ),
     );
   }
