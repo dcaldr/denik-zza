@@ -269,31 +269,49 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
   }
 
   Widget _buildGridView() {
-    return GridView.count(
-      crossAxisCount: 3,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 4.0,
-      crossAxisSpacing: 4.0,
-      childAspectRatio: 3 / 1,
+    return Column(
       children: [
-        _buildTextField('jmeno', 'Jméno', 'Jméno je povinné pole'),
-        _buildTextField('prijmeni', 'Příjmení', 'Příjmení je povinné pole'),
-        _buildTextField('cisloPojisteni', 'Číslo Pojištěnce', null),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: CustomDatePicker(controller: _controllers['datumNarozeni']!, labelText: 'Datum Narození')),
-            const SizedBox(width: 8.0),
-            Expanded(child: _buildTextField('pohlavi', 'Pohlaví', null)),
-          ],
-        ),
-        _buildTextField('zdravotniPojistovna', 'Zdravotní Pojišťovna', null),
-        _buildTextField('adresa', 'Adresa', null),
-        _buildTextField('jmenoRodice', 'Jméno rodiče', null),
-        _buildTextField('emailRodice', 'Email rodiče', null),
-        _buildTextField('telefonRodice', 'Telefon rodiče', null),
+        // Row 1: Basic identification
+        _buildFormRow([
+          _buildTextField('jmeno', 'Jméno', 'Jméno je povinné pole'),
+          _buildTextField('prijmeni', 'Příjmení', 'Příjmení je povinné pole'),
+          _buildTextField('cisloPojisteni', 'Číslo Pojištěnce', null),
+        ]),
+        const SizedBox(height: 4),
+        // Row 2: Birth details and insurance
+        _buildFormRow([
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: CustomDatePicker(controller: _controllers['datumNarozeni']!, labelText: 'Datum Narození')),
+              const SizedBox(width: 8.0),
+              Expanded(child: _buildTextField('pohlavi', 'Pohlaví', null)),
+            ],
+          ),
+          _buildTextField('zdravotniPojistovna', 'Zdravotní Pojišťovna', null),
+          _buildTextField('adresa', 'Adresa', null),
+        ]),
+        const SizedBox(height: 4),
+        // Row 3: Guardian contact info
+        _buildFormRow([
+          _buildTextField('jmenoRodice', 'Jméno rodiče', null),
+          _buildTextField('emailRodice', 'Email rodiče', null),
+          _buildTextField('telefonRodice', 'Telefon rodiče', null),
+        ]),
       ],
+    );
+  }
+
+  /// Build a single form row with equal-width fields
+  Widget _buildFormRow(List<Widget> fields) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: fields.map((field) => Expanded(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: field,
+        ),
+      )).toList(),
     );
   }
 
@@ -327,25 +345,33 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
-        CheckboxListTile(
-          title: const Text('Má bezinfekčnost'),
-          value: _bezinfekcnost,
-          onChanged: (bool? value) {
-            setState(() {
-              _bezinfekcnost = value ?? false;
-            });
-          },
-          controlAffinity: ListTileControlAffinity.leading,
-        ),
-        CheckboxListTile(
-          title: const Text('Má potvrzení o způsobilosti'),
-          value: _zpusobilost,
-          onChanged: (bool? value) {
-            setState(() {
-              _zpusobilost = value ?? false;
-            });
-          },
-          controlAffinity: ListTileControlAffinity.leading,
+        Row(
+          children: [
+            Expanded(
+              child: CheckboxListTile(
+                title: const Text('Má bezinfekčnost'),
+                value: _bezinfekcnost,
+                onChanged: (bool? value) {
+                  setState(() {
+                    _bezinfekcnost = value ?? false;
+                  });
+                },
+                controlAffinity: ListTileControlAffinity.leading,
+              ),
+            ),
+            Expanded(
+              child: CheckboxListTile(
+                title: const Text('Má potvrzení o způsobilosti'),
+                value: _zpusobilost,
+                onChanged: (bool? value) {
+                  setState(() {
+                    _zpusobilost = value ?? false;
+                  });
+                },
+                controlAffinity: ListTileControlAffinity.leading,
+              ),
+            ),
+          ],
         ),
       ],
     );
