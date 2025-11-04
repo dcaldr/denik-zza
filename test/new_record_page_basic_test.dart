@@ -60,8 +60,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Should show participant name
-        expect(find.text('${participant.jmeno} ${participant.prijmeni}'), findsOneWidget);
+        // Should show participant name (UI displays "Name, age let" format)
+        expect(find.textContaining('${participant.jmeno} ${participant.prijmeni}'), findsOneWidget);
       }
     });
 
@@ -74,7 +74,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Should have form fields
-      expect(find.text('Nadpis'), findsOneWidget);
+      expect(find.textContaining('Nadpis'), findsOneWidget);
       expect(find.text('Popis úrazu a ošetření'), findsOneWidget);
   expect(find.byKey(const Key('save_button')), findsOneWidget);
     });

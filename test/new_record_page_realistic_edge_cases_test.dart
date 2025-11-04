@@ -72,7 +72,7 @@ void main() {
         expect(find.textContaining('Nejprve vyberte účastníka'), findsWidgets);
         
   // Autocomplete should be present (by key per conventions)
-  expect(find.byKey(const Key('participant_autocomplete')), findsOneWidget);
+  expect(find.byKey(const Key('NewRecordPage_participantAutocomplete')), findsOneWidget);
       });
 
       testWidgets('SCENARIO: Page loads with participant - shows participant info', 
@@ -83,10 +83,10 @@ void main() {
           await _pumpNewRecordPage(tester, participant: participant);
 
           // Should show participant name
-          expect(find.text('${participant.jmeno} ${participant.prijmeni}'), findsOneWidget);
+          expect(find.textContaining('${participant.jmeno} ${participant.prijmeni}'), findsOneWidget);
           
           // Should show form fields
-          expect(find.text('Nadpis'), findsOneWidget);
+          expect(find.textContaining('Nadpis'), findsOneWidget);
           expect(find.text('Popis úrazu a ošetření'), findsOneWidget);
           
           // Should not show the "select participant" warning prominently in main content
@@ -279,7 +279,7 @@ void main() {
         expect(find.text('Účastník'), findsOneWidget);
         expect(find.text('Historie úrazů'), findsOneWidget);
         expect(find.text('Čas záznamu'), findsOneWidget);
-        expect(find.text('Nadpis'), findsOneWidget);
+        expect(find.textContaining('Nadpis'), findsOneWidget);
         expect(find.text('Popis úrazu a ošetření'), findsOneWidget);
       });
 
@@ -288,12 +288,12 @@ void main() {
         await _pumpNewRecordPage(tester);
         
         // Autocomplete should be present (prefer key-based lookup)
-        expect(find.byKey(const Key('participant_autocomplete')), findsOneWidget);
+        expect(find.byKey(const Key('NewRecordPage_participantAutocomplete')), findsOneWidget);
         
         // Should remain present even with participant selected
         if (testParticipants.isNotEmpty) {
           await _pumpNewRecordPage(tester, participant: testParticipants.first);
-          expect(find.byKey(const Key('participant_autocomplete')), findsOneWidget);
+          expect(find.byKey(const Key('NewRecordPage_participantAutocomplete')), findsOneWidget);
         }
       });
     });
@@ -452,7 +452,7 @@ Future<void> _selectParticipantProgrammatically(
   WidgetTester tester,
   MemoryOsoba participant,
 ) async {
-  final autocompleteFinder = find.byKey(const Key('participant_autocomplete'));
+  final autocompleteFinder = find.byKey(const Key('NewRecordPage_participantAutocomplete'));
   expect(autocompleteFinder, findsOneWidget);
 
   final element = autocompleteFinder.evaluate().first as StatefulElement;

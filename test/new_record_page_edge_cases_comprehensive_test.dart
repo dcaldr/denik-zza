@@ -87,7 +87,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Should stay with original participant and keep text
-        expect(find.text('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
+        expect(find.textContaining('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
         expect(_getTitleText(tester), equals('Some injury title'));
       });
 
@@ -113,7 +113,7 @@ void main() {
         
         // Should switch to new participant immediately
         await tester.pumpAndSettle();
-        expect(find.text('${participant2.jmeno} ${participant2.prijmeni}'), findsOneWidget);
+        expect(find.textContaining('${participant2.jmeno} ${participant2.prijmeni}'), findsOneWidget);
       });
 
       testWidgets('EDGE CASE: Text in description only → Warning still appears', 
@@ -186,7 +186,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Should switch to new participant
-        expect(find.text('${participant2.jmeno} ${participant2.prijmeni}'), findsOneWidget);
+        expect(find.textContaining('${participant2.jmeno} ${participant2.prijmeni}'), findsOneWidget);
         
         // Text should be cleared
         expect(_getTitleText(tester), isEmpty, 
@@ -218,7 +218,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Should end up with the last selected participant
-        expect(find.text('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
+        expect(find.textContaining('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
         
         // Form should be in clean state
         expect(_getTitleText(tester), isEmpty);
@@ -246,7 +246,7 @@ void main() {
         expect(find.text('Nejprve vyberte účastníka'), findsNothing);
         expect(_isFormEnabled(tester), isTrue, 
           reason: 'Form should be enabled after participant selection');
-        expect(find.text('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
+        expect(find.textContaining('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
       });
     });
 
@@ -297,7 +297,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Should preserve everything: participant, text, and timestamp
-        expect(find.text('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
+        expect(find.textContaining('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
         expect(_getTitleText(tester), equals('Some title'));
         expect(find.textContaining('20.08.2024'), findsOneWidget);
         expect(find.textContaining('10:15'), findsOneWidget);
@@ -381,7 +381,7 @@ void main() {
         expect(find.text('Prosím zadejte nadpis'), findsOneWidget);
         
         // Form should remain enabled and participant should stay selected
-        expect(find.text('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
+        expect(find.textContaining('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
         expect(_isFormEnabled(tester), isTrue);
       });
     });
@@ -411,7 +411,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // 5. Verify everything is preserved
-        expect(find.text('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget, 
+        expect(find.textContaining('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget, 
           reason: 'Original participant should be preserved');
         expect(_getTitleText(tester), equals('Complex scenario title'), 
           reason: 'Title text should be preserved');
@@ -456,7 +456,7 @@ void main() {
         expect(_getDescriptionText(tester), isEmpty, reason: 'Form should be cleared after save');
         
         // Participant should remain selected
-        expect(find.text('${participant2.jmeno} ${participant2.prijmeni}'), findsOneWidget);
+        expect(find.textContaining('${participant2.jmeno} ${participant2.prijmeni}'), findsOneWidget);
       });
 
       testWidgets('COMPLEX: Form state consistency after rapid operations', 
@@ -489,7 +489,7 @@ void main() {
         // Form should remain enabled, no unsaved changes
         expect(_isFormEnabled(tester), isTrue);
         expect(_hasUnsavedChangesInUI(tester), isFalse);
-        expect(find.text('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
+        expect(find.textContaining('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
       });
     });
 
@@ -513,11 +513,11 @@ void main() {
         await _pumpNewRecordPage(tester);
         
   // PersonAutocomplete should always be present by key
-  expect(find.byKey(const Key('participant_autocomplete')), findsOneWidget);        // Should remain present after participant selection
+  expect(find.byKey(const Key('NewRecordPage_participantAutocomplete')), findsOneWidget);        // Should remain present after participant selection
         await _simulateParticipantSelection(tester, testParticipants[0]);
         await tester.pumpAndSettle();
         
-        expect(find.byKey(const Key('participant_autocomplete')), findsOneWidget);
+        expect(find.byKey(const Key('NewRecordPage_participantAutocomplete')), findsOneWidget);
       });
     });
   });
@@ -590,7 +590,7 @@ String _getDescriptionText(WidgetTester tester) {
 /// Simulates participant selection through the autocomplete widget
 Future<void> _simulateParticipantSelection(WidgetTester tester, MemoryOsoba participant) async {
   // Find the PersonAutocomplete widget by key
-  final autocompleteWidget = tester.widget<PersonAutocomplete>(find.byKey(const Key('participant_autocomplete')));
+  final autocompleteWidget = tester.widget<PersonAutocomplete>(find.byKey(const Key('NewRecordPage_participantAutocomplete')));
   
   // Simulate the selection by calling the callback directly
   autocompleteWidget.onPersonSelected(participant);
@@ -642,6 +642,6 @@ void _verifyAllUIElementsPresent(WidgetTester tester) {
   expect(find.byKey(const Key('save_button')), findsOneWidget, reason: 'Save button should be present');
   
   // Controls using keys
-  expect(find.byKey(const Key('participant_autocomplete')), findsOneWidget, reason: 'Participant search should be present');
+  expect(find.byKey(const Key('NewRecordPage_participantAutocomplete')), findsOneWidget, reason: 'Participant search should be present');
   expect(find.byKey(const Key('datetime_change_button')), findsOneWidget, reason: 'DateTime change button should be present');
 }

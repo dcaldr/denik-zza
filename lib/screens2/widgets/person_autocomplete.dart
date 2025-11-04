@@ -6,12 +6,14 @@ class PersonAutocomplete extends StatefulWidget {
   final PersonSelectedCallback onPersonSelected;
   final IntakeRefreshCallback onRefresh;
   final List<MemoryOsoba> availablePersons;
+  final Key? textFieldKey;
 
   const PersonAutocomplete({
     super.key, 
     required this.onPersonSelected, 
     required this.onRefresh,
     required this.availablePersons,
+    this.textFieldKey,
   });
 
   @override
@@ -80,6 +82,7 @@ class _PersonAutocompleteState extends State<PersonAutocomplete> {
           },
           fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
             return TextField(
+              key: widget.textFieldKey,
               controller: textEditingController,
               focusNode: focusNode,
               decoration: InputDecoration(

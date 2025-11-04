@@ -69,7 +69,7 @@ void main() {
         await pumpNewRecordPage(tester, participant: participant);
 
         // Verify participant is displayed
-        expect(find.text('${participant.jmeno} ${participant.prijmeni}'), findsOneWidget);
+        expect(find.textContaining('${participant.jmeno} ${participant.prijmeni}'), findsOneWidget);
         
         // Form should be enabled
         final titleField = find.byKey(const Key('title_field'));
@@ -147,7 +147,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Should still show original participant
-        expect(find.text('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
+        expect(find.textContaining('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
         // Text should still be there
         expect(find.text('Some title'), findsOneWidget);
       });
@@ -236,7 +236,7 @@ Future<void> tapSaveButton(WidgetTester tester) async {
 /// Searches for a participant using the autocomplete
 Future<void> searchForParticipant(WidgetTester tester, String searchText) async {
   // Find the search field in PersonAutocomplete via its key
-  final autocomplete = find.byKey(const Key('participant_autocomplete'));
+  final autocomplete = find.byKey(const Key('NewRecordPage_participantAutocomplete'));
   expect(autocomplete, findsOneWidget);
   final searchField = find.descendant(
     of: autocomplete,
@@ -297,7 +297,7 @@ Future<void> selectParticipantProgrammatically(
   WidgetTester tester,
   MemoryOsoba participant,
 ) async {
-  final autocompleteFinder = find.byKey(const Key('participant_autocomplete'));
+  final autocompleteFinder = find.byKey(const Key('NewRecordPage_participantAutocomplete'));
   expect(autocompleteFinder, findsOneWidget);
   final autocompleteWidget = tester.widget<PersonAutocomplete>(autocompleteFinder);
   // Deterministic selection without relying on overlay popups

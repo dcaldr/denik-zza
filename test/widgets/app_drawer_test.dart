@@ -29,16 +29,12 @@ void main() {
       await tester.pump(); // Start drawer animation
       await tester.pumpAndSettle(); // Wait for drawer and FutureBuilder
       
-      // Debug: print what we actually found
-      print('CircularProgressIndicator found: ${find.byType(CircularProgressIndicator).evaluate().length}');
-      print('Drawer found: ${find.byType(Drawer).evaluate().length}');
-      print('ListTile found: ${find.byType(ListTile).evaluate().length}');
+  // Debug: removed print statements for success scenario per test guidelines
 
-      // Check section headers
-      expect(find.text('UDÁLOSTI'), findsOneWidget);
-      expect(find.text('ÚČASTNÍCI'), findsOneWidget);
-      expect(find.text('ZÁZNAMY'), findsOneWidget);
-      expect(find.text('NÁSTROJE'), findsOneWidget);
+      // Check section headers (current UI structure)
+      expect(find.text('HLAVNÍ: BĚHEM AKCE'), findsOneWidget);
+      expect(find.text('PŘÍPRAVA AKCE'), findsOneWidget);
+      expect(find.text('ZDRAVOTNICKÝ FILTR'), findsOneWidget);
     });
 
     testWidgets('Menu shows header', (tester) async {
@@ -75,6 +71,10 @@ void main() {
       scaffoldState.openDrawer();
       await tester.pumpAndSettle();
 
+      // Expand PŘÍPRAVA AKCE section to access event items
+      await tester.tap(find.byKey(const Key('AppDrawer_priprava')));
+      await tester.pumpAndSettle();
+
       // Event operations should be enabled
       final eventListTile = tester.widget<ListTile>(
         find.byKey(const Key('AppDrawer_event_list')),
@@ -101,6 +101,10 @@ void main() {
 
       final scaffoldState = tester.state<ScaffoldState>(find.byType(Scaffold));
       scaffoldState.openDrawer();
+      await tester.pumpAndSettle();
+
+      // Expand PŘÍPRAVA AKCE section to access participant items
+      await tester.tap(find.byKey(const Key('AppDrawer_priprava')));
       await tester.pumpAndSettle();
 
       // Participant operations should be disabled
@@ -131,11 +135,15 @@ void main() {
       scaffoldState.openDrawer();
       await tester.pumpAndSettle();
 
-      // Record operations should be disabled
+      // New record is in main section (always visible)
       final newRecordTile = tester.widget<ListTile>(
         find.byKey(const Key('AppDrawer_new_record')),
       );
       expect(newRecordTile.enabled, false);
+
+      // Expand ZDRAVOTNICKÝ FILTR section to access intake form
+      await tester.tap(find.text('ZDRAVOTNICKÝ FILTR'));
+      await tester.pumpAndSettle();
 
       final intakeFormTile = tester.widget<ListTile>(
         find.byKey(const Key('AppDrawer_intake_form')),
@@ -156,6 +164,20 @@ void main() {
 
       final scaffoldState = tester.state<ScaffoldState>(find.byType(Scaffold));
       scaffoldState.openDrawer();
+      await tester.pumpAndSettle();
+
+      // Expand PŘÍPRAVA AKCE section to access event items
+      await tester.tap(find.byKey(const Key('AppDrawer_priprava')));
+      await tester.pumpAndSettle();
+      
+      // Scroll to make ZDRAVOTNICKÝ FILTR visible and tap it
+      await tester.dragUntilVisible(
+        find.byKey(const Key('AppDrawer_filtr')),
+        find.byType(ListView),
+        const Offset(0, -50),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('AppDrawer_filtr')), warnIfMissed: false);
       await tester.pumpAndSettle();
 
       // Check all keys exist
@@ -184,14 +206,18 @@ void main() {
       scaffoldState.openDrawer();
       await tester.pumpAndSettle();
 
-      // Participant list should be disabled (screen doesn't exist)
+      // Participant list should be disabled (no event created)
       final participantListTile = tester.widget<ListTile>(
         find.byKey(const Key('AppDrawer_participant_list')),
       );
       expect(participantListTile.enabled, false);
       
-      // Should show "Připravujeme"
-      expect(find.text('Připravujeme'), findsOneWidget);
+      // Should show warning message within participant list tile
+      final participantListFinder = find.byKey(const Key('AppDrawer_participant_list'));
+      expect(find.descendant(
+        of: participantListFinder,
+        matching: find.text('Vytvořte akci nejdříve'),
+      ), findsOneWidget);
     });
   });
 }

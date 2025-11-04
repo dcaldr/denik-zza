@@ -62,7 +62,7 @@ void main() {
         await _pumpNewRecordPage(tester);
 
         // Verify initial state
-        expect(find.byKey(const Key('participant_autocomplete')), findsOneWidget);
+        expect(find.byKey(const Key('NewRecordPage_participantAutocomplete')), findsOneWidget);
         expect(find.text('Neuloženo'), findsNothing); // No unsaved changes initially
       });
 
@@ -71,7 +71,7 @@ void main() {
         await _pumpNewRecordPage(tester, participant: participant);
 
         // Verify participant is displayed
-        expect(find.text('${participant.jmeno} ${participant.prijmeni}'), findsOneWidget);
+        expect(find.textContaining('${participant.jmeno} ${participant.prijmeni}'), findsOneWidget);
         expect(find.text('Vyberte účastníka...'), findsNothing);
       });
     });
@@ -131,7 +131,7 @@ void main() {
         expect(find.text('Změnit účastníka?'), findsNothing);
         
         // Verify participant was switched successfully
-        expect(find.text('${participant2.jmeno} ${participant2.prijmeni}'), findsOneWidget);
+        expect(find.textContaining('${participant2.jmeno} ${participant2.prijmeni}'), findsOneWidget);
       });
 
       testWidgets('should allow canceling participant change when unsaved changes exist', (WidgetTester tester) async {
@@ -152,7 +152,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify original participant is still selected and text is preserved
-        expect(find.text('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
+        expect(find.textContaining('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
         expect(find.text('Test title'), findsOneWidget);
         expect(find.text('Neuloženo'), findsOneWidget);
       });
@@ -176,7 +176,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify new participant is selected and unsaved changes are cleared
-        expect(find.text('${participant2.jmeno} ${participant2.prijmeni}'), findsOneWidget);
+        expect(find.textContaining('${participant2.jmeno} ${participant2.prijmeni}'), findsOneWidget);
         expect(find.text('Neuloženo'), findsNothing);
       });
     });
@@ -213,14 +213,14 @@ void main() {
   await _selectParticipantProgrammatically(tester, participant1);
 
   // Verify search field is still available
-  expect(find.byKey(const Key('participant_autocomplete')), findsOneWidget);
+  expect(find.byKey(const Key('NewRecordPage_participantAutocomplete')), findsOneWidget);
         
         // Try to search for another participant
   final participant2 = testParticipants[1];
   await _selectParticipantProgrammatically(tester, participant2);
 
         // Verify the switch worked
-        expect(find.text('${participant2.jmeno} ${participant2.prijmeni}'), findsOneWidget);
+        expect(find.textContaining('${participant2.jmeno} ${participant2.prijmeni}'), findsOneWidget);
       });
     });
 
@@ -363,7 +363,7 @@ void main() {
           await tester.pump();
           
           // Verify correct participant is selected
-          expect(find.text('${testParticipants[i].jmeno} ${testParticipants[i].prijmeni}'), findsOneWidget);
+          expect(find.textContaining('${testParticipants[i].jmeno} ${testParticipants[i].prijmeni}'), findsOneWidget);
         }
       });
 
@@ -485,7 +485,7 @@ Future<void> _enterDescription(WidgetTester tester, String text) async {
 
 /// Programmatically selects a participant by calling the autocomplete's callback
 Future<void> _selectParticipantProgrammatically(WidgetTester tester, MemoryOsoba participant) async {
-  final autocompleteFinder = find.byKey(const Key('participant_autocomplete'));
+  final autocompleteFinder = find.byKey(const Key('NewRecordPage_participantAutocomplete'));
   expect(autocompleteFinder, findsOneWidget);
   final autocompleteWidget = tester.widget<PersonAutocomplete>(autocompleteFinder);
   // Call the callback to select the participant deterministically

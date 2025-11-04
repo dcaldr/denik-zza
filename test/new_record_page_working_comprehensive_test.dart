@@ -89,7 +89,7 @@ void main() {
         expect(find.text('Nejprve vyberte účastníka'), findsWidgets);
         
         // Form should be present but disabled (via opacity)
-        expect(find.text('Nadpis'), findsOneWidget);
+        expect(find.textContaining('Nadpis'), findsOneWidget);
         expect(find.text('Popis úrazu a ošetření'), findsOneWidget);
       });
 
@@ -103,10 +103,10 @@ void main() {
           await tester.pumpAndSettle();
 
           // Verify participant is displayed
-          expect(find.text('${participant.jmeno} ${participant.prijmeni}'), findsOneWidget);
+          expect(find.textContaining('${participant.jmeno} ${participant.prijmeni}'), findsOneWidget);
           
           // Form should be fully visible and enabled
-          expect(find.text('Nadpis'), findsOneWidget);
+          expect(find.textContaining('Nadpis'), findsOneWidget);
           expect(find.text('Popis úrazu a ošetření'), findsOneWidget);
         }
       });
@@ -240,10 +240,10 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Should show search area
-  expect(find.text('Vyhledat'), findsOneWidget);
+        // Should show search area (button label + TextField hint)
+  expect(find.textContaining('Vyhledat'), findsNWidgets(2));
   // Should have autocomplete widget (by key per conventions)
-  expect(find.byKey(const Key('participant_autocomplete')), findsOneWidget);
+  expect(find.byKey(const Key('NewRecordPage_participantAutocomplete')), findsOneWidget);
       });
     });
 

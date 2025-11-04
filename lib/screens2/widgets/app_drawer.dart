@@ -239,9 +239,12 @@ class AppDrawer extends StatelessWidget {
               children: [
                 Icon(Icons.warning_amber, size: 16, color: Colors.orange.shade700),
                 const SizedBox(width: 4),
-                Text(
-                  'Vytvořte akci nejdříve',
-                  style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                Flexible(
+                  child: Text(
+                    'Vytvořte akci nejdříve',
+                    style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             )
@@ -339,9 +342,12 @@ class AppDrawer extends StatelessWidget {
               children: [
                 Icon(Icons.warning_amber, size: 16, color: Colors.orange.shade700),
                 const SizedBox(width: 4),
-                Text(
-                  !hasEvent ? 'Vytvořte akci nejdříve' : 'Přidejte účastníky',
-                  style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                Flexible(
+                  child: Text(
+                    !hasEvent ? 'Vytvořte akci nejdříve' : 'Přidejte účastníky',
+                    style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             )
@@ -410,9 +416,12 @@ class AppDrawer extends StatelessWidget {
               children: [
                 Icon(Icons.warning_amber, size: 16, color: Colors.orange.shade700),
                 const SizedBox(width: 4),
-                Text(
-                  'Vytvořte akci nejdříve',
-                  style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                Flexible(
+                  child: Text(
+                    'Vytvořte akci nejdříve',
+                    style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),

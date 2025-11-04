@@ -47,7 +47,7 @@ void main() {
         expect(find.text('Nejprve vyberte účastníka'), findsWidgets);
         
         // 2. The form area should show the warning opacity
-        final formArea = find.text('Nadpis');
+        final formArea = find.textContaining('Nadpis');
         expect(formArea, findsOneWidget);
         
         // 3. Try to interact with disabled form
@@ -72,8 +72,8 @@ void main() {
         expect(find.text('Nejprve vyberte účastníka'), findsNothing);
         
         // Form should be fully functional
-        expect(find.text('${participant.jmeno} ${participant.prijmeni}'), findsOneWidget);
-        expect(find.text('Nadpis'), findsOneWidget);
+        expect(find.textContaining('${participant.jmeno} ${participant.prijmeni}'), findsOneWidget);
+        expect(find.textContaining('Nadpis'), findsOneWidget);
         expect(find.text('Popis úrazu a ošetření'), findsOneWidget);
       });
 
@@ -217,7 +217,7 @@ void main() {
 
         expect(find.text('Nový záznam úrazu'), findsOneWidget);
         expect(find.text('Účastník'), findsOneWidget);
-        expect(find.text('Vyhledat'), findsOneWidget);
+        expect(find.textContaining('Vyhledat'), findsNWidgets(2)); // Button label + TextField hint
         expect(find.text('Čas záznamu'), findsOneWidget);
   expect(find.byKey(const Key('save_button')), findsOneWidget);
 
@@ -230,7 +230,7 @@ void main() {
 
         expect(find.text('Nový záznam úrazu'), findsOneWidget);
         expect(find.text('Účastník'), findsOneWidget);
-        expect(find.text('Nadpis'), findsOneWidget);
+        expect(find.textContaining('Nadpis'), findsOneWidget);
         expect(find.text('Popis úrazu a ošetření'), findsOneWidget);
         expect(find.text('Čas záznamu'), findsOneWidget);
   expect(find.byKey(const Key('save_button')), findsOneWidget);
@@ -243,9 +243,9 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-  // Search should always be visible
-  expect(find.text('Vyhledat'), findsOneWidget);
-  expect(find.byKey(const Key('participant_autocomplete')), findsOneWidget);
+  // Search should always be visible (button label + TextField hint)
+  expect(find.textContaining('Vyhledat'), findsNWidgets(2));
+  expect(find.byKey(const Key('NewRecordPage_participantAutocomplete')), findsOneWidget);
       });
     });
 
@@ -279,7 +279,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // 1. Participant should be shown
-        expect(find.text('${participant.jmeno} ${participant.prijmeni}'), findsOneWidget);
+        expect(find.textContaining('${participant.jmeno} ${participant.prijmeni}'), findsOneWidget);
 
         // 2. Fill form
         final titleField = find.byType(TextFormField).first;

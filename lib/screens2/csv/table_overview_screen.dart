@@ -326,7 +326,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
                         _buildTitleRow(context),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 0),
                         _buildSummaryPanel(context),
                         _buildUnparsedColumnsSection(),
                         const SizedBox(height: 2),
@@ -336,7 +336,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                   ),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Divider(height: 4),
+                    child: Divider(height: 1),
                   ),
                   Expanded(
                     child: Stack(

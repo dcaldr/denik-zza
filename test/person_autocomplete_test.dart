@@ -44,7 +44,8 @@ void main() {
       // Verify the widget builds successfully
       expect(find.byType(PersonAutocomplete), findsOneWidget);
       expect(find.byType(Autocomplete<MemoryOsoba>), findsOneWidget);
-      expect(find.text('Search for a person'), findsOneWidget);
+      // Verify hint text (Czech UI text as per project conventions)
+      expect(find.text('Vyhledat osobu'), findsOneWidget);
     });
 
     testWidgets('should dispose properly without setState errors', (WidgetTester tester) async {

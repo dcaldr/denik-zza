@@ -147,6 +147,7 @@ class _ParticipantListScreenState extends State<ParticipantListScreen> {
             padding: const EdgeInsets.all(16.0),
             child: PersonAutocomplete(
               key: const Key('ParticipantList_autocomplete'),
+              textFieldKey: const Key('ParticipantList_searchField'),
               availablePersons: _allParticipants,
               onPersonSelected: _handlePersonSelected,
               onRefresh: _loadParticipants,
