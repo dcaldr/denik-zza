@@ -2,225 +2,235 @@
 
 **Complete Code for Deník ZZA Design System**
 
-Based on Flutter Material 3 (2024/2025) and your design preferences.
+Based on **ACTUAL patterns** from your CSV import flow and NewRecord page (not generic Material 3).
 
 ---
 
-## 📋 What Can Be Put in ThemeData?
+## 🔍 Design Patterns Extracted from Your Best Screens
 
-Based on [Flutter API documentation](https://api.flutter.dev/flutter/material/ThemeData-class.html), ThemeData contains **90+ properties**:
+I analyzed the actual code from:
+- `lib/screens2/csv/import_screen.dart` ✅ (you like this flow)
+- `lib/screens2/csv/summary_screen.dart` ✅
+- `lib/screens2/new_record_page.dart` ✅ (you like this page)
 
-### Core Styling
-✅ `colorScheme` - All colors (primary, secondary, backgrounds, etc.)
-✅ `textTheme` - All text styles (titles, body, labels)
-✅ `typography` - Platform-specific typography
+### What I Found:
 
-### Component Themes (Partial List)
-✅ `appBarTheme` - AppBar styling
-✅ `filledButtonTheme` - Filled button styling ⭐
-✅ `outlinedButtonTheme` - Outlined button styling ⭐
-✅ `textButtonTheme` - Text button styling
-✅ `inputDecorationTheme` - Form field styling ⭐
-✅ `cardTheme` - Card styling
-✅ `chipTheme` - Chip styling
-✅ `listTileTheme` - List item styling ⭐
-✅ `dialogTheme` - Dialog styling
-✅ `snackBarTheme` - SnackBar styling
-✅ `bottomSheetTheme` - Bottom sheet styling
-✅ `drawerTheme` - Drawer styling
-✅ `badgeTheme` - Badge styling
-✅ `dataTableTheme` - DataTable styling
-✅ `datePickerTheme` - Date picker styling
-✅ ...and 60+ more!
+**Spacing:**
+- Main padding: `20-24px` (not edge-to-edge)
+- Section spacing: `12-24px` between major sections
+- Compact spacing: `8-12px` for tight layouts
+- Button spacing: `16px` horizontal gap
 
-### Material Behavior
-✅ `useMaterial3` - Enable Material 3 (default: true in Flutter 3.16+)
-✅ `visualDensity` - Spacing density
-✅ `materialTapTargetSize` - Touch target size
-✅ `splashFactory` - Ripple effect
-✅ `pageTransitionsTheme` - Page transition animations
+**Font Sizes (actual from code):**
+- Body text: `13-15px` (NOT 16px!)
+- Labels: `12-13px`
+- Small text: `11px`
+- Compact mode reduces by 1-2px
+
+**Border Radius:**
+- Cards/containers: `12px` (rounder than Material 3 default)
+- Form fields: `8px`
+- Buttons: `8px`
+
+**Colors (actual shades used):**
+- `Colors.blue.shade50` - light backgrounds
+- `Colors.blue.shade100` - icon button backgrounds
+- `Colors.blue.shade200` - borders
+- `Colors.blue.shade600` - primary actions
+- `Colors.blue.shade700` - text/icons
 
 ---
 
-## 🏗️ File Structure
+## 🏗️ File Structure (Flutter Best Practice 2024)
 
 ```
-lib/design_system/
-├── tokens/
-│   ├── app_colors.dart
-│   ├── app_typography.dart
-│   ├── app_spacing.dart
-│   └── app_radii.dart
-└── theme/
-    └── app_theme.dart
+lib/
+├── design_system/
+│   ├── tokens/
+│   │   ├── app_colors.dart
+│   │   ├── app_typography.dart
+│   │   ├── app_spacing.dart
+│   │   └── app_radii.dart
+│   └── theme/
+│       └── app_theme.dart
+└── screens2/
+    └── (your screens)
 ```
 
 ---
 
-## 📝 Step 1: Spacing Tokens
+## 📝 Step 1: Spacing Tokens (Extracted from Your Code)
 
 **File:** `lib/design_system/tokens/app_spacing.dart`
 
 ```dart
 import 'package:flutter/material.dart';
 
-/// Spacing tokens for consistent spacing across the app.
+/// Spacing tokens extracted from CSV import flow and NewRecord page.
 ///
-/// Based on feedback: "too cramped, need more whitespace"
+/// Based on actual code analysis:
+/// - CSV import uses: EdgeInsets.all(24)
+/// - NewRecord uses: EdgeInsets.all(20) "for better breathing room"
+/// - Internal spacing: 12-24px
 class AppSpacing {
-  AppSpacing._(); // Private constructor to prevent instantiation
+  AppSpacing._();
 
-  // Base spacing scale
+  // Base spacing scale (from actual code)
   static const double xs = 4.0;
   static const double small = 8.0;
-  static const double medium = 16.0;
-  static const double large = 24.0;
-  static const double xl = 32.0;
-  static const double xxl = 48.0;
+  static const double medium = 12.0;   // Used for compact spacing
+  static const double large = 16.0;    // Form field padding
+  static const double xl = 20.0;       // NewRecord page padding
+  static const double xxl = 24.0;      // CSV import padding
 
-  // Screen-level padding (more generous for "open feel")
-  static const EdgeInsets screenPadding = EdgeInsets.all(large);
+  // Screen-level padding (matches NewRecord: 20px, CSV: 24px)
+  static const EdgeInsets screenPadding = EdgeInsets.all(xl);
+  static const EdgeInsets screenPaddingGenerous = EdgeInsets.all(xxl);
 
-  // Form-specific spacing (prevent edge-to-edge)
-  static const double formSideMargin = xl; // 32px breathing room
-  static const EdgeInsets formPadding = EdgeInsets.symmetric(
-    horizontal: formSideMargin,
-    vertical: large,
-  );
-
-  // Card padding
-  static const EdgeInsets cardPadding = EdgeInsets.all(medium);
-
-  // List item padding
-  static const EdgeInsets listItemPadding = EdgeInsets.symmetric(
-    horizontal: medium,
-    vertical: small,
-  );
-
-  // Button padding
-  static const EdgeInsets buttonPadding = EdgeInsets.symmetric(
-    horizontal: xl,
+  // Form-specific spacing (from NewRecord page)
+  static const EdgeInsets formFieldPadding = EdgeInsets.symmetric(
+    horizontal: large,
     vertical: medium,
   );
 
-  // Form field spacing
-  static const SizedBox fieldSpacing = SizedBox(height: medium);
-  static const SizedBox sectionSpacing = SizedBox(height: large);
+  // Container padding (from NewRecord participant box: all 16)
+  static const EdgeInsets containerPadding = EdgeInsets.all(large);
+
+  // Compact spacing (isCompact ? 8.0 : 12.0 from NewRecord)
+  static const double compactSpacing = small;
+  static const double regularSpacing = medium;
+
+  // Section spacing (from CSV: height: 12, 24)
+  static const SizedBox smallGap = SizedBox(height: medium);
+  static const SizedBox largeGap = SizedBox(height: xxl);
+
+  // Button spacing (from CSV: SizedBox(width: 16))
+  static const SizedBox buttonGap = SizedBox(width: large);
 }
 ```
 
 ---
 
-## 🎨 Step 2: Color Tokens
+## 🎨 Step 2: Color Tokens (Extracted from Your Code)
 
 **File:** `lib/design_system/tokens/app_colors.dart`
 
 ```dart
 import 'package:flutter/material.dart';
 
-/// Color tokens for the app.
+/// Color tokens extracted from your CSV import and NewRecord pages.
 ///
-/// Based on:
-/// - Current blue (okay per feedback)
-/// - Vibrant intake form buttons for major actions
-/// - Open, clean feel
+/// Based on actual usage:
+/// - Blue: shade50 (backgrounds), shade100 (icon buttons),
+///         shade200 (borders), shade600 (filled buttons), shade700 (text)
+/// - Green: For positive actions (from NewRecord zpusobilost button)
 class AppColors {
   AppColors._();
 
-  // Intake form button colors (your favorite!)
-  static const Color vibrantGreen = Color(0xFF4CAF50);
-  static const Color vibrantGreenLight = Color(0xFFC8E6C9);
-  static const Color vibrantGreenDark = Color(0xFF388E3C);
+  // Blue shades (EXACTLY as used in your code)
+  static final Color blueBackground = Colors.blue.shade50;
+  static final Color blueBackgroundLight = Colors.blue.shade50.withOpacity(0.3); // NewRecord datetime box
+  static final Color blueIconBackground = Colors.blue.shade100;
+  static final Color blueBorder = Colors.blue.shade200;
+  static final Color blueBorderLight = Colors.blue.shade200.withOpacity(0.5);
+  static final Color blueText = Colors.blue.shade600;
+  static final Color blueDark = Colors.blue.shade700;
 
-  // Blue primary (current, keep it)
-  static const Color primaryBlue = Color(0xFF1976D2);
-  static const Color primaryBlueLight = Color(0xFFE3F2FD);
-  static const Color primaryBlueDark = Color(0xFF1565C0);
+  // Green shades (from NewRecord zpusobilost button)
+  static final Color greenBackground = Colors.green.shade50;
+  static final Color greenText = Colors.green.shade700;
 
-  /// Light color scheme for the app
-  static const ColorScheme lightColorScheme = ColorScheme.light(
-    // Primary color (navigation, emphasis)
-    primary: primaryBlue,
+  // Grey shades (from NewRecord history section)
+  static final Color greyBackground = Colors.grey.shade50;
+  static final Color greyBackgroundMedium = Colors.grey.shade100;
+  static final Color greyBorder = Colors.grey.shade200;
+  static final Color greyBorderDark = Colors.grey.shade300;
+  static final Color greyText = Colors.grey.shade600;
+  static final Color greyTextLight = Colors.grey.shade400;
+  static final Color greyIcon = Colors.grey.shade700;
+
+  // Yellow (poznámka sticky note from NewRecord)
+  static final Color yellowBackground = Colors.yellow.shade50;
+  static final Color yellowBorder = Colors.amber.shade300;
+  static final Color yellowText = Colors.amber.shade700;
+  static final Color yellowTextDark = Colors.amber.shade800;
+
+  // Orange (unsaved changes badge from NewRecord)
+  static final Color orangeBackground = Colors.orange.shade100;
+  static final Color orangeBorder = Colors.orange.shade300;
+  static final Color orangeText = Colors.orange.shade600;
+
+  /// Light color scheme matching your actual app
+  static final ColorScheme lightColorScheme = ColorScheme.light(
+    // Primary: Blue (your current color - "okay" per feedback)
+    primary: Colors.blue,
     onPrimary: Colors.white,
-    primaryContainer: primaryBlueLight,
+    primaryContainer: blueBackground,
     onPrimaryContainer: Color(0xFF001D35),
 
-    // Secondary color (vibrant for major actions like intake form!)
-    secondary: vibrantGreen,
+    // Secondary: Use for vibrant major actions
+    // (Will configure FilledButton to use custom vibrant green separately)
+    secondary: Colors.blue.shade600,
     onSecondary: Colors.white,
-    secondaryContainer: vibrantGreenLight,
-    onSecondaryContainer: Color(0xFF002106),
+    secondaryContainer: blueIconBackground,
+    onSecondaryContainer: Color(0xFF001D35),
 
-    // Tertiary (for accents if needed)
-    tertiary: Color(0xFFFFA726), // Orange for highlights
-    onTertiary: Colors.white,
-    tertiaryContainer: Color(0xFFFFE0B2),
-    onTertiaryContainer: Color(0xFF2A1800),
-
-    // Error colors
-    error: Color(0xFFD32F2F),
+    // Error
+    error: Colors.red,
     onError: Colors.white,
-    errorContainer: Color(0xFFFFCDD2),
-    onErrorContainer: Color(0xFF410002),
+    errorContainer: Colors.red.shade50,
+    onErrorContainer: Colors.red.shade900,
 
-    // Backgrounds (open, clean feel - slight off-white)
-    background: Color(0xFFFAFAFA), // Very light grey for openness
-    onBackground: Color(0xFF1A1C1E),
+    // Background (open, clean feel - slight off-white like CSV import)
+    background: Color(0xFFFAFAFA),
+    onBackground: Colors.black87,
 
-    // Surface colors
+    // Surface
     surface: Colors.white,
-    onSurface: Color(0xFF1A1C1E),
-    surfaceVariant: Color(0xFFE0E3E6),
-    onSurfaceVariant: Color(0xFF43474E),
+    onSurface: Colors.black87,
+    surfaceVariant: greyBackground,
+    onSurfaceVariant: greyText,
 
-    // Outlines (for less intrusive borders)
-    outline: Color(0xFFE0E0E0), // Light grey, subtle
-    outlineVariant: Color(0xFFC3C7CF),
+    // Outline (for minimalistic borders)
+    outline: greyBorderDark,           // Light grey, subtle
+    outlineVariant: greyBorder,        // Even lighter
 
     // Shadows
     shadow: Color(0xFF000000),
     scrim: Color(0xFF000000),
-
-    // Inverse colors (for dark elements on light bg)
-    inverseSurface: Color(0xFF2F3033),
-    onInverseSurface: Color(0xFFF1F0F4),
-    inversePrimary: Color(0xFF90CAF9),
   );
-
-  // Semantic colors (for specific uses)
-  static const Color success = vibrantGreen;
-  static const Color warning = Color(0xFFFFA726);
-  static const Color info = primaryBlue;
 }
 ```
 
 ---
 
-## 📖 Step 3: Typography Tokens
+## 📖 Step 3: Typography Tokens (Actual Font Sizes from Your Code)
 
 **File:** `lib/design_system/tokens/app_typography.dart`
 
 ```dart
 import 'package:flutter/material.dart';
 
-/// Typography tokens for the app.
+/// Typography tokens extracted from your actual screens.
 ///
-/// Requirements:
-/// - Support Czech diacritics well
-/// - Slightly smaller font sizes (feedback: "too large")
-/// - Current weights are good
+/// Font sizes found in code:
+/// - NewRecord body text: isCompact ? 13 : 14
+/// - NewRecord labels: isCompact ? 12 : 13
+/// - NewRecord title fields: isCompact ? 14 : 15
+/// - Small text: 11, 10, 9 (various places)
+///
+/// These are SMALLER than Material 3 defaults (which use 14-16px body text).
 class AppTypography {
   AppTypography._();
 
-  /// Font family that supports Czech diacritics
-  static const String fontFamily = 'Roboto'; // Default, supports Czech well
+  static const String fontFamily = 'Roboto'; // Supports Czech diacritics
 
-  /// Text theme for the app
-  static TextTheme textTheme = TextTheme(
-    // Display styles (large headings)
+  /// Text theme matching your actual font sizes
+  static const TextTheme textTheme = TextTheme(
+    // Display styles (large headings) - rarely used in your app
     displayLarge: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 32,
+      fontSize: 28,
       fontWeight: FontWeight.bold,
       letterSpacing: -0.5,
       height: 1.2,
@@ -228,17 +238,15 @@ class AppTypography {
     ),
     displayMedium: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 28,
+      fontSize: 24,
       fontWeight: FontWeight.bold,
-      letterSpacing: 0,
       height: 1.2,
       locale: Locale('cs', 'CZ'),
     ),
     displaySmall: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 24,
+      fontSize: 20,
       fontWeight: FontWeight.bold,
-      letterSpacing: 0,
       height: 1.3,
       locale: Locale('cs', 'CZ'),
     ),
@@ -246,41 +254,37 @@ class AppTypography {
     // Headline styles (section headers)
     headlineLarge: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 22,
+      fontSize: 18,
       fontWeight: FontWeight.w600,
-      letterSpacing: 0,
       height: 1.3,
       locale: Locale('cs', 'CZ'),
     ),
     headlineMedium: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 20,
+      fontSize: 16,
       fontWeight: FontWeight.w600,
-      letterSpacing: 0,
       height: 1.3,
       locale: Locale('cs', 'CZ'),
     ),
     headlineSmall: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 18,
+      fontSize: 15,
       fontWeight: FontWeight.w600,
-      letterSpacing: 0,
       height: 1.3,
       locale: Locale('cs', 'CZ'),
     ),
 
-    // Title styles (smaller headings)
+    // Title styles (CSV uses theme.textTheme.titleMedium for labels)
     titleLarge: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 18, // Slightly smaller
+      fontSize: 16,
       fontWeight: FontWeight.w600,
-      letterSpacing: 0,
       height: 1.4,
       locale: Locale('cs', 'CZ'),
     ),
     titleMedium: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 16,
+      fontSize: 15,        // Matches NewRecord title fields (non-compact)
       fontWeight: FontWeight.w500,
       letterSpacing: 0.15,
       height: 1.4,
@@ -288,7 +292,7 @@ class AppTypography {
     ),
     titleSmall: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: FontWeight.w500,
       letterSpacing: 0.1,
       height: 1.4,
@@ -296,9 +300,10 @@ class AppTypography {
     ),
 
     // Body styles (main content)
+    // CRITICAL: These match your actual code!
     bodyLarge: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 15, // Slightly smaller than default 16
+      fontSize: 15,        // CSV import file label uses bodyLarge
       fontWeight: FontWeight.normal,
       letterSpacing: 0.5,
       height: 1.5,
@@ -306,7 +311,7 @@ class AppTypography {
     ),
     bodyMedium: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 14,
+      fontSize: 14,        // NewRecord description field (non-compact)
       fontWeight: FontWeight.normal,
       letterSpacing: 0.25,
       height: 1.5,
@@ -314,14 +319,14 @@ class AppTypography {
     ),
     bodySmall: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 12,
+      fontSize: 12,        // NewRecord poznámka label
       fontWeight: FontWeight.normal,
       letterSpacing: 0.4,
       height: 1.5,
       locale: Locale('cs', 'CZ'),
     ),
 
-    // Label styles (buttons, tabs)
+    // Label styles (buttons, small UI elements)
     labelLarge: TextStyle(
       fontFamily: fontFamily,
       fontSize: 14,
@@ -340,7 +345,7 @@ class AppTypography {
     ),
     labelSmall: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 11,
+      fontSize: 11,        // NewRecord health chip text
       fontWeight: FontWeight.w500,
       letterSpacing: 0.5,
       height: 1.4,
@@ -352,33 +357,39 @@ class AppTypography {
 
 ---
 
-## 📐 Step 4: Radii Tokens
+## 📐 Step 4: Radii Tokens (Extracted from Your Code)
 
 **File:** `lib/design_system/tokens/app_radii.dart`
 
 ```dart
 import 'package:flutter/material.dart';
 
-/// Border radius tokens for consistent rounded corners.
+/// Border radius tokens extracted from your actual screens.
+///
+/// Found in code:
+/// - CSV import file box: BorderRadius.circular(12)
+/// - NewRecord participant box: BorderRadius.circular(12.0)
+/// - NewRecord form fields: BorderRadius.circular(8.0)
+/// - NewRecord action buttons: BorderRadius.circular(8.0)
 class AppRadii {
   AppRadii._();
 
   static const double small = 4.0;
-  static const double medium = 8.0;
-  static const double large = 12.0;
-  static const double xl = 16.0;
+  static const double medium = 6.0;
+  static const double large = 8.0;      // Form fields, buttons
+  static const double xl = 12.0;        // Containers, cards
 
-  // Common border radii
-  static const BorderRadius buttonRadius = BorderRadius.all(Radius.circular(medium));
-  static const BorderRadius cardRadius = BorderRadius.all(Radius.circular(large));
-  static const BorderRadius inputRadius = BorderRadius.all(Radius.circular(medium));
-  static const BorderRadius dialogRadius = BorderRadius.all(Radius.circular(xl));
+  // Common border radii (matching your actual code)
+  static const BorderRadius buttonRadius = BorderRadius.all(Radius.circular(large));      // 8px
+  static const BorderRadius cardRadius = BorderRadius.all(Radius.circular(xl));           // 12px
+  static const BorderRadius inputRadius = BorderRadius.all(Radius.circular(large));       // 8px
+  static const BorderRadius containerRadius = BorderRadius.all(Radius.circular(xl));      // 12px
 }
 ```
 
 ---
 
-## 🎨 Step 5: Complete App Theme
+## 🎨 Step 5: Complete App Theme (Based on Your Actual Patterns)
 
 **File:** `lib/design_system/theme/app_theme.dart`
 
@@ -389,87 +400,111 @@ import '../tokens/app_typography.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/app_radii.dart';
 
-/// Complete theme configuration for Deník ZZA app.
+/// Complete theme for Deník ZZA app.
 ///
-/// Based on Material 3 and design preferences:
-/// - Vibrant buttons for major actions (like intake form)
-/// - Material 3 standard for minor actions
-/// - Minimalistic, open feel
-/// - Less intrusive form borders
+/// IMPORTANT: This theme is based on ACTUAL patterns extracted from:
+/// - CSV import flow (you like this)
+/// - NewRecord page (you like this)
+///
+/// NOT based on generic Material 3 defaults.
 class AppTheme {
   AppTheme._();
 
   static ThemeData get lightTheme {
     return ThemeData(
-      // Enable Material 3
       useMaterial3: true,
 
       // Color scheme
       colorScheme: AppColors.lightColorScheme,
 
-      // Typography
+      // Typography (actual font sizes from your code!)
       textTheme: AppTypography.textTheme,
       fontFamily: AppTypography.fontFamily,
 
-      // Visual density (comfortable for desktop/tablet)
+      // Visual density
       visualDensity: VisualDensity.comfortable,
 
       // ========================================
       // BUTTON THEMES
       // ========================================
 
-      /// Filled buttons - Vibrant for major actions (like intake form!)
+      /// Filled buttons - For major actions
       ///
-      /// Use for:
-      /// - Form submissions
-      /// - Primary workflow actions
-      /// - "Označit jako příchozí" style buttons
+      /// From NewRecord save button:
+      /// backgroundColor: Colors.blue.shade600
+      /// padding: vertical 12-14, horizontal 16-20
+      /// borderRadius: 8.0
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.vibrantGreen, // Vibrant!
+          backgroundColor: Colors.blue.shade600,    // Actual color from code
           foregroundColor: Colors.white,
-          padding: AppSpacing.buttonPadding,
+          padding: EdgeInsets.symmetric(
+            vertical: 14,
+            horizontal: 20,
+          ),
           minimumSize: Size(120, 48),
           shape: RoundedRectangleBorder(
-            borderRadius: AppRadii.buttonRadius,
+            borderRadius: AppRadii.buttonRadius,  // 8px
           ),
           elevation: 2,
-          textStyle: AppTypography.textTheme.labelLarge,
+          textStyle: AppTypography.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
 
-      /// Outlined buttons - Material 3 for secondary/minor actions
+      /// Outlined buttons - For secondary actions
       ///
-      /// Use for:
-      /// - Cancel buttons
-      /// - Secondary actions
-      /// - Less important actions
+      /// From NewRecord cancel button:
+      /// foregroundColor: Colors.grey.shade700
+      /// side: Colors.grey.shade400, width: 1.5
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primaryBlue,
-          padding: AppSpacing.buttonPadding,
+          foregroundColor: Colors.grey.shade700,   // Actual color from code
+          padding: EdgeInsets.symmetric(
+            vertical: 14,
+            horizontal: 16,
+          ),
           minimumSize: Size(100, 48),
           side: BorderSide(
-            color: AppColors.lightColorScheme.outline,
-            width: 1,
+            color: Colors.grey.shade400,            // Actual from code
+            width: 1.5,                             // Actual from code
           ),
           shape: RoundedRectangleBorder(
             borderRadius: AppRadii.buttonRadius,
           ),
-          textStyle: AppTypography.textTheme.labelLarge,
+          textStyle: AppTypography.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ),
 
-      /// Text buttons - For tertiary actions
+      /// Text buttons - Tertiary actions
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.primaryBlue,
+          foregroundColor: AppColors.blueText,
           padding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.medium,
+            horizontal: AppSpacing.large,
             vertical: AppSpacing.small,
           ),
           minimumSize: Size(88, 36),
-          textStyle: AppTypography.textTheme.labelLarge,
+        ),
+      ),
+
+      /// Elevated buttons - Used in CSV import
+      ///
+      /// From CSV import "Vybrat soubor" button
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          foregroundColor: Colors.white,
+          backgroundColor: AppColors.blueText,
+          padding: EdgeInsets.symmetric(
+            vertical: 12,
+            horizontal: 16,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: AppRadii.buttonRadius,
+          ),
         ),
       ),
 
@@ -477,21 +512,27 @@ class AppTheme {
       // FORM FIELD THEME
       // ========================================
 
-      /// Input decoration - Minimalistic with less intrusive borders
+      /// Input decoration - Minimalistic borders
+      ///
+      /// From NewRecord form fields:
+      /// borderRadius: 8.0
+      /// enabledBorder: Colors.blue.shade200
+      /// focusedBorder: Colors.blue.shade600, width: 2
+      /// contentPadding: all(12-16)
       inputDecorationTheme: InputDecorationTheme(
-        // Less intrusive borders (feedback: "minimalistic approach")
+        // Border styling (actual from code)
         border: OutlineInputBorder(
-          borderRadius: AppRadii.inputRadius,
+          borderRadius: AppRadii.inputRadius,  // 8px
           borderSide: BorderSide(
-            color: AppColors.lightColorScheme.outline,
-            width: 1.0, // Thin
+            color: AppColors.blueBorder,        // blue.shade200
+            width: 1.0,
           ),
         ),
 
         enabledBorder: OutlineInputBorder(
           borderRadius: AppRadii.inputRadius,
           borderSide: BorderSide(
-            color: AppColors.lightColorScheme.outline,
+            color: AppColors.blueBorder,        // blue.shade200
             width: 1.0,
           ),
         ),
@@ -499,54 +540,57 @@ class AppTheme {
         focusedBorder: OutlineInputBorder(
           borderRadius: AppRadii.inputRadius,
           borderSide: BorderSide(
-            color: AppColors.primaryBlue,
-            width: 1.5, // Slightly thicker when focused
+            color: Colors.blue.shade600,        // Actual from code
+            width: 2,                           // Actual from code
           ),
         ),
 
         errorBorder: OutlineInputBorder(
           borderRadius: AppRadii.inputRadius,
           borderSide: BorderSide(
-            color: AppColors.lightColorScheme.error,
-            width: 1.0,
+            color: Colors.red,
+            width: 2,
           ),
         ),
 
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: AppRadii.inputRadius,
           borderSide: BorderSide(
-            color: AppColors.lightColorScheme.error,
-            width: 1.5,
+            color: Colors.red,
+            width: 2,
           ),
         ),
 
         disabledBorder: OutlineInputBorder(
           borderRadius: AppRadii.inputRadius,
           borderSide: BorderSide(
-            color: AppColors.lightColorScheme.outlineVariant,
+            color: AppColors.greyBorder,
             width: 1.0,
           ),
         ),
 
-        // Padding for open feel
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: AppSpacing.medium,
-          vertical: AppSpacing.medium,
+        // Padding (from NewRecord: 12-16)
+        contentPadding: EdgeInsets.all(AppSpacing.large),  // 16px
+
+        // Fill (minimalistic - no background fill)
+        filled: true,
+        fillColor: Colors.white,
+
+        // Text styles
+        labelStyle: AppTypography.textTheme.bodyMedium?.copyWith(
+          color: AppColors.blueDark,
+          fontWeight: FontWeight.w500,
         ),
 
-        // Transparent background (minimalistic)
-        filled: false,
-
-        // Label style
-        labelStyle: AppTypography.textTheme.bodyMedium,
-        floatingLabelStyle: AppTypography.textTheme.bodySmall?.copyWith(
-          color: AppColors.primaryBlue,
+        hintStyle: AppTypography.textTheme.bodyMedium?.copyWith(
+          color: AppColors.greyTextLight,
+          fontStyle: FontStyle.italic,
         ),
 
-        // Helper/error text style
         helperStyle: AppTypography.textTheme.bodySmall,
         errorStyle: AppTypography.textTheme.bodySmall?.copyWith(
-          color: AppColors.lightColorScheme.error,
+          fontSize: 11,
+          height: 0.8,
         ),
       ),
 
@@ -554,29 +598,18 @@ class AppTheme {
       // CARD THEME
       // ========================================
 
+      /// Cards - From CSV summary failure cards
+      ///
+      /// margin: EdgeInsets.only(bottom: 8)
+      /// padding: EdgeInsets.all(12)
       cardTheme: CardTheme(
         elevation: 1,
-        shadowColor: AppColors.lightColorScheme.shadow.withOpacity(0.1),
-        margin: EdgeInsets.symmetric(
-          vertical: AppSpacing.small,
-          horizontal: 0,
-        ),
+        shadowColor: Colors.black.withOpacity(0.1),
+        margin: EdgeInsets.only(bottom: AppSpacing.small),
         shape: RoundedRectangleBorder(
-          borderRadius: AppRadii.cardRadius,
+          borderRadius: AppRadii.cardRadius,  // 12px
         ),
         clipBehavior: Clip.antiAlias,
-      ),
-
-      // ========================================
-      // LIST TILE THEME
-      // ========================================
-
-      listTileTheme: ListTileThemeData(
-        contentPadding: AppSpacing.listItemPadding,
-        minVerticalPadding: AppSpacing.small,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadii.cardRadius,
-        ),
       ),
 
       // ========================================
@@ -587,25 +620,14 @@ class AppTheme {
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 2,
-        backgroundColor: AppColors.primaryBlue,
+        backgroundColor: Colors.blue,           // Primary blue
         foregroundColor: Colors.white,
         titleTextStyle: AppTypography.textTheme.titleLarge?.copyWith(
           color: Colors.white,
+          fontSize: 18,
         ),
         iconTheme: IconThemeData(
           color: Colors.white,
-        ),
-      ),
-
-      // ========================================
-      // DRAWER THEME
-      // ========================================
-
-      drawerTheme: DrawerThemeData(
-        backgroundColor: AppColors.lightColorScheme.surface,
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.zero,
         ),
       ),
 
@@ -614,10 +636,10 @@ class AppTheme {
       // ========================================
 
       dialogTheme: DialogTheme(
-        backgroundColor: AppColors.lightColorScheme.surface,
+        backgroundColor: Colors.white,
         elevation: 6,
         shape: RoundedRectangleBorder(
-          borderRadius: AppRadii.dialogRadius,
+          borderRadius: AppRadii.containerRadius,  // 12px
         ),
         titleTextStyle: AppTypography.textTheme.headlineSmall,
         contentTextStyle: AppTypography.textTheme.bodyMedium,
@@ -629,84 +651,38 @@ class AppTheme {
 
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.lightColorScheme.inverseSurface,
+        backgroundColor: Colors.grey.shade800,
         contentTextStyle: AppTypography.textTheme.bodyMedium?.copyWith(
-          color: AppColors.lightColorScheme.onInverseSurface,
+          color: Colors.white,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: AppRadii.medium * BorderRadius.all(Radius.circular(1)),
+          borderRadius: BorderRadius.circular(8),
         ),
       ),
 
       // ========================================
-      // CHIP THEME
-      // ========================================
-
-      chipTheme: ChipThemeData(
-        backgroundColor: AppColors.lightColorScheme.surfaceVariant,
-        deleteIconColor: AppColors.lightColorScheme.onSurfaceVariant,
-        selectedColor: AppColors.primaryBlueLight,
-        secondarySelectedColor: AppColors.vibrantGreenLight,
-        padding: EdgeInsets.symmetric(
-          horizontal: AppSpacing.small,
-          vertical: AppSpacing.xs,
-        ),
-        labelStyle: AppTypography.textTheme.labelSmall,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(AppRadii.medium)),
-        ),
-      ),
-
-      // ========================================
-      // DATA TABLE THEME (for CSV)
+      // DATA TABLE THEME (CSV)
       // ========================================
 
       dataTableTheme: DataTableThemeData(
         headingTextStyle: AppTypography.textTheme.labelLarge,
         dataTextStyle: AppTypography.textTheme.bodyMedium,
-        columnSpacing: AppSpacing.large,
-        horizontalMargin: AppSpacing.medium,
-      ),
-
-      // ========================================
-      // DATE PICKER THEME
-      // ========================================
-
-      datePickerTheme: DatePickerThemeData(
-        backgroundColor: AppColors.lightColorScheme.surface,
-        headerBackgroundColor: AppColors.primaryBlue,
-        headerForegroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadii.dialogRadius,
-        ),
-      ),
-
-      // ========================================
-      // BOTTOM SHEET THEME
-      // ========================================
-
-      bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: AppColors.lightColorScheme.surface,
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadii.xl),
-          ),
-        ),
+        columnSpacing: AppSpacing.xxl,
+        horizontalMargin: AppSpacing.large,
       ),
 
       // ========================================
       // SCAFFOLD BACKGROUND
       // ========================================
 
-      scaffoldBackgroundColor: AppColors.lightColorScheme.background,
+      scaffoldBackgroundColor: AppColors.lightColorScheme.background,  // #FAFAFA
 
       // ========================================
       // DIVIDER THEME
       // ========================================
 
       dividerTheme: DividerThemeData(
-        color: AppColors.lightColorScheme.outlineVariant,
+        color: AppColors.greyBorderDark,
         thickness: 1,
         space: AppSpacing.medium,
       ),
@@ -719,19 +695,15 @@ class AppTheme {
 
 ## 🚀 Step 6: Integration in main.dart
 
-**File:** `lib/main.dart`
+**File:** `lib/main.dart` (update)
 
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:denik_zza/design_system/theme/app_theme.dart';
-import 'package:denik_zza/screens2/event_list.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize any services here...
-
   runApp(const MyApp());
 }
 
@@ -743,24 +715,19 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Deník ZZA',
 
-      // 🎨 Use our complete theme!
+      // 🎨 Use theme extracted from your actual code!
       theme: AppTheme.lightTheme,
 
       // Czech localization
       locale: const Locale('cs', 'CZ'),
-      supportedLocales: const [
-        Locale('cs', 'CZ'),
-      ],
+      supportedLocales: const [Locale('cs', 'CZ')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
 
-      // Home screen
       home: EventList(),
-
-      // Debug banner
       debugShowCheckedModeBanner: false,
     );
   }
@@ -771,69 +738,72 @@ class MyApp extends StatelessWidget {
 
 ## 💡 Usage Examples
 
-### Example 1: Using Themed Buttons
+### Example 1: Using Themed Buttons (Like Your CSV Import)
 
 ```dart
-// Major action (vibrant, like intake form)
+// Primary action (like CSV "Pokračovat")
 FilledButton(
-  onPressed: _submit,
-  child: Text('Uložit'), // Automatically uses theme style!
+  onPressed: _continue,
+  child: Text('Pokračovat'),  // Auto-styled like CSV import!
 )
 
-// Secondary action (Material 3 standard)
-OutlinedButton(
-  onPressed: _cancel,
-  child: Text('Zrušit'),
-)
-
-// Tertiary action
-TextButton(
-  onPressed: _back,
-  child: Text('Zpět'),
+// Secondary action (like CSV "Vybrat soubor")
+ElevatedButton(
+  onPressed: _pickFile,
+  child: Text('Vybrat soubor'),
 )
 ```
 
-### Example 2: Using Themed Form Fields
+### Example 2: Using Themed Form Fields (Like NewRecord)
 
 ```dart
-// Automatically gets minimalistic borders!
+// Automatically gets blue.shade200 borders, 8px radius!
 TextFormField(
   decoration: InputDecoration(
-    labelText: 'Jméno',
-    helperText: 'Zadejte jméno účastníka',
+    labelText: 'Nadpis',
+    hintText: 'Zadejte nadpis záznamu',
   ),
-  validator: (value) => value?.isEmpty ?? true ? 'Povinné pole' : null,
 )
 ```
 
-### Example 3: Using Spacing Constants
+### Example 3: Using Spacing (Like NewRecord)
 
 ```dart
+// Main screen padding (matches NewRecord: 20px)
 Padding(
-  padding: AppSpacing.screenPadding, // Not edge-to-edge!
+  padding: AppSpacing.screenPadding,  // 20px all sides
   child: Column(
     children: [
-      Text('Title'),
-      AppSpacing.sectionSpacing, // SizedBox with correct height
-      TextFormField(...),
-      AppSpacing.fieldSpacing,
+      Text('Section 1'),
+      AppSpacing.largeGap,              // 24px vertical gap
+      Text('Section 2'),
+      AppSpacing.smallGap,              // 12px vertical gap
       TextFormField(...),
     ],
   ),
 )
 ```
 
-### Example 4: Using Colors
+### Example 4: Participant Container (Like NewRecord)
 
 ```dart
-// For specific color needs (rare - theme handles most)
+// Blue gradient box (like NewRecord participant section)
 Container(
+  padding: AppSpacing.containerPadding,  // 16px all
   decoration: BoxDecoration(
-    color: Theme.of(context).colorScheme.primaryContainer,
+    gradient: LinearGradient(
+      colors: [
+        AppColors.blueBackground,
+        AppColors.blueBackgroundLight,
+      ],
+    ),
+    borderRadius: AppRadii.containerRadius,  // 12px
     border: Border.all(
-      color: Theme.of(context).colorScheme.outline,
+      color: AppColors.blueBorder,           // blue.shade200
+      width: 1,
     ),
   ),
+  child: YourContent(),
 )
 ```
 
@@ -843,64 +813,29 @@ Container(
 
 After implementation:
 
-- [ ] All buttons display correctly
-- [ ] Vibrant buttons for major actions (intake form style)
-- [ ] Material 3 buttons for minor actions
-- [ ] Form fields have less intrusive borders
+- [ ] Buttons match CSV import style (blue.shade600, not green)
+- [ ] Form fields have blue.shade200 borders (8px radius)
+- [ ] Font sizes feel smaller/more compact (14-15px body, not 16px)
+- [ ] Screen padding is 20-24px (not edge-to-edge)
+- [ ] Border radius is 8-12px (rounder than Material 3 default)
 - [ ] Czech diacritics render correctly (ě, š, č, ř, ž, ý, á, í, é, ú, ů, ď, ť, ň)
-- [ ] Spacing consistent across all screens
-- [ ] No edge-to-edge forms (margins present)
-- [ ] Text sizes feel appropriate (not too large)
-- [ ] Open, clean feel achieved
+- [ ] App feels consistent with CSV import and NewRecord pages
 - [ ] Test on Windows 10, Linux
-- [ ] Test on 375px, 768px, 1440px widths
+- [ ] Test responsive (375px, 768px, 1440px widths)
 
 ---
 
-## 🔄 Migration Path
+## 🔍 Key Differences from Material 3 Defaults
 
-To migrate existing screens to use the theme:
-
-### Before:
-```dart
-ElevatedButton(
-  style: ElevatedButton.styleFrom(
-    backgroundColor: Colors.green,
-    padding: EdgeInsets.all(16),
-  ),
-  onPressed: _submit,
-  child: Text('Uložit'),
-)
-```
-
-### After:
-```dart
-FilledButton( // Theme handles styling!
-  onPressed: _submit,
-  child: Text('Uložit'),
-)
-```
-
-### Before:
-```dart
-TextField(
-  decoration: InputDecoration(
-    border: OutlineInputBorder(
-      borderSide: BorderSide(color: Colors.grey),
-    ),
-    contentPadding: EdgeInsets.all(12),
-  ),
-)
-```
-
-### After:
-```dart
-TextField( // Theme handles styling!
-  decoration: InputDecoration(
-    labelText: 'Field label',
-  ),
-)
-```
+| Element | Material 3 Default | Your Actual Code |
+|---------|-------------------|------------------|
+| Body text | 16px | 14-15px |
+| Border radius | 4px | 8-12px |
+| Form padding | 12px | 16px |
+| Screen padding | 16px | 20-24px |
+| Button height | 40px | 48px |
+| Primary button color | Theme primary | blue.shade600 |
+| Form border color | Theme outline | blue.shade200 |
 
 ---
 
@@ -908,12 +843,13 @@ TextField( // Theme handles styling!
 
 - **Your Preferences:** `APP_DESIGN_FEEL.md`
 - **Implementation Plan:** `CONSISTENCY_PLAN.md`
-- **Official Flutter Docs:** https://api.flutter.dev/flutter/material/ThemeData-class.html
+- **UI Audit:** `../ui-audit/UI_AUDIT_DOCUMENTATION.md`
 
 ---
 
 **Created:** 2025-11-15
-**Flutter Version:** 3.16+ (Material 3 default)
+**Based on:** Actual code from CSV import flow + NewRecord page
+**Flutter Version:** 3.16+ (Material 3)
 **Locale:** cs_CZ (Czech)
 
-💡 **Pro Tip:** Once ThemeData is set up, you rarely need to specify styling in individual widgets!
+💡 **Important:** This theme extracts patterns from screens you already like (CSV import, NewRecord), not generic Material 3 defaults!
