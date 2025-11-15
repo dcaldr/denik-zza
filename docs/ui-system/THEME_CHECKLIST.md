@@ -144,6 +144,15 @@
 - Line 694: "Too large, decrease default size"
 - Line 695: "Some screens well packed (CSV, NewRecord)" ← Use their sizes!
 
+**IMPORTANT - Responsive Font Sizes:**
+- Theme provides 15px default (NOT 14px) to avoid breaking responsive logic
+- Screens that need responsive behavior override with: `isCompact ? 14 : 15`
+- User chose 15px as desktop/tablet default, 14px for compact views
+- Constants to add:
+  - [ ] `bodyMediumSize = 15.0` (Desktop/tablet default)
+  - [ ] `bodyMediumSizeCompact = 14.0` (Responsive override for screens)
+  - [ ] `bodyMediumSizePhone = 14.0` (Phone-specific)
+
 **Critical:** Body text is 14-15px (NOT 16px Material 3 default)
 
 ---
@@ -188,7 +197,14 @@
 
 **Reference:** APP_DESIGN_FEEL.md line 374 - IntakeForm buttons "LOVE the colors"
 
-- [ ] **FilledButtonTheme:**
+**IMPORTANT - Context-Sensitive Button Colors (User Decision: Option C):**
+- **Medical/arrival actions:** GREEN (like IntakeForm "uložit a přišel")
+- **Data/save actions:** BLUE (like NewRecord "Uložit")
+- **Single/minor actions:** Material standard (blue primary)
+
+**User quote:** "for bigger actions next to each other its good to have vibrant like intake form, for small actions or single actions newest material standard is ok"
+
+- [ ] **FilledButtonTheme (Default - Blue for data actions):**
   - [ ] `backgroundColor: Colors.blue.shade600` (from NewRecord save button)
   - [ ] `foregroundColor: Colors.white`
   - [ ] `padding: EdgeInsets.symmetric(v: 14, h: 20)` (from actual code)
@@ -196,6 +212,15 @@
   - [ ] `shape: RoundedRectangleBorder(borderRadius: AppRadii.buttonRadius)` (8px)
   - [ ] `elevation: 2`
   - [ ] `textStyle: AppTypography.textTheme.labelLarge.copyWith(fontWeight: w600)`
+
+- [ ] **Medical Action Buttons (Green - requires explicit styling):**
+  - [ ] IntakeForm "uložit a přišel": `Colors.green` (keep as-is)
+  - [ ] NOT in theme - manually styled with `.styleFrom(backgroundColor: Colors.green)`
+  - [ ] Document: "Medical arrival buttons use Colors.green explicitly"
+
+- [ ] **Destructive Action Buttons (Red - requires explicit styling):**
+  - [ ] IntakeForm "neukládat": `Colors.red` (keep as-is)
+  - [ ] NOT in theme - manually styled with `.styleFrom(backgroundColor: Colors.red)`
 
 - [ ] **OutlinedButtonTheme:**
   - [ ] `foregroundColor: Colors.grey.shade700` (from NewRecord cancel)
@@ -337,7 +362,46 @@
 
 ---
 
-### ⬜ 4.3 ParticipantListScreen - Fix Search & Clickability
+### ⬜ 4.3 EventRegistrationForm - Increase Padding
+
+**Priority:** HIGH
+**Reference:** APP_DESIGN_FEEL.md line 341, LINE_BY_LINE_VERIFICATION.md Gap #1
+
+**File:** `lib/screens2/event_registration_form.dart`
+
+**Current state:** Line 100 has `EdgeInsets.all(16.0)` - not enough
+
+- [ ] Change `EdgeInsets.all(16.0)` → `AppSpacing.screenPadding` (20px)
+- [ ] Test on desktop (should not stretch full width)
+- [ ] Verify form still creates events correctly
+
+**User quote:** "streches full width of screen -- no margins"
+
+**Note:** This was identified as a gap during line-by-line verification - form currently has 16px padding but needs 20-24px
+
+---
+
+### ⬜ 4.4 EventDetail - Verify Padding (Likely OK)
+
+**Priority:** LOW
+**Reference:** APP_DESIGN_FEEL.md line 304, LINE_BY_LINE_VERIFICATION.md Gap #2
+
+**File:** `lib/screens2/event_detail.dart`
+
+**Current state:** Line 107 has `EdgeInsets.all(20.0)` - already correct!
+
+- [ ] Verify visual spacing looks good on desktop
+- [ ] Replace hardcoded `EdgeInsets.all(20.0)` → `AppSpacing.screenPadding`
+- [ ] Verify participant list items have proper spacing
+- [ ] Test that search and filters still work correctly
+
+**User quote:** "spacing from side of screens feels off"
+
+**Note:** This was identified as a gap during line-by-line verification, but code inspection shows it already has 20px padding. May just need visual verification.
+
+---
+
+### ⬜ 4.5 ParticipantListScreen - Fix Search & Clickability
 
 **Priority:** HIGH
 **Reference:** APP_DESIGN_FEEL.md lines 135-139, SCREEN_ANALYSIS.md
@@ -353,7 +417,7 @@
 
 ---
 
-### ⬜ 4.4 IntakeForm - Add Inline Participant Creation
+### ⬜ 4.6 IntakeForm - Add Inline Participant Creation
 
 **Priority:** CRITICAL (HUGE MISS)
 **Reference:** APP_DESIGN_FEEL.md line 389, FIXME.md #1
@@ -369,7 +433,7 @@
 
 ---
 
-### ⬜ 4.5 IntakeForm - Add Arrived Counter
+### ⬜ 4.7 IntakeForm - Add Arrived Counter
 
 **Priority:** CRITICAL (HUGE MISS)
 **Reference:** APP_DESIGN_FEEL.md line 390, FIXME.md #2
@@ -448,6 +512,35 @@ color: Theme.of(context).colorScheme.outline
 - [ ] Replace `BorderRadius.circular(12)` → `AppRadii.containerRadius`
 - [ ] Replace `BorderRadius.circular(8)` → `AppRadii.inputRadius` or `buttonRadius`
 - [ ] Ensure consistency across all Container/Card widgets
+
+---
+
+### ⬜ 5.5 Fix Empty State Hardcoded Colors
+
+**Priority:** MEDIUM
+**Reference:** LINE_BY_LINE_VERIFICATION.md Gap #3
+
+**Files to update:**
+- [ ] `participant_list_screen.dart` - Empty state icons and text
+- [ ] `event_list.dart` - Empty state (if applicable)
+- [ ] Any other screens with empty states
+
+**Pattern to replace:**
+```dart
+// Before:
+Icon(Icons.people_outline, size: 48, color: Colors.grey)
+Text('Žádní účastníci', style: TextStyle(fontSize: 18, color: Colors.grey))
+
+// After:
+Icon(Icons.people_outline,
+  size: 48,
+  color: Theme.of(context).colorScheme.onSurfaceVariant)
+Text('Žádní účastníci',
+  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+    color: Theme.of(context).colorScheme.onSurfaceVariant))
+```
+
+**Note:** This was identified as a gap during line-by-line verification
 
 ---
 
