@@ -260,6 +260,31 @@ See PHASE_3_TECHNICAL.md for detailed commit messages.
 
 ---
 
+## ❓ Common Questions
+
+**Q: Why separate Phase 3 from functional fixes?**
+A: So we can isolate what broke what. If something breaks during Phase 3, we know it's from consistency changes. Pre-existing bugs are in FIXME.md.
+
+**Q: Why 6 separate commits instead of one big commit?**
+A: Easy rollback. If colors break something, we can revert just that commit without losing padding fixes or theme integration.
+
+**Q: Can I skip any steps?**
+A: No - they build on each other. Theme must be active before replacing hardcoded values makes sense.
+
+**Q: What if I find screens not in the plan?**
+A: Add them to the appropriate step and update file counts. See PHASE_3_SCREEN_COVERAGE.md for the verification process.
+
+**Q: Why preserve IntakeForm 3-button colors?**
+A: It's intentional manual styling for critical medical decisions (arrived/save/don't save). The color combination (green/blue/red) is specifically chosen for this ternary choice.
+
+**Q: How do I know which screens need padding?**
+A: Step 2 lists them explicitly. If a screen feels "edge-to-edge" when testing, add it to Step 2 and commit separately.
+
+**Q: Can I combine spacing and radii into one commit?**
+A: You can, but separate commits make debugging easier if something goes wrong.
+
+---
+
 **Branch:** claude/theme-implementation-011CUrKKs9V6BLrMRtfnH8Vd
 **Status:** Planning Complete, Ready for Implementation
 **Next:** See PHASE_3_TECHNICAL.md for detailed implementation steps

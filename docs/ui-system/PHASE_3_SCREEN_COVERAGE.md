@@ -88,6 +88,30 @@ Verification that all necessary screens are included in Phase 3 implementation p
 
 ---
 
+## ❓ Quick Q&A
+
+**Q: Are all necessary screens covered in Phase 3?**
+A: Yes - all 13 screens are covered. Initial plan missed 2 screens (table_overview_screen.dart and participant_edit_page.dart) which have been added.
+
+**Q: Which screens were missing from the initial plan?**
+A:
+- `table_overview_screen.dart` (CSV DataTable) - now has Section 3.7
+- `participant_edit_page.dart` - added to testing checklist
+
+**Q: Why is NewRecordPage called out specially?**
+A: It's complex with multiple color contexts (participant box, poznámka, health chips, buttons). Section 3.6 provides detailed replacements.
+
+**Q: Why exclude PrintCenter and ParticipantDetail?**
+A: PrintCenter has language/functionality issues (separate redesign). ParticipantDetail needs complete redesign (not just consistency fixes).
+
+**Q: What about FileViewerScreen?**
+A: It's inaccessible in current app state. If found during testing, just verify no crashes.
+
+**Q: How were these screens identified?**
+A: Analyzed lib/screens2/ directory structure and cross-referenced with existing code analysis from SCREEN_ANALYSIS.md.
+
+---
+
 ## ✅ Final Coverage Summary
 
 **Total Screens:** 13
