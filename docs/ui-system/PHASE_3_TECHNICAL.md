@@ -313,20 +313,26 @@ Colors.orange.shade300        → AppColors.orangeBorder
 Colors.orange.shade600        → AppColors.orangeText
 ```
 
-### 3.3: Files to Update (estimated)
+### 3.3: Files to Update
 
 **Priority 1 (definitely have hardcoded colors):**
-- [ ] `lib/screens2/new_record_page.dart` - Blue/grey for buttons, participant boxes
+- [ ] `lib/screens2/new_record_page.dart` - Blue/grey for buttons, participant boxes (see 3.6 for details)
 - [ ] `lib/screens2/widgets/app_drawer.dart` - Orange highlights
 - [ ] `lib/screens2/csv/import_screen.dart` - Blue containers
+- [ ] `lib/screens2/csv/table_overview_screen.dart` - DataTable colors (NEW - was missing!)
 - [ ] `lib/screens2/csv/summary_screen.dart` - Blue cards
 
 **Priority 2 (likely have hardcoded colors):**
 - [ ] `lib/screens2/participant_list_screen.dart` - Empty state grey
 - [ ] `lib/screens2/event_list.dart` - Empty state grey (if applicable)
-- [ ] `lib/screens2/intake_form_improved.dart` - Check gradients
+- [ ] `lib/screens2/intake_form_improved.dart` - Participant info box gradient, health status colors
+
+**Priority 3 (minimal changes expected):**
+- [ ] `lib/screens2/participant_edit_page.dart` - Verify Scaffold (reuses ParticipantRegistrationForm)
 
 **NOTE:** IntakeForm 3-button colors (green/blue/red) stay hardcoded - this is intentional!
+
+**Total files:** ~12-15 files (updated from ~10-15)
 
 ### 3.4: Add Import to Each File
 
@@ -364,29 +370,154 @@ Icon(Icons.people_outline, size: 48, color: AppColors.greyText)
 Text('Žádní účastníci', style: TextStyle(fontSize: 18, color: AppColors.greyText))
 ```
 
+### 3.6: NewRecordPage Detailed Color Replacements
+
+**File:** `lib/screens2/new_record_page.dart`
+
+**This is a complex screen with many hardcoded colors. Replace systematically:**
+
+**Participant info box:**
+```dart
+// BEFORE:
+Container(
+  decoration: BoxDecoration(
+    color: Colors.blue.shade50,
+    borderRadius: BorderRadius.circular(12),
+    border: Border.all(color: Colors.blue.shade200),
+    gradient: LinearGradient(
+      colors: [Colors.blue.shade50, Colors.blue.shade50.withOpacity(0.3)],
+    ),
+  ),
+)
+
+// AFTER:
+Container(
+  decoration: BoxDecoration(
+    color: AppColors.blueBackground,
+    borderRadius: AppRadii.containerRadius,
+    border: Border.all(color: AppColors.blueBorder),
+    gradient: LinearGradient(
+      colors: [AppColors.blueBackground, AppColors.blueBackgroundLight],
+    ),
+  ),
+)
+```
+
+**Buttons (will be auto-styled by theme, but verify):**
+```dart
+// Save button - FilledButton will auto-use theme
+// Close button - OutlinedButton will auto-use theme
+// If manually styled, replace:
+Colors.blue.shade600  → AppColors.blueText
+Colors.grey.shade700  → AppColors.greyIcon
+Colors.grey.shade400  → AppColors.greyBorderDark
+```
+
+**Poznámka (yellow notes) box:**
+```dart
+// BEFORE:
+Container(
+  decoration: BoxDecoration(
+    color: Colors.yellow.shade50,
+    border: Border.all(color: Colors.amber.shade300),
+  ),
+)
+
+// AFTER:
+Container(
+  decoration: BoxDecoration(
+    color: AppColors.yellowBackground,
+    border: Border.all(color: AppColors.yellowBorder),
+  ),
+)
+```
+
+**Health status chips:**
+```dart
+// BEFORE:
+Container(
+  decoration: BoxDecoration(
+    color: Colors.green.shade50,
+  ),
+  child: Text(..., style: TextStyle(color: Colors.green.shade700)),
+)
+
+// AFTER:
+Container(
+  decoration: BoxDecoration(
+    color: AppColors.greenBackground,
+  ),
+  child: Text(..., style: TextStyle(color: AppColors.greenText)),
+)
+```
+
+**Add imports:**
+```dart
+import '../core/constants/app_colors.dart';
+import '../core/constants/app_radii.dart';
+```
+
+### 3.7: CSV table_overview_screen.dart (DataTable)
+
+**File:** `lib/screens2/csv/table_overview_screen.dart`
+
+**This screen has a DataTable with many color properties:**
+
+**DataTable theme (most will be handled by theme, but check for hardcoded):**
+```dart
+// Check for any hardcoded:
+Colors.blue.shade*  → AppColors equivalents
+Colors.grey.shade*  → AppColors equivalents
+
+// Table borders:
+BorderSide(color: Colors.grey.shade300) → BorderSide(color: AppColors.greyBorderDark)
+
+// Table headers:
+TextStyle(color: Colors.black87)  → Use theme: Theme.of(context).textTheme.labelLarge
+
+// Selected row:
+Colors.blue.shade50  → AppColors.blueBackground
+```
+
+**IMPORTANT:** Do NOT add padding to this screen (table needs horizontal scroll)
+
+**Add import:**
+```dart
+import '../../core/constants/app_colors.dart';
+```
+
 ### Commit Step 3:
 ```bash
 git add lib/screens2/new_record_page.dart \
         lib/screens2/widgets/app_drawer.dart \
-        lib/screens2/csv/ \
+        lib/screens2/csv/import_screen.dart \
+        lib/screens2/csv/table_overview_screen.dart \
+        lib/screens2/csv/summary_screen.dart \
         lib/screens2/participant_list_screen.dart \
         lib/screens2/event_list.dart \
-        # ... add all modified files
+        lib/screens2/intake_form_improved.dart \
+        lib/screens2/participant_edit_page.dart
 
 git commit -m "refactor: replace hardcoded colors with AppColors
 
 Replaced all hardcoded Colors.blue/grey/orange with AppColors constants.
 
 Changes:
-- NewRecordPage: blue.shade200 → AppColors.blueBorder, etc.
+- NewRecordPage: Participant box, poznámka, health chips → AppColors
 - AppDrawer: orange.shade100 → AppColors.orangeBackground
-- CSV screens: All blue shades → AppColors
-- Empty states: Colors.grey → AppColors.greyText
+- CSV import_screen: Blue containers → AppColors
+- CSV table_overview_screen: DataTable colors → AppColors (NEW screen added)
+- CSV summary_screen: Blue cards → AppColors
+- ParticipantListScreen: Empty states → AppColors.greyText
+- EventList: Empty states → AppColors.greyText (if applicable)
+- IntakeFormImproved: Gradients, health status → AppColors
+- ParticipantEditPage: Verified (minimal changes)
 - All screens now use consistent color palette
 
 Preserved:
 - IntakeForm 3-button pattern (green/blue/red) - intentionally manual
 
+Files updated: 12-15 screens
 User priority: 9/10 for color consistency (APP_DESIGN_FEEL line 872)
 Reference: PHASE_3_TECHNICAL.md Step 3"
 ```
@@ -650,11 +781,17 @@ Reference: PHASE_3_TECHNICAL.md Step 5"
   - 20px padding (not 16px) ✅
   - Form fields styled ✅
 
-- [ ] **CSV Import Flow**
-  - import_screen styling ✅
-  - confirm_screen table styling ✅
-  - summary_screen cards styling ✅
-  - 24px generous padding preserved ✅
+- [ ] **ParticipantEditPage**
+  - Opens without errors ✅
+  - Form has 20px padding (inherits from ParticipantRegistrationForm) ✅
+  - Save/Cancel buttons work ✅
+  - AppBar styled correctly ✅
+
+- [ ] **CSV Import Flow** (3 screens)
+  - import_screen: File selection styling ✅
+  - table_overview_screen: DataTable styling, colors consistent ✅
+  - summary_screen: Cards styling ✅
+  - All screens: No padding issues (table preserves horizontal scroll) ✅
 
 - [ ] **AppDrawer**
   - Orange highlights preserved ✅
@@ -776,31 +913,40 @@ Next: Functional fixes from docs/ui-system/FIXME.md (separate work)"
 
 ## 📊 Files Changed Summary
 
-### Estimated Files Modified: 15-20 files
+### Estimated Files Modified: 17-20 files (updated from initial 15-20 estimate)
 
 **Core Integration (1 file):**
 - lib/main.dart
 
 **Edge-to-Edge Fixes (4 files):**
-- lib/screens2/participant_registration_form.dart
-- lib/screens2/event_registration_form.dart
-- lib/screens2/event_list.dart
-- lib/screens2/event_detail.dart
+- lib/screens2/participant_registration_form.dart (0px → 20px - CRITICAL)
+- lib/screens2/event_registration_form.dart (16px → 20px)
+- lib/screens2/event_list.dart (add 20px)
+- lib/screens2/event_detail.dart (replace hardcoded 20px)
 
-**Color Replacements (~7 files):**
-- lib/screens2/new_record_page.dart
-- lib/screens2/widgets/app_drawer.dart
-- lib/screens2/csv/import_screen.dart
-- lib/screens2/csv/summary_screen.dart
-- lib/screens2/participant_list_screen.dart
-- lib/screens2/event_list.dart (if empty states)
-- lib/screens2/intake_form_improved.dart (if needed)
+**Color Replacements (12-15 files):**
+1. lib/screens2/new_record_page.dart (participant box, poznámka, health chips)
+2. lib/screens2/widgets/app_drawer.dart (orange highlights)
+3. lib/screens2/csv/import_screen.dart (blue containers)
+4. lib/screens2/csv/table_overview_screen.dart (DataTable - NEW, was missing!)
+5. lib/screens2/csv/summary_screen.dart (blue cards)
+6. lib/screens2/participant_list_screen.dart (empty states)
+7. lib/screens2/event_list.dart (empty states if applicable)
+8. lib/screens2/intake_form_improved.dart (gradients, health status)
+9. lib/screens2/participant_edit_page.dart (verify - NEW, was missing!)
+10-15. Additional files discovered during implementation
 
-**Spacing Replacements (~10 files):**
-- Same files as above + any additional screens with hardcoded spacing
+**Spacing Replacements (12-17 files):**
+- All files from Color Replacements section
+- Plus any additional screens with hardcoded EdgeInsets/SizedBox
 
-**Radii Replacements (~10 files):**
-- Same files as above
+**Radii Replacements (12-17 files):**
+- All files from Color Replacements section
+- Plus any additional screens with hardcoded BorderRadius
+
+**New Screens Added to Plan:**
+- ✅ table_overview_screen.dart (CSV DataTable confirmation)
+- ✅ participant_edit_page.dart (edit participant - minimal changes)
 
 ---
 
