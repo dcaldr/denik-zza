@@ -1,12 +1,10 @@
 # Phase 3: UI Consistency Implementation - Technical Details
 
-**Purpose:** File-by-file technical instructions for Phase 3
-**Companion:** See PHASE_3_OVERVIEW.md for high-level plan
+File-by-file technical instructions for implementing Phase 3.
+
+**Related:** See PHASE_3_OVERVIEW.md for high-level plan, timeline, and success criteria
 **Branch:** claude/theme-implementation-011CUrKKs9V6BLrMRtfnH8Vd
-
----
-
-## 📋 Step-by-Step Implementation Guide
+**Screen Coverage:** See PHASE_3_SCREEN_COVERAGE.md for analysis of all screens
 
 ---
 
@@ -74,8 +72,7 @@ Reference: PHASE_3_TECHNICAL.md Step 1"
 **File:** `lib/screens2/participant_registration_form.dart`
 
 **Current state:** Form has NO padding (edge-to-edge)
-
-**User complaint:** "completely edge to edge... spills whole screen" (APP_DESIGN_FEEL line 183-184)
+**Issue:** "completely edge to edge... spills whole screen" (APP_DESIGN_FEEL.md line 183-184)
 
 **Find:** The Form widget (around line 100-150)
 
@@ -330,9 +327,9 @@ Colors.orange.shade600        → AppColors.orangeText
 **Priority 3 (minimal changes expected):**
 - [ ] `lib/screens2/participant_edit_page.dart` - Verify Scaffold (reuses ParticipantRegistrationForm)
 
-**NOTE:** IntakeForm 3-button colors (green/blue/red) stay hardcoded - this is intentional!
+**NOTE:** IntakeForm 3-button colors (green/blue/red) stay hardcoded - intentional manual styling for critical medical decisions.
 
-**Total files:** ~12-15 files (updated from ~10-15)
+**Total files:** 12-15 files
 
 ### 3.4: Add Import to Each File
 
@@ -370,11 +367,11 @@ Icon(Icons.people_outline, size: 48, color: AppColors.greyText)
 Text('Žádní účastníci', style: TextStyle(fontSize: 18, color: AppColors.greyText))
 ```
 
-### 3.6: NewRecordPage Detailed Color Replacements
+### 3.6: NewRecordPage Detailed Replacements
 
 **File:** `lib/screens2/new_record_page.dart`
 
-**This is a complex screen with many hardcoded colors. Replace systematically:**
+Complex screen with multiple color contexts. Replace systematically:
 
 **Participant info box:**
 ```dart
@@ -461,7 +458,7 @@ import '../core/constants/app_radii.dart';
 
 **File:** `lib/screens2/csv/table_overview_screen.dart`
 
-**This screen has a DataTable with many color properties:**
+DataTable screen with table-specific color properties:
 
 **DataTable theme (most will be handled by theme, but check for hardcoded):**
 ```dart
@@ -913,7 +910,7 @@ Next: Functional fixes from docs/ui-system/FIXME.md (separate work)"
 
 ## 📊 Files Changed Summary
 
-### Estimated Files Modified: 17-20 files (updated from initial 15-20 estimate)
+### Estimated Files Modified: 17-20 files
 
 **Core Integration (1 file):**
 - lib/main.dart
@@ -944,9 +941,9 @@ Next: Functional fixes from docs/ui-system/FIXME.md (separate work)"
 - All files from Color Replacements section
 - Plus any additional screens with hardcoded BorderRadius
 
-**New Screens Added to Plan:**
-- ✅ table_overview_screen.dart (CSV DataTable confirmation)
-- ✅ participant_edit_page.dart (edit participant - minimal changes)
+**Additional Screens Identified:**
+- ✅ table_overview_screen.dart (CSV DataTable confirmation - see Section 3.7)
+- ✅ participant_edit_page.dart (edit participant - minimal changes, inherits from ParticipantRegistrationForm)
 
 ---
 
@@ -972,16 +969,16 @@ These are **separate work** after Phase 3:
 ### Medium Priority:
 10-21. Various PrintCenter, FileViewer, AppDrawer issues
 
-**Important:** These are **functional fixes**, not UI consistency. They should be addressed AFTER Phase 3 is complete to avoid confusion about what broke what.
+**Important:** These are functional fixes, not UI consistency. Address AFTER Phase 3 to isolate consistency changes from pre-existing bugs.
 
 ---
 
 ## ⚠️ Critical Reminders
 
-1. **DO NOT change IntakeForm 3-button colors** - They stay green/blue/red
-2. **DO NOT change NewRecord responsive logic** - `isCompact ? 14 : 15` stays
+1. **DO NOT change IntakeForm 3-button colors** - Must stay green/blue/red (manual styling)
+2. **DO NOT change NewRecord responsive logic** - `isCompact ? 14 : 15` must remain
 3. **DO NOT add padding to CSV table** - Would break horizontal scroll
-4. **DO NOT change AppDrawer design** - User loves current design
+4. **DO NOT change AppDrawer design** - Current design is intentional
 5. **ONLY UI/visual changes** - No functional fixes in Phase 3
 
 ---
@@ -1033,7 +1030,6 @@ import '../../core/constants/app_colors.dart';  // Two levels up
 
 ---
 
-**Created:** 2025-11-16
 **Branch:** claude/theme-implementation-011CUrKKs9V6BLrMRtfnH8Vd
 **Status:** Ready for Implementation
 **Estimated Time:** 4-6 hours of focused work

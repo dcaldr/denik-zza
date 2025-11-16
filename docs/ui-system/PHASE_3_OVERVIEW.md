@@ -1,27 +1,29 @@
 # Phase 3: UI Consistency Implementation - Overview
 
-**Purpose:** Apply theme and design tokens across the app for consistent UI
+Apply theme and design tokens across the app for visual consistency.
+
 **Scope:** ONLY UI/visual consistency - NO functional fixes
 **Branch:** claude/theme-implementation-011CUrKKs9V6BLrMRtfnH8Vd
 **User Priority:** 9/10 (APP_DESIGN_FEEL.md line 872)
+**Related:** See PHASE_3_TECHNICAL.md for file-by-file implementation details
 
 ---
 
 ## 🎯 Phase 3 Goal
 
-Make the app UI consistent by:
-1. Activating the theme (1 line in main.dart)
-2. Fixing spacing issues (edge-to-edge screens)
-3. Replacing hardcoded values with theme constants
-4. Verifying visual consistency
+Achieve UI consistency through:
+1. Activate theme (1 line in main.dart)
+2. Fix edge-to-edge screens (add padding)
+3. Replace hardcoded values with theme constants
+4. Verify visual consistency across all screens
 
-**What Phase 3 Does NOT Include:**
+**Phase 3 Scope Limitations:**
 - ❌ Functional fixes (search, clickability, navigation)
 - ❌ Missing features (inline participant creation, arrived counter)
-- ❌ HUGE MISSES from FIXME.md
-- ✅ See FIXME.md for functional issues
+- ❌ HUGE MISSES documented in FIXME.md
+- ✅ Visual/UI consistency only
 
-**Why Separate?** So we know if issues originated from consistency work or were pre-existing.
+Functional issues are documented separately in `docs/ui-system/FIXME.md` to isolate consistency changes from pre-existing bugs.
 
 ---
 
@@ -46,14 +48,14 @@ Make the app UI consistent by:
 **Files:** 4 screens
 **Risk:** Low (only adding padding)
 
-User complaint: "completely edge to edge... spills whole screen"
+Addresses user complaint: "completely edge to edge... spills whole screen" (APP_DESIGN_FEEL.md lines 183-184)
 
 - [ ] ParticipantRegistrationForm: 0px → 20px padding (CRITICAL)
 - [ ] EventRegistrationForm: 16px → 20px padding
 - [ ] EventList: Add 20px padding
 - [ ] EventDetail: Verify padding (already has 20px, replace hardcoded)
 
-**Deliverable:** No more edge-to-edge screens, breathing room added
+**Deliverable:** All screens have 20px breathing room, no edge-to-edge layouts
 
 ---
 
@@ -108,13 +110,13 @@ Replace hardcoded `BorderRadius.circular(12)` → `AppRadii.containerRadius`
 **Status:** ⬜ Not Started
 **Risk:** Medium (catch regressions)
 
-- [ ] Test all 12 screens visually
+- [ ] Test all 13 screens visually (see PHASE_3_TECHNICAL.md Section 6.1 for complete list)
 - [ ] Verify no edge-to-edge issues
 - [ ] Check colors are consistent
 - [ ] Check spacing is consistent
-- [ ] Test responsive behavior (resize window)
-- [ ] Test Czech diacritics render correctly
-- [ ] Compare before/after (should look better, not different)
+- [ ] Test responsive behavior (resize window: 375px, 768px, 1440px)
+- [ ] Test Czech diacritics render correctly: `Příliš žluťoučký kůň úpěl ďábelské ódy`
+- [ ] Compare before/after (should look better, not radically different)
 
 **Deliverable:** Visual consistency verified, no regressions
 
@@ -126,11 +128,13 @@ Replace hardcoded `BorderRadius.circular(12)` → `AppRadii.containerRadius`
 |------|---------------|---------------|------------|
 | 1. Activate Theme | 1 | 5 min | Low |
 | 2. Fix Edge-to-Edge | 4 | 30 min | Low |
-| 3. Replace Colors | 10-15 | 1-2 hrs | Low |
-| 4. Replace Spacing | 10-15 | 1-2 hrs | Low |
-| 5. Replace Radii | 10-15 | 30 min | Low |
-| 6. Visual Testing | All | 1 hr | Medium |
-| **TOTAL** | **~15-20 files** | **4-6 hours** | **Low-Medium** |
+| 3. Replace Colors | 12-15 | 1-2 hrs | Low |
+| 4. Replace Spacing | 12-15 | 1-2 hrs | Low |
+| 5. Replace Radii | 12-15 | 30 min | Low |
+| 6. Visual Testing | 13 screens | 1 hr | Medium |
+| **TOTAL** | **17-20 files** | **4-6 hours** | **Low-Medium** |
+
+Updated file count includes table_overview_screen.dart and participant_edit_page.dart (see PHASE_3_SCREEN_COVERAGE.md).
 
 ---
 
@@ -187,7 +191,7 @@ Phase 3 is complete when:
 
 ## 📝 Commit Strategy
 
-**Strategic commits** for easy rollback:
+Strategic commits for granular rollback capability:
 
 1. **Commit 1:** "feat: integrate AppTheme in main.dart"
 2. **Commit 2:** "fix: add padding to edge-to-edge screens (ParticipantReg, EventReg, EventList, EventDetail)"
@@ -196,7 +200,8 @@ Phase 3 is complete when:
 5. **Commit 5:** "refactor: replace hardcoded radii with AppRadii"
 6. **Final Commit:** "docs: Phase 3 complete - UI consistency implemented"
 
-**Why separate commits?** Easy to identify what broke if issues arise.
+Separate commits isolate changes, making it easy to identify the source of any issues.
+See PHASE_3_TECHNICAL.md for detailed commit messages.
 
 ---
 
@@ -220,9 +225,7 @@ Phase 3 is complete when:
 
 ---
 
-## 📅 Timeline
-
-**Recommended approach:**
+## 📅 Recommended Timeline
 
 **Session 1 (30 min):**
 - Step 1: Activate theme
@@ -242,22 +245,21 @@ Phase 3 is complete when:
 - Step 6: Visual testing & verification
 - Final commit and push
 
-**Total: 4 sessions, ~6 hours of focused work**
+**Total:** 4 sessions, ~6 hours of focused work
 
 ---
 
-## ⚠️ Important Notes
+## ⚠️ Important Constraints
 
-1. **NO functional changes** in Phase 3 - only visual/consistency
-2. **Test after each commit** - catch issues early
-3. **Keep IntakeForm 3-button pattern** - don't change green/blue/red buttons
-4. **Preserve responsive logic** - NewRecord's `isCompact ? 14 : 15` stays
-5. **Czech locale is critical** - verify diacritics work
-6. **User can test** - this is visual work, easy to see if it's wrong
+1. **NO functional changes** in Phase 3 - only visual/consistency work
+2. **Test after each commit** to catch issues early
+3. **Preserve IntakeForm 3-button pattern** - don't change green/blue/red manual styling
+4. **Preserve responsive logic** - NewRecord's `isCompact ? 14 : 15` must remain
+5. **Czech locale is critical** - verify diacritics render correctly
+6. **Visual changes only** - easy to verify, user can test by eye
 
 ---
 
-**Created:** 2025-11-16
 **Branch:** claude/theme-implementation-011CUrKKs9V6BLrMRtfnH8Vd
 **Status:** Planning Complete, Ready for Implementation
-**Next:** See PHASE_3_TECHNICAL.md for detailed steps
+**Next:** See PHASE_3_TECHNICAL.md for detailed implementation steps
