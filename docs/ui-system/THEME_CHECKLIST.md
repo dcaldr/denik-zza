@@ -197,14 +197,27 @@
 
 **Reference:** APP_DESIGN_FEEL.md line 374 - IntakeForm buttons "LOVE the colors"
 
-**IMPORTANT - Context-Sensitive Button Colors (User Decision: Option C):**
-- **Medical/arrival actions:** GREEN (like IntakeForm "uložit a přišel")
-- **Data/save actions:** BLUE (like NewRecord "Uložit")
-- **Single/minor actions:** Material standard (blue primary)
+**IMPORTANT - Button Count Pattern (User's Simpler Solution):**
+- **2 buttons:** Blue FilledButton (primary) + Grey OutlinedButton (secondary)
+  - Example: NewRecord "Uložit" + "Zavřít"
+  - User feedback: "Current actions great"
+  - Theme handles automatically
+
+- **3 buttons:** Green/Blue/Red ElevatedButtons (critical ternary choice)
+  - Example: IntakeForm "uložit a přišel" (green) + "uložit" (blue) + "neukládat" (red)
+  - User feedback: "**love** the main action button"
+  - Manual styling (NOT in theme)
+  - Reserve for critical choices only
+
+**Why button count (not context)?**
+- Simpler rule: just count buttons
+- Objective: count is clear, "medical" vs "data" is subjective
+- Matches actual patterns: IntakeForm = 3, NewRecord = 2
+- Predictable: all 2-button screens look consistent
 
 **User quote:** "for bigger actions next to each other its good to have vibrant like intake form, for small actions or single actions newest material standard is ok"
 
-- [ ] **FilledButtonTheme (Default - Blue for data actions):**
+- [ ] **FilledButtonTheme (Default for 2-button pattern - Primary action):**
   - [ ] `backgroundColor: Colors.blue.shade600` (from NewRecord save button)
   - [ ] `foregroundColor: Colors.white`
   - [ ] `padding: EdgeInsets.symmetric(v: 14, h: 20)` (from actual code)
@@ -213,14 +226,12 @@
   - [ ] `elevation: 2`
   - [ ] `textStyle: AppTypography.textTheme.labelLarge.copyWith(fontWeight: w600)`
 
-- [ ] **Medical Action Buttons (Green - requires explicit styling):**
-  - [ ] IntakeForm "uložit a přišel": `Colors.green` (keep as-is)
-  - [ ] NOT in theme - manually styled with `.styleFrom(backgroundColor: Colors.green)`
-  - [ ] Document: "Medical arrival buttons use Colors.green explicitly"
-
-- [ ] **Destructive Action Buttons (Red - requires explicit styling):**
-  - [ ] IntakeForm "neukládat": `Colors.red` (keep as-is)
-  - [ ] NOT in theme - manually styled with `.styleFrom(backgroundColor: Colors.red)`
+- [ ] **3-Button Pattern (Manual styling - NOT in theme):**
+  - [ ] IntakeForm keeps existing code unchanged
+  - [ ] Button 1: `ElevatedButton.styleFrom(backgroundColor: Colors.green)` - "uložit a přišel"
+  - [ ] Button 2: `ElevatedButton.styleFrom(backgroundColor: Colors.blue)` - "uložit"
+  - [ ] Button 3: `ElevatedButton.styleFrom(backgroundColor: Colors.red)` - "neukládat"
+  - [ ] Document in app_theme.dart comments: "3-button pattern is manual"
 
 - [ ] **OutlinedButtonTheme:**
   - [ ] `foregroundColor: Colors.grey.shade700` (from NewRecord cancel)
