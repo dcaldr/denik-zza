@@ -313,23 +313,28 @@ Colors.orange.shade600        → AppColors.orangeText
 ### 3.3: Files to Update
 
 **Priority 1 (definitely have hardcoded colors):**
-- [ ] `lib/screens2/new_record_page.dart` - Blue/grey for buttons, participant boxes (see 3.6 for details)
-- [ ] `lib/screens2/widgets/app_drawer.dart` - Orange highlights
+- [ ] `lib/screens2/new_record_page.dart` - Blue/grey for buttons, participant boxes (65 instances, see 3.6 for details)
+- [ ] `lib/screens2/widgets/app_drawer.dart` - Orange highlights (20 instances)
 - [ ] `lib/screens2/csv/import_screen.dart` - Blue containers
-- [ ] `lib/screens2/csv/table_overview_screen.dart` - DataTable colors (NEW - was missing!)
+- [ ] `lib/screens2/csv/table_overview_screen.dart` - DataTable colors (see 3.7)
 - [ ] `lib/screens2/csv/summary_screen.dart` - Blue cards
+- [ ] `lib/print_ops2/print_center.dart` - Grey/blue for print UI (7 instances)
 
 **Priority 2 (likely have hardcoded colors):**
 - [ ] `lib/screens2/participant_list_screen.dart` - Empty state grey
 - [ ] `lib/screens2/event_list.dart` - Empty state grey (if applicable)
 - [ ] `lib/screens2/intake_form_improved.dart` - Participant info box gradient, health status colors
+- [ ] `lib/screens2/widgets/record_list_widget.dart` - Grey gradients (21 instances)
 
 **Priority 3 (minimal changes expected):**
 - [ ] `lib/screens2/participant_edit_page.dart` - Verify Scaffold (reuses ParticipantRegistrationForm)
 
+**Priority 4 (deprecated Theme property - not hardcoded color):**
+- [ ] `lib/print_ops2/widgets/append_analysis_widget.dart:88` - Theme.of(context).primaryColor → colorScheme.primary
+
 **NOTE:** IntakeForm 3-button colors (green/blue/red) stay hardcoded - intentional manual styling for critical medical decisions.
 
-**Total files:** 12-15 files
+**Total files:** 14-17 files (12-15 screens2 + 2 print_ops2)
 
 ### 3.4: Add Import to Each File
 
@@ -483,40 +488,98 @@ Colors.blue.shade50  → AppColors.blueBackground
 import '../../core/constants/app_colors.dart';
 ```
 
+### 3.8: print_ops2/print_center.dart (Print UI)
+
+**File:** `lib/print_ops2/print_center.dart`
+
+**7 hardcoded color instances to replace:**
+
+```dart
+// Check for hardcoded:
+Colors.grey.shade*  → AppColors.greyBackground, greyBorder, etc.
+Colors.blue.shade*  → AppColors.blueBackground, blueBorder, etc.
+
+// Common patterns in print UI:
+Colors.grey.shade100  → AppColors.greyBackgroundMedium
+Colors.grey.shade200  → AppColors.greyBorder
+Colors.blue.shade50   → AppColors.blueBackground
+```
+
+**Add import:**
+```dart
+import '../core/constants/app_colors.dart';
+```
+
+### 3.9: print_ops2/widgets/append_analysis_widget.dart (Deprecated Theme Property)
+
+**File:** `lib/print_ops2/widgets/append_analysis_widget.dart`
+**Line:** 88
+
+**DEPRECATED property fix (not a hardcoded color):**
+
+```dart
+// ❌ BEFORE (DEPRECATED - Flutter 3.3.0):
+Icon(
+  Icons.analytics_outlined,
+  color: Theme.of(context).primaryColor,
+  key: const Key('AppendAnalysisWidget_analysis_icon'),
+),
+
+// ✅ AFTER (Modern Flutter 3.22+):
+Icon(
+  Icons.analytics_outlined,
+  color: Theme.of(context).colorScheme.primary,
+  key: const Key('AppendAnalysisWidget_analysis_icon'),
+),
+```
+
+**Why:** `Theme.of(context).primaryColor` was deprecated in Flutter 3.3 (August 2022). Material Design 3 uses `ColorScheme.primary` instead.
+
+**No import needed** - just change the property access.
+
 ### Commit Step 3:
 ```bash
 git add lib/screens2/new_record_page.dart \
         lib/screens2/widgets/app_drawer.dart \
+        lib/screens2/widgets/record_list_widget.dart \
         lib/screens2/csv/import_screen.dart \
         lib/screens2/csv/table_overview_screen.dart \
         lib/screens2/csv/summary_screen.dart \
         lib/screens2/participant_list_screen.dart \
         lib/screens2/event_list.dart \
         lib/screens2/intake_form_improved.dart \
-        lib/screens2/participant_edit_page.dart
+        lib/screens2/participant_edit_page.dart \
+        lib/print_ops2/print_center.dart \
+        lib/print_ops2/widgets/append_analysis_widget.dart
 
-git commit -m "refactor: replace hardcoded colors with AppColors
+git commit -m "refactor: replace hardcoded colors and deprecated Theme property
 
 Replaced all hardcoded Colors.blue/grey/orange with AppColors constants.
+Fixed deprecated Theme.of(context).primaryColor usage.
 
-Changes:
-- NewRecordPage: Participant box, poznámka, health chips → AppColors
-- AppDrawer: orange.shade100 → AppColors.orangeBackground
+screens2/ changes:
+- NewRecordPage: Participant box, poznámka, health chips → AppColors (65 instances)
+- AppDrawer: orange.shade100 → AppColors.orangeBackground (20 instances)
+- RecordListWidget: Grey gradients → AppColors (21 instances)
 - CSV import_screen: Blue containers → AppColors
-- CSV table_overview_screen: DataTable colors → AppColors (NEW screen added)
+- CSV table_overview_screen: DataTable colors → AppColors
 - CSV summary_screen: Blue cards → AppColors
 - ParticipantListScreen: Empty states → AppColors.greyText
 - EventList: Empty states → AppColors.greyText (if applicable)
 - IntakeFormImproved: Gradients, health status → AppColors
 - ParticipantEditPage: Verified (minimal changes)
-- All screens now use consistent color palette
+
+print_ops2/ changes:
+- print_center.dart: Grey/blue UI colors → AppColors (7 instances)
+- append_analysis_widget.dart: primaryColor → colorScheme.primary (deprecated fix)
 
 Preserved:
 - IntakeForm 3-button pattern (green/blue/red) - intentionally manual
 
-Files updated: 12-15 screens
+Total: 117 hardcoded colors replaced + 1 deprecated property fixed
+Files updated: 14-17 files (12-15 screens2 + 2 print_ops2)
 User priority: 9/10 for color consistency (APP_DESIGN_FEEL line 872)
-Reference: PHASE_3_TECHNICAL.md Step 3"
+Reference: PHASE_3_TECHNICAL.md Step 3, DEPRECATION_AUDIT_2025.md"
 ```
 
 ---

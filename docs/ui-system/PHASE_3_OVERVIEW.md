@@ -61,18 +61,21 @@ Addresses user complaint: "completely edge to edge... spills whole screen" (APP_
 
 ### Step 3: Replace Hardcoded Colors (1-2 hours)
 **Status:** ⬜ Not Started
-**Files:** ~10-15 files
+**Files:** ~14-17 files (12-15 screens2 + 2 print_ops2)
 **Risk:** Low (visual only)
 
 Replace hardcoded `Colors.blue.shade200` → `AppColors.blueBorder`
+Fix deprecated `Theme.of(context).primaryColor` → `colorScheme.primary`
 
-- [ ] NewRecordPage: Replace all Colors.blue/grey with AppColors
+- [ ] NewRecordPage: Replace all Colors.blue/grey with AppColors (65 instances)
 - [ ] CSV screens: Replace hardcoded colors
-- [ ] AppDrawer: Replace Colors.orange with AppColors
-- [ ] Empty states: Replace Colors.grey with theme colors
+- [ ] AppDrawer: Replace Colors.orange with AppColors (20 instances)
+- [ ] RecordListWidget: Replace grey gradients (21 instances)
+- [ ] print_ops2/print_center.dart: Replace colors (7 instances)
+- [ ] print_ops2/append_analysis_widget.dart: Fix deprecated Theme property
 - [ ] All other screens: Systematic replacement
 
-**Deliverable:** All colors come from theme, consistent across app
+**Deliverable:** All colors use AppColors constants, no deprecated Theme properties
 
 ---
 
@@ -128,13 +131,13 @@ Replace hardcoded `BorderRadius.circular(12)` → `AppRadii.containerRadius`
 |------|---------------|---------------|------------|
 | 1. Activate Theme | 1 | 5 min | Low |
 | 2. Fix Edge-to-Edge | 4 | 30 min | Low |
-| 3. Replace Colors | 12-15 | 1-2 hrs | Low |
-| 4. Replace Spacing | 12-15 | 1-2 hrs | Low |
-| 5. Replace Radii | 12-15 | 30 min | Low |
+| 3. Replace Colors | 14-17 | 1-2 hrs | Low |
+| 4. Replace Spacing | 14-17 | 1-2 hrs | Low |
+| 5. Replace Radii | 14-17 | 30 min | Low |
 | 6. Visual Testing | 13 screens | 1 hr | Medium |
-| **TOTAL** | **17-20 files** | **4-6 hours** | **Low-Medium** |
+| **TOTAL** | **~19-22 files** | **4-6 hours** | **Low-Medium** |
 
-Updated file count includes table_overview_screen.dart and participant_edit_page.dart (see PHASE_3_SCREEN_COVERAGE.md).
+Updated file count includes print_ops2 folder (2 files) based on DEPRECATION_AUDIT_2025.md findings.
 
 ---
 
