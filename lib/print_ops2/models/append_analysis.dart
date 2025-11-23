@@ -2,19 +2,19 @@
 class AppendAnalysis {
   /// Number of pages in original document
   final int baselinePages;
-  
+
   /// Number of pages after adding first new record
   final int pagesAfterFirst;
-  
+
   /// Number of pages in final document
   final int finalPages;
-  
+
   /// Whether the first new record fits on the last existing page
   final bool reusedLastPage;
-  
+
   /// Page number where new content starts (1-indexed)
   final int insertionPage;
-  
+
   /// Page number where header should be hidden (-1 if no hiding needed)
   final int hideHeaderOnPage;
 
@@ -33,7 +33,8 @@ class AppendAnalysis {
     required int pagesAfterFirst,
     required int finalPages,
   }) {
-    final reusedLastPage = baselinePages > 0 && pagesAfterFirst == baselinePages;
+    final reusedLastPage =
+        baselinePages > 0 && pagesAfterFirst == baselinePages;
     final insertionPage = reusedLastPage ? baselinePages : baselinePages + 1;
     final hideHeaderOnPage = reusedLastPage ? baselinePages : -1;
 
@@ -53,13 +54,13 @@ class AppendAnalysis {
   /// Human-readable description of the append mode
   String getAppendModeDescription() {
     if (baselinePages == 0) {
-      return 'První tisk (${finalPages} stran)';
+      return 'První tisk ($finalPages stran)';
     }
-    
+
     if (reusedLastPage) {
-      return 'Pokračování na straně ${insertionPage} (celkem ${finalPages} stran)';
+      return 'Pokračování na straně $insertionPage (celkem $finalPages stran)';
     } else {
-      return 'Nová strana ${insertionPage} (celkem ${finalPages} stran)';
+      return 'Nová strana $insertionPage (celkem $finalPages stran)';
     }
   }
 

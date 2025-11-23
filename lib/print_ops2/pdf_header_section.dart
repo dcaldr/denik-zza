@@ -8,23 +8,25 @@ abstract class PdfHeaderSection {
 
 /// Concrete implementation for person header (includes restrictions)
 class PersonPdfHeaderSection extends PdfHeaderSection {
-  final dynamic osoba; // Should be MemoryOsoba, but kept dynamic for future event
+  final dynamic
+      osoba; // Should be MemoryOsoba, but kept dynamic for future event
   final List<dynamic>? omezeniList; // MemoryOmezeni list
   final List<dynamic>? lekList; // MemoryLek list
-  
+
   PersonPdfHeaderSection(this.osoba, {this.omezeniList, this.lekList});
 
   @override
   pw.Widget buildHeader() {
     // Implementation similar to PrintPdfHeader.buildHeader
-    String _formatDate(DateTime? date) {
+    String formatDate(DateTime? date) {
       if (date == null) return '';
       return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
     }
-    String _formatZdravotniPojistovna(String? zdravotniPojistovna) {
+
+    String formatZdravotniPojistovna(String? zdravotniPojistovna) {
       return zdravotniPojistovna != null ? ' ($zdravotniPojistovna)' : '';
     }
-    
+
     return pw.Column(
       children: [
         // Person info section
@@ -47,15 +49,18 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
                           style: pw.TextStyle(fontWeight: pw.FontWeight.normal),
                           children: [
                             pw.TextSpan(
-                              text: '${osoba?.jmeno ?? ''} ${osoba?.prijmeni ?? ''}',
-                              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                              text:
+                                  '${osoba?.jmeno ?? ''} ${osoba?.prijmeni ?? ''}',
+                              style:
+                                  pw.TextStyle(fontWeight: pw.FontWeight.bold),
                             ),
                           ],
                         ),
                       ),
-                      pw.Text('Datum narození: ${_formatDate(osoba?.datumNarozeni)}'),
                       pw.Text(
-                        'Pojištění: ${osoba?.cisloPojisteni ?? ''}${_formatZdravotniPojistovna(osoba?.zdravotniPojistovna)}',
+                          'Datum narození: ${formatDate(osoba?.datumNarozeni)}'),
+                      pw.Text(
+                        'Pojištění: ${osoba?.cisloPojisteni ?? ''}${formatZdravotniPojistovna(osoba?.zdravotniPojistovna)}',
                         maxLines: 2,
                         overflow: pw.TextOverflow.clip,
                       ),
@@ -73,8 +78,10 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text('Rodič: ${osoba?.jmenoRodice ?? ''}', maxLines: 2, overflow: pw.TextOverflow.clip),
-                      pw.Text('Tel. rodič: ${osoba?.telefonRodice ?? ''}', maxLines: 2, overflow: pw.TextOverflow.clip),
+                      pw.Text('Rodič: ${osoba?.jmenoRodice ?? ''}',
+                          maxLines: 2, overflow: pw.TextOverflow.clip),
+                      pw.Text('Tel. rodič: ${osoba?.telefonRodice ?? ''}',
+                          maxLines: 2, overflow: pw.TextOverflow.clip),
                       pw.Text('Email rodič: ${osoba?.emailRodice ?? ''}'),
                     ],
                   ),
@@ -99,8 +106,11 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        pw.Text('Omezení:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                        ...?omezeniList?.map((omezeni) => pw.Text('- ${omezeni.omezeni}')),
+                        pw.Text('Omezení:',
+                            style:
+                                pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                        ...?omezeniList
+                            ?.map((omezeni) => pw.Text('- ${omezeni.omezeni}')),
                       ],
                     ),
                   ),
@@ -109,7 +119,9 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        pw.Text('Léky:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                        pw.Text('Léky:',
+                            style:
+                                pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                         ...?lekList?.map((lek) => pw.Text('- ${lek.nazev}')),
                       ],
                     ),

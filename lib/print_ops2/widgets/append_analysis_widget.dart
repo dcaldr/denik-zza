@@ -11,11 +11,11 @@ class AppendAnalysisWidget extends StatelessWidget {
   final String? error;
 
   const AppendAnalysisWidget({
-    Key? key,
+    super.key,
     this.analysis,
     this.isLoading = false,
     this.error,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -400,39 +400,38 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
                 Text('Režim tisku',
                     style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
-                RadioGroup<PrintMode>(
-                  groupValue: ctrl.mode,
-                  onChanged: (v) => ctrl.changeMode(v!),
-                  child: Column(
-                    children: [
-                      RadioListTile<PrintMode>(
-                        value: PrintMode.full,
-                        title: const Text('Úplný tisk'),
-                        subtitle: const Text(
-                            'Vygeneruje celý dokument od začátku (reset).'),
+                Column(
+                  children: [
+                    RadioListTile<PrintMode>(
+                      value: PrintMode.full,
+                      groupValue: ctrl.mode,
+                      onChanged: (v) => ctrl.changeMode(v!),
+                      title: const Text('Úplný tisk'),
+                      subtitle: const Text(
+                          'Vygeneruje celý dokument od začátku (reset).'),
+                    ),
+                    RadioListTile<PrintMode>(
+                      value: PrintMode.append,
+                      groupValue: ctrl.mode,
+                      onChanged: (v) => ctrl.changeMode(v!),
+                      title: Row(
+                        children: const [
+                          Text('Dostisk (append)'),
+                          SizedBox(width: 6),
+                          Tooltip(
+                              message: 'Pouze nové záznamy, ostatní průhledně',
+                              child: Icon(Icons.info_outline, size: 16)),
+                        ],
                       ),
-                      RadioListTile<PrintMode>(
-                        value: PrintMode.append,
-                        title: Row(
-                          children: const [
-                            Text('Dostisk (append)'),
-                            SizedBox(width: 6),
-                            Tooltip(
-                                message:
-                                    'Pouze nové záznamy, ostatní průhledně',
-                                child: Icon(Icons.info_outline, size: 16)),
-                          ],
-                        ),
-                        subtitle: _appendSubtitle(ctrl, canAppendPlaceholder),
-                        secondary: (ctrl.appendPossible == false)
-                            ? const Tooltip(
-                                message:
-                                    'Nelze použít – pořadí nebo stav neumožňuje dostisk',
-                                child: Icon(Icons.block, color: Colors.grey))
-                            : null,
-                      ),
-                    ],
-                  ),
+                      subtitle: _appendSubtitle(ctrl, canAppendPlaceholder),
+                      secondary: (ctrl.appendPossible == false)
+                          ? const Tooltip(
+                              message:
+                                  'Nelze použít – pořadí nebo stav neumožňuje dostisk',
+                              child: Icon(Icons.block, color: Colors.grey))
+                          : null,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 _AppendHintBox(

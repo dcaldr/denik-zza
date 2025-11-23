@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
+import 'package:pdf/widgets.dart' as pw;
+
+import 'package:denik_zza/dev/ui/dev_app_builder.dart';
 import '../database/in_memory_structures_tmp/memory_lek.dart';
 import '../database/in_memory_structures_tmp/memory_omezeni.dart';
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
-import 'package:printing/printing.dart';
 import '../database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'generate_pdf_template.dart';
-import 'package:pdf/widgets.dart' as pw;
+
+void main() {
+  runApp(buildDevAppWithBanner(
+    title: 'Print Ops 2 Dev',
+    home: const PrintDemoLandingScreen(),
+    bannerMessage: 'PRINT DEV',
+    bannerIcon: Icons.print,
+  ));
+}
 
 // Demo persons (Czech themed, subtle cultural nods)
 final List<MemoryOsoba> demoPersons = [
@@ -25,12 +36,15 @@ final List<MemoryOsoba> demoPersons = [
     bezinfekcnost: true,
     zdravotniPojistovna: '111 VZP',
     poznamka: 'Má rád turistické značky.',
-    wasPrinted: false, oddil: null, prisel: null, potvrzeniPath: null,
+    wasPrinted: false,
+    oddil: null,
+    prisel: null,
+    potvrzeniPath: null,
   ),
   MemoryOsoba.fullNamed(
     id: 2,
-  jmeno: 'Karel',
-  prijmeni: 'Čapek', // jemný náznak nyní plné příjmení
+    jmeno: 'Karel',
+    prijmeni: 'Čapek', // jemný náznak nyní plné příjmení
     pohlavi: 1,
     adresa: 'Hradec Králové',
     cisloPojisteni: '234567/0002',
@@ -46,8 +60,8 @@ final List<MemoryOsoba> demoPersons = [
   ),
   MemoryOsoba.fullNamed(
     id: 3,
-  jmeno: 'Božena',
-  prijmeni: 'Němcová', // nenápadný odkaz nyní plné příjmení
+    jmeno: 'Božena',
+    prijmeni: 'Němcová', // nenápadný odkaz nyní plné příjmení
     pohlavi: 2,
     adresa: 'Litomyšl',
     cisloPojisteni: '345678/0003',
@@ -76,9 +90,13 @@ final List<MemoryOsoba> demoPersons = [
     bezinfekcnost: true,
     zdravotniPojistovna: '205 ČPZP',
     poznamka: 'Má hodně záznamů k tisku.',
-    wasPrinted: false, oddil: null, prisel: null, potvrzeniPath: null,
+    wasPrinted: false,
+    oddil: null,
+    prisel: null,
+    potvrzeniPath: null,
   ),
 ];
+
 List<MemoryZaznam> historicalRecords = [
   MemoryZaznam.fullNamed(
     idZaznamu: 1,
@@ -191,7 +209,8 @@ List<MemoryZaznam> historicalRecords = [
       idZaznamu: 100 + i,
       casZaznamu: DateTime(2024, 7, 1, 8 + (i % 10), (i * 7) % 60),
       nazev: 'Aktivita ${i + 1}',
-      popis: 'David provedl aktivitu číslo ${i + 1} – krátký popis události s detaily pro test délky.',
+      popis:
+          'David provedl aktivitu číslo ${i + 1} – krátký popis události s detaily pro test délky.',
       lecba: null,
       isPrinted: false,
       idAuthor: 4,
@@ -208,6 +227,17 @@ List<MemoryOmezeni> omezeniList = [
   MemoryOmezeni(id: 3, omezeni: 'Laktózová intolerance', typOmezeni: 1),
   MemoryOmezeni(id: 4, omezeni: 'Alergie na pyl', typOmezeni: 2),
   MemoryOmezeni(id: 5, omezeni: 'Vegetariánství', typOmezeni: 1),
+];
+
+List<MemoryLek> lekList = [
+  MemoryLek.fullNamed(
+      id: 1, nazev: 'Paralen', popisDavkovani: '1-0-1', idOsoby: 1),
+  MemoryLek.fullNamed(
+      id: 2, nazev: 'Ibalgin', popisDavkovani: '1-0-1', idOsoby: 1),
+];
+
+class PrintDemoLandingScreen extends StatelessWidget {
+  const PrintDemoLandingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -222,10 +252,12 @@ List<MemoryOmezeni> omezeniList = [
           return ListTile(
             title: Text('${person.jmeno} ${person.prijmeni}'),
             subtitle: Text(person.poznamka ?? ''),
-            leading: CircleAvatar(child: Text(person.jmeno.substring(0,1))),
+            leading: CircleAvatar(child: Text(person.jmeno.substring(0, 1))),
             trailing: const Icon(Icons.picture_as_pdf),
             onTap: () {
-              final filteredRecords = historicalRecords.where((r) => r.idPacient == person.id).toList();
+              final filteredRecords = historicalRecords
+                  .where((r) => r.idPacient == person.id)
+                  .toList();
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => PdfPreviewScreen(
@@ -243,7 +275,6 @@ List<MemoryOmezeni> omezeniList = [
     );
   }
 }
-
 
 class PdfPreviewScreen extends StatelessWidget {
   final MemoryOsoba osoba;
