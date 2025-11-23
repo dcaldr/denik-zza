@@ -285,8 +285,8 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     notifyListeners();
 
     try {
-    final CsvImportSession loadedSession =
-      await service.loadCsvFromPayload(payload);
+      final CsvImportSession loadedSession =
+          await service.loadCsvFromPayload(payload);
       Map<int, List<CsvDuplicateCandidate>> duplicates =
           <int, List<CsvDuplicateCandidate>>{};
       try {
@@ -517,9 +517,9 @@ class CsvReviewPrototypeController extends ChangeNotifier {
       }
       _loadingRows.remove(rowIndex);
       _updateEditedCells(rowIndex, updatedRow);
-    _duplicateMatches.remove(rowIndex);
-    updatedRow = _applyPrototypeWarnings(updatedRow, updatedFields);
-    _replaceRow(updatedRow);
+      _duplicateMatches.remove(rowIndex);
+      updatedRow = _applyPrototypeWarnings(updatedRow, updatedFields);
+      _replaceRow(updatedRow);
       notifyListeners();
       return updatedRow;
     } catch (error, stackTrace) {
@@ -592,21 +592,21 @@ class CsvReviewPrototypeController extends ChangeNotifier {
     );
     updatedFieldsMap['pohlavi'] = updatedGenderField;
 
-    final List<CsvReviewMessage> rowMessages = <CsvReviewMessage>[...
-        updatedRow.messages.where(
-          (CsvReviewMessage message) {
-            final String? code = message.code;
-            if (message.message == warningText) {
-              return false;
-            }
-            if (code == genderInferredCode || code == genderWarningCode) {
-              return false;
-            }
-            return true;
-          },
-        ),
-        warning,
-      ];
+    final List<CsvReviewMessage> rowMessages = <CsvReviewMessage>[
+      ...updatedRow.messages.where(
+        (CsvReviewMessage message) {
+          final String? code = message.code;
+          if (message.message == warningText) {
+            return false;
+          }
+          if (code == genderInferredCode || code == genderWarningCode) {
+            return false;
+          }
+          return true;
+        },
+      ),
+      warning,
+    ];
 
     // If gender was inferred from national ID but user overrode it with non-standard value,
     // mark inference as not applied (shows user manually changed it).
@@ -657,7 +657,7 @@ class CsvReviewPrototypeController extends ChangeNotifier {
       for (final int rowIndex in _selectedRows) {
         decisions[rowIndex] = CsvRowDecision.approved;
       }
-      
+
       final CsvFinalizeResult result = await service.finalizeImport(
         session: _session!,
         decisions: decisions,
@@ -918,8 +918,7 @@ String normalizeCsvFieldInput(
         input: trimmed,
         originalField: originalField,
         holdBuilder: () => PotvrzeniHold(columnName: 'potvrzení'),
-        formatter: (dynamic value) =>
-            value is bool ? value.toString() : '',
+        formatter: (dynamic value) => value is bool ? value.toString() : '',
       );
     default:
       return trimmed;
@@ -953,17 +952,7 @@ String _normalizeWithHold({
 final DateFormat _czechDateFormatter = DateFormat('dd.MM.yyyy');
 
 String _formatGenderLabel(String rawValue) {
-  final String normalized = TextTools.normText(rawValue);
-  if (normalized.isEmpty) {
-    return '';
-  }
-  if (_maleTokens.contains(normalized)) {
-    return 'Muž';
-  }
-  if (_femaleTokens.contains(normalized)) {
-    return 'Žena';
-  }
-  return rawValue;
+  return TextTools.formatGenderLabel(rawValue);
 }
 
 String _formatBooleanLabel(String rawValue) {
@@ -982,27 +971,8 @@ String _formatBooleanLabel(String rawValue) {
 }
 
 bool _isRecognizedGenderToken(String value) {
-  final String normalized = TextTools.normText(value);
-  if (normalized.isEmpty) {
-    return false;
-  }
-  return _maleTokens.contains(normalized) || _femaleTokens.contains(normalized);
+  return TextTools.isRecognizedGenderToken(value);
 }
-
-const Set<String> _maleTokens = <String>{
-  '1',
-  'm',
-  'muz',
-  'male',
-};
-
-const Set<String> _femaleTokens = <String>{
-  '2',
-  'z',
-  'zena',
-  'f',
-  'female',
-};
 
 final PotvrzeniHold _potvrzeniPrototype = PotvrzeniHold();
 

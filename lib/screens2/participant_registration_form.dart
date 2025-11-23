@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import '../input/input_hold.dart';
 import '../input/rodne_cislo.dart';
+import '../input/text_tools.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/screens2/widgets/memory_restriction_widget.dart';
 
@@ -234,7 +235,7 @@ class _ParticipantRegistrationFormState
           ? _controllers['poznamka']!.text
           : widget.osoba?.poznamka,
       pohlavi: _controllers['pohlavi']!.text.isNotEmpty
-          ? int.parse(_controllers['pohlavi']!.text)
+          ? (PohlaviHold.full(_controllers['pohlavi']!.text).output as int?)
           : widget.osoba?.pohlavi,
       zpusobilost: _zpusobilost,
       bezinfekcnost: _bezinfekcnost,
@@ -260,7 +261,8 @@ class _ParticipantRegistrationFormState
             DateFormat('dd.MM.yyyy').format(datumNarozeni);
       }
       if (_controllers['pohlavi']!.text.isEmpty) {
-        _controllers['pohlavi']!.text = pohlavi.toString();
+        _controllers['pohlavi']!.text =
+            TextTools.formatGenderLabel(pohlavi.toString());
       }
     }
   }
@@ -313,11 +315,13 @@ class _ParticipantRegistrationFormState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
+                  flex: 2,
                   child: CustomDatePicker(
                       controller: _controllers['datumNarozeni']!,
                       labelText: 'Datum Narození')),
               const SizedBox(width: 8.0),
-              Expanded(child: _buildTextField('pohlavi', 'Pohlaví', null)),
+              Expanded(
+                  flex: 1, child: _buildTextField('pohlavi', 'Pohlaví', null)),
             ],
           ),
           _buildTextField('zdravotniPojistovna', 'Zdravotní Pojišťovna', null),
