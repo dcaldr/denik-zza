@@ -15,7 +15,7 @@ class AppLogger {
     lineLength: 100,
     colors: true,
     printEmojis: true,
-    printTime: false,
+    dateTimeFormat: DateTimeFormat.none,
   );
 
   static final Logger _logger = Logger(

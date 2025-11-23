@@ -7,6 +7,7 @@ import 'package:logger/logger.dart';
 import '../database/database_wrapper.dart';
 import '../database/in_memory_structures_tmp/memory_akce.dart';
 import 'event_list.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 
 class EventRegistrationForm extends StatefulWidget {
   final MemoryAction? action;
@@ -32,8 +33,10 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
     if (widget.action != null) {
       _controllers['nadpis']!.text = widget.action!.nadpis;
       _controllers['popis']!.text = widget.action!.popis!;
-      _controllers['odkdy']!.text = DateFormat('dd.MM.yyyy').format(widget.action!.odkdy);
-      _controllers['dokdy']!.text = DateFormat('dd.MM.yyyy').format(widget.action!.dokdy);
+      _controllers['odkdy']!.text =
+          DateFormat('dd.MM.yyyy').format(widget.action!.odkdy);
+      _controllers['dokdy']!.text =
+          DateFormat('dd.MM.yyyy').format(widget.action!.dokdy);
     }
   }
 
@@ -46,7 +49,8 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       final dateFormat = DateFormat('dd.MM.yyyy');
-      final directory = await FileManager().createNewEventDataDir(_controllers['nadpis']!.text);
+      final directory = await FileManager()
+          .createNewEventDataDir(_controllers['nadpis']!.text);
       final newAction = MemoryAction(
         idAkce: widget.action?.idAkce,
         nadpis: _controllers['nadpis']!.text,
@@ -58,8 +62,10 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
 
       if (widget.action == null) {
         DatabaseWrapper.getDatabase().addEvent(newAction).then((success) {
-          final message = success ? 'Akce úspěšně přidána' : 'Přidání Akce se nezdařilo';
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+          final message =
+              success ? 'Akce úspěšně přidána' : 'Přidání Akce se nezdařilo';
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(message)));
 
           if (success) {
             //mark as selected event
@@ -68,23 +74,34 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
             DatabaseWrapper.getDatabase().getAllZzaActions().then((actions) {
               final lastAction = actions.last;
               if (lastAction.nadpis == _controllers['nadpis']!.text &&
-                  DateFormat('dd.MM.yyyy').format(lastAction.odkdy) == _controllers['odkdy']!.text &&
-                  DateFormat('dd.MM.yyyy').format(lastAction.dokdy) == _controllers['dokdy']!.text) {
-                DatabaseWrapper.getDatabase().updateCurrentEvent(lastAction.idAkce!);
+                  DateFormat('dd.MM.yyyy').format(lastAction.odkdy) ==
+                      _controllers['odkdy']!.text &&
+                  DateFormat('dd.MM.yyyy').format(lastAction.dokdy) ==
+                      _controllers['dokdy']!.text) {
+                DatabaseWrapper.getDatabase()
+                    .updateCurrentEvent(lastAction.idAkce!);
               } else {
-                Logger().e('Sanity check failed: Last action details do not match the form input.');
+                Logger().e(
+                    'Sanity check failed: Last action details do not match the form input.');
               }
             });
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => EventList()));
+            Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (context) => EventList()));
           }
         });
       } else {
-        DatabaseWrapper.getDatabase().updateEvent(action: newAction).then((updateResult) {
-          final message = updateResult > 0 ? 'Akce úspěšně aktualizována' : 'Aktualizace Akce se nezdařila';
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+        DatabaseWrapper.getDatabase()
+            .updateEvent(action: newAction)
+            .then((updateResult) {
+          final message = updateResult > 0
+              ? 'Akce úspěšně aktualizována'
+              : 'Aktualizace Akce se nezdařila';
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(message)));
 
           if (updateResult > 0) {
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => EventList()));
+            Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (context) => EventList()));
           }
         });
       }
@@ -97,7 +114,7 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
       appBar: AppBar(title: const Text('Založit akci')),
       drawer: const AppDrawer(),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: AppSpacing.screenPadding,
         child: Form(
           key: _formKey,
           child: ListView(
@@ -108,13 +125,24 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(child: CustomDatePicker(controller: _controllers['odkdy']!, labelText: 'Od kdy', validatorText: 'Prosím zadejte datum začátku')),
+                  Expanded(
+                      child: CustomDatePicker(
+                          controller: _controllers['odkdy']!,
+                          labelText: 'Od kdy',
+                          validatorText: 'Prosím zadejte datum začátku')),
                   const SizedBox(width: 10),
-                  Expanded(child: CustomDatePicker(controller: _controllers['dokdy']!, labelText: 'Do kdy', validatorText: 'Prosím zadejte datum konce')),
+                  Expanded(
+                      child: CustomDatePicker(
+                          controller: _controllers['dokdy']!,
+                          labelText: 'Do kdy',
+                          validatorText: 'Prosím zadejte datum konce')),
                 ],
               ),
               const SizedBox(height: 20),
-              ElevatedButton(onPressed: _submitForm, child: Text(widget.action == null ? 'Odeslat' : 'Aktualizovat')),
+              ElevatedButton(
+                  onPressed: _submitForm,
+                  child:
+                      Text(widget.action == null ? 'Odeslat' : 'Aktualizovat')),
             ],
           ),
         ),
@@ -122,15 +150,21 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
     );
   }
 
-  Widget _buildTextFormField(String key, String labelText, String validatorText) {
+  Widget _buildTextFormField(
+      String key, String labelText, String validatorText) {
     return TextFormField(
       controller: _controllers[key],
-      decoration: InputDecoration(labelText: labelText),
-      validator: (value) => value == null || value.isEmpty ? validatorText : null,
+      decoration: InputDecoration(
+        labelText: labelText,
+        border: const OutlineInputBorder(),
+      ),
+      validator: (value) =>
+          value == null || value.isEmpty ? validatorText : null,
     );
   }
 
-  Widget _buildTextFieldWithCounter(String key, String labelText, int maxLength) {
+  Widget _buildTextFieldWithCounter(
+      String key, String labelText, int maxLength) {
     return TextField(
       controller: _controllers[key],
       maxLines: 3,

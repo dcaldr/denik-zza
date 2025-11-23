@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/append_analysis.dart';
 
 /// Widget for displaying append analysis results (T9)
-/// 
+///
 /// Shows the results of the three-pass append algorithm analysis
 /// with user-friendly information about page counts and append mode.
 class AppendAnalysisWidget extends StatelessWidget {
@@ -92,19 +92,19 @@ class AppendAnalysisWidget extends StatelessWidget {
                 Text(
                   'Analýza tisku',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            
+
             // Main description
             Container(
               key: const Key('AppendAnalysisWidget_description_container'),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceVariant,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -119,16 +119,16 @@ class AppendAnalysisWidget extends StatelessWidget {
                     child: Text(
                       analysis!.getAppendModeDescription(),
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
+                            fontWeight: FontWeight.w500,
+                          ),
                     ),
                   ),
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Detailed information
             _buildDetailRow(
               context,
@@ -178,15 +178,15 @@ class AppendAnalysisWidget extends StatelessWidget {
             child: Text(
               label,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ),
           Text(
             value,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
+                  fontWeight: FontWeight.w500,
+                ),
           ),
         ],
       ),

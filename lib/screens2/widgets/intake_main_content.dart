@@ -4,6 +4,7 @@ import '../../database/in_memory_structures_tmp/memory_osoba.dart';
 import '../participant_registration_form.dart';
 import 'file_viewer_logic.dart';
 import 'file_viewer_screen_widget.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 
 class IntakeMainContent extends StatelessWidget {
   final MemoryOsoba? selectedPerson;
@@ -22,7 +23,7 @@ class IntakeMainContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: AppSpacing.screenPadding,
       child: Row(
         children: [
           Expanded(
@@ -41,10 +42,7 @@ class IntakeMainContent extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         const Text('First Column'),
-        Transform.scale(
-          scale: 0.85,
-          child: participantRegistrationForm,
-        ),
+        participantRegistrationForm,
       ],
     );
   }
@@ -65,14 +63,14 @@ class IntakeMainContent extends StatelessWidget {
   }
 
   Widget _buildFileViewer() {
-    final hasFile = zpusobilostFolder != null && 
-                   selectedPerson?.potvrzeniPath != null && 
-                   selectedPerson!.potvrzeniPath!.isNotEmpty;
-    
+    final hasFile = zpusobilostFolder != null &&
+        selectedPerson?.potvrzeniPath != null &&
+        selectedPerson!.potvrzeniPath!.isNotEmpty;
+
     if (hasFile) {
       return FileViewerScreen(
-        initialFilePath: '${zpusobilostFolder!.path}/${selectedPerson!.potvrzeniPath}'
-      );
+          initialFilePath:
+              '${zpusobilostFolder!.path}/${selectedPerson!.potvrzeniPath}');
     } else {
       return FileViewerLogic(onFileUploaded: onFileUploaded);
     }

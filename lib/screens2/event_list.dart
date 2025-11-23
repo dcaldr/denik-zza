@@ -1,6 +1,7 @@
 import 'package:denik_zza/screens2/event_registration_form.dart';
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/widgets/event_list_constants.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/screens2/event_detail.dart';
 import 'package:intl/intl.dart';
@@ -65,10 +66,13 @@ class _EventListState extends State<EventList> {
         } else if (snapshot.hasError) {
           return Text('${EventListConstants.errorPrefix}${snapshot.error}');
         } else {
-          return ListView.builder(
-            itemCount: snapshot.data!.length,
-            itemBuilder: (context, index) =>
-                _buildActionItem(context, snapshot.data![index]),
+          return Padding(
+            padding: AppSpacing.screenPadding,
+            child: ListView.builder(
+              itemCount: snapshot.data!.length,
+              itemBuilder: (context, index) =>
+                  _buildActionItem(context, snapshot.data![index]),
+            ),
           );
         }
       },

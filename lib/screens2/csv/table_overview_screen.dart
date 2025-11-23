@@ -116,19 +116,20 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     ];
     _activeStatus = null;
     _columnOrder = _resolveColumnOrder();
-    
+
     // Separate controllers for header and body to enable visible scrollbar
     _headerScrollController = ScrollController();
     _bodyScrollController = ScrollController();
     _verticalScrollController = ScrollController();
-    
+
     // Synchronize scrolling between header and body
     _bodyScrollController.addListener(_syncBodyToHeader);
     _headerScrollController.addListener(_syncHeaderToBody);
   }
 
   void _syncBodyToHeader() {
-    if (_bodyScrollController.hasClients && _headerScrollController.hasClients) {
+    if (_bodyScrollController.hasClients &&
+        _headerScrollController.hasClients) {
       if (_headerScrollController.offset != _bodyScrollController.offset) {
         _headerScrollController.jumpTo(_bodyScrollController.offset);
       }
@@ -136,7 +137,8 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
   }
 
   void _syncHeaderToBody() {
-    if (_headerScrollController.hasClients && _bodyScrollController.hasClients) {
+    if (_headerScrollController.hasClients &&
+        _bodyScrollController.hasClients) {
       if (_bodyScrollController.offset != _headerScrollController.offset) {
         _bodyScrollController.jumpTo(_headerScrollController.offset);
       }
@@ -349,7 +351,8 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                             thumbVisibility: true,
                             notificationPredicate: (notif) => notif.depth == 1,
                             child: ListView(
-                              key: const Key('CsvTableOverview_scrollable_body'),
+                              key:
+                                  const Key('CsvTableOverview_scrollable_body'),
                               controller: _verticalScrollController,
                               padding: EdgeInsets.only(
                                 left: 16,
@@ -604,7 +607,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceVariant,
+                  color: theme.colorScheme.surfaceContainerHighest,
                   borderRadius: badgeRadius,
                 ),
                 child: Text(
@@ -803,7 +806,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
 
     return ColoredBox(
       key: const Key('CsvTableOverview_table_header'),
-      color: theme.colorScheme.surfaceVariant,
+      color: theme.colorScheme.surfaceContainerHighest,
       child: SizedBox(
         height: _tableHeaderHeight,
         child: Row(
@@ -977,8 +980,9 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
   }
 
   Future<void> _handleFinalizePressed(BuildContext context) async {
-    _logger.d('Finalize button pressed - selectedCount: ${_controller.selectedRowCount}, isFinalizing: ${_controller.isFinalizing}');
-    
+    _logger.d(
+        'Finalize button pressed - selectedCount: ${_controller.selectedRowCount}, isFinalizing: ${_controller.isFinalizing}');
+
     if (_controller.selectedRowCount == 0 || _controller.isFinalizing) {
       _logger.w('Finalize aborted - selectedCount is 0 or already finalizing');
       return;
@@ -989,8 +993,9 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
         '$csvImportFlowLogTag: Finalize requested (selected=${_controller.selectedRowCount}, fileLabel=${_controller.importFileLabel ?? 'CSV soubor'}).',
       );
       final CsvFinalizeResult? result = await _controller.finalizeImport();
-      _logger.d('Finalize result received: savedCount=${result?.savedCount}, failedCount=${result?.failedCount}');
-      
+      _logger.d(
+          'Finalize result received: savedCount=${result?.savedCount}, failedCount=${result?.failedCount}');
+
       if (!mounted) {
         _logger.w('Widget not mounted after finalize');
         return;
@@ -1015,7 +1020,7 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
       _logger.i(
         '$csvImportFlowLogTag: Finalize succeeded (saved=${result.savedCount}, failed=${result.failedCount}). Opening summary.',
       );
-      
+
       if (!mounted) return;
       _logger.d('About to navigate to summary screen...');
       await CsvImportSummaryScreen.openAfterFinalize(
@@ -1131,8 +1136,9 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     final CsvReviewRow? sample = rows.isNotEmpty ? rows.first : null;
     final int selectedCount = _controller.selectedRowCount;
     final int totalValidRows = _controller.validRowCount;
-    final bool allSelected = selectedCount > 0 && selectedCount == totalValidRows;
-    
+    final bool allSelected =
+        selectedCount > 0 && selectedCount == totalValidRows;
+
     return <DataColumn>[
       DataColumn(
         label: includeSelectAllCheckbox
@@ -1231,7 +1237,7 @@ class _StatusCell extends StatelessWidget {
       key: Key('CsvTableOverview_status_${row.originalIndex}'),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: statusAccent.withOpacity(0.15),
+        color: statusAccent.withValues(alpha: 0.15),
         borderRadius: borderRadius,
       ),
       child: Text(
@@ -1475,7 +1481,7 @@ class _EditableCellState extends State<_EditableCell> {
         focusedBorder: showChangeHighlight ? highlightBorder : null,
         filled: showChangeHighlight,
         fillColor:
-            showChangeHighlight ? vividHighlight.withOpacity(0.16) : null,
+            showChangeHighlight ? vividHighlight.withValues(alpha: 0.16) : null,
         suffixIcon: hasWarning && scopedMessages.isNotEmpty
             ? _FieldWarningIcon(
                 iconKey: Key(

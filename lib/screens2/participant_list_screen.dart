@@ -8,9 +8,10 @@ import 'package:denik_zza/screens2/widgets/participant_list_item.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:denik_zza/screens2/event_detail.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 
 /// Screen displaying list of participants for the current event with search functionality
-/// 
+///
 /// Features:
 /// - Search by name or insurance number
 /// - List of participants from current event
@@ -104,7 +105,7 @@ class _ParticipantListScreenState extends State<ParticipantListScreen> {
 
     return ListView.builder(
       key: const Key('ParticipantList_listView'),
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: AppSpacing.screenPadding,
       itemCount: _displayedParticipants.length,
       itemBuilder: (context, index) {
         return ParticipantListItem(
@@ -173,7 +174,7 @@ class _ParticipantListScreenState extends State<ParticipantListScreen> {
 
   void _navigateToActionDetail(BuildContext context) {
     if (_currentAction == null) return;
-    
+
     Navigator.push(
       context,
       MaterialPageRoute(

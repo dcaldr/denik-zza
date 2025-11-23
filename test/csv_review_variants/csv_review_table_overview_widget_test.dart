@@ -12,13 +12,11 @@ import '../utils/csv_test_builders.dart';
 void main() {
   testWidgets('table overview renders rows and supports inline actions',
       (WidgetTester tester) async {
-    final TestWidgetsFlutterBinding binding =
-        TestWidgetsFlutterBinding.ensureInitialized();
-    binding.window.physicalSizeTestValue = const Size(1600, 1200);
-    binding.window.devicePixelRatioTestValue = 1.0;
+    tester.view.physicalSize = const Size(1600, 1200);
+    tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
-      binding.window.clearPhysicalSizeTestValue();
-      binding.window.clearDevicePixelRatioTestValue();
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
     });
 
     final _WidgetFakeService service = _WidgetFakeService();
@@ -36,7 +34,8 @@ void main() {
 
     expect(find.byKey(const Key('CsvTableOverview_summary_content')),
         findsOneWidget);
-    expect(find.byKey(const Key('CsvTableOverview_summary_note')), findsOneWidget);
+    expect(
+        find.byKey(const Key('CsvTableOverview_summary_note')), findsOneWidget);
     expect(
       find.byKey(const Key('CsvTableOverview_summary_rejected_count')),
       findsOneWidget,
@@ -123,8 +122,7 @@ void main() {
       const Key('CsvTableOverview_select_checkbox_1'),
     );
     expect(rejectedRowCheckbox, findsOneWidget);
-    Checkbox disabledCheckbox =
-        tester.widget<Checkbox>(rejectedRowCheckbox);
+    Checkbox disabledCheckbox = tester.widget<Checkbox>(rejectedRowCheckbox);
     expect(disabledCheckbox.onChanged, isNull);
     expect(disabledCheckbox.value, isFalse);
     await tester.tap(rejectedRowCheckbox);
@@ -138,88 +136,89 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
     expect(
-      find.text('Zamítnuté řádky nelze vybrat. Opravte chyby a zkuste to znovu.'),
+      find.text(
+          'Zamítnuté řádky nelze vybrat. Opravte chyby a zkuste to znovu.'),
       findsOneWidget,
     );
 
-  final Finder warnToggle =
-    find.byKey(const Key('CsvTableOverview_summary_warn_toggle'));
-  final Finder infoToggle =
-    find.byKey(const Key('CsvTableOverview_summary_info_toggle'));
-  final Finder okToggle =
-    find.byKey(const Key('CsvTableOverview_summary_ok_toggle'));
-  final Finder totalToggle =
-    find.byKey(const Key('CsvTableOverview_summary_total_toggle'));
-  final Finder warnCheckboxFinder =
-    find.byKey(const Key('CsvTableOverview_select_checkbox_2'));
-  final Finder infoCheckboxFinder =
-    find.byKey(const Key('CsvTableOverview_select_checkbox_3'));
-  final Finder okCheckboxFinder =
-    find.byKey(const Key('CsvTableOverview_select_checkbox_4'));
+    final Finder warnToggle =
+        find.byKey(const Key('CsvTableOverview_summary_warn_toggle'));
+    final Finder infoToggle =
+        find.byKey(const Key('CsvTableOverview_summary_info_toggle'));
+    final Finder okToggle =
+        find.byKey(const Key('CsvTableOverview_summary_ok_toggle'));
+    final Finder totalToggle =
+        find.byKey(const Key('CsvTableOverview_summary_total_toggle'));
+    final Finder warnCheckboxFinder =
+        find.byKey(const Key('CsvTableOverview_select_checkbox_2'));
+    final Finder infoCheckboxFinder =
+        find.byKey(const Key('CsvTableOverview_select_checkbox_3'));
+    final Finder okCheckboxFinder =
+        find.byKey(const Key('CsvTableOverview_select_checkbox_4'));
 
-  Checkbox warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
-  expect(warnCheckbox.value, isFalse);
-  await tester.tap(warnToggle);
-  await tester.pumpAndSettle();
-  warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
-  expect(warnCheckbox.value, isTrue);
-  await tester.tap(warnToggle);
-  await tester.pumpAndSettle();
-  warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
-  expect(warnCheckbox.value, isFalse);
+    Checkbox warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
+    expect(warnCheckbox.value, isFalse);
+    await tester.tap(warnToggle);
+    await tester.pumpAndSettle();
+    warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
+    expect(warnCheckbox.value, isTrue);
+    await tester.tap(warnToggle);
+    await tester.pumpAndSettle();
+    warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
+    expect(warnCheckbox.value, isFalse);
 
-  Checkbox infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
-  expect(infoCheckbox.value, isFalse);
-  await tester.tap(infoToggle);
-  await tester.pumpAndSettle();
-  infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
-  expect(infoCheckbox.value, isTrue);
-  await tester.tap(infoToggle);
-  await tester.pumpAndSettle();
-  infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
-  expect(infoCheckbox.value, isFalse);
+    Checkbox infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
+    expect(infoCheckbox.value, isFalse);
+    await tester.tap(infoToggle);
+    await tester.pumpAndSettle();
+    infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
+    expect(infoCheckbox.value, isTrue);
+    await tester.tap(infoToggle);
+    await tester.pumpAndSettle();
+    infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
+    expect(infoCheckbox.value, isFalse);
 
-  Checkbox okCheckbox = tester.widget<Checkbox>(okCheckboxFinder);
-  expect(warnCheckbox.value, isFalse);
-  expect(infoCheckbox.value, isFalse);
-  expect(okCheckbox.value, isFalse);
-  await tester.tap(okToggle);
-  await tester.pumpAndSettle();
-  warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
-  infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
-  okCheckbox = tester.widget<Checkbox>(okCheckboxFinder);
-  expect(warnCheckbox.value, isTrue);
-  expect(infoCheckbox.value, isTrue);
-  expect(okCheckbox.value, isTrue);
-  await tester.tap(okToggle);
-  await tester.pumpAndSettle();
-  warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
-  infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
-  okCheckbox = tester.widget<Checkbox>(okCheckboxFinder);
-  expect(warnCheckbox.value, isFalse);
-  expect(infoCheckbox.value, isFalse);
-  expect(okCheckbox.value, isFalse);
+    Checkbox okCheckbox = tester.widget<Checkbox>(okCheckboxFinder);
+    expect(warnCheckbox.value, isFalse);
+    expect(infoCheckbox.value, isFalse);
+    expect(okCheckbox.value, isFalse);
+    await tester.tap(okToggle);
+    await tester.pumpAndSettle();
+    warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
+    infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
+    okCheckbox = tester.widget<Checkbox>(okCheckboxFinder);
+    expect(warnCheckbox.value, isTrue);
+    expect(infoCheckbox.value, isTrue);
+    expect(okCheckbox.value, isTrue);
+    await tester.tap(okToggle);
+    await tester.pumpAndSettle();
+    warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
+    infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
+    okCheckbox = tester.widget<Checkbox>(okCheckboxFinder);
+    expect(warnCheckbox.value, isFalse);
+    expect(infoCheckbox.value, isFalse);
+    expect(okCheckbox.value, isFalse);
 
-  await tester.tap(totalToggle);
-  await tester.pumpAndSettle();
-  warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
-  infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
-  okCheckbox = tester.widget<Checkbox>(okCheckboxFinder);
-  Checkbox rejectedCheckboxAfterTotal =
-    tester.widget<Checkbox>(rejectedRowCheckbox);
-  expect(warnCheckbox.value, isTrue);
-  expect(infoCheckbox.value, isTrue);
-  expect(okCheckbox.value, isTrue);
-  expect(rejectedCheckboxAfterTotal.value, isFalse);
+    await tester.tap(totalToggle);
+    await tester.pumpAndSettle();
+    warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
+    infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
+    okCheckbox = tester.widget<Checkbox>(okCheckboxFinder);
+    Checkbox rejectedCheckboxAfterTotal =
+        tester.widget<Checkbox>(rejectedRowCheckbox);
+    expect(warnCheckbox.value, isTrue);
+    expect(infoCheckbox.value, isTrue);
+    expect(okCheckbox.value, isTrue);
+    expect(rejectedCheckboxAfterTotal.value, isFalse);
 
-  await tester.tap(totalToggle);
-  await tester.pumpAndSettle();
-  warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
-  infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
-  okCheckbox = tester.widget<Checkbox>(okCheckboxFinder);
-  expect(warnCheckbox.value, isFalse);
-  expect(infoCheckbox.value, isFalse);
-  expect(okCheckbox.value, isFalse);
+    await tester.tap(totalToggle);
+    await tester.pumpAndSettle();
+    warnCheckbox = tester.widget<Checkbox>(warnCheckboxFinder);
+    infoCheckbox = tester.widget<Checkbox>(infoCheckboxFinder);
+    okCheckbox = tester.widget<Checkbox>(okCheckboxFinder);
+    expect(warnCheckbox.value, isFalse);
+    expect(infoCheckbox.value, isFalse);
+    expect(okCheckbox.value, isFalse);
 
     service.markRejectedRowForRepair();
     await tester.enterText(
@@ -298,7 +297,6 @@ void main() {
     expect(statusTooltip.message, contains('Varování'));
     expect(statusTooltip.message, contains('Chybí potvrzení od lékaře'));
     expect(statusTooltip.triggerMode, TooltipTriggerMode.tap);
-
 
     final Finder rowOneStatusChipFinder =
         find.byKey(const Key('CsvTableOverview_status_1'));
@@ -386,15 +384,15 @@ void main() {
         find.byKey(const Key('CsvTableOverview_sticky_header'));
     expect(headerFinder, findsOneWidget);
 
-  final double initialTop = tester.getTopLeft(headerFinder).dy;
-  expect(initialTop, greaterThanOrEqualTo(0));
+    final double initialTop = tester.getTopLeft(headerFinder).dy;
+    expect(initialTop, greaterThanOrEqualTo(0));
 
-  final Finder tableHeaderFinder =
-    find.byKey(const Key('CsvTableOverview_table_header'));
-  expect(tableHeaderFinder, findsOneWidget);
-  final double initialTableHeaderTop =
-    tester.getTopLeft(tableHeaderFinder).dy;
-  expect(initialTableHeaderTop, greaterThan(initialTop));
+    final Finder tableHeaderFinder =
+        find.byKey(const Key('CsvTableOverview_table_header'));
+    expect(tableHeaderFinder, findsOneWidget);
+    final double initialTableHeaderTop =
+        tester.getTopLeft(tableHeaderFinder).dy;
+    expect(initialTableHeaderTop, greaterThan(initialTop));
 
     final Finder scrollableBodyFinder =
         find.byKey(const Key('CsvTableOverview_scrollable_body'));
@@ -410,9 +408,9 @@ void main() {
     final double scrolledTop = tester.getTopLeft(headerFinder).dy;
     expect(scrolledTop, closeTo(initialTop, 0.1));
 
-  final double scrolledTableHeaderTop =
-    tester.getTopLeft(tableHeaderFinder).dy;
-  expect(scrolledTableHeaderTop, closeTo(initialTableHeaderTop, 0.1));
+    final double scrolledTableHeaderTop =
+        tester.getTopLeft(tableHeaderFinder).dy;
+    expect(scrolledTableHeaderTop, closeTo(initialTableHeaderTop, 0.1));
   });
 
   testWidgets('header keeps column labels when filter yields no rows',
@@ -486,13 +484,11 @@ void main() {
 
   testWidgets('both vertical and horizontal scrollbars are present',
       (WidgetTester tester) async {
-    final TestWidgetsFlutterBinding binding =
-        TestWidgetsFlutterBinding.ensureInitialized();
-    binding.window.physicalSizeTestValue = const Size(1200, 800);
-    binding.window.devicePixelRatioTestValue = 1.0;
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
-      binding.window.clearPhysicalSizeTestValue();
-      binding.window.clearDevicePixelRatioTestValue();
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
     });
 
     final _WidgetFakeService service = _WidgetFakeService();
@@ -510,7 +506,7 @@ void main() {
 
     // Find both Scrollbar widgets in the widget tree
     final Finder scrollbarFinder = find.byType(Scrollbar);
-    
+
     // Should find exactly 2 Scrollbar widgets: vertical (outer) and horizontal (inner)
     expect(scrollbarFinder, findsNWidgets(2),
         reason: 'Should have both vertical and horizontal Scrollbars');
@@ -519,30 +515,6 @@ void main() {
     expect(find.byKey(const Key('CsvTableOverview_scrollable_body')),
         findsOneWidget,
         reason: 'Vertical ListView should exist');
-  });
-
-  testWidgets('horizontal scrollbar remains accessible when scrolling vertically',
-      (WidgetTester tester) async {
-    final TestWidgetsFlutterBinding binding =
-        TestWidgetsFlutterBinding.ensureInitialized();
-    // Large enough viewport to avoid overflow but test scrolling
-    binding.window.physicalSizeTestValue = const Size(1200, 800);
-    binding.window.devicePixelRatioTestValue = 1.0;
-    addTearDown(() {
-      binding.window.clearPhysicalSizeTestValue();
-      binding.window.clearDevicePixelRatioTestValue();
-    });
-
-    final _WidgetFakeService service = _WidgetFakeService();
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: CsvReviewTableOverviewScreen(
-          filePath: 'ignored.csv',
-          service: service,
-        ),
-      ),
-    );
 
     await tester.pumpAndSettle();
 
@@ -563,14 +535,11 @@ void main() {
 
   testWidgets('horizontal scroll works and synchronizes with header',
       (WidgetTester tester) async {
-    final TestWidgetsFlutterBinding binding =
-        TestWidgetsFlutterBinding.ensureInitialized();
-    // Wide table requires horizontal scrolling
-    binding.window.physicalSizeTestValue = const Size(600, 800);
-    binding.window.devicePixelRatioTestValue = 1.0;
+    tester.view.physicalSize = const Size(600, 800);
+    tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
-      binding.window.clearPhysicalSizeTestValue();
-      binding.window.clearDevicePixelRatioTestValue();
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
     });
 
     final _WidgetFakeService service = _WidgetFakeService();
@@ -620,13 +589,11 @@ void main() {
 
   testWidgets('vertical scroll works independently of horizontal scroll',
       (WidgetTester tester) async {
-    final TestWidgetsFlutterBinding binding =
-        TestWidgetsFlutterBinding.ensureInitialized();
-    binding.window.physicalSizeTestValue = const Size(1200, 800);
-    binding.window.devicePixelRatioTestValue = 1.0;
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
-      binding.window.clearPhysicalSizeTestValue();
-      binding.window.clearDevicePixelRatioTestValue();
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
     });
 
     final _WidgetFakeService service = _WidgetFakeService();
@@ -656,13 +623,11 @@ void main() {
 
   testWidgets('scrollbars use notificationPredicate correctly',
       (WidgetTester tester) async {
-    final TestWidgetsFlutterBinding binding =
-        TestWidgetsFlutterBinding.ensureInitialized();
-    binding.window.physicalSizeTestValue = const Size(800, 600);
-    binding.window.devicePixelRatioTestValue = 1.0;
+    tester.view.physicalSize = const Size(800, 600);
+    tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
-      binding.window.clearPhysicalSizeTestValue();
-      binding.window.clearDevicePixelRatioTestValue();
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
     });
 
     final _WidgetFakeService service = _WidgetFakeService();
@@ -679,9 +644,11 @@ void main() {
     await tester.pumpAndSettle();
 
     // Find both Scrollbar widgets
-    final List<Scrollbar> scrollbars = tester.widgetList<Scrollbar>(
-      find.byType(Scrollbar),
-    ).toList();
+    final List<Scrollbar> scrollbars = tester
+        .widgetList<Scrollbar>(
+          find.byType(Scrollbar),
+        )
+        .toList();
 
     expect(scrollbars.length, equals(2),
         reason: 'Should have exactly 2 Scrollbar widgets');
@@ -697,9 +664,8 @@ void main() {
             'At least one Scrollbar should have notificationPredicate set (see docs/nested-scrollbars-solution.md)');
 
     // Both scrollbars should have thumbVisibility enabled
-    final int visibleThumbs = scrollbars
-        .where((Scrollbar sb) => sb.thumbVisibility == true)
-        .length;
+    final int visibleThumbs =
+        scrollbars.where((Scrollbar sb) => sb.thumbVisibility == true).length;
 
     expect(visibleThumbs, equals(2),
         reason: 'Both scrollbars should have thumbVisibility: true');
@@ -768,7 +734,7 @@ class _WidgetFakeService implements CsvImportService {
   Future<CsvImportSession> loadCsv(String path) async {
     return CsvImportSession(
       review: CsvImportReview(
-  unparsedColumns: const <String>['neocekavany sloupec'],
+        unparsedColumns: const <String>['neocekavany sloupec'],
         rows: _rows,
       ),
       personResult: PersonResult(<Answer>[]),
@@ -780,18 +746,22 @@ class _WidgetFakeService implements CsvImportService {
     if (payload.path != null && payload.path!.isNotEmpty) {
       return loadCsv(payload.path!);
     }
-    throw UnsupportedError('In-memory payloads are not supported in this widget test.');
+    throw UnsupportedError(
+        'In-memory payloads are not supported in this widget test.');
   }
+
   @override
   Future<CsvReviewRow> reparseRow(Map<String, String?> updatedFields) async {
     lastPayload = Map<String, String?>.from(updatedFields);
     final CsvReviewRow existing = _rows.first;
     if (existing.originalIndex == 1 && repairRejectedOnNextEdit) {
       repairRejectedOnNextEdit = false;
-      final String newFirstName =
-          updatedFields['jmeno'] ?? existing.fields['jmeno']?.normalizedValue ?? 'Alena';
-      final String newLastName =
-          updatedFields['prijmeni'] ?? existing.fields['prijmeni']?.normalizedValue ?? 'Nováková';
+      final String newFirstName = updatedFields['jmeno'] ??
+          existing.fields['jmeno']?.normalizedValue ??
+          'Alena';
+      final String newLastName = updatedFields['prijmeni'] ??
+          existing.fields['prijmeni']?.normalizedValue ??
+          'Nováková';
       final CsvReviewRow repaired = _buildRow(
         1,
         newFirstName,
@@ -916,7 +886,8 @@ class _NoWarnRowsService implements CsvImportService {
     if (payload.path != null && payload.path!.isNotEmpty) {
       return loadCsv(payload.path!);
     }
-    throw UnsupportedError('In-memory payloads are not supported in this widget test.');
+    throw UnsupportedError(
+        'In-memory payloads are not supported in this widget test.');
   }
 
   @override
@@ -957,10 +928,12 @@ class _NoWarnRowsService implements CsvImportService {
   }) async {
     return CsvFinalizeResult(
       approvedCount: decisions.values
-          .where((CsvRowDecision decision) => decision == CsvRowDecision.approved)
+          .where(
+              (CsvRowDecision decision) => decision == CsvRowDecision.approved)
           .length,
       rejectedCount: decisions.values
-          .where((CsvRowDecision decision) => decision == CsvRowDecision.rejected)
+          .where(
+              (CsvRowDecision decision) => decision == CsvRowDecision.rejected)
           .length,
       savedRowIndices: const <int>[],
       failures: const <CsvFinalizeFailure>[],
@@ -1011,7 +984,8 @@ class _MisindexedService implements CsvImportService {
     if (payload.path != null && payload.path!.isNotEmpty) {
       return loadCsv(payload.path!);
     }
-    throw UnsupportedError('In-memory payloads are not supported in this widget test.');
+    throw UnsupportedError(
+        'In-memory payloads are not supported in this widget test.');
   }
 
   @override
@@ -1048,7 +1022,7 @@ class _MisindexedService implements CsvImportService {
 }
 
 /// Convenience wrapper around CsvReviewRowBuilder for this test file.
-/// 
+///
 /// Uses positional parameters for backward compatibility with existing test code.
 CsvReviewRow _buildRow(
   int index,

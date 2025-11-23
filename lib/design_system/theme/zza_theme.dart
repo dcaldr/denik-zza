@@ -206,9 +206,9 @@ class ZzaTheme {
       ///
       /// margin: EdgeInsets.only(bottom: 8)
       /// padding: EdgeInsets.all(12)
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 1,
-        shadowColor: Colors.black.withOpacity(0.1),
+        shadowColor: Colors.black.withValues(alpha: 0.1),
         margin: const EdgeInsets.only(bottom: AppSpacing.s),
         shape: const RoundedRectangleBorder(
           borderRadius: AppRadii.cardRadius, // 12px
@@ -239,7 +239,7 @@ class ZzaTheme {
       // DIALOG THEME
       // ========================================
 
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: Colors.white,
         elevation: 6,
         shape: const RoundedRectangleBorder(

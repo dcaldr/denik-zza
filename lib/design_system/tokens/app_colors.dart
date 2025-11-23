@@ -12,10 +12,11 @@ class AppColors {
   // Blue shades (EXACTLY as used in your code)
   static final Color blueBackground = Colors.blue.shade50;
   static final Color blueBackgroundLight =
-      Colors.blue.shade50.withOpacity(0.3); // NewRecord datetime box
+      Colors.blue.shade50.withValues(alpha: 0.3); // NewRecord datetime box
   static final Color blueIconBackground = Colors.blue.shade100;
   static final Color blueBorder = Colors.blue.shade200;
-  static final Color blueBorderLight = Colors.blue.shade200.withOpacity(0.5);
+  static final Color blueBorderLight =
+      Colors.blue.shade200.withValues(alpha: 0.5);
   static final Color blueText = Colors.blue.shade600;
   static final Color blueDark = Colors.blue.shade700;
 

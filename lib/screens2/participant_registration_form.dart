@@ -1,13 +1,14 @@
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/widgets/custom_date_picker.dart';
 import 'package:denik_zza/screens2/widgets/restrictions_widget.dart';
-import 'package:denik_zza/screens2/widgets/memory_restriction_widget.dart';
 import 'package:denik_zza/screens2/services/participant_registration_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import '../input/input_hold.dart';
 import '../input/rodne_cislo.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
+import 'package:denik_zza/screens2/widgets/memory_restriction_widget.dart';
 
 class ParticipantRegistrationForm extends StatefulWidget {
   final MemoryOsoba? osoba;
@@ -15,16 +16,20 @@ class ParticipantRegistrationForm extends StatefulWidget {
   final Function(MemoryOsoba)? onOsobaEdited;
   final VoidCallback? onRefresh;
 
-
-
-
-  const ParticipantRegistrationForm({super.key, this.osoba, this.onValidate, this.onOsobaEdited, this.onRefresh});
+  const ParticipantRegistrationForm(
+      {super.key,
+      this.osoba,
+      this.onValidate,
+      this.onOsobaEdited,
+      this.onRefresh});
 
   @override
-  _ParticipantRegistrationFormState createState() => _ParticipantRegistrationFormState();
+  State<ParticipantRegistrationForm> createState() =>
+      _ParticipantRegistrationFormState();
 }
 
-class _ParticipantRegistrationFormState extends State<ParticipantRegistrationForm> {
+class _ParticipantRegistrationFormState
+    extends State<ParticipantRegistrationForm> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _controllers = {
     'jmeno': TextEditingController(),
@@ -61,12 +66,16 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
   // Restrictions and medications logic
   final MemoryOmezeniLogic _omezeniLogic = MemoryOmezeniLogic();
   final MemoryLekLogic _lekLogic = MemoryLekLogic();
-  final ParticipantRegistrationService _participantService = ParticipantRegistrationService();
+  final ParticipantRegistrationService _participantService =
+      ParticipantRegistrationService();
 
   @override
   void initState() {
     super.initState();
-    if (widget.osoba == null || (widget.osoba!.id == -1 && widget.osoba!.jmeno.isEmpty && widget.osoba!.prijmeni.isEmpty)) {
+    if (widget.osoba == null ||
+        (widget.osoba!.id == -1 &&
+            widget.osoba!.jmeno.isEmpty &&
+            widget.osoba!.prijmeni.isEmpty)) {
       // Start with clear fields for new person
       clearFields();
     } else {
@@ -81,15 +90,16 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     });
     widget.onValidate?.call(validateForm);
   }
+
   void clearFields() {
     _controllers.forEach((key, controller) {
       controller.clear();
     });
-    
+
     // Reset checkbox values
     _zpusobilost = false;
     _bezinfekcnost = false;
-    
+
     // Reset restrictions
     _participantService.resetRestrictions(
       omezeniLogic: _omezeniLogic,
@@ -113,7 +123,10 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
   void didUpdateWidget(covariant ParticipantRegistrationForm oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.osoba != oldWidget.osoba) {
-      if (widget.osoba == null || (widget.osoba!.id == -1 && widget.osoba!.jmeno.isEmpty && widget.osoba!.prijmeni.isEmpty)) {
+      if (widget.osoba == null ||
+          (widget.osoba!.id == -1 &&
+              widget.osoba!.jmeno.isEmpty &&
+              widget.osoba!.prijmeni.isEmpty)) {
         // Clear fields for new person
         clearFields();
       } else {
@@ -124,16 +137,17 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     }
   }
 
- bool validateForm() {
-  return _formKey.currentState?.validate() ?? false;
-}
+  bool validateForm() {
+    return _formKey.currentState?.validate() ?? false;
+  }
 
   void _populateFields(MemoryOsoba osoba) {
     _controllers['jmeno']!.text = osoba.jmeno;
     _controllers['prijmeni']!.text = osoba.prijmeni;
     _controllers['cisloPojisteni']!.text = osoba.cisloPojisteni ?? '';
     if (osoba.datumNarozeni != null) {
-      _controllers['datumNarozeni']!.text = DateFormat('dd.MM.yyyy').format(osoba.datumNarozeni!);
+      _controllers['datumNarozeni']!.text =
+          DateFormat('dd.MM.yyyy').format(osoba.datumNarozeni!);
     }
     _controllers['pohlavi']!.text = osoba.pohlavi?.toString() ?? '';
     _controllers['zdravotniPojistovna']!.text = osoba.zdravotniPojistovna ?? '';
@@ -142,7 +156,7 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     _controllers['emailRodice']!.text = osoba.emailRodice ?? '';
     _controllers['telefonRodice']!.text = osoba.telefonRodice ?? '';
     _controllers['poznamka']!.text = osoba.poznamka ?? '';
-    
+
     // Initialize checkbox values
     _zpusobilost = osoba.zpusobilost ?? false;
     _bezinfekcnost = osoba.bezinfekcnost ?? false;
@@ -159,16 +173,19 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     if (_formKey.currentState!.validate()) {
       MemoryOsoba osoba = createMemoryOsoba();
       widget.onOsobaEdited?.call(osoba); // Ensure callback is called
-      
+
       // Use the service to save participant with restrictions
-      final participantId = await _participantService.saveParticipantWithRestrictions(
+      final participantId =
+          await _participantService.saveParticipantWithRestrictions(
         osoba: osoba,
         omezeniLogic: _omezeniLogic,
         lekLogic: _lekLogic,
       );
-      
+
       if (participantId != null) {
-        _showSnackBar(widget.osoba == null ? 'Účastník úspěšně přidán' : 'Účastník aktualizován');
+        _showSnackBar(widget.osoba == null
+            ? 'Účastník úspěšně přidán'
+            : 'Účastník aktualizován');
         // Update the osoba with the new ID if it was a new participant
         if (osoba.id == -1) {
           osoba.id = participantId;
@@ -189,7 +206,7 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
       validator.addInput(_controllers['datumNarozeni']!.text);
       parsedDate = validator.getOutput();
     }
-    
+
     return MemoryOsoba.fullNamed(
       id: widget.osoba?.id,
       jmeno: _controllers['jmeno']!.text,
@@ -229,17 +246,18 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
-  // TODO: Surface the same checksum/format warnings shown in CSV review so camp staff get inline feedback when manual entry fails the rodné číslo validation.
   void guessAndFillFields(String inText) {
     if (inText.length >= 6) {
       RodneCislo rc = RodneCislo(inText);
       DateTime datumNarozeni = rc.getDatumNarozeni();
       int pohlavi = rc.getPohlavi();
       if (_controllers['datumNarozeni']!.text.isEmpty) {
-        _controllers['datumNarozeni']!.text = DateFormat('dd.MM.yyyy').format(datumNarozeni);
+        _controllers['datumNarozeni']!.text =
+            DateFormat('dd.MM.yyyy').format(datumNarozeni);
       }
       if (_controllers['pohlavi']!.text.isEmpty) {
         _controllers['pohlavi']!.text = pohlavi.toString();
@@ -249,20 +267,31 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildGridView(),
-            _buildTextField('poznamka', 'Poznámka', 'Tento text se nebude tisknout', maxLines: 3, hintText: 'Tento text se nebude tisknout'),
-            const SizedBox(height: 16),
-            _buildCheckboxSection(),
-            const SizedBox(height: 16),
-            _buildRestrictionsSection(),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: _submitForm, child: Text(widget.osoba == null ? 'Přidat' : 'Aktualizovat')),
-          ],
+    return Padding(
+      padding: AppSpacing.screenPadding,
+      child: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildGridView(),
+              const SizedBox(height: 16),
+              _buildTextField('poznamka', 'Poznámka', null, maxLines: 3),
+              const SizedBox(height: 16),
+              _buildCheckboxSection(),
+              const SizedBox(height: 24),
+              _buildRestrictionsSection(),
+              const SizedBox(height: 24),
+              Center(
+                child: ElevatedButton(
+                  onPressed: _submitForm,
+                  child: Text(
+                      widget.osoba == null ? 'Registrovat' : 'Uložit změny'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -283,7 +312,10 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: CustomDatePicker(controller: _controllers['datumNarozeni']!, labelText: 'Datum Narození')),
+              Expanded(
+                  child: CustomDatePicker(
+                      controller: _controllers['datumNarozeni']!,
+                      labelText: 'Datum Narození')),
               const SizedBox(width: 8.0),
               Expanded(child: _buildTextField('pohlavi', 'Pohlaví', null)),
             ],
@@ -302,20 +334,22 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     );
   }
 
-  /// Build a single form row with equal-width fields
   Widget _buildFormRow(List<Widget> fields) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: fields.map((field) => Expanded(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: field,
-        ),
-      )).toList(),
+      children: fields
+          .map((field) => Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: field,
+                ),
+              ))
+          .toList(),
     );
   }
 
-  Widget _buildTextField(String key, String labelText, String? validatorText, {int maxLines = 1, String? hintText}) {
+  Widget _buildTextField(String key, String labelText, String? validatorText,
+      {int maxLines = 1, String? hintText}) {
     return TextFormField(
       controller: _controllers[key],
       decoration: InputDecoration(
@@ -377,6 +411,7 @@ class _ParticipantRegistrationFormState extends State<ParticipantRegistrationFor
     );
   }
 
+  /// Build the restrictions and medications section
   Widget _buildRestrictionsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

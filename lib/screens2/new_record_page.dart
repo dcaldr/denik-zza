@@ -26,7 +26,7 @@ import 'package:intl/intl.dart';
 /// - [x] Navigate to PersonAndModeFlowPage with pre-selected participant
 /// - [x] Support both full print and append print modes
 /// - [x] PrintCenter handles all PDF generation and printing logic
-/// 
+///
 /// ### File Viewer (způsobilost documents)
 /// **Status:** ✅ IMPLEMENTED
 /// - [x] Wired to FileViewerScreen
@@ -63,7 +63,7 @@ class NewRecordPageState extends State<NewRecordPage> {
   MemoryOsoba? _selectedParticipant;
   bool _hasUnsavedChanges = false;
   List<MemoryOsoba> _availableParticipants = [];
-  
+
   // Health info loaded separately
   List<MemoryOmezeni> _omezeniList = [];
   List<MemoryLek> _lekyList = [];
@@ -73,37 +73,38 @@ class NewRecordPageState extends State<NewRecordPage> {
   void initState() {
     super.initState();
     _selectedParticipant = widget.participant;
-    
+
     // Load participant's health data if participant was provided
     if (_selectedParticipant != null) {
       _poznamkaController.text = _selectedParticipant!.poznamka ?? '';
       _loadParticipantHealthData(_selectedParticipant!.id);
     }
-    
+
     // Track unsaved changes
     _titleController.addListener(_trackChanges);
     _descriptionController.addListener(_trackChanges);
     _poznamkaController.addListener(_trackChanges);
-    
+
     // Load available participants
     _loadAvailableParticipants();
-    
+
     // If no participant provided, search interface will be shown automatically
   }
 
   void _trackChanges() {
     setState(() {
-      _hasUnsavedChanges = _titleController.text.trim().isNotEmpty || 
-                          _descriptionController.text.trim().isNotEmpty ||
-                          _poznamkaController.text.trim().isNotEmpty;
+      _hasUnsavedChanges = _titleController.text.trim().isNotEmpty ||
+          _descriptionController.text.trim().isNotEmpty ||
+          _poznamkaController.text.trim().isNotEmpty;
     });
   }
 
   Future<void> _loadAvailableParticipants() async {
     try {
-  // Always resolve DB via the wrapper so tests/dev can inject memory DB
-  final database = DatabaseWrapper.getDatabase();
-  final participants = await database.watchParticipantsByCurrentEvent().first;
+      // Always resolve DB via the wrapper so tests/dev can inject memory DB
+      final database = DatabaseWrapper.getDatabase();
+      final participants =
+          await database.watchParticipantsByCurrentEvent().first;
       setState(() {
         _availableParticipants = participants;
       });
@@ -123,25 +124,25 @@ class NewRecordPageState extends State<NewRecordPage> {
     setState(() {
       _selectedParticipant = participant;
       _refreshCounter++;
-      
+
       // Clear form when switching participants
       _titleController.clear();
       _descriptionController.clear();
-      
+
       // Load participant's poznámka into the field
       _poznamkaController.text = participant.poznamka ?? '';
-      
+
       // Only clear timestamp if there were unsaved changes
       // Preserve manually set timestamps when no unsaved changes exist
       if (_hasUnsavedChanges) {
         _selectedDate = null;
         _selectedTime = null;
       }
-      
+
       // Reset unsaved changes flag since we're starting fresh with new participant
       _hasUnsavedChanges = false;
     });
-    
+
     // Load health data for new participant
     _loadParticipantHealthData(participant.id);
   }
@@ -164,7 +165,7 @@ class NewRecordPageState extends State<NewRecordPage> {
       final database = DatabaseWrapper.getDatabase();
       final omezeni = await database.getOmezeniByParticipantID(participantId);
       final leky = await database.getLekyByParticipantID(participantId);
-      
+
       setState(() {
         _omezeniList = omezeni;
         _lekyList = leky;
@@ -177,17 +178,17 @@ class NewRecordPageState extends State<NewRecordPage> {
   /// Formats age display with hover/click for full birthdate
   String _formatAge() {
     if (_selectedParticipant?.datumNarozeni == null) return '';
-    
+
     final birthDate = _selectedParticipant!.datumNarozeni!;
     final now = DateTime.now();
     int age = now.year - birthDate.year;
-    
+
     // Adjust if birthday hasn't occurred yet this year
-    if (now.month < birthDate.month || 
+    if (now.month < birthDate.month ||
         (now.month == birthDate.month && now.day < birthDate.day)) {
       age--;
     }
-    
+
     return ', $age let';
   }
 
@@ -196,11 +197,11 @@ class NewRecordPageState extends State<NewRecordPage> {
     // Filter omezeni by type: 1=omezeni, 2=alergie
     final alergieList = _omezeniList.where((o) => o.typOmezeni == 2).toList();
     final omezeniList = _omezeniList.where((o) => o.typOmezeni == 1).toList();
-    
+
     if (alergieList.isEmpty && omezeniList.isEmpty && _lekyList.isEmpty) {
       return const SizedBox.shrink(); // No health info to show
     }
-    
+
     // Build all health chip widgets
     final allHealthChips = <Widget>[
       // Alergie
@@ -231,16 +232,17 @@ class NewRecordPageState extends State<NewRecordPage> {
           maxChars: 30,
         ),
     ];
-    
+
     // Responsive collapse: adapt threshold to screen size
     final screenWidth = MediaQuery.of(context).size.width;
-    final maxCollapsedItems = screenWidth < 600 ? 4 : (screenWidth < 900 ? 6 : 8);
+    final maxCollapsedItems =
+        screenWidth < 600 ? 4 : (screenWidth < 900 ? 6 : 8);
     final totalItems = allHealthChips.length;
     final shouldShowCollapseButton = totalItems > maxCollapsedItems;
     final visibleChips = (_healthInfoExpanded || !shouldShowCollapseButton)
         ? allHealthChips
         : allHealthChips.take(maxCollapsedItems).toList();
-    
+
     return Wrap(
       spacing: 6,
       runSpacing: 4,
@@ -307,16 +309,18 @@ class NewRecordPageState extends State<NewRecordPage> {
   }) {
     final truncated = text.length > maxChars;
     final displayText = truncated ? '${text.substring(0, maxChars)}...' : text;
-    
+
     return InkWell(
-      onTap: truncated ? () => _showHealthDetailOverlay(text, icon, iconColor) : null,
+      onTap: truncated
+          ? () => _showHealthDetailOverlay(text, icon, iconColor)
+          : null,
       borderRadius: BorderRadius.circular(6),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: iconColor.withOpacity(0.3), width: 1),
+          border: Border.all(color: iconColor.withValues(alpha: 0.3), width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -341,7 +345,8 @@ class NewRecordPageState extends State<NewRecordPage> {
   }
 
   /// Shows overlay with full health info text
-  void _showHealthDetailOverlay(String fullText, IconData icon, Color iconColor) {
+  void _showHealthDetailOverlay(
+      String fullText, IconData icon, Color iconColor) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -371,10 +376,10 @@ class NewRecordPageState extends State<NewRecordPage> {
   /// Shows full birthdate information in a dialog
   void _showBirthdateInfo() {
     if (_selectedParticipant?.datumNarozeni == null) return;
-    
+
     final birthDate = _selectedParticipant!.datumNarozeni!;
     final formatted = DateFormat('d. MMMM yyyy', 'cs_CZ').format(birthDate);
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -396,14 +401,15 @@ class NewRecordPageState extends State<NewRecordPage> {
 
   /// Opens file viewer for způsobilost document
   void _showZpusobilostDocument() {
-    if (_selectedParticipant?.potvrzeniPath == null || 
+    if (_selectedParticipant?.potvrzeniPath == null ||
         _selectedParticipant!.potvrzeniPath!.isEmpty) {
       // Show error if no document path
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Chybí dokument'),
-          content: const Text('Pro tohoto účastníka není k dispozici dokument způsobilosti.'),
+          content: const Text(
+              'Pro tohoto účastníka není k dispozici dokument způsobilosti.'),
           actions: [
             TextButton(
               key: const Key('NewRecordPage_zpusobilost_missing_close'),
@@ -445,9 +451,8 @@ class NewRecordPageState extends State<NewRecordPage> {
         style: IconButton.styleFrom(
           padding: const EdgeInsets.all(8),
           minimumSize: const Size(36, 36),
-          backgroundColor: onPressed != null 
-              ? Colors.blue.shade50 
-              : Colors.grey.shade100,
+          backgroundColor:
+              onPressed != null ? Colors.blue.shade50 : Colors.grey.shade100,
         ),
       ),
     );
@@ -455,17 +460,17 @@ class NewRecordPageState extends State<NewRecordPage> {
 
   /// Check if způsobilost document is available
   bool _hasZpusobilostDocument() {
-    return _selectedParticipant?.potvrzeniPath != null && 
-           _selectedParticipant!.potvrzeniPath!.isNotEmpty;
+    return _selectedParticipant?.potvrzeniPath != null &&
+        _selectedParticipant!.potvrzeniPath!.isNotEmpty;
   }
 
   /// Builds způsobilost document button
   Widget _buildZpusobilostButton() {
     final hasDocument = _hasZpusobilostDocument();
-    final tooltip = hasDocument 
-        ? 'Zobrazit dokument způsobilosti' 
+    final tooltip = hasDocument
+        ? 'Zobrazit dokument způsobilosti'
         : 'Dokument způsobilosti nebyl nahrán';
-    
+
     return Tooltip(
       message: tooltip,
       child: IconButton(
@@ -477,9 +482,8 @@ class NewRecordPageState extends State<NewRecordPage> {
         style: IconButton.styleFrom(
           padding: const EdgeInsets.all(8),
           minimumSize: const Size(36, 36),
-          backgroundColor: hasDocument 
-              ? Colors.green.shade50 
-              : Colors.grey.shade100,
+          backgroundColor:
+              hasDocument ? Colors.green.shade50 : Colors.grey.shade100,
         ),
       ),
     );
@@ -493,7 +497,7 @@ class NewRecordPageState extends State<NewRecordPage> {
   /// Print full record (navigate to PrintCenter with full mode)
   Future<void> _printFullRecord() async {
     if (_selectedParticipant == null || !mounted) return;
-    
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -515,7 +519,7 @@ class NewRecordPageState extends State<NewRecordPage> {
   /// Print append mode (navigate to PrintCenter with append mode)
   Future<void> _printAppendRecord() async {
     if (_selectedParticipant == null || !mounted) return;
-    
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -600,15 +604,15 @@ class NewRecordPageState extends State<NewRecordPage> {
     if (_selectedDate == null && _selectedTime == null) {
       return 'Datum a čas (aktuální)';
     }
-    
-    String datePart = _selectedDate == null 
-        ? 'Dnes' 
+
+    String datePart = _selectedDate == null
+        ? 'Dnes'
         : '${_selectedDate!.day.toString().padLeft(2, '0')}.${_selectedDate!.month.toString().padLeft(2, '0')}.${_selectedDate!.year}';
-    
-    String timePart = _selectedTime == null 
-        ? 'aktuální čas' 
+
+    String timePart = _selectedTime == null
+        ? 'aktuální čas'
         : '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}';
-    
+
     return '$datePart, $timePart';
   }
 
@@ -656,19 +660,19 @@ class NewRecordPageState extends State<NewRecordPage> {
 
       try {
         await _recordService.addRecord(newRecord);
-        
+
         // Update participant's poznámka if it changed
         if (_selectedParticipant!.poznamka != _poznamkaController.text.trim()) {
           _selectedParticipant!.poznamka = _poznamkaController.text.trim();
           final db = DatabaseWrapper.getDatabase();
           await db.updateParticipant(osoba: _selectedParticipant!);
         }
-        
+
         // Refresh the record list by triggering a rebuild
         setState(() {
           _refreshCounter++;
         });
-        
+
         // Clear the form after successful save, but keep custom timestamp as tests expect it preserved
         _titleController.clear();
         _descriptionController.clear();
@@ -677,10 +681,11 @@ class NewRecordPageState extends State<NewRecordPage> {
           // Do not reset _selectedDate/_selectedTime to preserve manually set timestamp in UI
           _hasUnsavedChanges = false; // Reset unsaved changes flag
         });
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Záznam úrazu byl úspěšně uložen do deníku!')),
+            const SnackBar(
+                content: Text('Záznam úrazu byl úspěšně uložen do deníku!')),
           );
         }
       } catch (e) {
@@ -708,9 +713,8 @@ class NewRecordPageState extends State<NewRecordPage> {
         return AlertDialog(
           title: const Text('Změnit účastníka?'),
           content: const Text(
-            'Změnou účastníka se ztratí neuložené změny v formuláři. '
-            'Chcete pokračovat?'
-          ),
+              'Změnou účastníka se ztratí neuložené změny v formuláři. '
+              'Chcete pokračovat?'),
           actions: [
             TextButton(
               key: const Key('dialog_cancel_button'),
@@ -740,13 +744,14 @@ class NewRecordPageState extends State<NewRecordPage> {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-      // Adjust spacing and layout based on available height
-      final isCompact = constraints.maxHeight <= 600;
+          // Adjust spacing and layout based on available height
+          final isCompact = constraints.maxHeight <= 600;
           final spacing = isCompact ? 8.0 : 12.0; // Increased spacing
           final titleSpacing = isCompact ? 8.0 : 12.0; // Increased spacing
-          
+
           return Padding(
-            padding: const EdgeInsets.all(20.0), // Increased from 16.0 for better breathing room
+            padding: const EdgeInsets.all(
+                20.0), // Increased from 16.0 for better breathing room
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -759,7 +764,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                       end: Alignment.centerRight,
                       colors: [
                         Colors.blue.shade50,
-                        Colors.blue.shade50.withOpacity(0.5),
+                        Colors.blue.shade50.withValues(alpha: 0.5),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12.0), // More rounded
@@ -775,14 +780,16 @@ class NewRecordPageState extends State<NewRecordPage> {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Icon(
-                          _selectedParticipant != null ? Icons.person : Icons.person_search,
+                          _selectedParticipant != null
+                              ? Icons.person
+                              : Icons.person_search,
                           color: Colors.blue.shade700,
                           size: isCompact ? 18 : 20,
                         ),
                       ),
-                      
+
                       const SizedBox(width: 12),
-                      
+
                       // Participant info (takes most space)
                       Expanded(
                         flex: 2,
@@ -809,11 +816,14 @@ class NewRecordPageState extends State<NewRecordPage> {
                                 // Unsaved changes warning badge
                                 if (_hasUnsavedChanges)
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 4, vertical: 1),
                                     decoration: BoxDecoration(
                                       color: Colors.orange.shade100,
                                       borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: Colors.orange.shade300, width: 1),
+                                      border: Border.all(
+                                          color: Colors.orange.shade300,
+                                          width: 1),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
@@ -846,17 +856,23 @@ class NewRecordPageState extends State<NewRecordPage> {
                                         : 'Vyberte účastníka...',
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                      fontSize: isCompact ? 14 : 15,  // Reduced from 15-16 for compactness
+                                      fontSize: isCompact
+                                          ? 14
+                                          : 15, // Reduced from 15-16 for compactness
                                       fontWeight: FontWeight.bold,
-                                      color: _selectedParticipant != null ? Colors.black87 : Colors.grey.shade600,
+                                      color: _selectedParticipant != null
+                                          ? Colors.black87
+                                          : Colors.grey.shade600,
                                     ),
                                   ),
                                 ),
                                 // Info icon to show full birthdate on tap
-                                if (_selectedParticipant?.datumNarozeni != null) ...[
+                                if (_selectedParticipant?.datumNarozeni !=
+                                    null) ...[
                                   const SizedBox(width: 4),
                                   InkWell(
-                                    key: const Key('NewRecordPage_birthdate_info_icon'),
+                                    key: const Key(
+                                        'NewRecordPage_birthdate_info_icon'),
                                     onTap: _showBirthdateInfo,
                                     borderRadius: BorderRadius.circular(12),
                                     child: Padding(
@@ -879,9 +895,9 @@ class NewRecordPageState extends State<NewRecordPage> {
                           ],
                         ),
                       ),
-                      
+
                       const SizedBox(width: 12),
-                      
+
                       // Inline search (compact on the right)
                       Expanded(
                         flex: 1,
@@ -910,7 +926,8 @@ class NewRecordPageState extends State<NewRecordPage> {
                             ),
                             const SizedBox(height: 4),
                             PersonAutocomplete(
-                              key: const Key('NewRecordPage_participantAutocomplete'),
+                              key: const Key(
+                                  'NewRecordPage_participantAutocomplete'),
                               onPersonSelected: _onParticipantSelected,
                               onRefresh: _onRefresh,
                               availablePersons: _availableParticipants,
@@ -922,10 +939,11 @@ class NewRecordPageState extends State<NewRecordPage> {
                   ),
                 ),
                 SizedBox(height: spacing),
-                
+
                 // Display existing records (compact)
                 Expanded(
-                  flex: isCompact ? 1 : 2, // Reduced to take less vertical space
+                  flex:
+                      isCompact ? 1 : 2, // Reduced to take less vertical space
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -937,7 +955,8 @@ class NewRecordPageState extends State<NewRecordPage> {
                       children: [
                         // Header for records list (compact)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10.0, vertical: 6.0),
                           decoration: BoxDecoration(
                             color: Colors.grey.shade100,
                             borderRadius: const BorderRadius.only(
@@ -977,30 +996,39 @@ class NewRecordPageState extends State<NewRecordPage> {
                               : Container(
                                   alignment: Alignment.center,
                                   child: SingleChildScrollView(
-                                    physics: const NeverScrollableScrollPhysics(),
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Icon(
                                           Icons.person_search,
-                                          size: 24, // Reduced for test compatibility
+                                          size:
+                                              24, // Reduced for test compatibility
                                           color: Colors.grey.shade400,
                                         ),
-                                        const SizedBox(height: 4), // Reduced for test compatibility
+                                        const SizedBox(
+                                            height:
+                                                4), // Reduced for test compatibility
                                         Text(
                                           'Nejprve vyberte účastníka',
                                           style: TextStyle(
-                                            fontSize: 12, // Reduced for test compatibility
+                                            fontSize:
+                                                12, // Reduced for test compatibility
                                             color: Colors.grey.shade600,
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
-                                        const SizedBox(height: 2), // Reduced for test compatibility
+                                        const SizedBox(
+                                            height:
+                                                2), // Reduced for test compatibility
                                         Text(
                                           'Po výběru účastníka se zde zobrazí\njejí historie úrazů',
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
-                                            fontSize: 10, // Reduced for test compatibility
+                                            fontSize:
+                                                10, // Reduced for test compatibility
                                             color: Colors.grey.shade500,
                                           ),
                                         ),
@@ -1013,9 +1041,9 @@ class NewRecordPageState extends State<NewRecordPage> {
                     ),
                   ),
                 ),
-                
+
                 SizedBox(height: spacing),
-                
+
                 // Form for new record (main focus)
                 Expanded(
                   flex: isCompact ? 5 : 7, // More space for form (main focus)
@@ -1026,446 +1054,578 @@ class NewRecordPageState extends State<NewRecordPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                        // Make form fields scrollable but keep action buttons pinned
-                        Expanded(
-                          child: SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                        // Date/time section with action buttons - datetime in blue box, buttons at far right
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            // Blue box wraps ONLY the datetime section (tight fit)
-                            Flexible(
-                              child: Container(
-                                padding: const EdgeInsets.all(16.0),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade50.withOpacity(0.3),
-                                  borderRadius: BorderRadius.circular(12.0),
-                                  border: Border.all(color: Colors.blue.shade200.withOpacity(0.5), width: 1),
-                                ),
-                                child: InkWell(
-                                  key: const Key('datetime_change_button'),
-                                  onTap: _selectedParticipant != null ? _selectDateTime : null,
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
+                          // Make form fields scrollable but keep action buttons pinned
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  // Date/time section with action buttons - datetime in blue box, buttons at far right
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(8),
+                                      // Blue box wraps ONLY the datetime section (tight fit)
+                                      Flexible(
+                                        child: Container(
+                                          padding: const EdgeInsets.all(16.0),
+                                          decoration: BoxDecoration(
+                                            color: Colors.blue.shade50
+                                                .withValues(alpha: 0.3),
+                                            borderRadius:
+                                                BorderRadius.circular(12.0),
+                                            border: Border.all(
+                                                color: Colors.blue.shade200
+                                                    .withValues(alpha: 0.5),
+                                                width: 1),
+                                          ),
+                                          child: InkWell(
+                                            key: const Key(
+                                                'datetime_change_button'),
+                                            onTap: _selectedParticipant != null
+                                                ? _selectDateTime
+                                                : null,
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.all(8),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.blue.shade100,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            6),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.schedule,
+                                                    color: Colors.blue.shade700,
+                                                    size: isCompact ? 16 : 18,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Flexible(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        'Čas záznamu',
+                                                        style: TextStyle(
+                                                          fontSize: isCompact
+                                                              ? 12
+                                                              : 13,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          color: Colors
+                                                              .blue.shade700,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Row(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .center,
+                                                        children: [
+                                                          Flexible(
+                                                            child: Text(
+                                                              _formatSelectedDateTime(),
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              style: TextStyle(
+                                                                fontSize:
+                                                                    isCompact
+                                                                        ? 14
+                                                                        : 15,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w400,
+                                                                height:
+                                                                    1.2, // Prevent text clipping
+                                                                color: _selectedParticipant !=
+                                                                        null
+                                                                    ? Colors
+                                                                        .black87
+                                                                    : Colors
+                                                                        .grey
+                                                                        .shade400,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                              width: 4),
+                                                          Icon(
+                                                            Icons.edit_outlined,
+                                                            size: 16,
+                                                            color: _selectedParticipant !=
+                                                                    null
+                                                                ? Colors.blue
+                                                                    .shade700
+                                                                : Colors.grey
+                                                                    .shade400,
+                                                          ),
+                                                          // Only show reset button if datetime was modified
+                                                          if (_selectedDate !=
+                                                                  null ||
+                                                              _selectedTime !=
+                                                                  null) ...[
+                                                            const SizedBox(
+                                                                width: 6),
+                                                            InkWell(
+                                                              key: const Key(
+                                                                  'datetime_reset_button'),
+                                                              onTap:
+                                                                  _selectedParticipant !=
+                                                                          null
+                                                                      ? () {
+                                                                          setState(
+                                                                              () {
+                                                                            _selectedDate =
+                                                                                null;
+                                                                            _selectedTime =
+                                                                                null;
+                                                                          });
+                                                                        }
+                                                                      : null,
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          4),
+                                                              child: Tooltip(
+                                                                message:
+                                                                    'Reset na aktuální čas',
+                                                                child: Padding(
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .all(
+                                                                          2),
+                                                                  child: Icon(
+                                                                    Icons
+                                                                        .refresh,
+                                                                    size: 16,
+                                                                    color: _selectedParticipant !=
+                                                                            null
+                                                                        ? Colors
+                                                                            .blue
+                                                                            .shade700
+                                                                        : Colors
+                                                                            .grey
+                                                                            .shade400,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      // Group all action buttons together on the right
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          _buildPrintIconButton(
+                                            key: const Key(
+                                                'NewRecordPage_print_full_button'),
+                                            icon: Icons.print,
+                                            tooltip: 'Tisknout záznam',
+                                            onPressed: _canPrint()
+                                                ? _printFullRecord
+                                                : null,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          _buildPrintIconButton(
+                                            key: const Key(
+                                                'NewRecordPage_print_append_button'),
+                                            icon: Icons.add_to_photos,
+                                            tooltip:
+                                                'Přitisknout k existujícímu',
+                                            onPressed: _canPrint()
+                                                ? _printAppendRecord
+                                                : null,
+                                          ),
+                                          // Způsobilost document button (far right)
+                                          if (_selectedParticipant != null) ...[
+                                            const SizedBox(width: 4),
+                                            _buildZpusobilostButton(),
+                                          ],
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: titleSpacing),
+
+                                  // Title field
+                                  TextFormField(
+                                    key: const Key('title_field'),
+                                    controller: _titleController,
+                                    enabled: _selectedParticipant != null,
+                                    maxLines: 1,
+                                    maxLength: 200,
+                                    style: TextStyle(
+                                      fontSize: isCompact ? 14 : 15,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black87,
+                                    ),
+                                    decoration: InputDecoration(
+                                      labelText: 'Nadpis * (povinné)',
+                                      labelStyle: TextStyle(
+                                        color: Colors.blue.shade700,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      hintText: _selectedParticipant != null
+                                          ? 'Povinné - typ úrazu nebo stížnosti (např. "Odřenina kolena", "Bolest hlavy")'
+                                          : 'Vyberte účastníka pro pokračování',
+                                      hintStyle: TextStyle(
+                                        color: Colors.grey.shade500,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8.0),
+                                        borderSide: BorderSide(
+                                            color: Colors.blue.shade200),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8.0),
+                                        borderSide: BorderSide(
+                                            color: Colors.blue.shade200),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8.0),
+                                        borderSide: BorderSide(
+                                            color: Colors.blue.shade600,
+                                            width: 2),
+                                      ),
+                                      errorBorder: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8.0),
+                                        borderSide: const BorderSide(
+                                            color: Colors.red, width: 2),
+                                      ),
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: isCompact ? 12 : 16,
+                                          vertical: isCompact ? 8 : 12),
+                                      prefixIcon: Container(
+                                        margin: const EdgeInsets.all(8.0),
+                                        padding: const EdgeInsets.all(6.0),
                                         decoration: BoxDecoration(
-                                          color: Colors.blue.shade100,
-                                          borderRadius: BorderRadius.circular(6),
+                                          color: Colors.blue.shade50,
+                                          borderRadius:
+                                              BorderRadius.circular(4),
                                         ),
                                         child: Icon(
-                                          Icons.schedule,
+                                          Icons.title,
                                           color: Colors.blue.shade700,
                                           size: isCompact ? 16 : 18,
                                         ),
                                       ),
-                                      const SizedBox(width: 12),
-                                      Flexible(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Čas záznamu',
-                                              style: TextStyle(
-                                                fontSize: isCompact ? 12 : 13,
-                                                fontWeight: FontWeight.w500,
+                                      errorMaxLines: 1,
+                                      errorStyle: const TextStyle(
+                                          fontSize: 11, height: 0.8),
+                                    ),
+                                    validator: (value) {
+                                      if (value == null ||
+                                          value.trim().isEmpty) {
+                                        return 'Prosím zadejte nadpis';
+                                      }
+                                      if (value.length > 200) {
+                                        return 'Nadpis nesmí být delší než 200 znaků';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  SizedBox(height: titleSpacing),
+
+                                  // Description and Note side-by-side
+                                  SizedBox(
+                                    height: isCompact ? 90 : 120,
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Description field (main focus - wider)
+                                        Expanded(
+                                          flex: 4,
+                                          child: TextFormField(
+                                            key: const Key('description_field'),
+                                            controller: _descriptionController,
+                                            enabled:
+                                                _selectedParticipant != null,
+                                            maxLines: null,
+                                            minLines: null,
+                                            maxLength: 1024,
+                                            expands: true,
+                                            textAlignVertical:
+                                                TextAlignVertical.top,
+                                            style: TextStyle(
+                                              fontSize: isCompact ? 13 : 14,
+                                              fontWeight: FontWeight.w400,
+                                              color: Colors.black87,
+                                              height: 1.4,
+                                            ),
+                                            decoration: InputDecoration(
+                                              labelText:
+                                                  'Popis úrazu a ošetření',
+                                              labelStyle: TextStyle(
                                                 color: Colors.blue.shade700,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              hintText:
+                                                  'Co se stalo, jak k úrazu došlo, jaké ošetření bylo poskytnuto...',
+                                              hintStyle: TextStyle(
+                                                color: Colors.grey.shade500,
+                                                fontStyle: FontStyle.italic,
+                                              ),
+                                              filled: true,
+                                              fillColor: Colors.white,
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8.0),
+                                                borderSide: BorderSide(
+                                                    color:
+                                                        Colors.blue.shade200),
+                                              ),
+                                              enabledBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8.0),
+                                                borderSide: BorderSide(
+                                                    color:
+                                                        Colors.blue.shade200),
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8.0),
+                                                borderSide: BorderSide(
+                                                    color: Colors.blue.shade600,
+                                                    width: 2),
+                                              ),
+                                              errorBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8.0),
+                                                borderSide: const BorderSide(
+                                                    color: Colors.red,
+                                                    width: 2),
+                                              ),
+                                              contentPadding: EdgeInsets.all(
+                                                  isCompact ? 12 : 16),
+                                              alignLabelWithHint: true,
+                                              counterStyle: TextStyle(
+                                                color: Colors.grey.shade600,
+                                                fontSize: 11,
+                                              ),
+                                              errorMaxLines: 1,
+                                              errorStyle: const TextStyle(
+                                                  fontSize: 11, height: 0.8),
+                                            ),
+                                            validator: (value) {
+                                              if (value != null &&
+                                                  value.length > 1024) {
+                                                return 'Popis nesmí být delší než 1024 znaků';
+                                              }
+                                              return null;
+                                            },
+                                          ),
+                                        ),
+
+                                        const SizedBox(width: 12),
+
+                                        // Poznámka field (side note - narrower, sticky note style)
+                                        Expanded(
+                                          flex: 1,
+                                          child: TextFormField(
+                                            key: const Key('poznamka_field'),
+                                            controller: _poznamkaController,
+                                            enabled:
+                                                _selectedParticipant != null,
+                                            maxLines: null,
+                                            minLines: null,
+                                            expands: true,
+                                            textAlignVertical:
+                                                TextAlignVertical.top,
+                                            style: TextStyle(
+                                              fontSize: isCompact ? 11 : 12,
+                                              fontWeight: FontWeight.w400,
+                                              color: Colors.black87,
+                                              height: 1.3,
+                                            ),
+                                            decoration: InputDecoration(
+                                              labelText: 'Poznámka',
+                                              labelStyle: TextStyle(
+                                                color: Colors.amber.shade800,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: isCompact ? 11 : 12,
+                                              ),
+                                              hintText: 'Alergie, léky...',
+                                              hintStyle: TextStyle(
+                                                color: Colors.amber.shade700,
+                                                fontStyle: FontStyle.italic,
+                                                fontSize: 11,
+                                              ),
+                                              filled: true,
+                                              fillColor: Colors.yellow.shade50,
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(6.0),
+                                                borderSide: BorderSide(
+                                                    color:
+                                                        Colors.amber.shade300,
+                                                    width: 1.5),
+                                              ),
+                                              enabledBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(6.0),
+                                                borderSide: BorderSide(
+                                                    color:
+                                                        Colors.amber.shade300,
+                                                    width: 1.5),
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(6.0),
+                                                borderSide: BorderSide(
+                                                    color:
+                                                        Colors.amber.shade600,
+                                                    width: 2),
+                                              ),
+                                              contentPadding: EdgeInsets.all(
+                                                  isCompact ? 8 : 10),
+                                              alignLabelWithHint: true,
+                                              helperText: 'Netiskne se',
+                                              helperStyle: TextStyle(
+                                                color: Colors.amber.shade700,
+                                                fontSize: 9,
+                                                fontStyle: FontStyle.italic,
                                               ),
                                             ),
-                                            const SizedBox(height: 4),
-                                            Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              crossAxisAlignment: CrossAxisAlignment.center,
-                                              children: [
-                                                Flexible(
-                                                  child: Text(
-                                                    _formatSelectedDateTime(),
-                                                    overflow: TextOverflow.ellipsis,
-                                                    style: TextStyle(
-                                                      fontSize: isCompact ? 14 : 15,
-                                                      fontWeight: FontWeight.w400,
-                                                      height: 1.2, // Prevent text clipping
-                                                      color: _selectedParticipant != null 
-                                                          ? Colors.black87 
-                                                          : Colors.grey.shade400,
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Icon(
-                                                  Icons.edit_outlined,
-                                                  size: 16,
-                                                  color: _selectedParticipant != null 
-                                                      ? Colors.blue.shade700 
-                                                      : Colors.grey.shade400,
-                                                ),
-                                                // Only show reset button if datetime was modified
-                                                if (_selectedDate != null || _selectedTime != null) ...[
-                                                  const SizedBox(width: 6),
-                                                  InkWell(
-                                                    key: const Key('datetime_reset_button'),
-                                                    onTap: _selectedParticipant != null ? () {
-                                                      setState(() {
-                                                        _selectedDate = null;
-                                                        _selectedTime = null;
-                                                      });
-                                                    } : null,
-                                                    borderRadius: BorderRadius.circular(4),
-                                                    child: Tooltip(
-                                                      message: 'Reset na aktuální čas',
-                                                      child: Padding(
-                                                        padding: const EdgeInsets.all(2),
-                                                        child: Icon(
-                                                          Icons.refresh,
-                                                          size: 16,
-                                                          color: _selectedParticipant != null 
-                                                              ? Colors.blue.shade700 
-                                                              : Colors.grey.shade400,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            // Group all action buttons together on the right
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _buildPrintIconButton(
-                                  key: const Key('NewRecordPage_print_full_button'),
-                                  icon: Icons.print,
-                                  tooltip: 'Tisknout záznam',
-                                  onPressed: _canPrint() ? _printFullRecord : null,
-                                ),
-                                const SizedBox(width: 4),
-                                _buildPrintIconButton(
-                                  key: const Key('NewRecordPage_print_append_button'),
-                                  icon: Icons.add_to_photos,
-                                  tooltip: 'Přitisknout k existujícímu',
-                                  onPressed: _canPrint() ? _printAppendRecord : null,
-                                ),
-                                // Způsobilost document button (far right)
-                                if (_selectedParticipant != null) ...[
-                                  const SizedBox(width: 4),
-                                  _buildZpusobilostButton(),
-                                ],
-                              ],
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: titleSpacing),
-                        
-                        // Title field
-                        TextFormField(
-                            key: const Key('title_field'),
-                            controller: _titleController,
-                            enabled: _selectedParticipant != null,
-                            maxLines: 1,
-                            maxLength: 200,
-                            style: TextStyle(
-                              fontSize: isCompact ? 14 : 15,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black87,
-                            ),
-                            decoration: InputDecoration(
-                              labelText: 'Nadpis * (povinné)',
-                              labelStyle: TextStyle(
-                                color: Colors.blue.shade700,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              hintText: _selectedParticipant != null 
-                                  ? 'Povinné - typ úrazu nebo stížnosti (např. "Odřenina kolena", "Bolest hlavy")'
-                                  : 'Vyberte účastníka pro pokračování',
-                              hintStyle: TextStyle(
-                                color: Colors.grey.shade500,
-                                fontStyle: FontStyle.italic,
-                              ),
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(color: Colors.blue.shade200),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(color: Colors.blue.shade200),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
-                              ),
-                              errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: const BorderSide(color: Colors.red, width: 2),
-                              ),
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: isCompact ? 12 : 16, 
-                                vertical: isCompact ? 8 : 12
-                              ),
-                              prefixIcon: Container(
-                                margin: const EdgeInsets.all(8.0),
-                                padding: const EdgeInsets.all(6.0),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade50,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Icon(
-                                  Icons.title,
-                                  color: Colors.blue.shade700,
-                                  size: isCompact ? 16 : 18,
-                                ),
-                              ),
-                              errorMaxLines: 1,
-                              errorStyle: const TextStyle(fontSize: 11, height: 0.8),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Prosím zadejte nadpis';
-                              }
-                              if (value.length > 200) {
-                                return 'Nadpis nesmí být delší než 200 znaků';
-                              }
-                              return null;
-                            },
-                        ),
-                        SizedBox(height: titleSpacing),
-                        
-                        // Description and Note side-by-side
-                        SizedBox(
-                          height: isCompact ? 90 : 120,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Description field (main focus - wider)
-                              Expanded(
-                                flex: 4,
-                                child: TextFormField(
-                                  key: const Key('description_field'),
-                                  controller: _descriptionController,
-                                  enabled: _selectedParticipant != null,
-                                  maxLines: null,
-                                  minLines: null,
-                                  maxLength: 1024,
-                                  expands: true,
-                                  textAlignVertical: TextAlignVertical.top,
-                                  style: TextStyle(
-                                    fontSize: isCompact ? 13 : 14,
-                                    fontWeight: FontWeight.w400,
-                                    color: Colors.black87,
-                                    height: 1.4,
-                                  ),
-                                  decoration: InputDecoration(
-                                    labelText: 'Popis úrazu a ošetření',
-                                    labelStyle: TextStyle(
-                                      color: Colors.blue.shade700,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    hintText: 'Co se stalo, jak k úrazu došlo, jaké ošetření bylo poskytnuto...',
-                                    hintStyle: TextStyle(
-                                      color: Colors.grey.shade500,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                    filled: true,
-                                    fillColor: Colors.white,
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      borderSide: BorderSide(color: Colors.blue.shade200),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      borderSide: BorderSide(color: Colors.blue.shade200),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
-                                    ),
-                                    errorBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      borderSide: const BorderSide(color: Colors.red, width: 2),
-                                    ),
-                                    contentPadding: EdgeInsets.all(isCompact ? 12 : 16),
-                                    alignLabelWithHint: true,
-                                    counterStyle: TextStyle(
-                                      color: Colors.grey.shade600,
-                                      fontSize: 11,
-                                    ),
-                                    errorMaxLines: 1,
-                                    errorStyle: const TextStyle(fontSize: 11, height: 0.8),
-                                  ),
-                                  validator: (value) {
-                                    if (value != null && value.length > 1024) {
-                                      return 'Popis nesmí být delší než 1024 znaků';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                              
-                              const SizedBox(width: 12),
-                              
-                              // Poznámka field (side note - narrower, sticky note style)
-                              Expanded(
-                                flex: 1,
-                                child: TextFormField(
-                                  key: const Key('poznamka_field'),
-                                  controller: _poznamkaController,
-                                  enabled: _selectedParticipant != null,
-                                  maxLines: null,
-                                  minLines: null,
-                                  expands: true,
-                                  textAlignVertical: TextAlignVertical.top,
-                                  style: TextStyle(
-                                    fontSize: isCompact ? 11 : 12,
-                                    fontWeight: FontWeight.w400,
-                                    color: Colors.black87,
-                                    height: 1.3,
-                                  ),
-                                  decoration: InputDecoration(
-                                    labelText: 'Poznámka',
-                                    labelStyle: TextStyle(
-                                      color: Colors.amber.shade800,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: isCompact ? 11 : 12,
-                                    ),
-                                    hintText: 'Alergie, léky...',
-                                    hintStyle: TextStyle(
-                                      color: Colors.amber.shade700,
-                                      fontStyle: FontStyle.italic,
-                                      fontSize: 11,
-                                    ),
-                                    filled: true,
-                                    fillColor: Colors.yellow.shade50,
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(6.0),
-                                      borderSide: BorderSide(color: Colors.amber.shade300, width: 1.5),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(6.0),
-                                      borderSide: BorderSide(color: Colors.amber.shade300, width: 1.5),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(6.0),
-                                      borderSide: BorderSide(color: Colors.amber.shade600, width: 2),
-                                    ),
-                                    contentPadding: EdgeInsets.all(isCompact ? 8 : 10),
-                                    alignLabelWithHint: true,
-                                    helperText: 'Netiskne se',
-                                    helperStyle: TextStyle(
-                                      color: Colors.amber.shade700,
-                                      fontSize: 9,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        
-                        // Action buttons (enhanced professional styling) pinned at bottom
-                        Container(
-                          padding: const EdgeInsets.all(16.0), // Increased padding
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
-                            borderRadius: BorderRadius.circular(12.0), // More rounded
-                            border: Border.all(color: Colors.grey.shade200, width: 1),
-                          ),
-                          child: Row(
-                            children: [
-                              // Save button (primary action)
-                              Expanded(
-                                flex: 3,
-                                child: FilledButton.icon(
-                                  key: const Key('save_button'),
-                                  onPressed: _isSaving ? null : _saveRecord,
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: Colors.blue.shade600,
-                                    foregroundColor: Colors.white,
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: isCompact ? 12 : 14, // Better button height
-                                      horizontal: isCompact ? 16 : 20,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                    ),
-                                    elevation: 2,
-                                  ),
-                                  icon: _isSaving
-                                      ? SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                           ),
-                                        )
-                                      : Icon(
-                                          Icons.save,
-                                          size: isCompact ? 16 : 18,
                                         ),
-                                  label: Text(
-                                    _isSaving ? 'Ukládání...' : 'Uložit do deníku',
-                                    style: TextStyle(
-                                      fontSize: isCompact ? 13 : 14,
-                                      fontWeight: FontWeight.w600,
+                                      ],
                                     ),
                                   ),
-                                ),
+                                ],
                               ),
-                              
-                              const SizedBox(width: 16), // Increased spacing
-                              
-                              // Cancel button (secondary action)
-                              Expanded(
-                                flex: 2,
-                                child: OutlinedButton.icon(
-                                  key: const Key('cancel_button'),
-                                  onPressed: _isSaving ? null : _cancelAndReturn,
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: Colors.grey.shade700,
-                                    side: BorderSide(color: Colors.grey.shade400, width: 1.5),
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: isCompact ? 12 : 14, // Match save button height
-                                      horizontal: isCompact ? 12 : 16,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                    ),
-                                  ),
-                                  icon: Icon(
-                                    Icons.close,
-                                    size: isCompact ? 16 : 18,
-                                  ),
-                                  label: Text(
-                                    'Zavřít',
-                                    style: TextStyle(
-                                      fontSize: isCompact ? 13 : 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
+
+                          // Action buttons (enhanced professional styling) pinned at bottom
+                          Container(
+                            padding:
+                                const EdgeInsets.all(16.0), // Increased padding
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius:
+                                  BorderRadius.circular(12.0), // More rounded
+                              border: Border.all(
+                                  color: Colors.grey.shade200, width: 1),
+                            ),
+                            child: Row(
+                              children: [
+                                // Save button (primary action)
+                                Expanded(
+                                  flex: 3,
+                                  child: FilledButton.icon(
+                                    key: const Key('save_button'),
+                                    onPressed: _isSaving ? null : _saveRecord,
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: Colors.blue.shade600,
+                                      foregroundColor: Colors.white,
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: isCompact
+                                            ? 12
+                                            : 14, // Better button height
+                                        horizontal: isCompact ? 16 : 20,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8.0),
+                                      ),
+                                      elevation: 2,
+                                    ),
+                                    icon: _isSaving
+                                        ? SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                      Colors.white),
+                                            ),
+                                          )
+                                        : Icon(
+                                            Icons.save,
+                                            size: isCompact ? 16 : 18,
+                                          ),
+                                    label: Text(
+                                      _isSaving
+                                          ? 'Ukládání...'
+                                          : 'Uložit do deníku',
+                                      style: TextStyle(
+                                        fontSize: isCompact ? 13 : 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(width: 16), // Increased spacing
+
+                                // Cancel button (secondary action)
+                                Expanded(
+                                  flex: 2,
+                                  child: OutlinedButton.icon(
+                                    key: const Key('cancel_button'),
+                                    onPressed:
+                                        _isSaving ? null : _cancelAndReturn,
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.grey.shade700,
+                                      side: BorderSide(
+                                          color: Colors.grey.shade400,
+                                          width: 1.5),
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: isCompact
+                                            ? 12
+                                            : 14, // Match save button height
+                                        horizontal: isCompact ? 12 : 16,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8.0),
+                                      ),
+                                    ),
+                                    icon: Icon(
+                                      Icons.close,
+                                      size: isCompact ? 16 : 18,
+                                    ),
+                                    label: Text(
+                                      'Zavřít',
+                                      style: TextStyle(
+                                        fontSize: isCompact ? 13 : 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ], // Close Column (Form child)
                       ), // Close Form Column widget
                     ), // Close Form widget
@@ -1479,4 +1639,3 @@ class NewRecordPageState extends State<NewRecordPage> {
     ); // Close Scaffold
   }
 }
-

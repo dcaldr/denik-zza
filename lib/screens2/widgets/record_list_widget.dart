@@ -46,11 +46,11 @@ class _RecordListWidgetState extends State<RecordListWidget> {
 
   void _updateScrollIndicator() {
     if (!_scrollController.hasClients) return;
-    
+
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.position.pixels;
     final hasMore = currentScroll < maxScroll - 10; // 10px threshold
-    
+
     if (hasMore != _hasMoreBelow) {
       setState(() {
         _hasMoreBelow = hasMore;
@@ -62,14 +62,15 @@ class _RecordListWidgetState extends State<RecordListWidget> {
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
-      final records = await _participantService.getParticipantRecords(widget.participant.id);
+      final records = await _participantService
+          .getParticipantRecords(widget.participant.id);
       setState(() {
         _records = records;
         _isLoading = false;
       });
-      
+
       // Check if scrollable after rebuild
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _updateScrollIndicator();
@@ -95,7 +96,7 @@ class _RecordListWidgetState extends State<RecordListWidget> {
   @override
   Widget build(BuildContext context) {
     Widget content = _buildRecordsList();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch, // Full width
       children: [
@@ -118,13 +119,13 @@ class _RecordListWidgetState extends State<RecordListWidget> {
             ),
           ),
         Expanded(
-          child: widget.height != null 
-            ? SizedBox(
-                height: widget.height,
-                width: double.infinity,
-                child: content,
-              )
-            : content,
+          child: widget.height != null
+              ? SizedBox(
+                  height: widget.height,
+                  width: double.infinity,
+                  child: content,
+                )
+              : content,
         ),
       ],
     );
@@ -159,7 +160,7 @@ class _RecordListWidgetState extends State<RecordListWidget> {
             return RecordListItem(record: record);
           },
         ),
-        
+
         // Bottom fade indicator when there's more content below
         if (_hasMoreBelow)
           Positioned(
@@ -174,15 +175,16 @@ class _RecordListWidgetState extends State<RecordListWidget> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.grey.shade50.withOpacity(0.0),
-                      Colors.grey.shade50.withOpacity(0.9),
+                      Colors.grey.shade50.withValues(alpha: 0.0),
+                      Colors.grey.shade50.withValues(alpha: 0.9),
                       Colors.grey.shade50,
                     ],
                   ),
                 ),
                 child: Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.blue.shade50,
                       borderRadius: BorderRadius.circular(12),
@@ -272,9 +274,9 @@ class _RecordListItemState extends State<RecordListItem> {
             ),
           ),
         ),
-        
+
         const SizedBox(width: 8),
-        
+
         // Title (bold, limited width)
         Flexible(
           flex: 2,
@@ -289,7 +291,7 @@ class _RecordListItemState extends State<RecordListItem> {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        
+
         // Separator
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -301,7 +303,7 @@ class _RecordListItemState extends State<RecordListItem> {
             ),
           ),
         ),
-        
+
         // Description preview (flex takes remaining space)
         Flexible(
           flex: 3,
@@ -315,7 +317,7 @@ class _RecordListItemState extends State<RecordListItem> {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        
+
         // Print indicator (minimal)
         if (widget.record.isPrinted)
           Padding(
@@ -326,7 +328,7 @@ class _RecordListItemState extends State<RecordListItem> {
               color: Colors.green.shade400,
             ),
           ),
-        
+
         // Expand indicator
         Icon(
           Icons.chevron_right,
@@ -372,9 +374,9 @@ class _RecordListItemState extends State<RecordListItem> {
                 ],
               ),
             ),
-            
+
             const Spacer(),
-            
+
             // Print status
             if (widget.record.isPrinted)
               Container(
@@ -403,7 +405,7 @@ class _RecordListItemState extends State<RecordListItem> {
                   ],
                 ),
               ),
-            
+
             // Collapse indicator
             Icon(
               Icons.expand_less,
@@ -412,9 +414,9 @@ class _RecordListItemState extends State<RecordListItem> {
             ),
           ],
         ),
-        
+
         const SizedBox(height: 8),
-        
+
         // Title
         Text(
           widget.record.nazev ?? 'Bez nadpisu',
@@ -424,9 +426,9 @@ class _RecordListItemState extends State<RecordListItem> {
             color: Colors.black87,
           ),
         ),
-        
+
         const SizedBox(height: 6),
-        
+
         // Full description
         Text(
           widget.record.popis ?? '--',
