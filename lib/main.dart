@@ -1,3 +1,4 @@
+import 'package:denik_zza/design_system/theme/zza_theme.dart';
 import 'package:denik_zza/screens2/event_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -22,9 +23,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Event Registration',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      theme: ZzaTheme.lightTheme,
       // home: const EventRegistrationForm(),
       //home: const ParticipantRegistrationForm(),
       home: EventList(),

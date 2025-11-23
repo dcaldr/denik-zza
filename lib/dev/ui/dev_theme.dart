@@ -24,12 +24,4 @@ class DevTheme {
       // We can add other dev-specific overrides here if needed
     );
   }
-
-  /// Get alternative theme with deepOrange color scheme
-  /// Used by some CSV dev entry points
-  static ThemeData get deepOrangeTheme {
-    return ThemeData(
-      colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
-    );
-  }
 }

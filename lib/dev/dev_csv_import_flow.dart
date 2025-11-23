@@ -12,6 +12,5 @@ Future<void> main() async {
     bannerMessage: 'CSV Import Flow (In-Memory DB)',
     bannerIcon: Icons.upload_file,
     home: const CsvImportScreen(),
-    useDeepOrangeTheme: true,
   ));
 }

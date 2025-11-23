@@ -17,6 +17,5 @@ Future<void> main() async {
     home: CsvReviewTableOverviewScreen(
       filePath: csvPath,
     ),
-    useDeepOrangeTheme: true,
   ));
 }

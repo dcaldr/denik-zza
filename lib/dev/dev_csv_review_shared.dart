@@ -4,6 +4,7 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:denik_zza/dev/ui/dev_theme.dart';
 import 'package:path/path.dart' as p;
 
 /// Boots an in-memory database so CSV review dev mains never touch
@@ -32,14 +33,14 @@ String resolveProjectFile(String relativePath) {
 }
 
 /// Simple MaterialApp builder for dev entry points.
-/// 
+///
 /// @deprecated Use the unified dev UI components instead:
 /// ```dart
 /// import 'package:denik_zza/dev/ui/dev_app_builder.dart';
-/// 
+///
 /// // Simple version (no banner):
 /// runApp(buildDevApp(title: 'My Dev App', home: MyScreen()));
-/// 
+///
 /// // With banner (recommended):
 /// runApp(buildDevAppWithBanner(
 ///   title: 'My Dev App',
@@ -48,7 +49,8 @@ String resolveProjectFile(String relativePath) {
 ///   home: MyScreen(),
 /// ));
 /// ```
-@Deprecated('Use buildDevApp() or buildDevAppWithBanner() from lib/dev/ui/dev_app_builder.dart instead')
+@Deprecated(
+    'Use buildDevApp() or buildDevAppWithBanner() from lib/dev/ui/dev_app_builder.dart instead')
 MaterialApp buildDevApp({
   required String title,
   required Widget home,
@@ -63,9 +65,7 @@ MaterialApp buildDevApp({
       GlobalWidgetsLocalizations.delegate,
       GlobalCupertinoLocalizations.delegate,
     ],
-    theme: ThemeData(
-      colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
-    ),
+    theme: DevTheme.theme,
     home: home,
   );
 }
