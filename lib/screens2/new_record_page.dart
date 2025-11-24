@@ -14,6 +14,9 @@ import 'package:denik_zza/print_ops2/print_center.dart';
 import 'package:denik_zza/print_ops2/print_center_controller.dart';
 import 'package:denik_zza/print_ops2/print_center_service.dart';
 import 'package:intl/intl.dart';
+import 'package:denik_zza/design_system/tokens/app_colors.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
+import 'package:denik_zza/design_system/tokens/app_radii.dart';
 
 /// Enhanced new record page that matches the old system functionality
 /// but with improved architecture and validation
@@ -208,8 +211,8 @@ class NewRecordPageState extends State<NewRecordPage> {
       for (var alergie in alergieList)
         _buildHealthChip(
           icon: Icons.warning_amber,
-          iconColor: Colors.red,
-          backgroundColor: Colors.red.shade50,
+          iconColor: Theme.of(context).colorScheme.error,
+          backgroundColor: Theme.of(context).colorScheme.errorContainer,
           text: alergie.omezeni,
           maxChars: 30,
         ),
@@ -217,8 +220,8 @@ class NewRecordPageState extends State<NewRecordPage> {
       for (var omezeni in omezeniList)
         _buildHealthChip(
           icon: Icons.block,
-          iconColor: Colors.orange,
-          backgroundColor: Colors.orange.shade50,
+          iconColor: Theme.of(context).colorScheme.secondary,
+          backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
           text: omezeni.omezeni,
           maxChars: 30,
         ),
@@ -226,8 +229,8 @@ class NewRecordPageState extends State<NewRecordPage> {
       for (var lek in _lekyList)
         _buildHealthChip(
           icon: Icons.medication,
-          iconColor: Colors.blue,
-          backgroundColor: Colors.blue.shade50,
+          iconColor: Theme.of(context).colorScheme.primary,
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
           text: lek.nazev,
           maxChars: 30,
         ),
@@ -270,9 +273,9 @@ class NewRecordPageState extends State<NewRecordPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.grey.shade100,
+          color: AppColors.greyBackgroundMedium,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(color: Theme.of(context).dividerColor),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -280,7 +283,7 @@ class NewRecordPageState extends State<NewRecordPage> {
             Icon(
               _healthInfoExpanded ? Icons.expand_less : Icons.more_horiz,
               size: 14,
-              color: Colors.grey.shade700,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             if (!_healthInfoExpanded) ...[
               const SizedBox(width: 2),
@@ -288,7 +291,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                 '+$hiddenCount',
                 style: TextStyle(
                   fontSize: 10,
-                  color: Colors.grey.shade700,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -320,7 +323,7 @@ class NewRecordPageState extends State<NewRecordPage> {
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: iconColor.withValues(alpha: 0.3), width: 1),
+          border: Border.all(color: Theme.of(context).dividerColor, width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -447,13 +450,10 @@ class NewRecordPageState extends State<NewRecordPage> {
         icon: Icon(icon),
         iconSize: 20,
         onPressed: onPressed,
-        color: onPressed != null ? Colors.blue.shade700 : Colors.grey.shade400,
-        style: IconButton.styleFrom(
-          padding: const EdgeInsets.all(8),
-          minimumSize: const Size(36, 36),
-          backgroundColor:
-              onPressed != null ? Colors.blue.shade50 : Colors.grey.shade100,
-        ),
+        color: onPressed != null
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).disabledColor,
+        // Removed styleFrom override to use theme styling
       ),
     );
   }
@@ -478,13 +478,10 @@ class NewRecordPageState extends State<NewRecordPage> {
         icon: const Icon(Icons.description_outlined),
         iconSize: 20,
         onPressed: hasDocument ? _showZpusobilostDocument : null,
-        color: hasDocument ? Colors.green.shade700 : Colors.grey.shade400,
-        style: IconButton.styleFrom(
-          padding: const EdgeInsets.all(8),
-          minimumSize: const Size(36, 36),
-          backgroundColor:
-              hasDocument ? Colors.green.shade50 : Colors.grey.shade100,
-        ),
+        color: hasDocument
+            ? Theme.of(context).colorScheme.secondary
+            : Theme.of(context).disabledColor,
+        // Removed styleFrom override to use theme styling
       ),
     );
   }
@@ -619,9 +616,9 @@ class NewRecordPageState extends State<NewRecordPage> {
   Future<void> _saveRecord() async {
     if (_selectedParticipant == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Nejprve vyberte účastníka'),
-          backgroundColor: Colors.orange,
+        SnackBar(
+          content: const Text('Nejprve vyberte účastníka'),
+          backgroundColor: AppColors.orangeBackground,
         ),
       );
       return;
@@ -725,7 +722,7 @@ class NewRecordPageState extends State<NewRecordPage> {
               key: const Key('dialog_confirm_button'),
               onPressed: () => Navigator.of(context).pop(true),
               style: FilledButton.styleFrom(
-                backgroundColor: Colors.orange,
+                backgroundColor: AppColors.orangeBackground,
               ),
               child: const Text('Změnit účastníka'),
             ),
@@ -750,25 +747,28 @@ class NewRecordPageState extends State<NewRecordPage> {
           final titleSpacing = isCompact ? 8.0 : 12.0; // Increased spacing
 
           return Padding(
-            padding: const EdgeInsets.all(
-                20.0), // Increased from 16.0 for better breathing room
+            padding: AppSpacing.screenPadding, // 20px for better breathing room
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Compact horizontal participant selection with inline search
                 Container(
-                  padding: const EdgeInsets.all(16.0), // Increased padding
+                  padding: AppSpacing.containerPadding, // 16px padding
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                       colors: [
-                        Colors.blue.shade50,
-                        Colors.blue.shade50.withValues(alpha: 0.5),
+                        Theme.of(context).colorScheme.primaryContainer,
+                        Theme.of(context)
+                            .colorScheme
+                            .primaryContainer
+                            .withOpacity(0.5),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(12.0), // More rounded
-                    border: Border.all(color: Colors.blue.shade200, width: 1),
+                    borderRadius: AppRadii.containerRadius, // 12px rounded
+                    border: Border.all(
+                        color: Theme.of(context).colorScheme.primary, width: 1),
                   ),
                   child: Row(
                     children: [
@@ -776,19 +776,19 @@ class NewRecordPageState extends State<NewRecordPage> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.blue.shade100,
+                          color: Theme.of(context).colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Icon(
                           _selectedParticipant != null
                               ? Icons.person
                               : Icons.person_search,
-                          color: Colors.blue.shade700,
+                          color: Theme.of(context).colorScheme.primary,
                           size: isCompact ? 18 : 20,
                         ),
                       ),
 
-                      const SizedBox(width: 12),
+                      SizedBox(width: AppSpacing.m),
 
                       // Participant info (takes most space)
                       Expanded(
@@ -805,7 +805,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                     style: TextStyle(
                                       fontSize: isCompact ? 12 : 13,
                                       fontWeight: FontWeight.w500,
-                                      color: Colors.blue.shade700,
+                                      color: AppColors.blueText,
                                     ),
                                   ),
                                 ),
@@ -819,10 +819,10 @@ class NewRecordPageState extends State<NewRecordPage> {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 4, vertical: 1),
                                     decoration: BoxDecoration(
-                                      color: Colors.orange.shade100,
+                                      color: AppColors.orangeBackground,
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
-                                          color: Colors.orange.shade300,
+                                          color: AppColors.orangeBorder,
                                           width: 1),
                                     ),
                                     child: Row(
@@ -831,7 +831,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                         Icon(
                                           Icons.warning_amber,
                                           size: 10,
-                                          color: Colors.orange.shade600,
+                                          color: AppColors.orangeText,
                                         ),
                                         const SizedBox(width: 2),
                                         Text(
@@ -839,7 +839,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                           style: TextStyle(
                                             fontSize: 9,
                                             fontWeight: FontWeight.w500,
-                                            color: Colors.orange.shade600,
+                                            color: AppColors.orangeText,
                                           ),
                                         ),
                                       ],
@@ -861,8 +861,8 @@ class NewRecordPageState extends State<NewRecordPage> {
                                           : 15, // Reduced from 15-16 for compactness
                                       fontWeight: FontWeight.bold,
                                       color: _selectedParticipant != null
-                                          ? Colors.black87
-                                          : Colors.grey.shade600,
+                                          ? AppColors.greyIcon
+                                          : AppColors.greyText,
                                     ),
                                   ),
                                 ),
@@ -874,13 +874,13 @@ class NewRecordPageState extends State<NewRecordPage> {
                                     key: const Key(
                                         'NewRecordPage_birthdate_info_icon'),
                                     onTap: _showBirthdateInfo,
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: AppRadii.containerRadius,
                                     child: Padding(
                                       padding: const EdgeInsets.all(2),
                                       child: Icon(
                                         Icons.info_outline,
                                         size: 14,
-                                        color: Colors.blue.shade600,
+                                        color: AppColors.blueText,
                                       ),
                                     ),
                                   ),
@@ -896,7 +896,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                         ),
                       ),
 
-                      const SizedBox(width: 12),
+                      SizedBox(width: AppSpacing.m),
 
                       // Inline search (compact on the right)
                       Expanded(
@@ -908,7 +908,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                               children: [
                                 Icon(
                                   Icons.search,
-                                  color: Colors.blue.shade600,
+                                  color: AppColors.blueText,
                                   size: 14,
                                 ),
                                 const SizedBox(width: 4),
@@ -918,7 +918,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                     style: TextStyle(
                                       fontSize: isCompact ? 11 : 12,
                                       fontWeight: FontWeight.w500,
-                                      color: Colors.blue.shade600,
+                                      color: AppColors.blueText,
                                     ),
                                   ),
                                 ),
@@ -947,9 +947,10 @@ class NewRecordPageState extends State<NewRecordPage> {
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
+                      color: AppColors.greyBackground,
                       borderRadius: BorderRadius.circular(8.0),
-                      border: Border.all(color: Colors.grey.shade300, width: 1),
+                      border:
+                          Border.all(color: AppColors.greyBorderDark, width: 1),
                     ),
                     child: Column(
                       children: [
@@ -958,20 +959,21 @@ class NewRecordPageState extends State<NewRecordPage> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10.0, vertical: 6.0),
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
+                            color: AppColors.greyBackgroundMedium,
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(7.0),
                               topRight: Radius.circular(7.0),
                             ),
                             border: Border(
-                              bottom: BorderSide(color: Colors.grey.shade300),
+                              bottom:
+                                  BorderSide(color: AppColors.greyBorderDark),
                             ),
                           ),
                           child: Row(
                             children: [
                               Icon(
                                 Icons.history,
-                                color: Colors.grey.shade600,
+                                color: AppColors.greyText,
                                 size: 14,
                               ),
                               const SizedBox(width: 6),
@@ -980,7 +982,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.grey.shade700,
+                                  color: AppColors.greyIcon,
                                 ),
                               ),
                             ],
@@ -1006,7 +1008,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                           Icons.person_search,
                                           size:
                                               24, // Reduced for test compatibility
-                                          color: Colors.grey.shade400,
+                                          color: AppColors.greyTextLight,
                                         ),
                                         const SizedBox(
                                             height:
@@ -1016,7 +1018,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                           style: TextStyle(
                                             fontSize:
                                                 12, // Reduced for test compatibility
-                                            color: Colors.grey.shade600,
+                                            color: AppColors.greyText,
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
@@ -1029,7 +1031,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                           style: TextStyle(
                                             fontSize:
                                                 10, // Reduced for test compatibility
-                                            color: Colors.grey.shade500,
+                                            color: AppColors.greyText,
                                           ),
                                         ),
                                       ],
@@ -1068,14 +1070,14 @@ class NewRecordPageState extends State<NewRecordPage> {
                                       // Blue box wraps ONLY the datetime section (tight fit)
                                       Flexible(
                                         child: Container(
-                                          padding: const EdgeInsets.all(16.0),
+                                          padding: AppSpacing.containerPadding,
                                           decoration: BoxDecoration(
-                                            color: Colors.blue.shade50
+                                            color: AppColors.blueBackground
                                                 .withValues(alpha: 0.3),
                                             borderRadius:
-                                                BorderRadius.circular(12.0),
+                                                AppRadii.containerRadius,
                                             border: Border.all(
-                                                color: Colors.blue.shade200
+                                                color: AppColors.blueBorder
                                                     .withValues(alpha: 0.5),
                                                 width: 1),
                                           ),
@@ -1094,18 +1096,19 @@ class NewRecordPageState extends State<NewRecordPage> {
                                                   padding:
                                                       const EdgeInsets.all(8),
                                                   decoration: BoxDecoration(
-                                                    color: Colors.blue.shade100,
+                                                    color: AppColors
+                                                        .blueIconBackground,
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                             6),
                                                   ),
                                                   child: Icon(
                                                     Icons.schedule,
-                                                    color: Colors.blue.shade700,
+                                                    color: AppColors.blueDark,
                                                     size: isCompact ? 16 : 18,
                                                   ),
                                                 ),
-                                                const SizedBox(width: 12),
+                                                SizedBox(width: AppSpacing.m),
                                                 Flexible(
                                                   child: Column(
                                                     crossAxisAlignment:
@@ -1282,14 +1285,14 @@ class NewRecordPageState extends State<NewRecordPage> {
                                     decoration: InputDecoration(
                                       labelText: 'Nadpis * (povinné)',
                                       labelStyle: TextStyle(
-                                        color: Colors.blue.shade700,
+                                        color: AppColors.blueDark,
                                         fontWeight: FontWeight.w500,
                                       ),
                                       hintText: _selectedParticipant != null
                                           ? 'Povinné - typ úrazu nebo stížnosti (např. "Odřenina kolena", "Bolest hlavy")'
                                           : 'Vyberte účastníka pro pokračování',
                                       hintStyle: TextStyle(
-                                        color: Colors.grey.shade500,
+                                        color: AppColors.greyText,
                                         fontStyle: FontStyle.italic,
                                       ),
                                       filled: true,
@@ -1298,19 +1301,19 @@ class NewRecordPageState extends State<NewRecordPage> {
                                         borderRadius:
                                             BorderRadius.circular(8.0),
                                         borderSide: BorderSide(
-                                            color: Colors.blue.shade200),
+                                            color: AppColors.blueBorder),
                                       ),
                                       enabledBorder: OutlineInputBorder(
                                         borderRadius:
                                             BorderRadius.circular(8.0),
                                         borderSide: BorderSide(
-                                            color: Colors.blue.shade200),
+                                            color: AppColors.blueBorder),
                                       ),
                                       focusedBorder: OutlineInputBorder(
                                         borderRadius:
                                             BorderRadius.circular(8.0),
                                         borderSide: BorderSide(
-                                            color: Colors.blue.shade600,
+                                            color: AppColors.blueText,
                                             width: 2),
                                       ),
                                       errorBorder: OutlineInputBorder(
@@ -1326,13 +1329,13 @@ class NewRecordPageState extends State<NewRecordPage> {
                                         margin: const EdgeInsets.all(8.0),
                                         padding: const EdgeInsets.all(6.0),
                                         decoration: BoxDecoration(
-                                          color: Colors.blue.shade50,
+                                          color: AppColors.blueBackground,
                                           borderRadius:
                                               BorderRadius.circular(4),
                                         ),
                                         child: Icon(
                                           Icons.title,
-                                          color: Colors.blue.shade700,
+                                          color: AppColors.blueDark,
                                           size: isCompact ? 16 : 18,
                                         ),
                                       ),
@@ -1384,13 +1387,13 @@ class NewRecordPageState extends State<NewRecordPage> {
                                               labelText:
                                                   'Popis úrazu a ošetření',
                                               labelStyle: TextStyle(
-                                                color: Colors.blue.shade700,
+                                                color: AppColors.blueDark,
                                                 fontWeight: FontWeight.w500,
                                               ),
                                               hintText:
                                                   'Co se stalo, jak k úrazu došlo, jaké ošetření bylo poskytnuto...',
                                               hintStyle: TextStyle(
-                                                color: Colors.grey.shade500,
+                                                color: AppColors.greyText,
                                                 fontStyle: FontStyle.italic,
                                               ),
                                               filled: true,
@@ -1400,20 +1403,20 @@ class NewRecordPageState extends State<NewRecordPage> {
                                                     BorderRadius.circular(8.0),
                                                 borderSide: BorderSide(
                                                     color:
-                                                        Colors.blue.shade200),
+                                                        AppColors.blueBorder),
                                               ),
                                               enabledBorder: OutlineInputBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(8.0),
                                                 borderSide: BorderSide(
                                                     color:
-                                                        Colors.blue.shade200),
+                                                        AppColors.blueBorder),
                                               ),
                                               focusedBorder: OutlineInputBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(8.0),
                                                 borderSide: BorderSide(
-                                                    color: Colors.blue.shade600,
+                                                    color: AppColors.blueText,
                                                     width: 2),
                                               ),
                                               errorBorder: OutlineInputBorder(
@@ -1427,7 +1430,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                                   isCompact ? 12 : 16),
                                               alignLabelWithHint: true,
                                               counterStyle: TextStyle(
-                                                color: Colors.grey.shade600,
+                                                color: AppColors.greyText,
                                                 fontSize: 11,
                                               ),
                                               errorMaxLines: 1,
@@ -1444,7 +1447,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                           ),
                                         ),
 
-                                        const SizedBox(width: 12),
+                                        SizedBox(width: AppSpacing.m),
 
                                         // Poznámka field (side note - narrower, sticky note style)
                                         Expanded(
@@ -1527,13 +1530,13 @@ class NewRecordPageState extends State<NewRecordPage> {
                           // Action buttons (enhanced professional styling) pinned at bottom
                           Container(
                             padding:
-                                const EdgeInsets.all(16.0), // Increased padding
+                                AppSpacing.containerPadding, // 16px padding
                             decoration: BoxDecoration(
-                              color: Colors.grey.shade50,
+                              color: AppColors.greyBackground,
                               borderRadius:
-                                  BorderRadius.circular(12.0), // More rounded
+                                  AppRadii.containerRadius, // 12px rounded
                               border: Border.all(
-                                  color: Colors.grey.shade200, width: 1),
+                                  color: AppColors.greyBorder, width: 1),
                             ),
                             child: Row(
                               children: [
@@ -1543,23 +1546,9 @@ class NewRecordPageState extends State<NewRecordPage> {
                                   child: FilledButton.icon(
                                     key: const Key('save_button'),
                                     onPressed: _isSaving ? null : _saveRecord,
-                                    style: FilledButton.styleFrom(
-                                      backgroundColor: Colors.blue.shade600,
-                                      foregroundColor: Colors.white,
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: isCompact
-                                            ? 12
-                                            : 14, // Better button height
-                                        horizontal: isCompact ? 16 : 20,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(8.0),
-                                      ),
-                                      elevation: 2,
-                                    ),
+                                    // Removed styleFrom to use theme styling
                                     icon: _isSaving
-                                        ? SizedBox(
+                                        ? const SizedBox(
                                             width: 16,
                                             height: 16,
                                             child: CircularProgressIndicator(
@@ -1569,16 +1558,13 @@ class NewRecordPageState extends State<NewRecordPage> {
                                                       Colors.white),
                                             ),
                                           )
-                                        : Icon(
-                                            Icons.save,
-                                            size: isCompact ? 16 : 18,
-                                          ),
+                                        : const Icon(Icons.save, size: 18),
                                     label: Text(
                                       _isSaving
                                           ? 'Ukládání...'
                                           : 'Uložit do deníku',
-                                      style: TextStyle(
-                                        fontSize: isCompact ? 13 : 14,
+                                      style: const TextStyle(
+                                        fontSize: 13,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -1595,9 +1581,9 @@ class NewRecordPageState extends State<NewRecordPage> {
                                     onPressed:
                                         _isSaving ? null : _cancelAndReturn,
                                     style: OutlinedButton.styleFrom(
-                                      foregroundColor: Colors.grey.shade700,
+                                      foregroundColor: AppColors.greyIcon,
                                       side: BorderSide(
-                                          color: Colors.grey.shade400,
+                                          color: AppColors.greyTextLight,
                                           width: 1.5),
                                       padding: EdgeInsets.symmetric(
                                         vertical: isCompact

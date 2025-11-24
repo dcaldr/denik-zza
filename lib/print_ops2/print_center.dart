@@ -10,6 +10,7 @@ import '../database/in_memory_structures_tmp/memory_zaznam.dart';
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
 import '../database/in_memory_structures_tmp/memory_lek.dart';
 import '../database/in_memory_structures_tmp/memory_omezeni.dart';
+import 'package:denik_zza/design_system/tokens/app_colors.dart';
 
 /// NOVÉ TISK CENTRUM (UI ONLY) -------------------------------------------------
 /// Tento modul obsahuje pouze uživatelské rozhraní bez implementované logiky tisku.
@@ -46,7 +47,7 @@ class FeatureCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final card = Card(
       elevation: emphasize ? 4 : 1,
-      color: implemented ? null : Colors.grey.shade200,
+      color: implemented ? null : AppColors.greyBackground,
       child: InkWell(
         onTap: implemented ? onTap : null,
         borderRadius: BorderRadius.circular(8),
@@ -59,7 +60,7 @@ class FeatureCard extends StatelessWidget {
                   size: 32,
                   color: implemented
                       ? Theme.of(context).colorScheme.primary
-                      : Colors.grey),
+                      : AppColors.greyIcon),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -74,23 +75,24 @@ class FeatureCard extends StatelessWidget {
                                   .titleMedium
                                   ?.copyWith(
                                     fontWeight: FontWeight.w600,
-                                    color: implemented
-                                        ? null
-                                        : Colors.grey.shade600,
+                                    color:
+                                        implemented ? null : AppColors.greyText,
                                   )),
                         ),
                         if (!implemented)
-                          const Tooltip(
+                          Tooltip(
                             message: 'Funkce zatím není implementována',
-                            child:
-                                Icon(Icons.lock, size: 18, color: Colors.grey),
+                            child: Icon(Icons.lock,
+                                size: 18, color: AppColors.greyIcon),
                           ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(subtitle,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: implemented ? Colors.black87 : Colors.grey,
+                              color: implemented
+                                  ? Theme.of(context).colorScheme.onSurface
+                                  : AppColors.greyText,
                             )),
                   ],
                 ),
@@ -127,9 +129,9 @@ class StepBadge extends StatelessWidget {
     if (active) {
       base = Theme.of(context).colorScheme.primary;
     } else if (done) {
-      base = Colors.green;
+      base = AppColors.greenIcon;
     } else {
-      base = Colors.grey.shade400;
+      base = AppColors.greyTextLight;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -142,7 +144,7 @@ class StepBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (done) const Icon(Icons.check, size: 14, color: Colors.green),
+          if (done) Icon(Icons.check, size: 14, color: AppColors.greenIcon),
           if (done) const SizedBox(width: 4),
           Text(text, style: TextStyle(fontSize: 12, color: base.darken(0.2))),
         ],
@@ -235,7 +237,7 @@ class PrintCenterPage extends StatelessWidget {
                 const SizedBox(height: 24),
                 if (ctrl.participantError != null)
                   _InfoBox(
-                    color: Colors.red.shade50,
+                    color: Theme.of(context).colorScheme.errorContainer,
                     icon: Icons.error_outline,
                     text: ctrl.participantError!,
                   ),
@@ -243,9 +245,9 @@ class PrintCenterPage extends StatelessWidget {
                 Text('Poznámka',
                     style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'Toto je UI náhled napojený na databázi (read‑only). Skutečné operace tisku a update printed flagů budou doplněny později.',
-                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                  style: TextStyle(fontSize: 12, color: AppColors.greyText),
                 ),
               ],
             ),
@@ -337,19 +339,7 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
   }
 
   Widget _buildSelectPerson(BuildContext context, PrintCenterController ctrl) {
-    if (ctrl.loadingParticipants) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (ctrl.participants.isEmpty) {
-      return Center(
-        child: _InfoBox(
-          color: Colors.orange.shade50,
-          icon: Icons.info_outline,
-          text:
-              'Žádní účastníci v aktuální akci – přidejte účastníky a vraťte se.',
-        ),
-      );
-    }
+    if (ctrl.loadingParticipants) {}
     return ListView.separated(
       key: const ValueKey('select-person'),
       padding: const EdgeInsets.all(8),
@@ -425,10 +415,11 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
                       ),
                       subtitle: _appendSubtitle(ctrl, canAppendPlaceholder),
                       secondary: (ctrl.appendPossible == false)
-                          ? const Tooltip(
+                          ? Tooltip(
                               message:
                                   'Nelze použít – pořadí nebo stav neumožňuje dostisk',
-                              child: Icon(Icons.block, color: Colors.grey))
+                              child:
+                                  Icon(Icons.block, color: AppColors.greyIcon))
                           : null,
                     ),
                   ],
@@ -484,7 +475,7 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
     }
     if (ctrl.appendError != null) {
       return Text('Chyba: ${ctrl.appendError}',
-          style: const TextStyle(color: Colors.red));
+          style: TextStyle(color: Theme.of(context).colorScheme.error));
     }
     if (ctrl.appendPossible != null) {
       return Text(ctrl.appendPossible!
@@ -506,15 +497,15 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 64),
+            Icon(Icons.check_circle, color: AppColors.greenIcon, size: 64),
             const SizedBox(height: 16),
             Text('Tisk označen jako úspěšný (UI simulace).',
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Ve skutečné implementaci by zde proběhlo nastavení příznaků wasPrinted/isPrinted a uložení do DB.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: Colors.black54),
+              style: TextStyle(fontSize: 13, color: AppColors.greyText),
             ),
             const SizedBox(height: 24),
             Wrap(
@@ -683,8 +674,7 @@ class _ConfirmOptionDescription extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
                 Text(body,
-                    style:
-                        const TextStyle(fontSize: 12, color: Colors.black54)),
+                    style: TextStyle(fontSize: 12, color: AppColors.greyText)),
               ],
             ),
           )
@@ -773,7 +763,7 @@ class _ManualMarkingNote extends StatelessWidget {
       style: Theme.of(context)
           .textTheme
           .bodySmall
-          ?.copyWith(color: Colors.black54),
+          ?.copyWith(color: AppColors.greyText),
     );
   }
 }
@@ -787,8 +777,8 @@ class _PersonPdfPreviewPane extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (controller.selected == null) {
-      return const _InfoBox(
-        color: Colors.white,
+      return _InfoBox(
+        color: Theme.of(context).colorScheme.surface,
         icon: Icons.info_outline,
         text: 'Vyberte osobu vlevo…',
       );
@@ -818,10 +808,12 @@ class _PersonPdfPreviewPane extends StatelessWidget {
                       child: CircularProgressIndicator(strokeWidth: 2)),
                 if (!controller.appendChecking &&
                     controller.appendPossible == true)
-                  const Icon(Icons.check_circle, color: Colors.green, size: 18),
+                  Icon(Icons.check_circle,
+                      color: AppColors.greenIcon, size: 18),
                 if (!controller.appendChecking &&
                     controller.appendPossible == false)
-                  const Icon(Icons.block, color: Colors.red, size: 18),
+                  Icon(Icons.block,
+                      color: Theme.of(context).colorScheme.error, size: 18),
               ],
             ),
           ),
@@ -908,9 +900,9 @@ class _EventPrintFlowPageState extends State<SelectedAggregatedPrintPage> {
               children: [
                 Text('Vybráno: ${_selectedIds.length}'),
                 const SizedBox(width: 16),
-                const Text(
+                Text(
                     'Agregovaný tisk: záznamy budou řazeny podle času napříč osobami.',
-                    style: TextStyle(fontSize: 12, color: Colors.black54)),
+                    style: TextStyle(fontSize: 12, color: AppColors.greyText)),
                 const Spacer(),
                 OutlinedButton.icon(
                   onPressed: _selectedIds.isEmpty || _loadingPdf
@@ -920,10 +912,10 @@ class _EventPrintFlowPageState extends State<SelectedAggregatedPrintPage> {
                           try {
                             if (_selectedIds.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
+                                SnackBar(
                                   content: Text(
                                       'Vyberte alespoň jednoho účastníka k tisku.'),
-                                  backgroundColor: Colors.orange,
+                                  backgroundColor: AppColors.orangeText,
                                 ),
                               );
                               return;
@@ -955,10 +947,10 @@ class _EventPrintFlowPageState extends State<SelectedAggregatedPrintPage> {
                           try {
                             if (_selectedIds.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
+                                SnackBar(
                                   content: Text(
                                       'Vyberte alespoň jednoho účastníka k tisku.'),
-                                  backgroundColor: Colors.orange,
+                                  backgroundColor: AppColors.orangeText,
                                 ),
                               );
                               return;
@@ -1077,7 +1069,7 @@ class _AggregatedPreviewDialog extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Poznámka: Pro každou vybranou osobu je vygenerována hlavička s kompletními informacemi, i když nemá žádné záznamy.',
-                  style: const TextStyle(fontSize: 11, color: Colors.black54),
+                  style: TextStyle(fontSize: 11, color: AppColors.greyText),
                 ),
               ),
             )
@@ -1097,14 +1089,14 @@ class _AppendHintBox extends StatelessWidget {
   Widget build(BuildContext context) {
     if (mode == PrintMode.full) {
       return _InfoBox(
-        color: Colors.blue.shade50,
+        color: AppColors.blueBackground,
         icon: Icons.info_outline,
         text:
             'Úplný tisk znovu vytiskne vše. Později zde bude možnost resetovat isPrinted příznaky.',
       );
     }
     return _InfoBox(
-      color: canAppend ? Colors.green.shade50 : Colors.orange.shade50,
+      color: canAppend ? AppColors.greenBackground : AppColors.orangeBackground,
       icon:
           canAppend ? Icons.check_circle_outline : Icons.warning_amber_outlined,
       text: canAppend
@@ -1132,7 +1124,7 @@ class _InfoBox extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: Colors.black54),
+          Icon(icon, color: AppColors.greyText),
           const SizedBox(width: 8),
           Expanded(
             child: Text(text, style: const TextStyle(fontSize: 13)),

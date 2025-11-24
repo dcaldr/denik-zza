@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/services/participant_service.dart';
+import 'package:denik_zza/design_system/tokens/app_colors.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
+import 'package:denik_zza/design_system/tokens/app_radii.dart';
 
 /// A reusable widget for displaying a list of medical records
 /// Replaces the old FullZraneniList from /screens folder
@@ -175,9 +178,9 @@ class _RecordListWidgetState extends State<RecordListWidget> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.grey.shade50.withValues(alpha: 0.0),
-                      Colors.grey.shade50.withValues(alpha: 0.9),
-                      Colors.grey.shade50,
+                      AppColors.greyBackground.withValues(alpha: 0.0),
+                      AppColors.greyBackground.withValues(alpha: 0.9),
+                      AppColors.greyBackground,
                     ],
                   ),
                 ),
@@ -186,8 +189,8 @@ class _RecordListWidgetState extends State<RecordListWidget> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.blueBackground,
+                      borderRadius: AppRadii.containerRadius,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -195,7 +198,7 @@ class _RecordListWidgetState extends State<RecordListWidget> {
                         Icon(
                           Icons.keyboard_arrow_down,
                           size: 14,
-                          color: Colors.blue.shade600,
+                          color: AppColors.blueText,
                         ),
                         const SizedBox(width: 2),
                         Text(
@@ -203,7 +206,7 @@ class _RecordListWidgetState extends State<RecordListWidget> {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
-                            color: Colors.blue.shade600,
+                            color: AppColors.blueText,
                           ),
                         ),
                       ],
@@ -245,7 +248,7 @@ class _RecordListItemState extends State<RecordListItem> {
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border(
-            bottom: BorderSide(color: Colors.grey.shade200, width: 1),
+            bottom: BorderSide(color: AppColors.greyBorder, width: 1),
           ),
         ),
         child: _isExpanded ? _buildExpandedView() : _buildCompactView(),
@@ -262,33 +265,16 @@ class _RecordListItemState extends State<RecordListItem> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: Colors.blue.shade50,
-            borderRadius: BorderRadius.circular(4),
+            color: AppColors.blueBackground,
+            borderRadius: BorderRadius.circular(AppRadii.small),
           ),
           child: Text(
             _formatTime(widget.record.casZaznamu),
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: Colors.blue.shade700,
+              color: AppColors.blueDark,
             ),
-          ),
-        ),
-
-        const SizedBox(width: 8),
-
-        // Title (bold, limited width)
-        Flexible(
-          flex: 2,
-          child: Text(
-            widget.record.nazev ?? 'Bez nadpisu',
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-              color: Colors.black87,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
         ),
 
@@ -299,7 +285,7 @@ class _RecordListItemState extends State<RecordListItem> {
             '—',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey.shade400,
+              color: AppColors.greyIcon,
             ),
           ),
         ),
@@ -311,7 +297,7 @@ class _RecordListItemState extends State<RecordListItem> {
             widget.record.popis ?? '--',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey.shade600,
+              color: AppColors.greyText,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -325,7 +311,7 @@ class _RecordListItemState extends State<RecordListItem> {
             child: Icon(
               Icons.print,
               size: 14,
-              color: Colors.green.shade400,
+              color: AppColors.greenIcon,
             ),
           ),
 
@@ -333,7 +319,7 @@ class _RecordListItemState extends State<RecordListItem> {
         Icon(
           Icons.chevron_right,
           size: 16,
-          color: Colors.grey.shade400,
+          color: AppColors.greyIcon,
         ),
       ],
     );
@@ -351,8 +337,8 @@ class _RecordListItemState extends State<RecordListItem> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(6),
+                color: AppColors.blueBackground,
+                borderRadius: BorderRadius.circular(AppRadii.medium),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -360,7 +346,7 @@ class _RecordListItemState extends State<RecordListItem> {
                   Icon(
                     Icons.access_time,
                     size: 12,
-                    color: Colors.blue.shade700,
+                    color: AppColors.blueDark,
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -368,7 +354,7 @@ class _RecordListItemState extends State<RecordListItem> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
-                      color: Colors.blue.shade700,
+                      color: AppColors.blueDark,
                     ),
                   ),
                 ],
@@ -382,8 +368,8 @@ class _RecordListItemState extends State<RecordListItem> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(4),
+                  color: AppColors.greenBackground,
+                  borderRadius: BorderRadius.circular(AppRadii.small),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -391,14 +377,14 @@ class _RecordListItemState extends State<RecordListItem> {
                     Icon(
                       Icons.print,
                       size: 12,
-                      color: Colors.green.shade600,
+                      color: AppColors.greenIcon,
                     ),
                     const SizedBox(width: 3),
                     Text(
                       'Vytištěno',
                       style: TextStyle(
                         fontSize: 10,
-                        color: Colors.green.shade600,
+                        color: AppColors.greenText,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -410,7 +396,7 @@ class _RecordListItemState extends State<RecordListItem> {
             Icon(
               Icons.expand_less,
               size: 18,
-              color: Colors.grey.shade400,
+              color: AppColors.greyIcon,
             ),
           ],
         ),
@@ -434,7 +420,7 @@ class _RecordListItemState extends State<RecordListItem> {
           widget.record.popis ?? '--',
           style: TextStyle(
             fontSize: 13,
-            color: Colors.grey.shade700,
+            color: AppColors.greyText,
             height: 1.4,
           ),
         ),
