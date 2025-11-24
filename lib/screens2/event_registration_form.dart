@@ -139,7 +139,7 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
                 ],
               ),
               const SizedBox(height: 20),
-              ElevatedButton(
+              FilledButton(
                   onPressed: _submitForm,
                   child:
                       Text(widget.action == null ? 'Odeslat' : 'Aktualizovat')),

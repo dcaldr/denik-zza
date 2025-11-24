@@ -286,7 +286,7 @@ class _ParticipantRegistrationFormState
               _buildRestrictionsSection(),
               const SizedBox(height: 24),
               Center(
-                child: ElevatedButton(
+                child: FilledButton(
                   onPressed: _submitForm,
                   child: Text(
                       widget.osoba == null ? 'Registrovat' : 'Uložit změny'),

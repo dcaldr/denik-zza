@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 
@@ -42,7 +43,7 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
         try {
           final updateResult = await DatabaseWrapper.getDatabase()
               .updateParticipant(osoba: _editedParticipant!);
-          
+
           if (mounted) {
             if (updateResult > 0) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -75,7 +76,8 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Upravit účastníka: ${widget.participant.jmeno} ${widget.participant.prijmeni}'),
+        title: Text(
+            'Upravit účastníka: ${widget.participant.jmeno} ${widget.participant.prijmeni}'),
         actions: [
           TextButton(
             onPressed: _handleSave,
@@ -90,7 +92,7 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: AppSpacing.screenPadding,
             child: Column(
               children: [
                 Expanded(
@@ -101,18 +103,15 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                AppSpacing.mediumGap,
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    ElevatedButton(
+                    OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(false),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey,
-                      ),
                       child: const Text('Zrušit'),
                     ),
-                    ElevatedButton(
+                    FilledButton(
                       onPressed: _handleSave,
                       child: const Text('Uložit změny'),
                     ),

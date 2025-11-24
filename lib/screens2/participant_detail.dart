@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/screens2/services/participant_service.dart';
 import 'package:denik_zza/print_ops/confirm_print.dart';
@@ -33,9 +34,10 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
-      final records = await _participantService.getParticipantRecords(widget.participant.id);
+      final records = await _participantService
+          .getParticipantRecords(widget.participant.id);
       setState(() {
         _records = records;
         _isLoading = false;
@@ -52,14 +54,16 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.participant.jmeno} ${widget.participant.prijmeni}'),
+        title:
+            Text('${widget.participant.jmeno} ${widget.participant.prijmeni}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () async {
               final result = await Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => ParticipantEditPage(participant: widget.participant),
+                  builder: (context) =>
+                      ParticipantEditPage(participant: widget.participant),
                 ),
               );
               // If participant was edited, refresh the data
@@ -71,37 +75,47 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: AppSpacing.screenPadding,
         child: ListView(
           children: [
             _buildInfoCard('Osobní údaje', [
-              _buildInfoRow('Datum narození:', '${widget.participant.datumNarozeni?.day.toString().padLeft(2, '0')}.${widget.participant.datumNarozeni?.month.toString().padLeft(2, '0')}.${widget.participant.datumNarozeni?.year}'), //TODO: TD2
-              _buildInfoRow('Pohlaví:', widget.participant.pohlavi == MemoryOsoba.POHLAVI_MUZ ? 'Muž' : 'Žena'),
+              _buildInfoRow('Datum narození:',
+                  '${widget.participant.datumNarozeni?.day.toString().padLeft(2, '0')}.${widget.participant.datumNarozeni?.month.toString().padLeft(2, '0')}.${widget.participant.datumNarozeni?.year}'), //TODO: TD2
+              _buildInfoRow(
+                  'Pohlaví:',
+                  widget.participant.pohlavi == MemoryOsoba.POHLAVI_MUZ
+                      ? 'Muž'
+                      : 'Žena'),
               _buildInfoRow('Adresa:', widget.participant.adresa ?? 'N/A'),
             ]),
             _buildInfoCard('Pojišťovací údaje', [
-              _buildInfoRow('Pojišťovna:', widget.participant.zdravotniPojistovna ?? 'N/A'),
-              _buildInfoRow('Rodné číslo:', widget.participant.cisloPojisteni ?? 'N/A'),
+              _buildInfoRow('Pojišťovna:',
+                  widget.participant.zdravotniPojistovna ?? 'N/A'),
+              _buildInfoRow(
+                  'Rodné číslo:', widget.participant.cisloPojisteni ?? 'N/A'),
             ]),
             _buildInfoCard('Potvrzení', [
-                _buildInfoRow('Bezinfekčnost:', widget.participant.bezinfekcnost == true ? 'Ano' : 'Ne'),
-                _buildInfoRow('Způsobilost:', widget.participant.zpusobilost == true ? 'Ano' : 'Ne'),
+              _buildInfoRow('Bezinfekčnost:',
+                  widget.participant.bezinfekcnost == true ? 'Ano' : 'Ne'),
+              _buildInfoRow('Způsobilost:',
+                  widget.participant.zpusobilost == true ? 'Ano' : 'Ne'),
             ]),
-            const SizedBox(height: 16),
+            AppSpacing.mediumGap,
             Text(
               'Lékařské záznamy',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             _buildMedicalRecords(),
-            const SizedBox(height: 16),
+            AppSpacing.mediumGap,
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                ElevatedButton.icon(
+                FilledButton.icon(
                   onPressed: () async {
                     final result = await Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => NewRecordPage(participant: widget.participant),
+                        builder: (context) =>
+                            NewRecordPage(participant: widget.participant),
                       ),
                     );
                     // If a record was added, refresh the records list
@@ -112,11 +126,12 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
                   icon: const Icon(Icons.add),
                   label: const Text('Nový záznam'),
                 ),
-                ElevatedButton.icon(
+                FilledButton.icon(
                   onPressed: () async {
                     // TODO: This should be moved to a service/controller
                     final woodoo = PrinterWoodoo();
-                    final packedPdf = await woodoo.printSelected([widget.participant]);
+                    final packedPdf =
+                        await woodoo.printSelected([widget.participant]);
                     if (context.mounted) {
                       ConfirmPrint().showConfirmPrintDialog(context, packedPdf);
                     }
@@ -156,7 +171,8 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
             title: Text(record.nazev ?? 'Bez názvu'),
             subtitle: Text(record.popis ?? 'Bez popisu'),
             trailing: record.casZaznamu != null
-                ? Text('${record.casZaznamu!.day}.${record.casZaznamu!.month}.${record.casZaznamu!.year}')
+                ? Text(
+                    '${record.casZaznamu!.day}.${record.casZaznamu!.month}.${record.casZaznamu!.year}')
                 : const Text('Neznámé datum'),
           ),
         );
@@ -167,7 +183,7 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
   Widget _buildInfoCard(String title, List<Widget> children) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: AppSpacing.containerPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -175,7 +191,7 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
               title,
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: 8),
+            AppSpacing.smallGap,
             ...children,
           ],
         ),

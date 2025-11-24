@@ -17,6 +17,7 @@ import 'package:intl/intl.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/design_system/tokens/app_radii.dart';
+import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 
 /// Enhanced new record page that matches the old system functionality
 /// but with improved architecture and validation
@@ -739,6 +740,7 @@ class NewRecordPageState extends State<NewRecordPage> {
         title: const Text('Nový záznam úrazu'),
         // Removed disabled edit button and placeholder info button for cleaner interface
       ),
+      drawer: const AppDrawer(),
       body: LayoutBuilder(
         builder: (context, constraints) {
           // Adjust spacing and layout based on available height
