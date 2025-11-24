@@ -36,6 +36,7 @@ class AppSpacing {
 
   // Section spacing (from CSV: height: 12, 24)
   static const SizedBox smallGap = SizedBox(height: m);
+  static const SizedBox mediumGap = SizedBox(height: l);
   static const SizedBox largeGap = SizedBox(height: xxl);
 
   // Button spacing (from CSV: SizedBox(width: 16))

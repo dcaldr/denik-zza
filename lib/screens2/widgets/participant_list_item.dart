@@ -53,7 +53,7 @@ class ParticipantListItem extends StatelessWidget {
                     : '',
               ),
             ),
-            ElevatedButton(
+            OutlinedButton(
               key: index != null
                   ? Key('ParticipantListItem_${index}_detailButton')
                   : null,

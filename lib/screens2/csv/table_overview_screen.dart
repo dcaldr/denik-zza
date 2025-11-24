@@ -1,5 +1,8 @@
 import 'dart:math' as math;
 
+import 'package:denik_zza/design_system/tokens/app_colors.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
+import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:denik_zza/input/csv_review_models.dart';
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
@@ -501,12 +504,12 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
     final int okCount = grouped[CsvRowReviewStatus.ok]?.length ?? 0;
     final int validCount = warnCount + infoCount + okCount;
 
-    final BorderRadius badgeRadius = BorderRadius.circular(8);
+    final BorderRadius badgeRadius = AppRadii.buttonRadius;
     return Card(
       elevation: 0,
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: AppSpacing.formFieldPadding,
         child: Wrap(
           key: const Key('CsvTableOverview_summary_content'),
           spacing: 16,
@@ -1518,13 +1521,13 @@ class _FieldWarningIcon extends StatelessWidget {
       return Icon(
         Icons.warning_amber_outlined,
         key: iconKey,
-        color: Colors.orange,
+        color: AppColors.orangeText,
       );
     }
     final Widget icon = Icon(
       Icons.warning_amber_outlined,
       key: iconKey,
-      color: Colors.orange,
+      color: AppColors.orangeText,
     );
     final String tooltipMessage = messages
         .map((CsvReviewMessage message) =>

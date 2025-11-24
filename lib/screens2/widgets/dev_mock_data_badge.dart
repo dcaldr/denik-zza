@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:denik_zza/dev/ui/dev_theme.dart';
 
 /// Development warning badge indicating mock/test data is in use
 ///
@@ -28,7 +29,7 @@ import 'package:flutter/material.dart';
 class DevMockDataBadge extends StatelessWidget {
   /// Optional custom text (defaults to "USES MOCKUPS !!")
   final String? text;
-  
+
   /// Optional custom icon (defaults to Icons.construction)
   final IconData? icon;
 
@@ -43,9 +44,9 @@ class DevMockDataBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: BoxDecoration(
-        color: Colors.orange.shade100,
+        color: DevTheme.warningBackground,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.orange.shade400, width: 1),
+        border: Border.all(color: DevTheme.warningBorder, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -53,15 +54,15 @@ class DevMockDataBadge extends StatelessWidget {
           Icon(
             icon ?? Icons.construction,
             size: 10,
-            color: Colors.orange.shade700,
+            color: DevTheme.warningText,
           ),
           const SizedBox(width: 2),
           Text(
             text ?? 'USES MOCKUPS !!',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.bold,
-              color: Colors.orange.shade700,
+              color: DevTheme.warningText,
             ),
           ),
         ],

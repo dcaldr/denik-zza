@@ -23,6 +23,7 @@ class AppColors {
   // Green shades (from NewRecord zpusobilost button)
   static final Color greenBackground = Colors.green.shade50;
   static final Color greenText = Colors.green.shade700;
+  static final Color greenIcon = Colors.green.shade400;
 
   // Grey shades (from NewRecord history section)
   static final Color greyBackground = Colors.grey.shade50;

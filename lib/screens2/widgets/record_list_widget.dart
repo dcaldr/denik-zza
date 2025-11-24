@@ -3,7 +3,7 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/services/participant_service.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
-import 'package:denik_zza/design_system/tokens/app_spacing.dart';
+
 import 'package:denik_zza/design_system/tokens/app_radii.dart';
 
 /// A reusable widget for displaying a list of medical records

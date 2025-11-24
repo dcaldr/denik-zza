@@ -8,6 +8,9 @@ import 'package:denik_zza/screens2/participant_list_screen.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:denik_zza/print_ops2/print_center.dart';
 import 'package:flutter/material.dart';
+import 'package:denik_zza/design_system/tokens/app_colors.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
+import 'package:denik_zza/design_system/tokens/app_radii.dart';
 
 /// Phase-based hybrid menu drawer with workflow-focused design
 /// Option C: Main workflow items always visible, supporting sections collapsible
@@ -64,19 +67,19 @@ class AppDrawer extends StatelessWidget {
             padding: EdgeInsets.zero,
             children: [
               _buildHeader(context),
-              
+
               // HLAVNÍ: BĚHEM AKCE - Always visible main workflow section
               _buildMainWorkflowHeader(),
               _buildNewRecord(context, hasEvent, hasParticipants),
               _buildParticipantList(context, hasEvent),
               _buildPrintCenter(context, hasEvent),
-              
+
               const SizedBox(height: 8),
               const Divider(height: 1),
-              
+
               // PŘÍPRAVA AKCE - Collapsible pre-event setup section
               _buildPrepSection(context, hasEvent),
-              
+
               // ZDRAVOTNICKÝ FILTR - Collapsible medical screening section
               _buildMedicalSection(context, hasEvent, hasParticipants),
             ],
@@ -112,35 +115,38 @@ class AppDrawer extends StatelessWidget {
   Widget _buildMainWorkflowHeader() {
     return Container(
       key: const Key('AppDrawer_hlavniSection'),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: AppSpacing.formFieldPadding,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.orange.shade100, Colors.orange.shade50],
+          colors: [
+            AppColors.orangeBackground,
+            AppColors.orangeBackground.withOpacity(0.5)
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         border: Border(
-          left: BorderSide(color: Colors.deepOrange, width: 3),
+          left: BorderSide(color: AppColors.orangeText, width: 3),
         ),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: AppRadii.buttonRadius,
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.shade200,
+            color: AppColors.orangeBorder,
             blurRadius: 2,
             offset: const Offset(0, 1),
           ),
         ],
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.star, color: Colors.deepOrange, size: 18),
-          SizedBox(width: 8),
+          Icon(Icons.star, color: AppColors.orangeText, size: 18),
+          const SizedBox(width: 8),
           Text(
             'HLAVNÍ: BĚHEM AKCE',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Colors.deepOrange,
+              color: AppColors.orangeText,
               letterSpacing: 0.5,
             ),
           ),
@@ -172,7 +178,8 @@ class AppDrawer extends StatelessWidget {
   }
 
   /// Build collapsible medical screening section
-  Widget _buildMedicalSection(BuildContext context, bool hasEvent, bool hasParticipants) {
+  Widget _buildMedicalSection(
+      BuildContext context, bool hasEvent, bool hasParticipants) {
     return ExpansionTile(
       key: const Key('AppDrawer_filtr'),
       leading: const Icon(Icons.medical_services),
@@ -200,7 +207,8 @@ class AppDrawer extends StatelessWidget {
         Navigator.pop(context);
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const EventRegistrationForm()),
+          MaterialPageRoute(
+              builder: (context) => const EventRegistrationForm()),
         );
       },
     );
@@ -225,24 +233,27 @@ class AppDrawer extends StatelessWidget {
   Widget _buildParticipantList(BuildContext context, bool hasEvent) {
     return ListTile(
       key: const Key('AppDrawer_participant_list'),
-      leading: Icon(Icons.people, color: hasEvent ? null : Colors.grey.shade400),
+      leading:
+          Icon(Icons.people, color: hasEvent ? null : AppColors.greyTextLight),
       title: Text(
         'Seznam účastníků',
         style: TextStyle(
           fontSize: 15,
-          color: hasEvent ? null : Colors.grey.shade500,
+          color: hasEvent ? null : AppColors.greyText,
         ),
       ),
       subtitle: !hasEvent
           ? Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.warning_amber, size: 16, color: Colors.orange.shade700),
+                Icon(Icons.warning_amber,
+                    size: 16, color: AppColors.orangeText),
                 const SizedBox(width: 4),
                 Flexible(
                   child: Text(
                     'Vytvořte akci nejdříve',
-                    style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                    style: TextStyle(
+                        fontSize: 11, color: AppColors.lightColorScheme.error),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -268,24 +279,27 @@ class AppDrawer extends StatelessWidget {
   Widget _buildNewParticipant(BuildContext context, bool hasEvent) {
     return ListTile(
       key: const Key('AppDrawer_new_participant'),
-      leading: Icon(Icons.person_add, color: hasEvent ? null : Colors.grey.shade400),
+      leading: Icon(Icons.person_add,
+          color: hasEvent ? null : AppColors.greyTextLight),
       title: Text(
         'Registrace účastníka',
         style: TextStyle(
           fontSize: 15,
-          color: hasEvent ? null : Colors.grey.shade500,
+          color: hasEvent ? null : AppColors.greyText,
         ),
       ),
-      subtitle: hasEvent 
-          ? null 
-          : const Text('Vyžaduje akci', style: TextStyle(fontSize: 11, color: Colors.grey)),
+      subtitle: hasEvent
+          ? null
+          : Text('Vyžaduje akci',
+              style: TextStyle(fontSize: 11, color: AppColors.greyText)),
       enabled: hasEvent,
       onTap: hasEvent
           ? () {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const ParticipantRegistrationPage()),
+                MaterialPageRoute(
+                    builder: (context) => const ParticipantRegistrationPage()),
               );
             }
           : null,
@@ -295,24 +309,27 @@ class AppDrawer extends StatelessWidget {
   Widget _buildCsvImport(BuildContext context, bool hasEvent) {
     return ListTile(
       key: const Key('AppDrawer_csv_import'),
-      leading: Icon(Icons.upload_file, color: hasEvent ? null : Colors.grey.shade400),
+      leading: Icon(Icons.upload_file,
+          color: hasEvent ? null : AppColors.greyTextLight),
       title: Text(
         'Import CSV',
         style: TextStyle(
           fontSize: 15,
-          color: hasEvent ? null : Colors.grey.shade500,
+          color: hasEvent ? null : AppColors.greyText,
         ),
       ),
       subtitle: hasEvent
           ? null
-          : const Text('Vyžaduje akci', style: TextStyle(fontSize: 11, color: Colors.grey)),
+          : Text('Vyžaduje akci',
+              style: TextStyle(fontSize: 11, color: AppColors.greyText)),
       enabled: hasEvent,
       onTap: hasEvent
           ? () {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const CsvImportScreen()),
+                MaterialPageRoute(
+                    builder: (context) => const CsvImportScreen()),
               );
             }
           : null,
@@ -320,32 +337,35 @@ class AppDrawer extends StatelessWidget {
   }
 
   // HLAVNÍ section: New injury record (primary workflow action)
-  Widget _buildNewRecord(BuildContext context, bool hasEvent, bool hasParticipants) {
+  Widget _buildNewRecord(
+      BuildContext context, bool hasEvent, bool hasParticipants) {
     final enabled = hasEvent && hasParticipants;
     return ListTile(
       key: const Key('AppDrawer_new_record'),
       leading: Icon(
         Icons.add_circle,
-        color: enabled ? Colors.deepOrange : Colors.grey.shade400,
+        color: enabled ? AppColors.orangeText : AppColors.greyTextLight,
       ),
       title: Text(
         'Nový záznam úrazu',
         style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 15,
-          color: enabled ? null : Colors.grey.shade500,
+          color: enabled ? null : AppColors.greyText,
         ),
       ),
       subtitle: !enabled
           ? Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.warning_amber, size: 16, color: Colors.orange.shade700),
+                Icon(Icons.warning_amber,
+                    size: 16, color: AppColors.orangeText),
                 const SizedBox(width: 4),
                 Flexible(
                   child: Text(
                     !hasEvent ? 'Vytvořte akci nejdříve' : 'Přidejte účastníky',
-                    style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                    style: TextStyle(
+                        fontSize: 11, color: AppColors.lightColorScheme.error),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -366,23 +386,25 @@ class AppDrawer extends StatelessWidget {
   }
 
   // ZDRAVOTNICKÝ FILTR section: Intake form
-  Widget _buildIntakeForm(BuildContext context, bool hasEvent, bool hasParticipants) {
+  Widget _buildIntakeForm(
+      BuildContext context, bool hasEvent, bool hasParticipants) {
     final enabled = hasEvent && hasParticipants;
     return ListTile(
       key: const Key('AppDrawer_intake_form'),
       leading: Icon(
         Icons.assignment_turned_in,
-        color: enabled ? null : Colors.grey.shade400,
+        color: enabled ? null : AppColors.greyTextLight,
       ),
       title: Text(
         'Příjímací formulář',
         style: TextStyle(
           fontSize: 15,
-          color: enabled ? null : Colors.grey.shade500,
+          color: enabled ? null : AppColors.greyText,
         ),
       ),
       subtitle: !enabled
-          ? const Text('Vyžaduje akci a účastníky', style: TextStyle(fontSize: 11, color: Colors.grey))
+          ? Text('Vyžaduje akci a účastníky',
+              style: TextStyle(fontSize: 11, color: AppColors.greyText))
           : null,
       enabled: enabled,
       onTap: enabled
@@ -390,7 +412,8 @@ class AppDrawer extends StatelessWidget {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const NewIntakeFormImproved()),
+                MaterialPageRoute(
+                    builder: (context) => const NewIntakeFormImproved()),
               );
             }
           : null,
@@ -401,12 +424,13 @@ class AppDrawer extends StatelessWidget {
   Widget _buildPrintCenter(BuildContext context, bool hasEvent) {
     return ListTile(
       key: const Key('AppDrawer_print_center'),
-      leading: Icon(Icons.print, color: hasEvent ? null : Colors.grey.shade400),
+      leading:
+          Icon(Icons.print, color: hasEvent ? null : AppColors.greyTextLight),
       title: Text(
         'Tisk centrum',
         style: TextStyle(
           fontSize: 15,
-          color: hasEvent ? null : Colors.grey.shade500,
+          color: hasEvent ? null : AppColors.greyText,
         ),
       ),
       subtitle: hasEvent
@@ -414,12 +438,14 @@ class AppDrawer extends StatelessWidget {
           : Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.warning_amber, size: 16, color: Colors.orange.shade700),
+                Icon(Icons.warning_amber,
+                    size: 16, color: AppColors.orangeText),
                 const SizedBox(width: 4),
                 Flexible(
                   child: Text(
                     'Vytvořte akci nejdříve',
-                    style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                    style: TextStyle(
+                        fontSize: 11, color: AppColors.lightColorScheme.error),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -431,7 +457,8 @@ class AppDrawer extends StatelessWidget {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const PrintCenterPage()),
+                MaterialPageRoute(
+                    builder: (context) => const PrintCenterPage()),
               );
             }
           : null,

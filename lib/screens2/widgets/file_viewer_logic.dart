@@ -5,7 +5,6 @@ import '../../input/file_manager.dart';
 import 'file_viewer_screen_widget.dart';
 import 'package:file_picker/file_picker.dart';
 
-
 class FileViewerLogic extends StatefulWidget {
   final Function(String) onFileUploaded;
 
@@ -31,7 +30,9 @@ class _FileViewerLogicState extends State<FileViewerLogic> {
         widget.onFileUploaded(newFilePath);
       }
     }
-  }  @override
+  }
+
+  @override
   Widget build(BuildContext context) {
     return _filePath != null && _filePath!.isNotEmpty
         ? FileViewerScreen(initialFilePath: _filePath!)
@@ -40,13 +41,14 @@ class _FileViewerLogicState extends State<FileViewerLogic> {
               // If height is too small, show a simplified version
               if (constraints.maxHeight < 60) {
                 return const Center(
-                  child: Text('no file', 
+                  child: Text(
+                    'no file',
                     style: TextStyle(fontSize: 10),
                     textAlign: TextAlign.center,
                   ),
                 );
               }
-              
+
               // For normal heights, wrap in SingleChildScrollView to prevent overflow
               return SingleChildScrollView(
                 child: ConstrainedBox(

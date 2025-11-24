@@ -1128,7 +1128,8 @@ class _CsvReviewPrototypeHostState extends State<CsvReviewPrototypeHost> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            Icon(Icons.error_outline,
+                color: Theme.of(context).colorScheme.error, size: 48),
             const SizedBox(height: 12),
             Text(
               'Import CSV se nepodařilo načíst.',

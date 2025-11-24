@@ -11,6 +11,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
+import 'package:denik_zza/design_system/tokens/app_radii.dart';
 
 /// Entry screen for the CSV review flow allowing the operator to pick a file
 /// and launch the table overview review experience.
@@ -59,7 +61,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
       drawer: const AppDrawer(),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: AppSpacing.screenPaddingGenerous,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -69,16 +71,16 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
                 key: const Key('CsvImportScreen_instruction_label'),
                 style: theme.textTheme.titleMedium,
               ),
-              const SizedBox(height: 12),
+              AppSpacing.smallGap,
               Text(
                 'Soubor musí být ve formátu CSV se stejným pořadím sloupců jako v šabloně. '
                 'Nepovolené soubory budou odmítnuty.',
                 style: theme.textTheme.bodyMedium,
               ),
-              const SizedBox(height: 24),
+              AppSpacing.largeGap,
               _buildSelectionPreview(theme),
               if (_errorMessage != null) ...<Widget>[
-                const SizedBox(height: 12),
+                AppSpacing.smallGap,
                 Text(
                   _errorMessage!,
                   key: const Key('CsvImportScreen_error_label'),
@@ -87,10 +89,10 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
                   ),
                 ),
               ],
-              const SizedBox(height: 24),
+              AppSpacing.largeGap,
               Row(
                 children: <Widget>[
-                  ElevatedButton(
+                  OutlinedButton(
                     key: const Key('CsvImportScreen_pick_button'),
                     onPressed: _isPicking ? null : _handlePickPressed,
                     child: _isPicking
@@ -101,7 +103,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
                           )
                         : const Text('Vybrat soubor'),
                   ),
-                  const SizedBox(width: 16),
+                  AppSpacing.buttonGap,
                   FilledButton(
                     key: const Key('CsvImportScreen_continue_button'),
                     onPressed: _canContinue ? _handleContinuePressed : null,
@@ -126,17 +128,17 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
     final Color textColor = hasSelection
         ? theme.colorScheme.onSurface
         : theme.colorScheme.onSurfaceVariant;
-    
+
     // Make the entire container clickable, but only filename selectable
     return InkWell(
       key: const Key('CsvImportScreen_file_box'),
       onTap: _isPicking ? null : _handlePickPressed,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: AppRadii.containerRadius,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: AppRadii.containerRadius,
           border: Border.all(color: borderColor),
         ),
         child: hasSelection
@@ -146,12 +148,14 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
                   Text(
                     'Vybraný soubor: ',
                     key: const Key('CsvImportScreen_file_label_prefix'),
-                    style: theme.textTheme.bodyLarge?.copyWith(color: textColor),
+                    style:
+                        theme.textTheme.bodyLarge?.copyWith(color: textColor),
                   ),
                   SelectableText(
                     _selectedFileName ?? "(bez názvu)",
                     key: const Key('CsvImportScreen_file_name'),
-                    style: theme.textTheme.bodyLarge?.copyWith(color: textColor),
+                    style:
+                        theme.textTheme.bodyLarge?.copyWith(color: textColor),
                   ),
                 ],
               )
@@ -327,7 +331,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
         displayName: displayName,
       );
     } catch (error, stackTrace) {
-    _logger.e('$csvImportFlowLogTag: Failed to prepare CSV payload.',
+      _logger.e('$csvImportFlowLogTag: Failed to prepare CSV payload.',
           error: error, stackTrace: stackTrace);
       if (mounted) {
         _showSnackBar(
