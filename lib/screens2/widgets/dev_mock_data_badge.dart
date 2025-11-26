@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:denik_zza/dev/ui/dev_theme.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
+import 'package:denik_zza/design_system/tokens/app_radii.dart';
 
 /// Development warning badge indicating mock/test data is in use
 ///
@@ -42,10 +44,11 @@ class DevMockDataBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+      padding:
+          const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 1),
       decoration: BoxDecoration(
         color: DevTheme.warningBackground,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: AppRadii.buttonRadius,
         border: Border.all(color: DevTheme.warningBorder, width: 1),
       ),
       child: Row(

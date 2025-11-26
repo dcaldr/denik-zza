@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
+import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import '../shared/intake_types.dart';
 
 class PersonAutocomplete extends StatefulWidget {
@@ -9,8 +10,8 @@ class PersonAutocomplete extends StatefulWidget {
   final Key? textFieldKey;
 
   const PersonAutocomplete({
-    super.key, 
-    required this.onPersonSelected, 
+    super.key,
+    required this.onPersonSelected,
     required this.onRefresh,
     required this.availablePersons,
     this.textFieldKey,
@@ -21,10 +22,10 @@ class PersonAutocomplete extends StatefulWidget {
 }
 
 class _PersonAutocompleteState extends State<PersonAutocomplete> {
-
   // Show first name, last name for display string
-  static String _displayStringForOption(MemoryOsoba option) => '${option.jmeno} ${option.prijmeni}';
-  
+  static String _displayStringForOption(MemoryOsoba option) =>
+      '${option.jmeno} ${option.prijmeni}';
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -64,23 +65,27 @@ class _PersonAutocompleteState extends State<PersonAutocomplete> {
             if (textEditingValue.text.isEmpty) {
               return const Iterable<MemoryOsoba>.empty();
             }
-            
+
             // Handle empty available persons list
             if (widget.availablePersons.isEmpty) {
               return const Iterable<MemoryOsoba>.empty();
             }
-            
+
             return widget.availablePersons.where((MemoryOsoba person) {
               final lowerQuery = textEditingValue.text.toLowerCase();
               return person.jmeno.toLowerCase().contains(lowerQuery) ||
-                     person.prijmeni.toLowerCase().contains(lowerQuery) ||
-                     (person.cisloPojisteni?.toLowerCase().contains(lowerQuery) ?? false);
+                  person.prijmeni.toLowerCase().contains(lowerQuery) ||
+                  (person.cisloPojisteni?.toLowerCase().contains(lowerQuery) ??
+                      false);
             });
           },
           onSelected: (MemoryOsoba person) {
             widget.onPersonSelected(person);
           },
-          fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+          fieldViewBuilder: (BuildContext context,
+              TextEditingController textEditingController,
+              FocusNode focusNode,
+              VoidCallback onFieldSubmitted) {
             return TextField(
               key: widget.textFieldKey,
               controller: textEditingController,
@@ -89,7 +94,7 @@ class _PersonAutocompleteState extends State<PersonAutocomplete> {
                 prefixIcon: const Icon(Icons.search),
                 hintText: 'Vyhledat osobu',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: AppRadii.inputRadius,
                 ),
               ),
             );

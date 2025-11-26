@@ -2,6 +2,8 @@
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/screens/participants/add_participant_page.dart';
 import 'package:denik_zza/screens2/widgets/participant_list_item.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
+import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 
@@ -25,7 +27,7 @@ class _ActionDetailState extends State<ActionDetail> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode(); // Stable focus node
   String _searchQuery = '';
-  
+
   // Data state management - load once in initState, filter in memory
   List<MemoryOsoba> _allParticipants = [];
   bool _isLoading = true;
@@ -48,7 +50,8 @@ class _ActionDetailState extends State<ActionDetail> {
   /// This prevents TextField from being recreated on setState
   Future<void> _loadParticipants() async {
     try {
-      final participants = await database.getParticipantsByEvent(widget.action.idAkce!);
+      final participants =
+          await database.getParticipantsByEvent(widget.action.idAkce!);
       if (!mounted) return;
       setState(() {
         _allParticipants = participants;
@@ -68,12 +71,12 @@ class _ActionDetailState extends State<ActionDetail> {
   /// Filters participants based on search query
   List<MemoryOsoba> _filterParticipants(List<MemoryOsoba> participants) {
     if (_searchQuery.isEmpty) return participants;
-    
+
     final query = _searchQuery.toLowerCase();
     return participants.where((person) {
       return person.jmeno.toLowerCase().contains(query) ||
-             person.prijmeni.toLowerCase().contains(query) ||
-             (person.cisloPojisteni?.toLowerCase().contains(query) ?? false);
+          person.prijmeni.toLowerCase().contains(query) ||
+          (person.cisloPojisteni?.toLowerCase().contains(query) ?? false);
     }).toList();
   }
 
@@ -103,115 +106,119 @@ class _ActionDetailState extends State<ActionDetail> {
           : _error != null
               ? Center(child: Text('Chyba: $_error'))
               : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 0),
-                    Text(
-                      widget.action.nadpis,
-                      style: const TextStyle(
-                          fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
-                    const Divider(),
-                    Row(
+                  child: Padding(
+                    padding: AppSpacing.screenPadding,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.people, size: 50),
-                        Text('Počet účastníků: ${_allParticipants.length}'),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        const Icon(Icons.calendar_month, size: 50),
+                        const SizedBox(height: 0),
                         Text(
-                            'Datum: ${widget.action.odkdy.day.toString().padLeft(2, '0')}.${widget.action.odkdy.month.toString().padLeft(2, '0')}.${widget.action.odkdy.year} - ${widget.action.dokdy.day.toString().padLeft(2, '0')}.${widget.action.dokdy.month.toString().padLeft(2, '0')}.${widget.action.dokdy.year}'), //TODO: improve as mentioned in pdf.dart //DT1 //DT2
-                      ],
-                    ),
-                    const Divider(),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Popis Akce\n${widget.action.popis}',
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    const Divider(),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        // Search bar for participants
-                        Expanded(
-                          child: TextField(
-                            key: const Key('EventDetail_searchField'),
-                            controller: _searchController,
-                            focusNode: _searchFocusNode, // Use stable focus node
-                            decoration: const InputDecoration(
-                              hintText: 'Hledat účastníka...',
-                              prefixIcon: Icon(Icons.search),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                          widget.action.nadpis,
+                          style: const TextStyle(
+                              fontSize: 24, fontWeight: FontWeight.bold),
+                        ),
+                        const Divider(),
+                        Row(
+                          children: [
+                            const Icon(Icons.people, size: 50),
+                            Text('Počet účastníků: ${_allParticipants.length}'),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            const Icon(Icons.calendar_month, size: 50),
+                            Text(
+                                'Datum: ${widget.action.odkdy.day.toString().padLeft(2, '0')}.${widget.action.odkdy.month.toString().padLeft(2, '0')}.${widget.action.odkdy.year} - ${widget.action.dokdy.day.toString().padLeft(2, '0')}.${widget.action.dokdy.month.toString().padLeft(2, '0')}.${widget.action.dokdy.year}'), //TODO: improve as mentioned in pdf.dart //DT1 //DT2
+                          ],
+                        ),
+                        const Divider(),
+                        AppSpacing.largeGap,
+                        Text(
+                          'Popis Akce\n${widget.action.popis}',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        const Divider(),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            // Search bar for participants
+                            Expanded(
+                              child: TextField(
+                                key: const Key('EventDetail_searchField'),
+                                controller: _searchController,
+                                focusNode:
+                                    _searchFocusNode, // Use stable focus node
+                                decoration: const InputDecoration(
+                                  hintText: 'Hledat účastníka...',
+                                  prefixIcon: Icon(Icons.search),
+                                  border: OutlineInputBorder(
+                                    borderRadius: AppRadii.inputRadius,
+                                  ),
+                                ),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _searchQuery = value;
+                                  });
+                                },
                               ),
                             ),
-                            onChanged: (value) {
-                              setState(() {
-                                _searchQuery = value;
-                              });
-                            },
+                            SizedBox(width: AppSpacing.s),
+                            IconButton(
+                              key: const Key('EventDetail_addButton'),
+                              icon: const Icon(Icons.person_add),
+                              onPressed: () {
+                                // Navigate to another screen for adding a participant
+                                // You need to create the AddParticipantPage
+                                // and handle the logic for adding participants.
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AddParticipantPage()),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                        AppSpacing.smallGap,
+                        const Text(
+                          'Účastníci',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 10),
+                        // Apply search filter
+                        ..._filterParticipants(_allParticipants)
+                            .asMap()
+                            .entries
+                            .map((entry) => ParticipantListItem(
+                                  osoba: entry.value,
+                                  index: entry.key,
+                                )),
+                        // Show message if no results
+                        if (_searchQuery.isNotEmpty &&
+                            _filterParticipants(_allParticipants).isEmpty)
+                          Center(
+                            child: Padding(
+                              padding: AppSpacing.screenPadding,
+                              child: Column(
+                                children: [
+                                  const Icon(Icons.search_off,
+                                      size: 48, color: Colors.grey),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'Žádné výsledky pro "$_searchQuery"',
+                                    style: const TextStyle(
+                                        fontSize: 16, color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          key: const Key('EventDetail_addButton'),
-                          icon: const Icon(Icons.person_add),
-                          onPressed: () {
-                            // Navigate to another screen for adding a participant
-                            // You need to create the AddParticipantPage
-                            // and handle the logic for adding participants.
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const AddParticipantPage()),
-                            );
-                          },
-                        ),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Účastníci',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 10),
-                    // Apply search filter
-                    ..._filterParticipants(_allParticipants)
-                        .asMap()
-                        .entries
-                        .map((entry) => ParticipantListItem(
-                              osoba: entry.value,
-                              index: entry.key,
-                            )),
-                    // Show message if no results
-                    if (_searchQuery.isNotEmpty && _filterParticipants(_allParticipants).isEmpty)
-                      Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20.0),
-                          child: Column(
-                            children: [
-                              const Icon(Icons.search_off, size: 48, color: Colors.grey),
-                              const SizedBox(height: 10),
-                              Text(
-                                'Žádné výsledky pro "$_searchQuery"',
-                                style: const TextStyle(fontSize: 16, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
     );
   }
 }

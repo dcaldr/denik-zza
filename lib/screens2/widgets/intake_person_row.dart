@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import '../shared/intake_types.dart';
 import 'person_autocomplete.dart';
 
@@ -9,8 +10,8 @@ class IntakePersonRow extends StatelessWidget {
   final List<MemoryOsoba> availablePersons;
 
   const IntakePersonRow({
-    super.key, 
-    required this.onPersonSelected, 
+    super.key,
+    required this.onPersonSelected,
     required this.onRefresh,
     required this.availablePersons,
   });
@@ -18,15 +19,15 @@ class IntakePersonRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: AppSpacing.containerPadding,
       child: Row(
         children: [
           const Text('Select Person: '),
           Expanded(
             child: Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(AppSpacing.s),
               child: PersonAutocomplete(
-                onPersonSelected: onPersonSelected, 
+                onPersonSelected: onPersonSelected,
                 onRefresh: onRefresh,
                 availablePersons: availablePersons,
               ),

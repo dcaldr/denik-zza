@@ -1,5 +1,6 @@
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:flutter/material.dart';
 
 import 'widgets/summary_section.dart';
@@ -52,17 +53,17 @@ class CsvImportSummaryScreen extends StatelessWidget {
           children: <Widget>[
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: AppSpacing.screenPadding,
                 children: <Widget>[
                   Text(
                     'Soubor: $importFileLabel',
                     key: const Key('CsvSummary_file_label'),
                     style: theme.textTheme.titleMedium,
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: AppSpacing.m),
                   Wrap(
-                    spacing: 16,
-                    runSpacing: 16,
+                    spacing: AppSpacing.l,
+                    runSpacing: AppSpacing.l,
                     children: <Widget>[
                       SummaryBadge(
                         key: const Key('CsvSummary_badge_approved'),
@@ -90,7 +91,7 @@ class CsvImportSummaryScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: AppSpacing.xxl),
                   Text(
                     _hasFailures
                         ? 'Nepodařilo se uložit některé řádky. Zkontrolujte jejich hlášení:'
@@ -99,7 +100,7 @@ class CsvImportSummaryScreen extends StatelessWidget {
                     style: theme.textTheme.bodyMedium,
                   ),
                   if (_hasFailures) ...<Widget>[
-                    const SizedBox(height: 12),
+                    SizedBox(height: AppSpacing.m),
                     ..._buildFailureTiles(theme),
                   ],
                 ],
@@ -108,7 +109,12 @@ class CsvImportSummaryScreen extends StatelessWidget {
             SafeArea(
               top: false,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.l,
+                  AppSpacing.s,
+                  AppSpacing.l,
+                  AppSpacing.l,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
@@ -121,7 +127,7 @@ class CsvImportSummaryScreen extends StatelessWidget {
                       },
                       child: const Text('Zpět na výběr CSV'),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: AppSpacing.s),
                     OutlinedButton(
                       key: const Key('CsvSummary_export_placeholder'),
                       onPressed: null,
@@ -142,9 +148,9 @@ class CsvImportSummaryScreen extends StatelessWidget {
       for (final CsvFinalizeFailure failure in result.failures)
         Card(
           key: Key('CsvSummary_failure_${failure.originalIndex}'),
-          margin: const EdgeInsets.only(bottom: 8),
+          margin: EdgeInsets.only(bottom: AppSpacing.s),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(AppSpacing.m),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
@@ -152,7 +158,7 @@ class CsvImportSummaryScreen extends StatelessWidget {
                   'Řádek ${failure.originalIndex}',
                   style: theme.textTheme.titleSmall,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   failure.message,
                   style: theme.textTheme.bodyMedium,

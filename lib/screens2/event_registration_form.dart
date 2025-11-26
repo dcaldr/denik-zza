@@ -120,9 +120,9 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
           child: ListView(
             children: [
               _buildTextFormField('nadpis', 'Nadpis', 'Prosím zadejte nadpis'),
-              const SizedBox(height: 10),
+              AppSpacing.smallGap,
               _buildTextFieldWithCounter('popis', 'Popis', 130),
-              const SizedBox(height: 10),
+              AppSpacing.smallGap,
               Row(
                 children: [
                   Expanded(
@@ -130,7 +130,7 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
                           controller: _controllers['odkdy']!,
                           labelText: 'Od kdy',
                           validatorText: 'Prosím zadejte datum začátku')),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppSpacing.s),
                   Expanded(
                       child: CustomDatePicker(
                           controller: _controllers['dokdy']!,
@@ -138,7 +138,7 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
                           validatorText: 'Prosím zadejte datum konce')),
                 ],
               ),
-              const SizedBox(height: 20),
+              AppSpacing.largeGap,
               FilledButton(
                   onPressed: _submitForm,
                   child:

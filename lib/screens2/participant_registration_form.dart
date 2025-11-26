@@ -278,13 +278,13 @@ class _ParticipantRegistrationFormState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildGridView(),
-              const SizedBox(height: 16),
+              AppSpacing.mediumGap,
               _buildTextField('poznamka', 'Poznámka', null, maxLines: 3),
-              const SizedBox(height: 16),
+              AppSpacing.mediumGap,
               _buildCheckboxSection(),
-              const SizedBox(height: 24),
+              AppSpacing.largeGap,
               _buildRestrictionsSection(),
-              const SizedBox(height: 24),
+              AppSpacing.largeGap,
               Center(
                 child: FilledButton(
                   onPressed: _submitForm,
@@ -319,7 +319,7 @@ class _ParticipantRegistrationFormState
                   child: CustomDatePicker(
                       controller: _controllers['datumNarozeni']!,
                       labelText: 'Datum Narození')),
-              const SizedBox(width: 8.0),
+              const SizedBox(width: AppSpacing.s),
               Expanded(
                   flex: 1, child: _buildTextField('pohlavi', 'Pohlaví', null)),
             ],
@@ -433,7 +433,7 @@ class _ParticipantRegistrationFormState
                 participantId: widget.osoba?.id,
               ),
             ),
-            const SizedBox(width: 16),
+            AppSpacing.buttonGap,
             Expanded(
               child: RestrictionsWidget(
                 logic: _lekLogic,
