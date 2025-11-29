@@ -4,21 +4,21 @@ import 'package:drift/drift.dart';
 import '../utils/database_test_helper.dart';
 
 /// Hardcoded setup for testing with predefined test data
-/// 
+///
 /// This class prepares the app database with a test event called "Test Test Test"
 /// and 10 participants with various test data configurations.
 /// Uses the existing DatabaseTestHelper infrastructure.
-/// 
+///
 /// 🎯 **Testing Approach**: Uses Drift database directly (like other tests)
 /// - ✅ Events: Created using Drift database methods
-/// - ✅ Participants: Created using Drift database methods  
+/// - ✅ Participants: Created using Drift database methods
 /// - ✅ Insurance companies: Auto-created by participant addition
 /// - ⚠️  Paramedics: Uses hardcoded test ID (no front-facing creation method exists)
 /// - ✅ Medical records: Created using Drift database methods
-/// 
+///
 /// 📖 Database Access:
 /// Uses DatabaseTestHelper.createTestDatabase() for real SQLite databases.
-/// 
+///
 /// Usage:
 /// ```dart
 /// setUp(() async {
@@ -26,7 +26,6 @@ import '../utils/database_test_helper.dart';
 /// });
 /// ```
 class HardcodedTestSetup {
-  
   // Static variable to track selected event
   static int? _selectedEventId;
 
@@ -34,24 +33,28 @@ class HardcodedTestSetup {
   static int? get selectedEventId => _selectedEventId;
 
   /// Sets up the database with test data and returns the database instance
-  /// 
+  ///
   /// [databaseType] - Whether to use memory (fast) or file (persistent) database
   static Future<AppDatabase> setupTestData({
     TestDatabaseType databaseType = TestDatabaseType.memory,
   }) async {
     // Create test database using existing infrastructure
-    final AppDatabase database = DatabaseTestHelper.createTestDatabase(databaseType);
-    
+    final AppDatabase database =
+        DatabaseTestHelper.createTestDatabase(databaseType);
+    print(
+        '[TMP] HardcodedTestSetup: Created DB ${database.hashCode} (Type: $databaseType)');
+
     try {
-  // Ensure the app uses this database instance (so UI + services see same data)
-  DatabaseWrapper.setTestMode();
-  DatabaseWrapper.useTestDriftDatabase(database);
+      // Ensure the app uses this database instance (so UI + services see same data)
+      DatabaseWrapper.setTestMode();
+      DatabaseWrapper.useTestDriftDatabase(database);
 
       // 1. Create the test event using Drift database methods
       final now = DateTime.now();
       final eventCompanion = ZzaActionsCompanion(
         actionTitle: const Value('Test Test Test'),
-        actionDescription: const Value('Testovací akce s českými účastníky a historickými osobnostmi'),
+        actionDescription: const Value(
+            'Testovací akce s českými účastníky a historickými osobnostmi'),
         dateFrom: Value(now),
         dateTo: Value(now.add(const Duration(days: 7))),
       );
@@ -75,7 +78,7 @@ class HardcodedTestSetup {
         phoneNumber: const Value('+420000000000'),
         username: const Value('tester1'),
       ));
-      
+
       // 2. Create 10 Czech participants using Drift database methods
       // Insurance companies will be auto-created during participant addition
       final participants = await _createCzechParticipants(database, eventId);
@@ -84,7 +87,6 @@ class HardcodedTestSetup {
       await _createCzechMedicalRecords(database, participants, testParamedicId);
 
       return database;
-      
     } catch (e) {
       print('❌ Error setting up test data: $e');
       rethrow;
@@ -92,9 +94,10 @@ class HardcodedTestSetup {
   }
 
   /// Creates 10 Czech participants with cultural references using Drift database methods
-  static Future<List<int>> _createCzechParticipants(AppDatabase database, int eventId) async {
+  static Future<List<int>> _createCzechParticipants(
+      AppDatabase database, int eventId) async {
     final participantIds = <int>[];
-    
+
     // Czech historical and cultural figures with subtle references
     final czechParticipants = [
       {
@@ -147,7 +150,7 @@ class HardcodedTestSetup {
       },
       {
         'firstName': 'Tomáš',
-        'lastName': 'Baťa', // Tomáš Baťa - shoe entrepreneur  
+        'lastName': 'Baťa', // Tomáš Baťa - shoe entrepreneur
         'birthDate': DateTime(2005, 4, 3),
         'address': 'Zlín, náměstí Míru 12',
         'note': 'Sbírá staré boty a opravuje je',
@@ -178,17 +181,17 @@ class HardcodedTestSetup {
         'insurance': 'Všeobecná zdravotní pojišťovna',
       },
     ];
-    
+
     for (final participant in czechParticipants) {
       // Create insurance company if it doesn't exist
       final insuranceName = participant['insurance'] as String;
-      int? insuranceId = await database.getInsuranceCompanyIDbyName(insuranceName);
+      int? insuranceId =
+          await database.getInsuranceCompanyIDbyName(insuranceName);
       if (insuranceId == null) {
         insuranceId = await database.addInsuranceCompany(
-          InsuranceCompaniesCompanion(name: Value(insuranceName))
-        );
+            InsuranceCompaniesCompanion(name: Value(insuranceName)));
       }
-      
+
       final companion = ParticipantsCompanion(
         firstName: Value(participant['firstName'] as String),
         lastName: Value(participant['lastName'] as String),
@@ -202,7 +205,7 @@ class HardcodedTestSetup {
         arrivedConfirmation: const Value(true),
         wasPrinted: const Value(false),
       );
-      
+
       final id = await database.addParticipant(companion);
       participantIds.add(id);
     }
@@ -210,11 +213,13 @@ class HardcodedTestSetup {
   }
 
   /// Creates medical records with Czech cultural easter eggs using Drift database methods
-  static Future<void> _createCzechMedicalRecords(AppDatabase database, List<int> participantIds, int paramedicId) async {
+  static Future<void> _createCzechMedicalRecords(
+      AppDatabase database, List<int> participantIds, int paramedicId) async {
     final czechRecords = [
       {
         'title': 'Kontrola zdraví',
-        'description': 'má velrybí stoličku a hodně ho bolí', // The requested easter egg
+        'description':
+            'má velrybí stoličku a hodně ho bolí', // The requested easter egg
         'participantIndex': 0, // Václav Havlík
       },
       {
@@ -234,7 +239,8 @@ class HardcodedTestSetup {
       },
       {
         'title': 'Existenciální krize',
-        'description': 'trpí nesnesitelnou lehkostí bytí, doporučen filozofický klid',
+        'description':
+            'trpí nesnesitelnou lehkostí bytí, doporučen filozofický klid',
         'participantIndex': 4, // Milan Kundera
       },
       {
@@ -259,11 +265,12 @@ class HardcodedTestSetup {
       },
       {
         'title': 'Kafka-esque situace',
-        'description': 'proměnil se v brouka během spánku, ale ráno byl zase normální',
+        'description':
+            'proměnil se v brouka během spánku, ale ráno byl zase normální',
         'participantIndex': 9, // Franz Kafka
       },
     ];
-    
+
     for (int i = 0; i < czechRecords.length; i++) {
       final record = czechRecords[i];
       final companion = RecordsCompanion(
@@ -278,14 +285,14 @@ class HardcodedTestSetup {
       await database.addRecord(companion);
     }
   }
-  
+
   /// Quick setup method that can be called in test setUp()
   static Future<AppDatabase> quickSetup({
     TestDatabaseType databaseType = TestDatabaseType.memory,
   }) async {
     return await setupTestData(databaseType: databaseType);
   }
-  
+
   /// Close and clean up the database
   static Future<void> cleanup(AppDatabase database) async {
     await DatabaseTestHelper.closeTestDatabase(database);

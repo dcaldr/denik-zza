@@ -16,7 +16,8 @@ void main() {
     late List<MemoryOsoba> testParticipants;
 
     setUp(() async {
-      // Defensive cleanup to protect against pollution from other tests
+      print('[TMP] Test: setUp started');
+      // Defensive cleanup to protect against protection from other tests
       DatabaseWrapper.resetToProduction();
       FileManager().setMode(FileManagerMode.production);
 
@@ -37,11 +38,15 @@ void main() {
                 wasPrinted: p.wasPrinted,
               ))
           .toList();
+      print(
+          '[TMP] Test: setUp finished. Participants: ${testParticipants.length}');
     });
 
     tearDown(() async {
+      print('[TMP] Test: tearDown started');
       await database.close();
       DatabaseWrapper.resetToProduction();
+      print('[TMP] Test: tearDown finished');
     });
 
     group('Warning Behavior Tests', () {
@@ -173,6 +178,8 @@ void main() {
     group('Validation Combination Tests', () {
       testWidgets('SCENARIO: Multiple validation errors at once',
           (WidgetTester tester) async {
+        print(
+            '[TMP] Test: SCENARIO: Multiple validation errors at once STARTED');
         final participant = testParticipants.first;
 
         await tester.pumpWidget(
