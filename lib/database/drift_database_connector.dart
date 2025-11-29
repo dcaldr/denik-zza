@@ -12,7 +12,8 @@ import 'package:denik_zza/database/drift_database/database.dart';
 ///
 /// bridge between the app and the sqlite (drift) database
 class DriftDatabaseConnector implements DatabaseInterface {
-  static final DriftDatabaseConnector _singleton = DriftDatabaseConnector._internal();
+  static final DriftDatabaseConnector _singleton =
+      DriftDatabaseConnector._internal();
   // Singleton factory for default production usage
   factory DriftDatabaseConnector() {
     return _singleton;
@@ -33,20 +34,22 @@ class DriftDatabaseConnector implements DatabaseInterface {
 
   @override
   Future<int?> addOsobaAndReturnId(MemoryOsoba osoba) async {
-    int? insCompId = await _driftDatabase.getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna);
+    int? insCompId = await _driftDatabase
+        .getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna);
 
     // Only create insurance company if the name is not empty/null
-    if(insCompId == null && osoba.zdravotniPojistovna != null && osoba.zdravotniPojistovna!.trim().isNotEmpty) {
-      _driftDatabase.addInsuranceCompany(
-        InsuranceCompaniesCompanion(
-          name: Value(osoba.zdravotniPojistovna!),
-        )
-      );
+    if (insCompId == null &&
+        osoba.zdravotniPojistovna != null &&
+        osoba.zdravotniPojistovna!.trim().isNotEmpty) {
+      _driftDatabase.addInsuranceCompany(InsuranceCompaniesCompanion(
+        name: Value(osoba.zdravotniPojistovna!),
+      ));
       // Update insCompId after creating the insurance company
-      insCompId = await _driftDatabase.getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna);
+      insCompId = await _driftDatabase
+          .getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna);
     }
     // If insurance company name is empty/null, insCompId remains null
-      ///Now a function
+    ///Now a function
     // ParticipantsCompanion c = ParticipantsCompanion(
     //   firstName: Value(osoba.jmeno),
     //   lastName: Value(osoba.prijmeni),
@@ -74,8 +77,9 @@ class DriftDatabaseConnector implements DatabaseInterface {
 
     return osobaID;
   }
+
   @override
-  Future<bool> addOsoba(MemoryOsoba osoba){
+  Future<bool> addOsoba(MemoryOsoba osoba) {
     return addOsobaAndReturnId(osoba).then((id) => id != null);
   }
 
@@ -100,30 +104,30 @@ class DriftDatabaseConnector implements DatabaseInterface {
   }
 
   @override
- Future<bool> addEvent(MemoryAction action) async {
-  if (action.nadpis.isEmpty) return false;
+  Future<bool> addEvent(MemoryAction action) async {
+    if (action.nadpis.isEmpty) return false;
     // now a function
-  // final c = ZzaActionsCompanion(
-  //   actionTitle: Value(action.nadpis),
-  //   actionDescription: Value(action.popis),
-  //   dateFrom: Value(action.odkdy),
-  //   dateTo: Value(action.dokdy),
-  //   homeDirectory: Value(action.domovskyAdresarPath),
-  // );
+    // final c = ZzaActionsCompanion(
+    //   actionTitle: Value(action.nadpis),
+    //   actionDescription: Value(action.popis),
+    //   dateFrom: Value(action.odkdy),
+    //   dateTo: Value(action.dokdy),
+    //   homeDirectory: Value(action.domovskyAdresarPath),
+    // );
 
-  try {
-    await _driftDatabase.addZzaAction(_toZzaActionsCompanion(action));
-    //await _driftDatabase.addZzaAction(c);
-    return true;
-  } catch (e) {
-    return false;
+    try {
+      await _driftDatabase.addZzaAction(_toZzaActionsCompanion(action));
+      //await _driftDatabase.addZzaAction(c);
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
-}
 
   @override
   Future<List<MemoryOsoba>> getParticipantsByEvent(int idEvent) async {
-    List<Participant> participants = await
-    _driftDatabase.getParticipantsByAction(idEvent);
+    List<Participant> participants =
+        await _driftDatabase.getParticipantsByAction(idEvent);
     // now a function
     // List<MemoryOsoba> memoryParticipants = [];
     //
@@ -153,7 +157,8 @@ class DriftDatabaseConnector implements DatabaseInterface {
     // }
 
     //return memoryParticipants;
-    return Future.wait(participants.map(_toMemoryOsoba).toList()); //může být asi i bez wait
+    return Future.wait(
+        participants.map(_toMemoryOsoba).toList()); //může být asi i bez wait
   }
 
   @override
@@ -196,24 +201,21 @@ class DriftDatabaseConnector implements DatabaseInterface {
     // }
 
     //return memoryRecords;
-    return  records.map(_toMemoryZaznam).toList();
+    return records.map(_toMemoryZaznam).toList();
   }
+
   @Deprecated("Remove when possible")
   @override
   void updatePinnedEvent(int? pinnedEventID) async {
     _driftDatabase.updateCache(CacheCompanion(
-        id: const Value(1),
-        pinnedActionID: Value(pinnedEventID)
-    ));
+        id: const Value(1), pinnedActionID: Value(pinnedEventID)));
   }
 
   @override
   void updateCurrentEvent(int? currentEventID) async {
     FileManager().changeEvent();
     _driftDatabase.updateCache(CacheCompanion(
-        id: const Value(1),
-        currentActionID: Value(currentEventID)
-    ));
+        id: const Value(1), currentActionID: Value(currentEventID)));
   }
 
   @override
@@ -221,20 +223,23 @@ class DriftDatabaseConnector implements DatabaseInterface {
     int? currentEvent = await _driftDatabase.getCurrentActionID();
 
     // now a function
-  //   List<MemoryOsoba> memoryParticipants = [];
-  //
-  //   if(currentEvent != null) {
-  //     memoryParticipants = await getParticipantsByEvent(currentEvent);
-  //   }
-  //
+    //   List<MemoryOsoba> memoryParticipants = [];
+    //
+    //   if(currentEvent != null) {
+    //     memoryParticipants = await getParticipantsByEvent(currentEvent);
+    //   }
+    //
     // return memoryActions;
-    return currentEvent != null ? await getParticipantsByEvent(currentEvent) : [];
-}
+    return currentEvent != null
+        ? await getParticipantsByEvent(currentEvent)
+        : [];
+  }
+
   //
   @override
   Future<List<MemoryAction>> getAllZzaActions() async {
     List<ZzaAction> actions = await _driftDatabase.getAllZzaActions();
-  // now a function
+    // now a function
     // List<MemoryAction> memoryActions = [];
     //
     // for(ZzaAction a in actions) {
@@ -248,13 +253,13 @@ class DriftDatabaseConnector implements DatabaseInterface {
     //   ));
     // }
     return actions.map(_toMemoryAction).toList();
- //   return memoryActions;
-
+    //   return memoryActions;
   }
 
   @override
   Future<int> getParticipantCountInAction(int idAction) async {
-    List<Participant> p = await _driftDatabase.getParticipantsByAction(idAction);
+    List<Participant> p =
+        await _driftDatabase.getParticipantsByAction(idAction);
 
     return p.length;
   }
@@ -288,17 +293,18 @@ class DriftDatabaseConnector implements DatabaseInterface {
     // TODO: implement quickPrintZaznamyOsoby
     throw UnimplementedError();
   }
+
 //note: přidáno -- TODO: rewrite to db side of the code (ie return finished MemoryAction)
   @override
   Future<MemoryAction?> getCurrentAction() async {
-  final currentActionId = await _driftDatabase.getCurrentActionID();
-  if (currentActionId == null) {
-    return null;
-  }
-  final zzaAction = await _driftDatabase.getZzaActionByID(currentActionId);
-  if (zzaAction == null) {
-    return null;
-  }
+    final currentActionId = await _driftDatabase.getCurrentActionID();
+    if (currentActionId == null) {
+      return null;
+    }
+    final zzaAction = await _driftDatabase.getZzaActionByID(currentActionId);
+    if (zzaAction == null) {
+      return null;
+    }
     // now a function
     // return MemoryAction.fullNamed(
     //   idAkce: zzaAction.id,
@@ -309,47 +315,47 @@ class DriftDatabaseConnector implements DatabaseInterface {
     //   domovskyAdresarPath: zzaAction.homeDirectory,
     // );
     // return memoryActions;
-  return _toMemoryAction(zzaAction) ;
+    return _toMemoryAction(zzaAction);
   }
-
-
 
   @override
   Future<bool> setNoteValue(int personId, String value) {
     return _driftDatabase.setNoteValue(personId, value);
-
   }
 
-@override
-Future<int> updateParticipant({int? idOverride, required MemoryOsoba osoba}) async {
-  final id = idOverride ?? osoba.id;
-final c = await _toParticipantsCompanion(osoba);
- return _driftDatabase.updateParticipant(id,  c);
-}
+  @override
+  Future<int> updateParticipant(
+      {int? idOverride, required MemoryOsoba osoba}) async {
+    final id = idOverride ?? osoba.id;
+    final c = await _toParticipantsCompanion(osoba);
+    return _driftDatabase.updateParticipant(id, c);
+  }
 
-@override
-Future<int> updateEvent({int? idOverride, required MemoryAction action}) async {
-  final id = idOverride ?? action.idAkce;
-  final c = _toZzaActionsCompanion(action);
+  @override
+  Future<int> updateEvent(
+      {int? idOverride, required MemoryAction action}) async {
+    final id = idOverride ?? action.idAkce;
+    final c = _toZzaActionsCompanion(action);
 
-return _driftDatabase.updateEvent(id!, c);
-}
+    return _driftDatabase.updateEvent(id!, c);
+  }
 
   @override
   Future<bool> addLek(MemoryLek lek) async {
-   MedicationsCompanion c =_toMedicationCompanion(lek);
+    MedicationsCompanion c = _toMedicationCompanion(lek);
 
     int a = await _driftDatabase.addMedication(c);
-   if(a> 0){
-     return true;
-   }
-   return false;
+    if (a > 0) {
+      return true;
+    }
+    return false;
   }
 
   @override
-  Future<bool> addOmezeni(MemoryOmezeni omezeni) async{
-    int a = await _driftDatabase.addAllergiesLimitations(_toRestrictionCompanion(omezeni));
-    if(a> 0){
+  Future<bool> addOmezeni(MemoryOmezeni omezeni) async {
+    int a = await _driftDatabase
+        .addAllergiesLimitations(_toRestrictionCompanion(omezeni));
+    if (a > 0) {
       return true;
     }
     return false;
@@ -357,30 +363,43 @@ return _driftDatabase.updateEvent(id!, c);
 
   @override
   Future<List<MemoryLek>> getAllLeky() {
-    return _driftDatabase.getAllMedications().then((medications) => medications.map<MemoryLek>(_toMemoryLek).toList());  }
+    return _driftDatabase.getAllMedications().then(
+        (medications) => medications.map<MemoryLek>(_toMemoryLek).toList());
+  }
+
   @override
   Future<List<MemoryOmezeni>> getAllOmezeni() {
-    return _driftDatabase.getAllAllergiesLimitations().then((allergiesLimitations) => allergiesLimitations.map(_toMemoryOmezeni).toList());
+    return _driftDatabase.getAllAllergiesLimitations().then(
+        (allergiesLimitations) =>
+            allergiesLimitations.map(_toMemoryOmezeni).toList());
   }
 
   @override
   Future<List<MemoryLek>> getLekyByParticipantID(int id) {
-    return _driftDatabase.getMedicationsByParticipantID(id).then((medications) => medications.map(_toMemoryLek).toList());
+    return _driftDatabase
+        .getMedicationsByParticipantID(id)
+        .then((medications) => medications.map(_toMemoryLek).toList());
   }
 
   @override
   Future<List<MemoryOmezeni>> getOmezeniByParticipantID(int id) {
-return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergiesLimitations) => allergiesLimitations.map(_toMemoryOmezeni).toList());
-}
+    return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then(
+        (allergiesLimitations) =>
+            allergiesLimitations.map(_toMemoryOmezeni).toList());
+  }
 
   @override
   Future<MemoryOsoba> getOsobaById(int id) async {
-  return _driftDatabase.getParticipantByID(id).then((participant) async => await _toMemoryOsoba(participant!));
+    return _driftDatabase
+        .getParticipantByID(id)
+        .then((participant) async => await _toMemoryOsoba(participant!));
   }
 
   @override
   Stream<List<MemoryOsoba>> watchParticipantsByEvent(int idAction) {
-    return _driftDatabase.watchParticipantsByAction(idAction).asyncMap((participants) async {
+    return _driftDatabase
+        .watchParticipantsByAction(idAction)
+        .asyncMap((participants) async {
       List<MemoryOsoba> memoryParticipants = [];
       for (Participant p in participants) {
         memoryParticipants.add(await _toMemoryOsoba(p));
@@ -408,16 +427,18 @@ return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergies
     });
   }
 
-
- /// Translators from MemoryOsoba, MemoryZaznam, MemoryAction to Drift Companions
+  /// Translators from MemoryOsoba, MemoryZaznam, MemoryAction to Drift Companions
   /// TODO: rewrite to use MemoryX directly as db companion (
-  Future<ParticipantsCompanion> _toParticipantsCompanion(MemoryOsoba osoba) async {
+  Future<ParticipantsCompanion> _toParticipantsCompanion(
+      MemoryOsoba osoba) async {
     // Get insurance company ID, but only if name is not empty
     int? insCompId;
-    if (osoba.zdravotniPojistovna != null && osoba.zdravotniPojistovna!.trim().isNotEmpty) {
-      insCompId = await _driftDatabase.getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna);
+    if (osoba.zdravotniPojistovna != null &&
+        osoba.zdravotniPojistovna!.trim().isNotEmpty) {
+      insCompId = await _driftDatabase
+          .getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna);
     }
-    
+
     return ParticipantsCompanion(
       firstName: Value(osoba.jmeno),
       lastName: Value(osoba.prijmeni),
@@ -428,8 +449,8 @@ return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergies
       parentPhoneNumber: Value(osoba.telefonRodice),
       eligibleConfirmation: Value(osoba.zpusobilost!),
       nonInfectiousConfirmation: Value(osoba.bezinfekcnost!),
-        insuranceCompanyFK: Value(insCompId),
-    zzaActionFK: Value((await _driftDatabase.getCurrentActionID())!),
+      insuranceCompanyFK: Value(insCompId),
+      zzaActionFK: Value((await _driftDatabase.getCurrentActionID())!),
       parentName: Value(osoba.jmenoRodice),
       parentEmail: Value(osoba.emailRodice),
       campUnit: Value(osoba.oddil),
@@ -441,7 +462,7 @@ return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergies
 
   RecordsCompanion _toRecordsCompanion(MemoryZaznam zaznam) {
     return RecordsCompanion(
-  dateAndTime: Value(zaznam.casZaznamu ?? DateTime.now()),
+      dateAndTime: Value(zaznam.casZaznamu ?? DateTime.now()),
       title: Value(zaznam.nazev!),
       description: Value(zaznam.popis!),
       treatment: const Value(""),
@@ -495,7 +516,9 @@ return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergies
   }
 
   MemoryZaznam _toMemoryZaznam(Record r) {
-    String description = r.treatment != null ? '${r.description}\n${r.treatment}' : r.description;
+    String description = r.treatment != null
+        ? '${r.description}\n${r.treatment}'
+        : r.description;
     return MemoryZaznam.fullNamed(
       idZaznamu: r.id,
       casZaznamu: r.dateAndTime,
@@ -520,15 +543,18 @@ return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergies
       domovskyAdresarPath: a.homeDirectory,
     );
   }
+
   MedicationsCompanion _toMedicationCompanion(MemoryLek lek) {
     return MedicationsCompanion(
       name: Value(lek.nazev),
-      dosage: Value(lek.popisDavkovani ?? ""), // Provide a default value if null
+      dosage:
+          Value(lek.popisDavkovani ?? ""), // Provide a default value if null
       dosageTiming: Value(lek.popisDavkovani ?? ""),
       wasPrinted: Value(lek.wasPrinted),
       participantFK: Value(lek.idOsoby),
     );
   }
+
   AllergiesLimitationsCompanion _toRestrictionCompanion(MemoryOmezeni omezeni) {
     return AllergiesLimitationsCompanion(
       //id: Value(omezeni.id),
@@ -536,10 +562,10 @@ return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergies
       type: Value(omezeni.typOmezeni),
       wasPrinted: Value(omezeni.wasPrinted),
       participantFK: Value(omezeni.idOsoby ?? -1),
-
     );
   }
- MemoryLek _toMemoryLek(Medication lek) {
+
+  MemoryLek _toMemoryLek(Medication lek) {
     return MemoryLek.fullNamed(
       id: lek.id,
       nazev: lek.name,
@@ -550,23 +576,19 @@ return _driftDatabase.getAllergiesLimitationsByParticipantID(id).then((allergies
       //poznamka: lek.note,
     );
   }
-MemoryOmezeni  _toMemoryOmezeni(AllergiesLimitation omezeni) {
+
+  MemoryOmezeni _toMemoryOmezeni(AllergiesLimitation omezeni) {
     return MemoryOmezeni.fullNamed(
       id: omezeni.id,
       omezeni: omezeni.description,
       typOmezeni: omezeni.type,
       idOsoby: omezeni.participantFK,
-
-
       wasPrinted: omezeni.wasPrinted,
     );
   }
 
-
-
-
-
-
-
-
+  @override
+  Future<void> close() async {
+    await _driftDatabase.close();
+  }
 }

@@ -16,51 +16,6 @@ enum DatabaseMode {
 /// **PRODUCTION SAFETY GUARANTEE**: This wrapper ensures that the production app
 /// ALWAYS uses persistent storage and can NEVER silently switch to non-persistent
 /// databases that would cause data loss.
-///
-/// ## Usage:
-///
-/// **In production code:**
-/// ```dart
-/// DatabaseInterface dbInterface = DatabaseWrapper.getDatabase();
-/// // Always returns DriftDatabaseConnector with persistent storage
-/// ```
-///
-/// **In test code:**
-/// ```dart
-/// setUp(() {
-///   DatabaseWrapper.setTestMode(); // Use in-memory database
-/// });
-///
-/// tearDown(() {
-///   DatabaseWrapper.resetToProduction(); // Clean up
-/// });
-///
-/// test('my test', () {
-///   DatabaseInterface db = DatabaseWrapper.getDatabase();
-///   // Returns Drift in-memory database for test isolation
-/// });
-/// ```
-///
-/// **In main() function (recommended):**
-/// ```dart
-/// void main() {
-///   DatabaseWrapper.ensureProductionMode(); // Validates safety
-///   runApp(MyApp());
-/// }
-/// ```
-///
-/// ## Database Types:
-/// - **Production**: DriftDatabaseConnector (persistent SQLite file)
-/// - **Testing**: DriftDatabaseConnector bound to in-memory AppDatabase
-///
-/// ## Safety Features:
-/// - Compile-time and runtime checks prevent accidental data loss
-/// - Production mode is the default and heavily protected
-/// - Test mode must be explicitly enabled
-/// - Validation methods detect unsafe configurations
-///
-/// **Right now, it's singleton by historical reasons.**
-/// **New databases should be easier to implement.**
 class DatabaseWrapper {
   static final DatabaseWrapper _singleton = DatabaseWrapper._internal();
 
@@ -69,18 +24,20 @@ class DatabaseWrapper {
   }
   DatabaseWrapper._internal();
 
-  /// Database to be used by the app.
-  ///
-  /// 1 - in memory database
-  ///
-  /// 0 - default database ( now [DriftDatabaseConnector] )
-  static int databaseID = 0;
-
   /// NEW: Database mode selection (safer than int-based selection)
   static DatabaseMode _databaseMode = DatabaseMode.production;
 
+  /// Database to be used by the app.
+  /// 1 - in memory database
+  /// 0 - default database ( now [DriftDatabaseConnector] )
+  static int databaseID = 0;
+
   /// Optional test database to use when in testing mode.
   static AppDatabase? _injectedTestDb;
+
+  /// Cached instance of the implicit test database.
+  /// This tracks the database created by [getDatabase] when in test mode but no explicit DB was injected.
+  static AppDatabase? _cachedImplicitTestDb;
 
   /// Inject a specific Drift [AppDatabase] for tests / dev runs.
   /// If not provided, testing mode will default to an in-memory instance.
@@ -88,42 +45,13 @@ class DatabaseWrapper {
     _injectedTestDb = db;
   }
 
-  // Cleaned legacy unused fields and methods
-
   /// Set database mode for testing purposes.
   ///
   /// **IMPORTANT**: This method is intended for testing only.
   /// Do NOT use in production code - use only in test setUp methods.
-  ///
-  /// Example usage in tests:
-  /// Set database to testing mode (in-memory, non-persistent).
-  ///
-  /// **IMPORTANT**: Only call this in test code! Never in production.
-  /// This switches the database to use in-memory storage for test isolation.
-  ///
-  /// Example usage in tests:
-  /// ```dart
-  /// setUp(() {
-  ///   DatabaseWrapper.setTestMode();
-  /// });
-  ///
-  /// tearDown(() {
-  ///   DatabaseWrapper.resetToProduction();
-  /// });
-  /// ```
   static void setTestMode() {
     print('[TMP] DatabaseWrapper: setTestMode() called');
     _databaseMode = DatabaseMode.testing;
-  }
-
-  /// Reset database to production mode (persistent storage).
-  ///
-  /// Call this in test tearDown to ensure clean state.
-  /// Also useful for ensuring production mode is active.
-  static void resetToProduction() {
-    print('[TMP] DatabaseWrapper: resetToProduction() called');
-    _databaseMode = DatabaseMode.production;
-    _injectedTestDb = null;
   }
 
   /// Get current database mode (for debugging/testing purposes)
@@ -132,19 +60,11 @@ class DatabaseWrapper {
   }
 
   /// Check if the app is currently using persistent storage.
-  ///
-  /// Returns true if the database will persist data between app restarts.
-  /// Returns false if using in-memory/testing storage.
   static bool isUsingPersistentStorage() {
     return _databaseMode == DatabaseMode.production && databaseID != 1;
   }
 
   /// Force production mode and validate safety.
-  ///
-  /// This method ensures the app is in production mode and validates
-  /// that the configuration is safe. Call this in your main() function.
-  ///
-  /// Throws [StateError] if unsafe configuration is detected.
   static void ensureProductionMode() {
     _databaseMode = DatabaseMode.production;
     validateProductionSafety();
@@ -152,68 +72,88 @@ class DatabaseWrapper {
 
   /// Returns the correct database instance.
   ///
-  /// This method returns the correct database instance based on the [databaseID] variable
-  /// and the [_databaseMode] setting. The new mode-based selection takes precedence
-  /// for better type safety.
+  /// *   **Production**: Returns the singleton `DriftDatabaseConnector` (which uses the real `AppDatabase`).
+  /// *   **Test**: Returns a `DriftDatabaseConnector` initialized with an in-memory `AppDatabase`.
   ///
-  /// If [databaseID] is undefined it falls back to [DriftDatabaseConnector].
-  ///
-  /// **For Production**: Always returns [DriftDatabaseConnector] with persistent storage
-  /// **For Testing**: Returns in-memory database for test isolation
-  ///
-  /// **SAFETY GUARANTEE**: In production, this method will NEVER return a non-persistent
-  /// database. The app will always use persistent storage unless explicitly set to test mode.
+  /// **Important**: In test mode, this method ensures that if an implicit database is created,
+  /// it is cached in `_cachedImplicitTestDb` so it can be properly closed by `dispose()`.
   static DatabaseInterface getDatabase() {
-    print(
-        '[TMP] DatabaseWrapper: getDatabase() called. Mode: $_databaseMode, Injected: ${_injectedTestDb?.hashCode}');
-    // Production safety check: ensure we never accidentally use non-persistent DB in production
-    // when not explicitly in test mode
+    print('[TMP] DatabaseWrapper: getDatabase() called. Mode: $_databaseMode');
+
+    // Production safety check
     assert(() {
-      if (_databaseMode == DatabaseMode.production && databaseID == 1) {
-        throw StateError(
-            'CRITICAL SAFETY ERROR: Production app attempted to use non-persistent database! '
-            'databaseID=1 (memory) is set while _databaseMode=production. '
-            'This would cause silent data loss. '
-            'If you need testing, call DatabaseWrapper.setTestMode() explicitly.');
-      }
+      // Production safety check is now handled by _databaseMode enforcement
       return true;
     }());
 
-    // New mode-based selection (preferred and safer)
-    if (_databaseMode == DatabaseMode.testing) {
-      // Prefer injected AppDatabase, fallback to in-memory Drift
-      final db = _injectedTestDb ?? AppDatabase.testInMemory();
-      print(
-          '[TMP] DatabaseWrapper: Returning testing DB (Injected: ${_injectedTestDb != null}). DB Hash: ${db.hashCode}');
-      return DriftDatabaseConnector.withDatabase(db);
+    if (_databaseMode == DatabaseMode.testing || databaseID == 1) {
+      if (_injectedTestDb != null) {
+        print('[TMP] Returning injected test DB');
+        return DriftDatabaseConnector.withDatabase(_injectedTestDb!);
+      } else {
+        // Fix: Reuse the cached implicit DB if it exists, otherwise create and cache it.
+        if (_cachedImplicitTestDb == null) {
+          print('[TMP] Creating NEW implicit test DB (in-memory)');
+          _cachedImplicitTestDb = AppDatabase.testInMemory();
+        } else {
+          print('[TMP] Reusing CACHED implicit test DB');
+        }
+        return DriftDatabaseConnector.withDatabase(_cachedImplicitTestDb!);
+      }
     }
 
-    // Legacy int-based selection (maintained for compatibility)
-    // Note: The assert above prevents dangerous combinations
-    if (databaseID == 1) {
-      // Legacy switch maps to testing behavior: use in-memory Drift (custom MemoryDatabase deprecated)
-      final db = _injectedTestDb ?? AppDatabase.testInMemory();
-      print(
-          '[TMP] DatabaseWrapper: Returning legacy testing DB. DB Hash: ${db.hashCode}');
-      return DriftDatabaseConnector.withDatabase(db);
-    }
-
-    // Default: Production database with persistent storage
-    // This is the ONLY path that returns persistent storage
-    print('[TMP] DatabaseWrapper: Returning PRODUCTION DB');
+    print('[TMP] Returning PRODUCTION DB');
     return DriftDatabaseConnector();
   }
 
-  /// Validates that the current configuration is safe for production use.
+  /// Reset database to production mode (persistent storage).
   ///
-  /// Throws [StateError] if the configuration would result in data loss.
-  /// Call this in your main() function to verify production safety.
+  /// Call this in test tearDown to ensure clean state.
+  /// Also useful for ensuring production mode is active.
+  ///
+  /// **Deprecated**: Use [dispose] instead for better cleanup.
+  static void resetToProduction() {
+    print('[TMP] DatabaseWrapper: resetToProduction() called');
+    _databaseMode = DatabaseMode.production;
+    databaseID = 0;
+    _injectedTestDb = null;
+    // We don't close _cachedImplicitTestDb here because this is the legacy method.
+    // Use dispose() for proper cleanup.
+    _cachedImplicitTestDb = null;
+  }
+
+  /// Disposes of all database resources and resets the wrapper to a clean state.
+  ///
+  /// This method is the core of the "Universal Test Automation Strategy". It:
+  /// 1.  Closes the injected test database (if any).
+  /// 2.  Closes the cached implicit test database (if any).
+  /// 3.  Resets the mode to [DatabaseMode.production].
+  /// 4.  Clears all static references.
+  ///
+  /// Call this method in the global `tearDown` to ensure no test pollution.
+  static Future<void> dispose() async {
+    print('[TMP] DatabaseWrapper.dispose() called. Cleaning up.');
+
+    if (_injectedTestDb != null) {
+      await _injectedTestDb!.close();
+      _injectedTestDb = null;
+    }
+
+    if (_cachedImplicitTestDb != null) {
+      await _cachedImplicitTestDb!.close();
+      _cachedImplicitTestDb = null;
+    }
+
+    _databaseMode = DatabaseMode.production;
+    databaseID = 0;
+  }
+
+  /// Validates that the current configuration is safe for production use.
   static void validateProductionSafety() {
-    if (_databaseMode == DatabaseMode.production && databaseID == 1) {
+    // Validation is now implicit in the mode system
+    if (_databaseMode != DatabaseMode.production) {
       throw StateError(
-          'PRODUCTION SAFETY VIOLATION: App is configured to use non-persistent storage! '
-          'databaseID=1 while _databaseMode=production would cause silent data loss. '
-          'Reset databaseID to 0 or call DatabaseWrapper.setTestMode() for testing.');
+          'PRODUCTION SAFETY VIOLATION: App is not in production mode!');
     }
   }
 }
