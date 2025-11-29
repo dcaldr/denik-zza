@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/input/file_manager.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/services/models/csv_import_payload.dart';
@@ -23,19 +24,18 @@ void main() {
   tearDown(() async {
     // Reset to production mode
     FileManager().setMode(FileManagerMode.production);
+    DatabaseWrapper.resetToProduction();
     // Cleanup is handled by FileManager in persist mode
   });
 
   test('loadCsvFromPayload writes bytes to temp and cleans up', () async {
-    final Uint8List bytes =
-        await File('test/data/first.csv').readAsBytes();
+    final Uint8List bytes = await File('test/data/first.csv').readAsBytes();
     final CsvImportPayload payload = CsvImportPayload.fromBytes(
       bytes: bytes,
       displayName: 'people.csv',
     );
 
-    final CsvImportSession session =
-        await service.loadCsvFromPayload(payload);
+    final CsvImportSession session = await service.loadCsvFromPayload(payload);
 
     expect(session.review.rows, isNotEmpty);
     expect(session.personResult.goodPersons, isNotEmpty);
@@ -69,7 +69,8 @@ void main() {
 
   test('loadCsvFromPayload handles malformed CSV bytes', () async {
     // Create a file with invalid CSV structure
-    final bytes = Uint8List.fromList('not,valid,csv\ngarbage\nmore garbage'.codeUnits);
+    final bytes =
+        Uint8List.fromList('not,valid,csv\ngarbage\nmore garbage'.codeUnits);
     final payload = CsvImportPayload.fromBytes(
       bytes: bytes,
       displayName: 'bad.csv',
@@ -95,7 +96,8 @@ void main() {
     );
 
     // Launch multiple loads concurrently
-    final futures = List.generate(3, (_) => service.loadCsvFromPayload(payload));
+    final futures =
+        List.generate(3, (_) => service.loadCsvFromPayload(payload));
     final results = await Future.wait(futures);
 
     // All should succeed

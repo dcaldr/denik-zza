@@ -32,9 +32,11 @@ void main() {
 
     tearDown(() async {
       await database.close();
+      DatabaseWrapper.resetToProduction();
     });
 
-    test('fails gracefully when no current event exists (the null error bug)', () async {
+    test('fails gracefully when no current event exists (the null error bug)',
+        () async {
       // Setup: Empty database WITHOUT current event
       // This is the scenario that caused the original bug!
       DatabaseWrapper.setTestMode();
@@ -63,10 +65,13 @@ void main() {
       );
 
       // Should report failures for all rows (since no current event exists)
-      expect(result.savedCount, 0, reason: 'Should save no rows when no current event exists');
-      expect(result.failedCount, greaterThan(0), reason: 'Should report failures for all approved rows');
-      expect(result.failures.length, equals(decisions.length), reason: 'Every approved row should fail');
-      
+      expect(result.savedCount, 0,
+          reason: 'Should save no rows when no current event exists');
+      expect(result.failedCount, greaterThan(0),
+          reason: 'Should report failures for all approved rows');
+      expect(result.failures.length, equals(decisions.length),
+          reason: 'Every approved row should fail');
+
       // Verify failures contain error information
       for (final failure in result.failures) {
         expect(failure.originalIndex, greaterThan(0));
@@ -74,14 +79,16 @@ void main() {
       }
     });
 
-    test('successfully imports participants when current event exists', () async {
+    test('successfully imports participants when current event exists',
+        () async {
       // Setup: Database WITH current event (using DevEnvironment)
       database = await DevEnvironment.initialize();
       service = DefaultCsvImportService();
 
       // Verify current event exists (this fixes the bug!)
       final currentId = await database.getCurrentActionID();
-      expect(currentId, isNotNull, reason: 'Current event must exist for import to work');
+      expect(currentId, isNotNull,
+          reason: 'Current event must exist for import to work');
 
       // Load CSV
       final session = await service.loadCsv('test/data/first.csv');
@@ -95,11 +102,13 @@ void main() {
           decisions[row.originalIndex] = CsvRowDecision.approved;
         }
       }
-      expect(decisions, isNotEmpty, reason: 'Should have at least one valid row to import');
+      expect(decisions, isNotEmpty,
+          reason: 'Should have at least one valid row to import');
 
       // Count participants BEFORE import
       final dbInterface = DatabaseWrapper.getDatabase();
-      final participantsBefore = await dbInterface.getParticipantsByCurrentEvent();
+      final participantsBefore =
+          await dbInterface.getParticipantsByCurrentEvent();
       final countBefore = participantsBefore.length;
 
       // Finalize import - should succeed with real database!
@@ -107,19 +116,23 @@ void main() {
         session: session,
         decisions: decisions,
       );
-      
+
       // Verify result shows success
-      expect(result.savedCount, greaterThan(0), reason: 'Should save at least one participant');
-      expect(result.failedCount, 0, reason: 'Should have no failures with valid data');
+      expect(result.savedCount, greaterThan(0),
+          reason: 'Should save at least one participant');
+      expect(result.failedCount, 0,
+          reason: 'Should have no failures with valid data');
       expect(result.savedRowIndices.length, equals(result.savedCount));
 
       // CRITICAL: Verify actual database state (not just service return value!)
       // DevEnvironment.initialize() pre-populates DB, so check INCREMENT not absolute count
-      final participantsAfter = await dbInterface.getParticipantsByCurrentEvent();
+      final participantsAfter =
+          await dbInterface.getParticipantsByCurrentEvent();
       expect(
         participantsAfter.length,
         equals(countBefore + result.savedCount),
-        reason: 'Database should have ${result.savedCount} MORE participants after import',
+        reason:
+            'Database should have ${result.savedCount} MORE participants after import',
       );
     });
 
@@ -153,7 +166,8 @@ void main() {
       final dbInterface = DatabaseWrapper.getDatabase();
       final participants = await dbInterface.getParticipantsByCurrentEvent();
       // DevEnvironment pre-populates DB with 10 participants, so we have 11 total now
-      expect(participants.length, greaterThan(0), reason: 'Should have participants in database');
+      expect(participants.length, greaterThan(0),
+          reason: 'Should have participants in database');
 
       // Find the newly imported participant by matching name
       final saved = participants.firstWhere(
@@ -163,13 +177,15 @@ void main() {
       expect(saved.prijmeni, equals(expectedLastName));
     });
 
-    test('handles multi_person_shuffled_order.csv (the bug trigger file!)', () async {
+    test('handles multi_person_shuffled_order.csv (the bug trigger file!)',
+        () async {
       // This is the exact file that triggered the null error bug
       database = await DevEnvironment.initialize();
       service = DefaultCsvImportService();
 
       // Load the problematic file
-      final session = await service.loadCsv('test/data/multi_person_shuffled_order.csv');
+      final session =
+          await service.loadCsv('test/data/multi_person_shuffled_order.csv');
       expect(session.review.rows, isNotEmpty);
 
       // Approve all VALID rows (all statuses except rejected)
@@ -187,11 +203,13 @@ void main() {
           validCount++;
         }
       }
-      expect(validCount, greaterThan(0), reason: 'Should have at least one valid (non-rejected) row');
+      expect(validCount, greaterThan(0),
+          reason: 'Should have at least one valid (non-rejected) row');
 
       // Count participants BEFORE import to handle DevEnvironment pre-population
       final dbInterface = DatabaseWrapper.getDatabase();
-      final participantsBefore = await dbInterface.getParticipantsByCurrentEvent();
+      final participantsBefore =
+          await dbInterface.getParticipantsByCurrentEvent();
       final countBefore = participantsBefore.length;
 
       // Finalize - this used to crash with null check operator error!
@@ -199,15 +217,16 @@ void main() {
         session: session,
         decisions: decisions,
       );
-      
+
       // Verify success
       expect(result.savedCount, equals(validCount));
       expect(result.failedCount, 0);
 
       // Verify database state - check INCREMENT not absolute count
-      final participantsAfter = await dbInterface.getParticipantsByCurrentEvent();
+      final participantsAfter =
+          await dbInterface.getParticipantsByCurrentEvent();
       expect(participantsAfter.length, equals(countBefore + validCount),
-        reason: 'Should have $validCount MORE participants after import');
+          reason: 'Should have $validCount MORE participants after import');
     });
 
     test('reports failures correctly when some rows fail to save', () async {
@@ -250,7 +269,8 @@ void main() {
       service = DefaultCsvImportService();
 
       final dbInterface = DatabaseWrapper.getDatabase();
-      final countInitial = (await dbInterface.getParticipantsByCurrentEvent()).length;
+      final countInitial =
+          (await dbInterface.getParticipantsByCurrentEvent()).length;
 
       // First import
       final session1 = await service.loadCsv('test/data/first.csv');
@@ -267,10 +287,11 @@ void main() {
 
       final count1 = (await dbInterface.getParticipantsByCurrentEvent()).length;
       expect(count1, equals(countInitial + result1.savedCount),
-        reason: 'First import should add ${result1.savedCount} participants');
+          reason: 'First import should add ${result1.savedCount} participants');
 
       // Second import (should add to existing)
-      final session2 = await service.loadCsv('test/data/minimal_required_fields.csv');
+      final session2 =
+          await service.loadCsv('test/data/minimal_required_fields.csv');
       final decisions2 = <int, CsvRowDecision>{};
       for (final row in session2.review.rows) {
         if (row.status == CsvRowReviewStatus.ok) {
@@ -283,7 +304,8 @@ void main() {
       );
 
       // Verify total count includes both imports PLUS initial data
-      final totalParticipants = await dbInterface.getParticipantsByCurrentEvent();
+      final totalParticipants =
+          await dbInterface.getParticipantsByCurrentEvent();
       expect(
         totalParticipants.length,
         equals(countInitial + result1.savedCount + result2.savedCount),
