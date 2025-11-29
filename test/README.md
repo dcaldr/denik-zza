@@ -95,7 +95,7 @@ flutter test --reporter expanded
 - **ALWAYS use in-memory databases** for unit/widget tests
 - Call `DatabaseWrapper.setTestMode()` in `setUp()`
 - Use `HardcodedTestSetup` for consistent test data
-- Clean up with `DatabaseWrapper.resetToProduction()` in `tearDown()`
+- Clean up with `await DatabaseWrapper.dispose()` in `tearDown()`
 
 ### Widget Testing & Keys
 - **MANDATORY:** Use named keys for ALL testable elements

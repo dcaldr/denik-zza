@@ -6,7 +6,7 @@ import 'package:denik_zza/database/drift_database_connector.dart';
 // Old custom MemoryDatabase is deprecated; test mode now injects Drift in-memory DB
 
 /// Comprehensive proof-of-concept tests demonstrating the robust database system.
-/// 
+///
 /// These tests verify:
 /// 1. Production safety - app never uses non-persistent DB accidentally
 /// 2. Test isolation - test DBs don't interfere with each other or production
@@ -15,32 +15,31 @@ import 'package:denik_zza/database/drift_database_connector.dart';
 /// 5. Safety checks - dangerous configurations are detected and prevented
 void main() {
   group('Database System Safety Proof Tests', () {
-    
     /// Clean up state before each test
-    setUp(() {
-      DatabaseWrapper.resetToProduction();
+    setUp(() async {
+      await DatabaseWrapper.dispose();
     });
-    
+
     /// Ensure clean state after tests
-    tearDown(() {
-      DatabaseWrapper.resetToProduction();
+    tearDown(() async {
+      await DatabaseWrapper.dispose();
     });
 
     group('Production Safety Tests', () {
       test('Default mode is production with persistent storage', () {
         expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.production);
         expect(DatabaseWrapper.isUsingPersistentStorage(), isTrue);
-        
+
         DatabaseInterface db = DatabaseWrapper.getDatabase();
         expect(db, isA<DriftDatabaseConnector>());
       });
 
-      test('Production mode NEVER returns non-persistent database', () {
+      test('Production mode NEVER returns non-persistent database', () async {
         // Ensure we're in production mode
-        DatabaseWrapper.resetToProduction();
+        await DatabaseWrapper.dispose();
         expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.production);
-        
-        // Even with legacy databaseID manipulation, production should be safe
+
+        // Even with legacy manipulation, production should be safe
         // (This would be caught by the assert in getDatabase())
         DatabaseInterface db = DatabaseWrapper.getDatabase();
         expect(db, isA<DriftDatabaseConnector>());
@@ -58,7 +57,8 @@ void main() {
         // Note: We can't actually test the dangerous state in production
         // because it would throw in assert mode, but we can verify
         // the validation method exists and works in safe states
-        expect(() => DatabaseWrapper.validateProductionSafety(), returnsNormally);
+        expect(
+            () => DatabaseWrapper.validateProductionSafety(), returnsNormally);
       });
     });
 
@@ -67,54 +67,54 @@ void main() {
         DatabaseWrapper.setTestMode();
         expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.testing);
         expect(DatabaseWrapper.isUsingPersistentStorage(), isFalse);
-        
-  DatabaseInterface db = DatabaseWrapper.getDatabase();
-  // In test mode we return a DriftDatabaseConnector bound to in-memory AppDatabase
-  expect(db, isA<DriftDatabaseConnector>());
+
+        DatabaseInterface db = DatabaseWrapper.getDatabase();
+        // In test mode we return a DriftDatabaseConnector bound to in-memory AppDatabase
+        expect(db, isA<DriftDatabaseConnector>());
       });
 
-      test('Test mode can be reset to production', () {
+      test('Test mode can be reset to production', () async {
         DatabaseWrapper.setTestMode();
         expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.testing);
-        
-        DatabaseWrapper.resetToProduction();
+
+        await DatabaseWrapper.dispose();
         expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.production);
         expect(DatabaseWrapper.isUsingPersistentStorage(), isTrue);
       });
 
-      test('Multiple test setups are isolated', () {
+      test('Multiple test setups are isolated', () async {
         // First test environment
-  DatabaseWrapper.setTestMode();
-  DatabaseInterface db1 = DatabaseWrapper.getDatabase();
-  expect(db1, isA<DriftDatabaseConnector>());
-        
+        DatabaseWrapper.setTestMode();
+        DatabaseInterface db1 = DatabaseWrapper.getDatabase();
+        expect(db1, isA<DriftDatabaseConnector>());
+
         // Reset and create second test environment
-        DatabaseWrapper.resetToProduction();
-  DatabaseWrapper.setTestMode();
-  DatabaseInterface db2 = DatabaseWrapper.getDatabase();
-  expect(db2, isA<DriftDatabaseConnector>());
-        
+        await DatabaseWrapper.dispose();
+        DatabaseWrapper.setTestMode();
+        DatabaseInterface db2 = DatabaseWrapper.getDatabase();
+        expect(db2, isA<DriftDatabaseConnector>());
+
         // They should be the same singleton instance for memory database
-  // Drift connector is a singleton in production path, but when injecting we still return connector
-  // Identity is not guaranteed; just verify both are connectors
-  expect(db1.runtimeType, equals(db2.runtimeType));
+        // Drift connector is a singleton in production path, but when injecting we still return connector
+        // Identity is not guaranteed; just verify both are connectors
+        expect(db1.runtimeType, equals(db2.runtimeType));
       });
     });
 
     group('Schema Consistency Tests', () {
-      test('Production and test databases have same interface', () {
+      test('Production and test databases have same interface', () async {
         // Production database
-        DatabaseWrapper.resetToProduction();
+        await DatabaseWrapper.dispose();
         DatabaseInterface prodDb = DatabaseWrapper.getDatabase();
-        
+
         // Test database
         DatabaseWrapper.setTestMode();
         DatabaseInterface testDb = DatabaseWrapper.getDatabase();
-        
+
         // Both should implement the same interface
         expect(prodDb, isA<DatabaseInterface>());
         expect(testDb, isA<DatabaseInterface>());
-        
+
         // They should have the same methods available
         // (This is guaranteed by the interface, but we verify it works)
         expect(prodDb.runtimeType.toString(), contains('Database'));
@@ -128,7 +128,7 @@ void main() {
         DatabaseInterface db = DatabaseWrapper.getDatabase();
         expect(db, isNotNull);
         expect(db, isA<DatabaseInterface>());
-        
+
         // Should be production database by default
         expect(db, isA<DriftDatabaseConnector>());
       });
@@ -137,41 +137,41 @@ void main() {
         // Test the exact pattern used throughout the app
         final DatabaseInterface database = DatabaseWrapper.getDatabase();
         expect(database, isNotNull);
-        
+
         // Verify it's the persistent database
         expect(database, isA<DriftDatabaseConnector>());
       });
     });
 
     group('Integration Safety Tests', () {
-      test('Production app workflow is never affected by test code', () {
+      test('Production app workflow is never affected by test code', () async {
         // Simulate production app startup
         DatabaseWrapper.ensureProductionMode();
         DatabaseInterface prodDb = DatabaseWrapper.getDatabase();
         expect(prodDb, isA<DriftDatabaseConnector>());
-        
+
         // Simulate some test running (in separate isolate/process)
         // This should NOT affect the production database selection
-  DatabaseWrapper.setTestMode();
-  DatabaseInterface testDb = DatabaseWrapper.getDatabase();
-  expect(testDb, isA<DriftDatabaseConnector>());
-        
+        DatabaseWrapper.setTestMode();
+        DatabaseInterface testDb = DatabaseWrapper.getDatabase();
+        expect(testDb, isA<DriftDatabaseConnector>());
+
         // Reset to production (simulating test cleanup)
-        DatabaseWrapper.resetToProduction();
+        await DatabaseWrapper.dispose();
         DatabaseInterface backToProdDb = DatabaseWrapper.getDatabase();
         expect(backToProdDb, isA<DriftDatabaseConnector>());
       });
 
-      test('Test cleanup always returns to safe state', () {
+      test('Test cleanup always returns to safe state', () async {
         // Simulate a test that might not clean up properly
         DatabaseWrapper.setTestMode();
         expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.testing);
-        
+
         // Force cleanup (what should happen in tearDown)
-        DatabaseWrapper.resetToProduction();
+        await DatabaseWrapper.dispose();
         expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.production);
         expect(DatabaseWrapper.isUsingPersistentStorage(), isTrue);
-        
+
         // Verify production app would work correctly
         DatabaseInterface db = DatabaseWrapper.getDatabase();
         expect(db, isA<DriftDatabaseConnector>());
@@ -179,33 +179,34 @@ void main() {
     });
 
     group('Safety Edge Cases', () {
-      test('Repeated mode switches work correctly', () {
+      test('Repeated mode switches work correctly', () async {
         for (int i = 0; i < 5; i++) {
           DatabaseWrapper.setTestMode();
           expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.testing);
           expect(DatabaseWrapper.getDatabase(), isA<DriftDatabaseConnector>());
-          
-          DatabaseWrapper.resetToProduction();
+
+          await DatabaseWrapper.dispose();
           expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.production);
           expect(DatabaseWrapper.getDatabase(), isA<DriftDatabaseConnector>());
         }
       });
 
-      test('getCurrentMode always returns correct state', () {
+      test('getCurrentMode always returns correct state', () async {
         expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.production);
-        
+
         DatabaseWrapper.setTestMode();
         expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.testing);
-        
-        DatabaseWrapper.resetToProduction();
+
+        await DatabaseWrapper.dispose();
         expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.production);
       });
 
-      test('isUsingPersistentStorage correctly identifies storage type', () {
+      test('isUsingPersistentStorage correctly identifies storage type',
+          () async {
         // Production mode should use persistent storage
-        DatabaseWrapper.resetToProduction();
+        await DatabaseWrapper.dispose();
         expect(DatabaseWrapper.isUsingPersistentStorage(), isTrue);
-        
+
         // Test mode should not use persistent storage
         DatabaseWrapper.setTestMode();
         expect(DatabaseWrapper.isUsingPersistentStorage(), isFalse);
@@ -214,26 +215,26 @@ void main() {
   });
 
   group('Real-World Usage Examples', () {
-    test('Typical test setup pattern', () {
+    test('Typical test setup pattern', () async {
       // This demonstrates the recommended test setup pattern
       DatabaseWrapper.setTestMode();
-      
+
       DatabaseInterface db = DatabaseWrapper.getDatabase();
-  expect(db, isA<DriftDatabaseConnector>());
-      
+      expect(db, isA<DriftDatabaseConnector>());
+
       // Test operations would go here...
       // They would use isolated, in-memory storage
-      
-      DatabaseWrapper.resetToProduction();
+
+      await DatabaseWrapper.dispose();
     });
 
     test('Production app startup pattern', () {
       // This demonstrates the recommended production startup
       DatabaseWrapper.ensureProductionMode();
-      
+
       DatabaseInterface db = DatabaseWrapper.getDatabase();
       expect(db, isA<DriftDatabaseConnector>());
-      
+
       // Production operations would use persistent storage
       expect(DatabaseWrapper.isUsingPersistentStorage(), isTrue);
     });

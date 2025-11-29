@@ -6,7 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
 /// Centralized coordinator for application mode switching.
-/// 
+///
 /// Synchronizes DatabaseWrapper and FileManager to ensure they always use
 /// compatible modes. Provides single point of control for switching between
 /// testing, debugging, and production modes.
@@ -18,9 +18,9 @@ import 'dart:io';
 /// setUp(() {
 ///   ModeCoordinator.setTestingMode();
 /// });
-/// 
-/// tearDown(() {
-///   ModeCoordinator.resetToProduction();
+///
+/// tearDown(() async {
+///   await ModeCoordinator.setProductionMode();
 /// });
 /// ```
 ///
@@ -29,9 +29,9 @@ import 'dart:io';
 /// setUp(() async {
 ///   await ModeCoordinator.setIntegrationTestMode(testName: 'user_flow_test');
 /// });
-/// 
-/// tearDown(() {
-///   ModeCoordinator.resetToProduction();
+///
+/// tearDown(() async {
+///   await ModeCoordinator.setProductionMode();
 /// });
 /// ```
 ///
@@ -55,32 +55,32 @@ class ModeCoordinator {
   static void setTestingMode() {
     _currentMode = AppMode.testing;
     _currentTestName = null;
-    
+
     DatabaseWrapper.setTestMode();
     FileManager().setTestMode();
-    
+
     _logger.d('ModeCoordinator: Switched to testing mode (in-memory)');
   }
 
   /// Switch to integration test mode: in-memory database, real file operations
   /// in isolated directory.
-  /// 
+  ///
   /// Each test gets its own subfolder: Documents/DenikZZA/integration_test_output/<testName>/
-  /// 
+  ///
   /// **When to use:** Integration tests that need to verify file operations
   /// (PDF generation, file uploads, etc.) while keeping data separate from production.
   static Future<void> setIntegrationTestMode({required String testName}) async {
     _currentMode = AppMode.integrationTest;
     _currentTestName = testName;
-    
+
     // Use in-memory database for speed and isolation
     DatabaseWrapper.setTestMode();
-    
+
     // Use real file system in isolated directory
     final integrationTestDir = await _getIntegrationTestDirectory(testName);
     FileManager().setMode(FileManagerMode.production); // Real file operations
     FileManager().homeDir = integrationTestDir; // But in test directory
-    
+
     _logger.i('ModeCoordinator: Integration test mode - $testName');
     _logger.d('Integration test directory: ${integrationTestDir.path}');
   }
@@ -90,38 +90,40 @@ class ModeCoordinator {
   static Future<void> setDebugMode({required String testName}) async {
     _currentMode = AppMode.debug;
     _currentTestName = testName;
-    
-    DatabaseWrapper.resetToProduction(); // Uses file-based database
+
+    await DatabaseWrapper.dispose(); // Uses file-based database
     FileManager().setPersistentTestMode('test_outputs/$testName');
-    
+
     _logger.d('ModeCoordinator: Debug mode - $testName');
   }
 
   /// Switch to production mode: real database, real file operations.
-  static void setProductionMode() {
+  static Future<void> setProductionMode() async {
     _currentMode = AppMode.production;
     _currentTestName = null;
-    
-    DatabaseWrapper.resetToProduction();
+
+    await DatabaseWrapper.dispose();
     FileManager().resetToProduction();
-    
+
     _logger.d('ModeCoordinator: Switched to production mode');
   }
 
   /// Reset to production mode (alias for clarity in tearDown)
-  static void resetToProduction() => setProductionMode();
+  @deprecated
+  static Future<void> resetToProduction() => setProductionMode();
 
   /// Get integration test directory for a specific test.
   /// Creates: Documents/DenikZZA/integration_test_output/<testName>/
   static Future<Directory> _getIntegrationTestDirectory(String testName) async {
     final docs = await getApplicationDocumentsDirectory();
-    final integrationDir = Directory('${docs.path}/DenikZZA/integration_test_output/$testName');
-    
+    final integrationDir =
+        Directory('${docs.path}/DenikZZA/integration_test_output/$testName');
+
     if (!await integrationDir.exists()) {
       await integrationDir.create(recursive: true);
       _logger.d('Created integration test directory: ${integrationDir.path}');
     }
-    
+
     return integrationDir;
   }
 
@@ -129,8 +131,9 @@ class ModeCoordinator {
   static Future<void> cleanupIntegrationTestOutputs() async {
     try {
       final docs = await getApplicationDocumentsDirectory();
-      final integrationDir = Directory('${docs.path}/DenikZZA/integration_test_output');
-      
+      final integrationDir =
+          Directory('${docs.path}/DenikZZA/integration_test_output');
+
       if (await integrationDir.exists()) {
         await integrationDir.delete(recursive: true);
         _logger.i('Cleaned up integration test outputs');
@@ -155,14 +158,14 @@ class ModeCoordinator {
 enum AppMode {
   /// In-memory database, no file operations (fastest, for unit/widget tests)
   testing,
-  
+
   /// In-memory database, real file operations in isolated directory
   /// (for integration tests that need to verify file operations)
   integrationTest,
-  
+
   /// Persistent database and files in test_outputs/ (for debugging)
   debug,
-  
+
   /// Real database and file operations (production)
   production,
 }

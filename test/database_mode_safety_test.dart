@@ -5,15 +5,14 @@ import 'package:denik_zza/database/database_wrapper.dart';
 /// This test verifies the core safety features without relying on complex interfaces.
 void main() {
   group('Database Mode Safety Tests', () {
-    
     /// Clean up state before each test
-    setUp(() {
-      DatabaseWrapper.resetToProduction();
+    setUp(() async {
+      await DatabaseWrapper.dispose();
     });
-    
+
     /// Ensure clean state after tests
-    tearDown(() {
-      DatabaseWrapper.resetToProduction();
+    tearDown(() async {
+      await DatabaseWrapper.dispose();
     });
 
     test('Default mode is production', () {
@@ -25,19 +24,19 @@ void main() {
       expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.testing);
     });
 
-    test('Production mode can be restored', () {
+    test('Production mode can be restored', () async {
       DatabaseWrapper.setTestMode();
       expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.testing);
-      
-      DatabaseWrapper.resetToProduction();
+
+      await DatabaseWrapper.dispose();
       expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.production);
     });
 
-    test('isUsingPersistentStorage works correctly', () {
+    test('isUsingPersistentStorage works correctly', () async {
       // Production mode should use persistent storage
-      DatabaseWrapper.resetToProduction();
+      await DatabaseWrapper.dispose();
       expect(DatabaseWrapper.isUsingPersistentStorage(), isTrue);
-      
+
       // Test mode should not use persistent storage
       DatabaseWrapper.setTestMode();
       expect(DatabaseWrapper.isUsingPersistentStorage(), isFalse);
@@ -46,33 +45,33 @@ void main() {
     test('ensureProductionMode sets production mode', () {
       DatabaseWrapper.setTestMode();
       expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.testing);
-      
+
       DatabaseWrapper.ensureProductionMode();
       expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.production);
     });
 
-    test('validateProductionSafety works in safe configurations', () {
-      DatabaseWrapper.resetToProduction();
+    test('validateProductionSafety works in safe configurations', () async {
+      await DatabaseWrapper.dispose();
       expect(() => DatabaseWrapper.validateProductionSafety(), returnsNormally);
     });
 
-    test('Multiple mode switches work correctly', () {
+    test('Multiple mode switches work correctly', () async {
       for (int i = 0; i < 3; i++) {
         DatabaseWrapper.setTestMode();
         expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.testing);
         expect(DatabaseWrapper.isUsingPersistentStorage(), isFalse);
-        
-        DatabaseWrapper.resetToProduction();
+
+        await DatabaseWrapper.dispose();
         expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.production);
         expect(DatabaseWrapper.isUsingPersistentStorage(), isTrue);
       }
     });
 
-    test('Production mode is the safe default', () {
+    test('Production mode is the safe default', () async {
       // After any operations, verify we're in production mode
       DatabaseWrapper.setTestMode();
-      DatabaseWrapper.resetToProduction();
-      
+      await DatabaseWrapper.dispose();
+
       expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.production);
       expect(DatabaseWrapper.isUsingPersistentStorage(), isTrue);
     });

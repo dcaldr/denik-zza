@@ -16,6 +16,22 @@ enum DatabaseMode {
 /// **PRODUCTION SAFETY GUARANTEE**: This wrapper ensures that the production app
 /// ALWAYS uses persistent storage and can NEVER silently switch to non-persistent
 /// databases that would cause data loss.
+///
+/// ## Usage
+///
+/// **Production (Default):**
+/// No setup needed. Uses [DriftDatabaseConnector] with persistent storage.
+///
+/// **Testing:**
+/// ```dart
+/// setUp(() {
+///   DatabaseWrapper.setTestMode();
+/// });
+///
+/// tearDown(() async {
+///   await DatabaseWrapper.dispose();
+/// });
+/// ```
 class DatabaseWrapper {
   static final DatabaseWrapper _singleton = DatabaseWrapper._internal();
 
@@ -26,11 +42,6 @@ class DatabaseWrapper {
 
   /// NEW: Database mode selection (safer than int-based selection)
   static DatabaseMode _databaseMode = DatabaseMode.production;
-
-  /// Database to be used by the app.
-  /// 1 - in memory database
-  /// 0 - default database ( now [DriftDatabaseConnector] )
-  static int databaseID = 0;
 
   /// Optional test database to use when in testing mode.
   static AppDatabase? _injectedTestDb;
@@ -61,7 +72,7 @@ class DatabaseWrapper {
 
   /// Check if the app is currently using persistent storage.
   static bool isUsingPersistentStorage() {
-    return _databaseMode == DatabaseMode.production && databaseID != 1;
+    return _databaseMode == DatabaseMode.production;
   }
 
   /// Force production mode and validate safety.
@@ -86,7 +97,7 @@ class DatabaseWrapper {
       return true;
     }());
 
-    if (_databaseMode == DatabaseMode.testing || databaseID == 1) {
+    if (_databaseMode == DatabaseMode.testing) {
       if (_injectedTestDb != null) {
         print('[TMP] Returning injected test DB');
         return DriftDatabaseConnector.withDatabase(_injectedTestDb!);
@@ -104,22 +115,6 @@ class DatabaseWrapper {
 
     print('[TMP] Returning PRODUCTION DB');
     return DriftDatabaseConnector();
-  }
-
-  /// Reset database to production mode (persistent storage).
-  ///
-  /// Call this in test tearDown to ensure clean state.
-  /// Also useful for ensuring production mode is active.
-  ///
-  /// **Deprecated**: Use [dispose] instead for better cleanup.
-  static void resetToProduction() {
-    print('[TMP] DatabaseWrapper: resetToProduction() called');
-    _databaseMode = DatabaseMode.production;
-    databaseID = 0;
-    _injectedTestDb = null;
-    // We don't close _cachedImplicitTestDb here because this is the legacy method.
-    // Use dispose() for proper cleanup.
-    _cachedImplicitTestDb = null;
   }
 
   /// Disposes of all database resources and resets the wrapper to a clean state.
@@ -145,7 +140,6 @@ class DatabaseWrapper {
     }
 
     _databaseMode = DatabaseMode.production;
-    databaseID = 0;
   }
 
   /// Validates that the current configuration is safe for production use.

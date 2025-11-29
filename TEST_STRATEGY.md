@@ -5,7 +5,7 @@
 
 ## 1. The "Zero-Config" Promise
 Developers should **never** have to manually set up or tear down the database in a standard test.
--   **Bad**: Manually calling `DatabaseWrapper.setTestMode()` and `tearDown(() => DatabaseWrapper.resetToProduction())`.
+-   **Bad**: Manually calling `DatabaseWrapper.setTestMode()` and `tearDown(() => DatabaseWrapper.dispose())`.
 -   **Good**: The test infrastructure handles this automatically.
 
 ## 2. Architecture: The "Smart Singleton" & Global Safety
@@ -58,6 +58,6 @@ testWidgets('my widget test', (tester) async {
 
 ## 5. Migration Guide for Refactoring
 When refactoring old tests:
-1.  **Remove** manual `tearDown(() => DatabaseWrapper.resetToProduction())`.
+1.  **Remove** manual `tearDown(() => DatabaseWrapper.dispose())`.
 2.  **Remove** direct usage of `DatabaseTestHelper` if it conflicts with the global strategy.
 3.  **Ensure** `DatabaseWrapper.getDatabase()` is used instead of instantiating `AppDatabase` directly, unless you are specifically testing the database class itself.

@@ -24,7 +24,7 @@ void main() {
   tearDown(() async {
     // Reset to production mode
     FileManager().setMode(FileManagerMode.production);
-    DatabaseWrapper.resetToProduction();
+    await DatabaseWrapper.dispose();
     // Cleanup is handled by FileManager in persist mode
   });
 

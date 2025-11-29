@@ -34,7 +34,7 @@ void main() {
     });
     
     tearDown(() {
-      ModeCoordinator.resetToProduction();
+      ModeCoordinator.setProductionMode();
     });
     
     test('service works', () {
@@ -69,7 +69,7 @@ void main() {
     });
     
     tearDown(() {
-      ModeCoordinator.resetToProduction();
+      ModeCoordinator.setProductionMode();
     });
     
     testWidgets('generates PDF successfully', (tester) async {
@@ -100,7 +100,7 @@ void main() {
   
   tearDown(() {
     // DON'T reset to production - keep files for inspection
-    // ModeCoordinator.resetToProduction(); // Skip this!
+    // ModeCoordinator.setProductionMode(); // Skip this!
   });
   
   test('debug this behavior', () {

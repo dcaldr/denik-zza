@@ -18,7 +18,7 @@ void main() {
     setUp(() async {
       print('[TMP] Test: setUp started');
       // Defensive cleanup to protect against protection from other tests
-      DatabaseWrapper.resetToProduction();
+      await DatabaseWrapper.dispose();
       FileManager().setMode(FileManagerMode.production);
 
       database = await HardcodedTestSetup.setupTestData(
@@ -45,7 +45,7 @@ void main() {
     tearDown(() async {
       print('[TMP] Test: tearDown started');
       await database.close();
-      DatabaseWrapper.resetToProduction();
+      await DatabaseWrapper.dispose();
       print('[TMP] Test: tearDown finished');
     });
 

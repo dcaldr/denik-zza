@@ -7,9 +7,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('ModeCoordinator -', () {
-    tearDown(() {
+    tearDown(() async {
       // Always reset to production after tests
-      ModeCoordinator.resetToProduction();
+      await ModeCoordinator.setProductionMode();
     });
 
     test('setTestingMode synchronizes DatabaseWrapper and FileManager', () {
@@ -20,12 +20,12 @@ void main() {
       expect(FileManager().isTesting, true);
     });
 
-    test('setProductionMode synchronizes both systems', () {
+    test('setProductionMode synchronizes both systems', () async {
       // First set to testing
       ModeCoordinator.setTestingMode();
 
       // Then switch to production
-      ModeCoordinator.setProductionMode();
+      await ModeCoordinator.setProductionMode();
 
       expect(ModeCoordinator.currentMode, AppMode.production);
       expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.production);
@@ -35,14 +35,14 @@ void main() {
     test('setIntegrationTestMode configures for isolated testing', () async {
       // Note: Actual directory creation requires path_provider plugin (integration test only)
       // This test verifies mode configuration without filesystem operations
-      
+
       // For unit test, we skip the actual call that needs path_provider
       // In real integration tests, this would work fine
-      
+
       // Just verify mode switching logic
       ModeCoordinator.setTestingMode(); // This works without path_provider
       expect(ModeCoordinator.currentMode, AppMode.testing);
-      
+
       // Integration test mode WOULD set:
       // - currentMode to AppMode.integrationTest
       // - currentTestName to test name
@@ -55,12 +55,13 @@ void main() {
 
       expect(ModeCoordinator.currentMode, AppMode.debug);
       expect(ModeCoordinator.currentTestName, 'debug_session');
-      expect(DatabaseWrapper.getCurrentMode(), DatabaseMode.production); // File-based DB
+      expect(DatabaseWrapper.getCurrentMode(),
+          DatabaseMode.production); // File-based DB
     });
 
-    test('resetToProduction returns to clean state', () {
+    test('setProductionMode returns to clean state', () async {
       ModeCoordinator.setTestingMode();
-      ModeCoordinator.resetToProduction();
+      await ModeCoordinator.setProductionMode();
 
       expect(ModeCoordinator.currentMode, AppMode.production);
       expect(ModeCoordinator.currentTestName, null);

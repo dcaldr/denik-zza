@@ -46,8 +46,8 @@ void main() {
   DatabaseWrapper.setTestMode(); // Switch to in-memory Drift database
   });
   
-  tearDown(() {
-    DatabaseWrapper.resetToProduction(); // Always clean up!
+  tearDown(() async {
+    await DatabaseWrapper.dispose(); // Always clean up!
   });
   
   test('app-level database test', () {
@@ -113,8 +113,8 @@ void main() {
   DatabaseWrapper.setTestMode(); // Use isolated in-memory Drift DB
     });
     
-    tearDown(() {
-      DatabaseWrapper.resetToProduction(); // Always reset!
+    tearDown(() async {
+      await DatabaseWrapper.dispose(); // Always reset!
     });
     
     test('my test', () {
@@ -293,7 +293,7 @@ DatabaseInterface db = DatabaseWrapper.getDatabase();
 ```dart
 // For app-level tests
 setUp(() => DatabaseWrapper.setTestMode());
-tearDown(() => DatabaseWrapper.resetToProduction());
+tearDown(() async => await DatabaseWrapper.dispose());
 DatabaseInterface db = DatabaseWrapper.getDatabase();
 
 // For direct database tests  
@@ -307,7 +307,7 @@ tearDown(() => database.close());
 ```dart
 group('Fast Unit Tests', () {
   setUp(() => DatabaseWrapper.setTestMode());
-  tearDown(() => DatabaseWrapper.resetToProduction());
+  tearDown(() async => await DatabaseWrapper.dispose());
   
   test('business logic test', () {
     DatabaseInterface db = DatabaseWrapper.getDatabase();
@@ -340,7 +340,7 @@ group('Integration Tests', () {
 void main() {
   group('Unit Tests', () {
     setUp(() => DatabaseWrapper.setTestMode());
-    tearDown(() => DatabaseWrapper.resetToProduction());
+    tearDown(() async => await DatabaseWrapper.dispose());
     // Fast tests here
   });
   
@@ -382,7 +382,7 @@ How to fix (do this):
 - In tests, create a fresh `AppDatabase` per test (or per group) and close it in `tearDown()`. Use our helpers:
   - Fast unit tests: `final db = AppDatabase.testInMemory();` (already uses `closeStreamsSynchronously: true`).
   - Unified helper: `final db = await UnifiedTestSetup.createDatabase();` and `await db.close();` in tearDown.
-- For app-level tests using `DatabaseWrapper`, call `DatabaseWrapper.setTestMode()` in `setUp()` and `DatabaseWrapper.resetToProduction()` in `tearDown()` to avoid touching the production singleton.
+- For app-level tests using `DatabaseWrapper`, call `DatabaseWrapper.setTestMode()` in `setUp()` and `await DatabaseWrapper.dispose()` in `tearDown()` to avoid touching the production singleton.
 - Do not call `close()` on the production singleton instance used by the real app. If you need a closed lifecycle for a test, use an injected/in-memory database instance instead.
 
 Notes and extras:

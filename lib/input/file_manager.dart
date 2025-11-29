@@ -298,22 +298,6 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
 
   /// Check if running in persistent testing mode
   bool get isPersistMode => _mode == FileManagerMode.persist;
-
-  /// Check if running in production mode
-  bool get isProductionMode => _mode == FileManagerMode.production;
-
-  /// Set FileManager to testing mode (in-memory, no disk operations)
-  /// Maintains backward compatibility with existing test patterns
-  void setTestMode() {
-    _mode = FileManagerMode.inMemory;
-    isTesting = true;
-    _updateSubFoldersForMode();
-  }
-
-  /// Set FileManager mode with optional test output path
-  /// 
-  /// Usage:
-  ///   FileManager().setMode(FileManagerMode.inMemory);
   ///   FileManager().setMode(FileManagerMode.persist, testOutputPath: 'test/outputs');
   ///   FileManager().setMode(FileManagerMode.production);
   void setMode(FileManagerMode mode, {String? testOutputPath}) {
@@ -326,23 +310,6 @@ Future<String?> nameCollisionSolver(Directory base, String inName) async {
   /// Set FileManager to persistent testing mode with specified output path
   void setPersistentTestMode(String testOutputPath) {
     _mode = FileManagerMode.persist;
-    _testOutputPath = testOutputPath;
-    isTesting = false; // persist mode is different from legacy isTesting
-    _updateSubFoldersForMode();
-  }
-
-  /// Reset FileManager to production mode
-  void resetToProduction() {
-    _mode = FileManagerMode.production;
-    _testOutputPath = null;
-    isTesting = false;
-    _updateSubFoldersForMode();
-  }
-
-  /// Get FileManager configuration summary for debugging
-  Map<String, dynamic> getConfigSummary() {
-    return {
-      'mode': _mode.value,
       'isTesting': isTesting,
       'testOutputPath': _testOutputPath,
       'homeDir': homeDir?.path,

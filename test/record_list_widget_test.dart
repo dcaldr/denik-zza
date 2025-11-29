@@ -10,16 +10,15 @@ void main() {
   group('RecordListWidget Tests', () {
     late AppDatabase testDb;
 
-    setUpAll(() async {
+    setUp(() async {
       DatabaseWrapper.setTestMode();
       DatabaseTestHelper.disableDriftWarnings();
       testDb = AppDatabase.testInMemory();
       DatabaseWrapper.useTestDriftDatabase(testDb);
     });
 
-    tearDownAll(() async {
-      await testDb.close();
-      DatabaseWrapper.resetToProduction();
+    tearDown(() async {
+      await DatabaseWrapper.dispose();
     });
 
     Widget createTestWidget(MemoryOsoba participant) {
@@ -35,30 +34,33 @@ void main() {
       );
     }
 
-    testWidgets('should display empty state when participant has no records', (WidgetTester tester) async {
+    testWidgets('should display empty state when participant has no records',
+        (WidgetTester tester) async {
       final participant = MemoryOsoba.basic('Jan', 'Novák')..id = 1;
-      
+
       await tester.pumpWidget(createTestWidget(participant));
       await tester.pumpAndSettle();
 
       expect(find.text('Zatím žádné zdravotní záznamy.'), findsOneWidget,
-        reason: 'Empty state message must be visible when no records exist');
+          reason: 'Empty state message must be visible when no records exist');
     });
 
-    testWidgets('should display loading indicator while fetching records', (WidgetTester tester) async {
+    testWidgets('should display loading indicator while fetching records',
+        (WidgetTester tester) async {
       final participant = MemoryOsoba.basic('Jan', 'Novák')..id = 1;
-      
+
       await tester.pumpWidget(createTestWidget(participant));
-      
+
       // Before pumpAndSettle completes, loading indicator should be visible
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      
+
       await tester.pumpAndSettle();
     });
 
-    testWidgets('should render widget without crashing', (WidgetTester tester) async {
+    testWidgets('should render widget without crashing',
+        (WidgetTester tester) async {
       final participant = MemoryOsoba.basic('Jan', 'Novák')..id = 1;
-      
+
       await tester.pumpWidget(createTestWidget(participant));
       await tester.pumpAndSettle();
 

@@ -9,7 +9,7 @@ import 'setup_templates/hardcoded_setup.dart';
 import 'utils/database_test_helper.dart';
 
 /// Comprehensive tests for ParticipantListScreen including challenging scenarios
-/// 
+///
 /// Tests cover:
 /// - Basic rendering and UI elements
 /// - Search functionality with Czech diacritics
@@ -29,23 +29,24 @@ void main() {
     // CRITICAL FIX: Set test mode FIRST, before creating any widgets
     // This ensures DatabaseWrapper.getDatabase() returns the test database
     DatabaseWrapper.setTestMode();
-    
+
     database = await HardcodedTestSetup.setupTestData(
       databaseType: TestDatabaseType.memory,
     );
-    
+
     // Verify test mode is active
     assert(DatabaseWrapper.getCurrentMode() == DatabaseMode.testing,
-      'Test mode must be active before widget creation');
+        'Test mode must be active before widget creation');
   });
 
   tearDown(() async {
     await database.close();
-    DatabaseWrapper.resetToProduction();
+    await DatabaseWrapper.dispose();
   });
 
   group('ParticipantListScreen - Basic Rendering', () {
-    testWidgets('renders with all required UI elements', (WidgetTester tester) async {
+    testWidgets('renders with all required UI elements',
+        (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: ParticipantListScreen()));
       await tester.pump(); // Initial render
       await tester.pump(); // FutureBuilder resolves
@@ -54,23 +55,27 @@ void main() {
       // Verify AppBar
       expect(find.byKey(const Key('ParticipantList_appBar')), findsOneWidget);
       expect(find.text('Seznam účastníků'), findsOneWidget);
-      
+
       // Verify add button
-      expect(find.byKey(const Key('ParticipantList_addButton')), findsOneWidget);
-      
+      expect(
+          find.byKey(const Key('ParticipantList_addButton')), findsOneWidget);
+
       // Verify search field (PersonAutocomplete widget)
-      expect(find.byKey(const Key('ParticipantList_searchField')), findsOneWidget);
-      expect(find.byKey(const Key('ParticipantList_autocomplete')), findsOneWidget);
-      
+      expect(
+          find.byKey(const Key('ParticipantList_searchField')), findsOneWidget);
+      expect(find.byKey(const Key('ParticipantList_autocomplete')),
+          findsOneWidget);
+
       // Verify list view exists (may be empty or populated depending on data load timing)
       expect(find.byKey(const Key('ParticipantList_listView')), findsOneWidget);
-      
+
       // Verify participants are displayed (10 from HardcodedTestSetup)
       // Using byType instead of string matching for robustness
       expect(find.byType(ParticipantListItem), findsWidgets);
     });
 
-    testWidgets('displays all 10 participants from test data', (WidgetTester tester) async {
+    testWidgets('displays all 10 participants from test data',
+        (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: ParticipantListScreen()));
       await tester.pumpAndSettle();
 
@@ -79,10 +84,10 @@ void main() {
       // or checking a representative sample that spans the alphabet
       final firstNames = [
         'Antonín', // Starts with A
-        'Bedřich', // Starts with B  
-        'Ema',     // Starts with E
-        'Franz',   // Starts with F
-        'Jan',     // Starts with J
+        'Bedřich', // Starts with B
+        'Ema', // Starts with E
+        'Franz', // Starts with F
+        'Jan', // Starts with J
       ];
 
       for (final name in firstNames) {
@@ -93,41 +98,48 @@ void main() {
           const Offset(0, -50),
         );
         await tester.pumpAndSettle();
-        
-        expect(find.textContaining(name), findsOneWidget, 
-          reason: 'Should find participant: $name');
+
+        expect(find.textContaining(name), findsOneWidget,
+            reason: 'Should find participant: $name');
       }
     });
   });
 
   group('ParticipantListScreen - Search Functionality', () {
-    testWidgets('autocomplete widget is present and functional', (WidgetTester tester) async {
+    testWidgets('autocomplete widget is present and functional',
+        (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: ParticipantListScreen()));
       await tester.pumpAndSettle();
 
       // Verify PersonAutocomplete widget exists
-      expect(find.byKey(const Key('ParticipantList_autocomplete')), findsOneWidget);
-      expect(find.byKey(const Key('ParticipantList_searchField')), findsOneWidget);
-      
+      expect(find.byKey(const Key('ParticipantList_autocomplete')),
+          findsOneWidget);
+      expect(
+          find.byKey(const Key('ParticipantList_searchField')), findsOneWidget);
+
       // Verify typing in search field works
       await tester.enterText(
         find.byKey(const Key('ParticipantList_searchField')),
         'Test',
       );
       await tester.pumpAndSettle();
-      
+
       // Search field should contain the text
-      final textField = tester.widget<TextField>(find.byKey(const Key('ParticipantList_searchField')));
+      final textField = tester.widget<TextField>(
+          find.byKey(const Key('ParticipantList_searchField')));
       expect(textField.controller?.text, 'Test');
     });
 
-    // SKIPPED: Detailed search behavior tests removed because PersonAutocomplete 
+    // SKIPPED: Detailed search behavior tests removed because PersonAutocomplete
     // shows results in a dropdown overlay, making string matching unreliable.
     // The autocomplete widget itself is tested separately.
-  }, skip: 'Search functionality changed to PersonAutocomplete - detailed tests no longer applicable');
+  },
+      skip:
+          'Search functionality changed to PersonAutocomplete - detailed tests no longer applicable');
 
   group('ParticipantListScreen - Navigation', () {
-    testWidgets('tapping add button navigates to participant registration', (WidgetTester tester) async {
+    testWidgets('tapping add button navigates to participant registration',
+        (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: ParticipantListScreen()));
       await tester.pumpAndSettle();
 
@@ -139,12 +151,14 @@ void main() {
       expect(find.byType(ParticipantRegistrationPage), findsOneWidget);
     });
 
-    testWidgets('tapping detail button navigates to participant detail', (WidgetTester tester) async {
+    testWidgets('tapping detail button navigates to participant detail',
+        (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: ParticipantListScreen()));
       await tester.pumpAndSettle();
 
       // Find first participant's detail button
-      final detailButton = find.byKey(const Key('ParticipantListItem_0_detailButton'));
+      final detailButton =
+          find.byKey(const Key('ParticipantListItem_0_detailButton'));
       expect(detailButton, findsOneWidget);
 
       // Tap detail button
