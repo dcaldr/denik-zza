@@ -278,6 +278,22 @@ class _RecordListItemState extends State<RecordListItem> {
           ),
         ),
 
+        const SizedBox(width: 8),
+
+        // Title
+        Flexible(
+          flex: 2,
+          child: Text(
+            widget.record.nazev ?? 'Bez nadpisu',
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+
         // Separator
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6),
