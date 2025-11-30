@@ -146,7 +146,7 @@ void main() {
     // Should not show error, just stay in initial state
     expect(find.byKey(const Key('CsvImportScreen_error_label')), findsNothing);
     expect(find.text('Zatím nebyl vybrán žádný soubor.'), findsOneWidget);
-    
+
     // Continue button should remain disabled
     final continueButton = tester.widget<FilledButton>(
       find.byKey(const Key('CsvImportScreen_continue_button')),
@@ -169,7 +169,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: CsvImportScreen()));
 
     // Get initial button state
-    final buttonBefore = tester.widget<ElevatedButton>(
+    final buttonBefore = tester.widget<OutlinedButton>(
       find.byKey(const Key('CsvImportScreen_pick_button')),
     );
     expect(buttonBefore.onPressed, isNotNull);
@@ -177,11 +177,11 @@ void main() {
     // Tap once
     await tester.tap(find.byKey(const Key('CsvImportScreen_pick_button')));
     await tester.pump(); // Let tap take effect
-    
+
     // After tap, button child might change (implementation detail)
     // Key point: async operation started, should complete successfully
     await tester.pumpAndSettle();
-    
+
     // After completion, file should be selected
     expect(find.textContaining('test.csv'), findsOneWidget);
   });
@@ -200,7 +200,7 @@ void main() {
     );
 
     await tester.pumpWidget(const MaterialApp(home: CsvImportScreen()));
-    
+
     await tester.tap(find.byKey(const Key('CsvImportScreen_pick_button')));
     await tester.pump(); // Start async operation
 
@@ -295,7 +295,8 @@ void main() {
   // File Box Clickability & Selective Text Tests
   // ═══════════════════════════════════════════════════════════════
 
-  testWidgets('file box click triggers file picker', (WidgetTester tester) async {
+  testWidgets('file box click triggers file picker',
+      (WidgetTester tester) async {
     fakePlatform.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(name: 'test.csv', size: 100, path: 'test.csv'),
@@ -312,7 +313,8 @@ void main() {
     expect(find.textContaining('test.csv'), findsOneWidget);
   });
 
-  testWidgets('only filename is selectable, not label prefix', (WidgetTester tester) async {
+  testWidgets('only filename is selectable, not label prefix',
+      (WidgetTester tester) async {
     fakePlatform.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(name: 'my_file.csv', size: 100, path: 'my_file.csv'),
@@ -343,14 +345,15 @@ void main() {
       findsOneWidget,
       reason: 'Filename should exist as SelectableText',
     );
-    
-    final selectableTextFinder = find.byKey(const Key('CsvImportScreen_file_name'));
+
+    final selectableTextFinder =
+        find.byKey(const Key('CsvImportScreen_file_name'));
     expect(
       tester.widget(selectableTextFinder),
       isA<SelectableText>(),
       reason: 'Filename should be SelectableText widget',
     );
-    
+
     final selectableText = tester.widget<SelectableText>(selectableTextFinder);
     expect(
       selectableText.data,
@@ -359,7 +362,8 @@ void main() {
     );
   });
 
-  testWidgets('empty state shows non-selectable message', (WidgetTester tester) async {
+  testWidgets('empty state shows non-selectable message',
+      (WidgetTester tester) async {
     await tester.pumpWidget(const MaterialApp(home: CsvImportScreen()));
 
     // Verify empty state message
@@ -368,14 +372,15 @@ void main() {
       findsOneWidget,
       reason: 'Empty state should show non-selectable Text',
     );
-    
+
     expect(
       find.text('Zatím nebyl vybrán žádný soubor.'),
       findsOneWidget,
     );
-    
+
     // Verify it's Text, not SelectableText
-    final emptyTextFinder = find.byKey(const Key('CsvImportScreen_file_label_empty'));
+    final emptyTextFinder =
+        find.byKey(const Key('CsvImportScreen_file_label_empty'));
     expect(
       tester.widget(emptyTextFinder),
       isA<Text>(),
@@ -383,7 +388,8 @@ void main() {
     );
   });
 
-  testWidgets('file box click disabled when picking', (WidgetTester tester) async {
+  testWidgets('file box click disabled when picking',
+      (WidgetTester tester) async {
     // Queue result for the delayed picker
     fakePlatform.enqueueResult(
       FilePickerResult(<PlatformFile>[
@@ -401,18 +407,19 @@ void main() {
     // The InkWell's onTap should be null when disabled
     final fileBox = find.byKey(const Key('CsvImportScreen_file_box'));
     final inkWell = tester.widget<InkWell>(fileBox);
-    
+
     // Note: This test may not catch the _isPicking state reliably because
     // the file picker completes immediately in tests. The key insight is
     // that the implementation checks _isPicking and sets onTap: _isPicking ? null : handler
     // which we verified in the code. Complete the operation:
     await tester.pumpAndSettle();
-    
+
     // After completion, file should be selected
     expect(find.textContaining('test.csv'), findsOneWidget);
   });
 
-  testWidgets('filename without extension shows correctly', (WidgetTester tester) async {
+  testWidgets('filename without extension shows correctly',
+      (WidgetTester tester) async {
     fakePlatform.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(name: 'noextension', size: 100, path: 'noextension'),
@@ -432,7 +439,8 @@ void main() {
     );
   });
 
-  testWidgets('file box shows filename in SelectableText widget', (WidgetTester tester) async {
+  testWidgets('file box shows filename in SelectableText widget',
+      (WidgetTester tester) async {
     fakePlatform.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(name: 'data_file.csv', size: 200, path: 'data_file.csv'),
@@ -453,7 +461,7 @@ void main() {
       equals('data_file.csv'),
       reason: 'SelectableText should contain filename only, not label',
     );
-    
+
     // Verify label prefix is separate Text widget
     final labelText = tester.widget<Text>(
       find.byKey(const Key('CsvImportScreen_file_label_prefix')),
@@ -593,4 +601,3 @@ class _TrackingNavigatorObserver extends NavigatorObserver {
     super.didPush(route, previousRoute);
   }
 }
-

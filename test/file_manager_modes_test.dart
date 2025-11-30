@@ -5,7 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('FileManager mode transitions', () {
-    test('inMemory -> persist -> production transitions keep subFolders consistent', () async {
+    test(
+        'inMemory -> persist -> production transitions keep subFolders consistent',
+        () async {
       final fm = FileManager(isTesting: true); // inMemory
       expect(fm.currentMode, FileManagerMode.inMemory);
       expect(fm.subFolders, isEmpty);
@@ -14,11 +16,13 @@ void main() {
       try {
         fm.setPersistentTestMode(temp.path);
         expect(fm.currentMode, FileManagerMode.persist);
-        expect(fm.subFolders, containsAll(['backup','zpusobilosti','vysetreni']));
+        expect(fm.subFolders,
+            containsAll(['backup', 'zpusobilosti', 'vysetreni']));
 
-        fm.resetToProduction();
+        fm.setProductionMode();
         expect(fm.currentMode, FileManagerMode.production);
-        expect(fm.subFolders, containsAll(['backup','zpusobilosti','vysetreni']));
+        expect(fm.subFolders,
+            containsAll(['backup', 'zpusobilosti', 'vysetreni']));
       } finally {
         await temp.delete(recursive: true);
       }

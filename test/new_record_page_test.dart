@@ -4,8 +4,7 @@ import 'package:denik_zza/screens2/new_record_page.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
-import 'utils/database_test_helper.dart';
-import 'package:denik_zza/database/in_memory_structures_tmp/memory_akce.dart';
+import 'setup_templates/hardcoded_setup.dart';
 
 void main() {
   group('NewRecordPage Widget Tests', () {
@@ -13,37 +12,17 @@ void main() {
     late AppDatabase testDb;
 
     setUp(() async {
-      // Use in-memory DB for widget tests to avoid touching production DB
-      DatabaseWrapper.setTestMode();
-      // Suppress Drift's multiple database warnings in tests
-      DatabaseTestHelper.disableDriftWarnings();
-      testDb = AppDatabase.testInMemory();
-      DatabaseWrapper.useTestDriftDatabase(testDb);
-      // Seed a current event so watchParticipantsByCurrentEvent() has cache row
-      final dbInterface = DatabaseWrapper.getDatabase();
-      await dbInterface.addEvent(MemoryAction(
-        idAkce: null,
-        nadpis: 'Test Event',
-        popis: 'Event for widget tests',
-        odkdy: DateTime.now().subtract(const Duration(days: 1)),
-        dokdy: DateTime.now().add(const Duration(days: 1)),
-        domovskyAdresarPath: null,
-      ));
-      final actions = await dbInterface.getAllZzaActions();
-      if (actions.isNotEmpty && actions.first.idAkce != null) {
-        dbInterface.updateCurrentEvent(actions.first.idAkce);
-      }
-      // Create test participants for the UI tests
-      testPersons = [
-        MemoryOsoba.basic('Jan', 'Novák'),
-        MemoryOsoba.basic('Marie', 'Svobodová'),
-        MemoryOsoba.basic('Petr', 'Dvořák'),
-      ];
+      // Use HardcodedTestSetup for robust data initialization
+      // This ensures events, participants, and cache are correctly set up
+      testDb = await HardcodedTestSetup.setupTestData();
 
-      // Set IDs for the test persons to make them identifiable
-      for (int i = 0; i < testPersons.length; i++) {
-        testPersons[i].id = i + 1;
-      }
+      // Get the participants created by the setup
+      final dbInterface = DatabaseWrapper.getDatabase();
+      testPersons = await dbInterface.getParticipantsByCurrentEvent();
+
+      // Verify setup was successful
+      expect(testPersons, isNotEmpty,
+          reason: 'HardcodedTestSetup should create participants');
     });
 
     tearDown(() async {

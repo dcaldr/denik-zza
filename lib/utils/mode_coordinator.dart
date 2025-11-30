@@ -103,7 +103,7 @@ class ModeCoordinator {
     _currentTestName = null;
 
     await DatabaseWrapper.dispose();
-    FileManager().resetToProduction();
+    FileManager().setProductionMode();
 
     _logger.d('ModeCoordinator: Switched to production mode');
   }
