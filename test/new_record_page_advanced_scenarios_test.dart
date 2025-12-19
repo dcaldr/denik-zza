@@ -6,7 +6,7 @@ import 'package:denik_zza/database/drift_database/database.dart';
 import 'utils/database_test_helper.dart';
 import 'setup_templates/hardcoded_setup.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
-import 'package:denik_zza/input/file_manager.dart';
+import 'package:denik_zza/utils/mode_coordinator.dart';
 
 /// Advanced tests focusing on warning behaviors and edge cases
 /// specifically requested by the user for "combination of situations"
@@ -17,12 +17,9 @@ void main() {
 
     setUp(() async {
       print('[TMP] Test: setUp started');
-      // Defensive cleanup to protect against protection from other tests
-      await DatabaseWrapper.dispose();
-      FileManager().setMode(FileManagerMode.production);
+      ModeCoordinator.setTestingMode();
 
-      database = await HardcodedTestSetup.setupTestData(
-          databaseType: TestDatabaseType.memory);
+      database = await HardcodedTestSetup.setupTestData();
 
       // Get existing test participants from the setup and convert to MemoryOsoba
       final participants = await database.select(database.participants).get();

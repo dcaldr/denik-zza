@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'setup_templates/hardcoded_setup.dart';
 import 'utils/database_test_helper.dart';
+import 'package:denik_zza/utils/mode_coordinator.dart';
 
 /// Comprehensive tests for ParticipantListScreen including challenging scenarios
 ///
@@ -28,11 +29,9 @@ void main() {
   setUp(() async {
     // CRITICAL FIX: Set test mode FIRST, before creating any widgets
     // This ensures DatabaseWrapper.getDatabase() returns the test database
-    DatabaseWrapper.setTestMode();
+    ModeCoordinator.setTestingMode();
 
-    database = await HardcodedTestSetup.setupTestData(
-      databaseType: TestDatabaseType.memory,
-    );
+    database = await HardcodedTestSetup.setupTestData();
 
     // Verify test mode is active
     assert(DatabaseWrapper.getCurrentMode() == DatabaseMode.testing,

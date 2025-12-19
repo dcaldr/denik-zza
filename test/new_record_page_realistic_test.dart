@@ -5,11 +5,12 @@ import 'package:denik_zza/screens2/new_record_page.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'utils/database_test_helper.dart';
+import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'setup_templates/hardcoded_setup.dart';
 
 /// Realistic tests for NewRecordPage based on actual implementation
-/// 
+///
 /// Tests the real functionality:
 /// - Basic page loading
 /// - Participant selection through autocomplete
@@ -21,27 +22,32 @@ void main() {
     late List<MemoryOsoba> testParticipants;
 
     setUp(() async {
+      ModeCoordinator.setTestingMode();
       // Set up test database with participants using existing setup functions
-      database = await HardcodedTestSetup.setupTestData(databaseType: TestDatabaseType.memory);
-      
+      database = await HardcodedTestSetup.setupTestData();
+
       // Get test participants from the setup and convert to MemoryOsoba
       final participants = await database.select(database.participants).get();
-      testParticipants = participants.map((p) => MemoryOsoba.named(
-        id: p.id,
-        jmeno: p.firstName,
-        prijmeni: p.lastName,
-        datumNarozeni: p.birthDate,
-        adresa: p.address,
-        zpusobilost: p.eligibleConfirmation,
-        bezinfekcnost: p.nonInfectiousConfirmation,
-        wasPrinted: p.wasPrinted,
-      )).toList();
-      
+      testParticipants = participants
+          .map((p) => MemoryOsoba.named(
+                id: p.id,
+                jmeno: p.firstName,
+                prijmeni: p.lastName,
+                datumNarozeni: p.birthDate,
+                adresa: p.address,
+                zpusobilost: p.eligibleConfirmation,
+                bezinfekcnost: p.nonInfectiousConfirmation,
+                wasPrinted: p.wasPrinted,
+              ))
+          .toList();
+
       // Ensure we have at least 2 participants for switching tests
       if (testParticipants.length < 2) {
         // Add additional test participants if needed
-        final participant1 = await createTestParticipant(database, 'Test', 'User1');
-        final participant2 = await createTestParticipant(database, 'Test', 'User2');
+        final participant1 =
+            await createTestParticipant(database, 'Test', 'User1');
+        final participant2 =
+            await createTestParticipant(database, 'Test', 'User2');
         testParticipants.addAll([participant1, participant2]);
       }
     });
@@ -51,7 +57,8 @@ void main() {
     });
 
     group('Basic Functionality', () {
-      testWidgets('should load correctly without pre-selected participant', (WidgetTester tester) async {
+      testWidgets('should load correctly without pre-selected participant',
+          (WidgetTester tester) async {
         await pumpNewRecordPage(tester);
 
         // Verify page structure
@@ -59,18 +66,21 @@ void main() {
         expect(find.text('Účastník'), findsOneWidget);
         expect(find.text('Vyberte účastníka...'), findsOneWidget);
         expect(find.text('Nejprve vyberte účastníka'), findsOneWidget);
-        
+
         // Form should be disabled
         expect(find.text('Nejprve vyberte účastníka'), findsOneWidget);
       });
 
-      testWidgets('should load correctly with pre-selected participant', (WidgetTester tester) async {
+      testWidgets('should load correctly with pre-selected participant',
+          (WidgetTester tester) async {
         final participant = testParticipants.first;
         await pumpNewRecordPage(tester, participant: participant);
 
         // Verify participant is displayed
-        expect(find.textContaining('${participant.jmeno} ${participant.prijmeni}'), findsOneWidget);
-        
+        expect(
+            find.textContaining('${participant.jmeno} ${participant.prijmeni}'),
+            findsOneWidget);
+
         // Form should be enabled
         final titleField = find.byKey(const Key('title_field'));
         final descriptionField = find.byKey(const Key('description_field'));
@@ -83,7 +93,8 @@ void main() {
     });
 
     group('Form Validation', () {
-      testWidgets('should validate required title field', (WidgetTester tester) async {
+      testWidgets('should validate required title field',
+          (WidgetTester tester) async {
         final participant = testParticipants.first;
         await pumpNewRecordPage(tester, participant: participant);
 
@@ -95,7 +106,8 @@ void main() {
         expect(find.text('Prosím zadejte nadpis'), findsOneWidget);
       });
 
-      testWidgets('should allow saving with valid data', (WidgetTester tester) async {
+      testWidgets('should allow saving with valid data',
+          (WidgetTester tester) async {
         final participant = testParticipants.first;
         await pumpNewRecordPage(tester, participant: participant);
 
@@ -113,7 +125,9 @@ void main() {
     });
 
     group('Unsaved Changes Warning', () {
-      testWidgets('should show warning dialog when text is entered and participant would be changed', (WidgetTester tester) async {
+      testWidgets(
+          'should show warning dialog when text is entered and participant would be changed',
+          (WidgetTester tester) async {
         final participant1 = testParticipants[0];
         await pumpNewRecordPage(tester, participant: participant1);
 
@@ -122,15 +136,19 @@ void main() {
         await tester.pumpAndSettle();
 
         // Try to select different participant via autocomplete
-  await selectParticipantProgrammatically(tester, testParticipants[1]);
+        await selectParticipantProgrammatically(tester, testParticipants[1]);
         await tester.pumpAndSettle();
 
         // Should show confirmation dialog
         expect(find.text('Změnit účastníka?'), findsOneWidget);
-        expect(find.text('Změnou účastníka se ztratí neuložené změny v formuláři. Chcete pokračovat?'), findsOneWidget);
+        expect(
+            find.text(
+                'Změnou účastníka se ztratí neuložené změny v formuláři. Chcete pokračovat?'),
+            findsOneWidget);
       });
 
-      testWidgets('should allow canceling participant change', (WidgetTester tester) async {
+      testWidgets('should allow canceling participant change',
+          (WidgetTester tester) async {
         final participant1 = testParticipants[0];
         await pumpNewRecordPage(tester, participant: participant1);
 
@@ -139,7 +157,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Try to select different participant
-  await selectParticipantProgrammatically(tester, testParticipants[1]);
+        await selectParticipantProgrammatically(tester, testParticipants[1]);
         await tester.pumpAndSettle();
 
         // Cancel the change
@@ -147,14 +165,18 @@ void main() {
         await tester.pumpAndSettle();
 
         // Should still show original participant
-        expect(find.textContaining('${participant1.jmeno} ${participant1.prijmeni}'), findsOneWidget);
+        expect(
+            find.textContaining(
+                '${participant1.jmeno} ${participant1.prijmeni}'),
+            findsOneWidget);
         // Text should still be there
         expect(find.text('Some title'), findsOneWidget);
       });
     });
 
     group('Timestamp Handling', () {
-      testWidgets('should show datetime picker button', (WidgetTester tester) async {
+      testWidgets('should show datetime picker button',
+          (WidgetTester tester) async {
         final participant = testParticipants.first;
         await pumpNewRecordPage(tester, participant: participant);
 
@@ -167,17 +189,19 @@ void main() {
 }
 
 /// Helper function to create test participant in database
-Future<MemoryOsoba> createTestParticipant(AppDatabase db, String firstName, String lastName) async {
-  final participant = await db.into(db.participants).insertReturning(ParticipantsCompanion(
-    firstName: drift.Value(firstName),
-    lastName: drift.Value(lastName),
-    birthDate: drift.Value(DateTime(1990, 1, 1)),
-    address: const drift.Value('Test Address'),
-    eligibleConfirmation: const drift.Value(true),
-    nonInfectiousConfirmation: const drift.Value(true),
-    wasPrinted: const drift.Value(false),
-  ));
-  
+Future<MemoryOsoba> createTestParticipant(
+    AppDatabase db, String firstName, String lastName) async {
+  final participant =
+      await db.into(db.participants).insertReturning(ParticipantsCompanion(
+            firstName: drift.Value(firstName),
+            lastName: drift.Value(lastName),
+            birthDate: drift.Value(DateTime(1990, 1, 1)),
+            address: const drift.Value('Test Address'),
+            eligibleConfirmation: const drift.Value(true),
+            nonInfectiousConfirmation: const drift.Value(true),
+            wasPrinted: const drift.Value(false),
+          ));
+
   return MemoryOsoba.named(
     id: participant.id,
     jmeno: participant.firstName,
@@ -191,7 +215,8 @@ Future<MemoryOsoba> createTestParticipant(AppDatabase db, String firstName, Stri
 }
 
 /// Pumps the NewRecordPage widget with proper MaterialApp wrapper
-Future<void> pumpNewRecordPage(WidgetTester tester, {MemoryOsoba? participant}) async {
+Future<void> pumpNewRecordPage(WidgetTester tester,
+    {MemoryOsoba? participant}) async {
   await tester.pumpWidget(
     MaterialApp(
       home: NewRecordPage(participant: participant),
@@ -234,9 +259,11 @@ Future<void> tapSaveButton(WidgetTester tester) async {
 }
 
 /// Searches for a participant using the autocomplete
-Future<void> searchForParticipant(WidgetTester tester, String searchText) async {
+Future<void> searchForParticipant(
+    WidgetTester tester, String searchText) async {
   // Find the search field in PersonAutocomplete via its key
-  final autocomplete = find.byKey(const Key('NewRecordPage_participantAutocomplete'));
+  final autocomplete =
+      find.byKey(const Key('NewRecordPage_participantAutocomplete'));
   expect(autocomplete, findsOneWidget);
   final searchField = find.descendant(
     of: autocomplete,
@@ -251,7 +278,10 @@ Future<void> searchForParticipant(WidgetTester tester, String searchText) async 
   bool suggestionsVisible = false;
   for (int i = 0; i < 10; i++) {
     await tester.pump(const Duration(milliseconds: 100));
-    if (tester.any(find.textContaining(searchText))) { suggestionsVisible = true; break; }
+    if (tester.any(find.textContaining(searchText))) {
+      suggestionsVisible = true;
+      break;
+    }
   }
   // Fallback: If searching for full name didn't show suggestions, try first token (usually first name)
   if (!suggestionsVisible) {
@@ -261,7 +291,10 @@ Future<void> searchForParticipant(WidgetTester tester, String searchText) async 
       await tester.pump();
       for (int i = 0; i < 10; i++) {
         await tester.pump(const Duration(milliseconds: 100));
-        if (tester.any(find.textContaining(tokens.first))) { suggestionsVisible = true; break; }
+        if (tester.any(find.textContaining(tokens.first))) {
+          suggestionsVisible = true;
+          break;
+        }
       }
     }
   }
@@ -297,9 +330,11 @@ Future<void> selectParticipantProgrammatically(
   WidgetTester tester,
   MemoryOsoba participant,
 ) async {
-  final autocompleteFinder = find.byKey(const Key('NewRecordPage_participantAutocomplete'));
+  final autocompleteFinder =
+      find.byKey(const Key('NewRecordPage_participantAutocomplete'));
   expect(autocompleteFinder, findsOneWidget);
-  final autocompleteWidget = tester.widget<PersonAutocomplete>(autocompleteFinder);
+  final autocompleteWidget =
+      tester.widget<PersonAutocomplete>(autocompleteFinder);
   // Deterministic selection without relying on overlay popups
   autocompleteWidget.onPersonSelected(participant);
   await tester.pumpAndSettle();

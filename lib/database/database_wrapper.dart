@@ -61,7 +61,6 @@ class DatabaseWrapper {
   /// **IMPORTANT**: This method is intended for testing only.
   /// Do NOT use in production code - use only in test setUp methods.
   static void setTestMode() {
-    print('[TMP] DatabaseWrapper: setTestMode() called');
     _databaseMode = DatabaseMode.testing;
   }
 
@@ -89,8 +88,6 @@ class DatabaseWrapper {
   /// **Important**: In test mode, this method ensures that if an implicit database is created,
   /// it is cached in `_cachedImplicitTestDb` so it can be properly closed by `dispose()`.
   static DatabaseInterface getDatabase() {
-    print('[TMP] DatabaseWrapper: getDatabase() called. Mode: $_databaseMode');
-
     // Production safety check
     assert(() {
       // Production safety check is now handled by _databaseMode enforcement
@@ -99,21 +96,16 @@ class DatabaseWrapper {
 
     if (_databaseMode == DatabaseMode.testing) {
       if (_injectedTestDb != null) {
-        print('[TMP] Returning injected test DB');
         return DriftDatabaseConnector.withDatabase(_injectedTestDb!);
       } else {
         // Fix: Reuse the cached implicit DB if it exists, otherwise create and cache it.
         if (_cachedImplicitTestDb == null) {
-          print('[TMP] Creating NEW implicit test DB (in-memory)');
           _cachedImplicitTestDb = AppDatabase.testInMemory();
-        } else {
-          print('[TMP] Reusing CACHED implicit test DB');
-        }
+        } else {}
         return DriftDatabaseConnector.withDatabase(_cachedImplicitTestDb!);
       }
     }
 
-    print('[TMP] Returning PRODUCTION DB');
     return DriftDatabaseConnector();
   }
 
@@ -127,8 +119,6 @@ class DatabaseWrapper {
   ///
   /// Call this method in the global `tearDown` to ensure no test pollution.
   static Future<void> dispose() async {
-    print('[TMP] DatabaseWrapper.dispose() called. Cleaning up.');
-
     if (_injectedTestDb != null) {
       await _injectedTestDb!.close();
       _injectedTestDb = null;

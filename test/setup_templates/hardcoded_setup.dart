@@ -1,5 +1,6 @@
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/input/file_manager.dart';
 import 'package:drift/drift.dart';
 import '../utils/database_test_helper.dart';
 
@@ -34,20 +35,37 @@ class HardcodedTestSetup {
 
   /// Sets up the database with test data and returns the database instance
   ///
-  /// [databaseType] - Whether to use memory (fast) or file (persistent) database
-  static Future<AppDatabase> setupTestData({
-    TestDatabaseType databaseType = TestDatabaseType.memory,
-  }) async {
-    // Create test database using existing infrastructure
-    final AppDatabase database =
-        DatabaseTestHelper.createTestDatabase(databaseType);
-    print(
-        '[TMP] HardcodedTestSetup: Created DB ${database.hashCode} (Type: $databaseType)');
+  /// [db] - Optional database instance to populate. If null, it creates one based on the current environment.
+  /// This allows it to work with any mode (Memory, File, Debug) set by [ModeCoordinator].
+  static Future<AppDatabase> setupTestData({AppDatabase? db}) async {
+    AppDatabase database;
+
+    if (db != null) {
+      database = db;
+    } else {
+      // Smart Creation: Create DB based on current environment
+      if (DatabaseWrapper.getCurrentMode() == DatabaseMode.testing) {
+        // In-Memory Mode (Unit Tests & Integration Tests)
+        database = AppDatabase.testInMemory();
+      } else {
+        // Persistent Mode (Debug / Production)
+        // We need to wait for the path from FileManager (which ModeCoordinator configured)
+        final path = await FileManager().getDbFilePath();
+        if (path == null) {
+          // Fallback if no path (shouldn't happen in persistent mode)
+          database = AppDatabase.testInMemory();
+        } else {
+          database = AppDatabase(path);
+        }
+      }
+
+      // Inject the created DB so the app uses it
+      DatabaseWrapper.useTestDriftDatabase(database);
+    }
 
     try {
-      // Ensure the app uses this database instance (so UI + services see same data)
-      DatabaseWrapper.setTestMode();
-      DatabaseWrapper.useTestDriftDatabase(database);
+      // Note: We no longer force setTestMode() here.
+      // The caller (test setup) should have already configured the environment via ModeCoordinator.
 
       // 1. Create the test event using Drift database methods
       final now = DateTime.now();
@@ -287,10 +305,8 @@ class HardcodedTestSetup {
   }
 
   /// Quick setup method that can be called in test setUp()
-  static Future<AppDatabase> quickSetup({
-    TestDatabaseType databaseType = TestDatabaseType.memory,
-  }) async {
-    return await setupTestData(databaseType: databaseType);
+  static Future<AppDatabase> quickSetup({AppDatabase? db}) async {
+    return await setupTestData(db: db);
   }
 
   /// Close and clean up the database

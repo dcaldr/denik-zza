@@ -5,7 +5,9 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'setup_templates/hardcoded_setup.dart';
+import 'setup_templates/hardcoded_setup.dart';
 import 'utils/database_test_helper.dart';
+import 'package:denik_zza/utils/mode_coordinator.dart';
 
 void main() {
   // Ensure Flutter bindings for rootBundle/font loading
@@ -17,7 +19,8 @@ void main() {
     late DatabaseInterface db;
 
     setUp(() async {
-      database = await HardcodedTestSetup.setupTestData(databaseType: TestDatabaseType.memory);
+      ModeCoordinator.setTestingMode();
+      database = await HardcodedTestSetup.setupTestData();
       service = PrintCenterService();
       db = DatabaseWrapper.getDatabase();
     });
@@ -26,7 +29,9 @@ void main() {
       await database.close();
     });
 
-    test('analyzeAndBuildAppend with empty records produces first-print analysis', () async {
+    test(
+        'analyzeAndBuildAppend with empty records produces first-print analysis',
+        () async {
       final participants = await db.getParticipantsByCurrentEvent();
       expect(participants.isNotEmpty, true);
 
@@ -50,7 +55,8 @@ void main() {
       expect(result.pdfBytes.isNotEmpty, true);
     });
 
-    test('GeneratePdfTemplate.canAppend returns false when osoba not printed', () async {
+    test('GeneratePdfTemplate.canAppend returns false when osoba not printed',
+        () async {
       final participants = await db.getParticipantsByCurrentEvent();
       expect(participants.isNotEmpty, true);
 
@@ -63,7 +69,9 @@ void main() {
       expect(template.canAppend(), false);
     });
 
-    test('setMultipleRecordPrintedFlags handles empty list and returns empty results', () async {
+    test(
+        'setMultipleRecordPrintedFlags handles empty list and returns empty results',
+        () async {
       final results = await service.setMultipleRecordPrintedFlags([], true);
       expect(results, isEmpty);
     });

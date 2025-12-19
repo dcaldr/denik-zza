@@ -118,7 +118,9 @@ class FileManager {
       _instance._updateSubFoldersForMode();
     }
 
-    _instance.homeDir = homeDir;
+    if (homeDir != null) {
+      _instance.homeDir = homeDir;
+    }
     return _instance;
   }
 
@@ -296,11 +298,6 @@ class FileManager {
     }
   }
 
-  @Deprecated('Use getDbFilePath() instead')
-  String? getDbFilePathSync() {
-    return isTesting ? null : homeDir?.path;
-  }
-
   // Enhanced FileManager methods following DatabaseWrapper pattern
 
   /// Get current FileManager mode
@@ -351,10 +348,6 @@ class FileManager {
     isTesting = false;
     _updateSubFoldersForMode();
   }
-
-  /// Reset FileManager to production mode
-  @deprecated
-  void resetToProduction() => setProductionMode();
 
   /// Get FileManager configuration summary for debugging
   Map<String, dynamic> getConfigSummary() {

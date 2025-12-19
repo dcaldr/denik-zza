@@ -108,10 +108,6 @@ class ModeCoordinator {
     _logger.d('ModeCoordinator: Switched to production mode');
   }
 
-  /// Reset to production mode (alias for clarity in tearDown)
-  @deprecated
-  static Future<void> resetToProduction() => setProductionMode();
-
   /// Get integration test directory for a specific test.
   /// Creates: Documents/DenikZZA/integration_test_output/<testName>/
   static Future<Directory> _getIntegrationTestDirectory(String testName) async {

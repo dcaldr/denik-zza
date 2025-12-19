@@ -5,6 +5,7 @@ import 'package:denik_zza/screens2/new_record_page.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'utils/database_test_helper.dart';
 import 'setup_templates/hardcoded_setup.dart';
@@ -27,10 +28,9 @@ void main() {
       TestWidgetsFlutterBinding.ensureInitialized();
 
       // Set test mode explicitly
-      DatabaseWrapper.setTestMode();
+      ModeCoordinator.setTestingMode();
       // Set up test database with participants using existing setup functions
-      database = await HardcodedTestSetup.setupTestData(
-          databaseType: TestDatabaseType.memory);
+      database = await HardcodedTestSetup.setupTestData();
 
       // Get test participants from the setup and convert to MemoryOsoba
       final participants = await database.select(database.participants).get();

@@ -4,10 +4,11 @@ import 'package:denik_zza/screens2/new_record_page.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'utils/database_test_helper.dart';
+import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'setup_templates/hardcoded_setup.dart';
 
 /// Basic working tests for NewRecordPage
-/// 
+///
 /// These tests focus on what actually works and is testable
 void main() {
   group('NewRecordPage Basic Tests', () {
@@ -15,21 +16,24 @@ void main() {
     late List<MemoryOsoba> testParticipants;
 
     setUp(() async {
+      ModeCoordinator.setTestingMode();
       // Set up test database with participants using existing setup functions
-      database = await HardcodedTestSetup.setupTestData(databaseType: TestDatabaseType.memory);
-      
+      database = await HardcodedTestSetup.setupTestData();
+
       // Get test participants from the setup and convert to MemoryOsoba
       final participants = await database.select(database.participants).get();
-      testParticipants = participants.map((p) => MemoryOsoba.named(
-        id: p.id,
-        jmeno: p.firstName,
-        prijmeni: p.lastName,
-        datumNarozeni: p.birthDate,
-        adresa: p.address,
-        zpusobilost: p.eligibleConfirmation,
-        bezinfekcnost: p.nonInfectiousConfirmation,
-        wasPrinted: p.wasPrinted,
-      )).toList();
+      testParticipants = participants
+          .map((p) => MemoryOsoba.named(
+                id: p.id,
+                jmeno: p.firstName,
+                prijmeni: p.lastName,
+                datumNarozeni: p.birthDate,
+                adresa: p.address,
+                zpusobilost: p.eligibleConfirmation,
+                bezinfekcnost: p.nonInfectiousConfirmation,
+                wasPrinted: p.wasPrinted,
+              ))
+          .toList();
     });
 
     tearDown(() async {
@@ -49,10 +53,11 @@ void main() {
       expect(find.text('Účastník'), findsOneWidget);
     });
 
-    testWidgets('should show participant info when participant is provided', (WidgetTester tester) async {
+    testWidgets('should show participant info when participant is provided',
+        (WidgetTester tester) async {
       if (testParticipants.isNotEmpty) {
         final participant = testParticipants.first;
-        
+
         await tester.pumpWidget(
           MaterialApp(
             home: NewRecordPage(participant: participant),
@@ -61,7 +66,9 @@ void main() {
         await tester.pumpAndSettle();
 
         // Should show participant name (UI displays "Name, age let" format)
-        expect(find.textContaining('${participant.jmeno} ${participant.prijmeni}'), findsOneWidget);
+        expect(
+            find.textContaining('${participant.jmeno} ${participant.prijmeni}'),
+            findsOneWidget);
       }
     });
 
@@ -76,7 +83,7 @@ void main() {
       // Should have form fields
       expect(find.textContaining('Nadpis'), findsOneWidget);
       expect(find.text('Popis úrazu a ošetření'), findsOneWidget);
-  expect(find.byKey(const Key('save_button')), findsOneWidget);
+      expect(find.byKey(const Key('save_button')), findsOneWidget);
     });
 
     testWidgets('should show datetime section', (WidgetTester tester) async {
@@ -89,13 +96,14 @@ void main() {
 
       // Should have datetime section
       expect(find.text('Čas záznamu'), findsOneWidget);
-  expect(find.byKey(const Key('datetime_change_button')), findsOneWidget);
+      expect(find.byKey(const Key('datetime_change_button')), findsOneWidget);
     });
 
-    testWidgets('should validate title field when participant is selected', (WidgetTester tester) async {
+    testWidgets('should validate title field when participant is selected',
+        (WidgetTester tester) async {
       if (testParticipants.isNotEmpty) {
         final participant = testParticipants.first;
-        
+
         await tester.pumpWidget(
           MaterialApp(
             home: NewRecordPage(participant: participant),
@@ -104,7 +112,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Try to save without entering title
-  final saveButton = find.byKey(const Key('save_button'));
+        final saveButton = find.byKey(const Key('save_button'));
         await tester.tap(saveButton);
         await tester.pumpAndSettle();
 
@@ -113,7 +121,9 @@ void main() {
       }
     });
 
-    testWidgets('should show warning when no participant is selected and trying to save', (WidgetTester tester) async {
+    testWidgets(
+        'should show warning when no participant is selected and trying to save',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: const NewRecordPage(),
@@ -122,7 +132,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Try to save without selecting participant
-  final saveButton = find.byKey(const Key('save_button'));
+      final saveButton = find.byKey(const Key('save_button'));
       await tester.tap(saveButton);
       await tester.pumpAndSettle();
 

@@ -1,14 +1,14 @@
 /// Focus Management Tests
-/// 
+///
 /// Tests for the focus management fix that ensures TextField focus is maintained
 /// during typing across different screens.
-/// 
+///
 /// **Root Issue Fixed**: TextField inside FutureBuilder caused widget recreation
 /// on setState, breaking focus even with stable FocusNode.
-/// 
+///
 /// **Solution**: Load data in initState(), remove FutureBuilder from interactive
 /// widgets, ensure TextField in stable widget tree position.
-/// 
+///
 /// Tests cover:
 /// - ActionDetail: Raw TextField with stable controllers
 /// - ParticipantListScreen: PersonAutocomplete widget
@@ -16,6 +16,7 @@
 /// - IntakePersonRow: PersonAutocomplete widget
 
 import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_akce.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/event_detail.dart';
@@ -34,17 +35,16 @@ void main() {
     late MemoryAction testAction;
 
     setUp(() async {
-      DatabaseWrapper.setTestMode();
-      await HardcodedTestSetup.setupTestData(
-        databaseType: TestDatabaseType.memory,
-      );
-      
+      ModeCoordinator.setTestingMode();
+      await HardcodedTestSetup.setupTestData();
+
       // Get the current action using DatabaseWrapper
       final dbInterface = DatabaseWrapper.getDatabase();
       testAction = (await dbInterface.getCurrentAction())!;
     });
 
-    testWidgets('Focus maintained during typing in search field', (tester) async {
+    testWidgets('Focus maintained during typing in search field',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: ActionDetail(action: testAction),
@@ -67,7 +67,8 @@ void main() {
       final focusNode = textField.focusNode!;
 
       // Verify initial focus
-      expect(focusNode.hasFocus, isTrue, reason: 'TextField should be focused after tap');
+      expect(focusNode.hasFocus, isTrue,
+          reason: 'TextField should be focused after tap');
 
       // Type multiple characters - each triggers setState
       await tester.enterText(searchField, 'A');
@@ -76,17 +77,20 @@ void main() {
 
       await tester.enterText(searchField, 'An');
       await tester.pump();
-      expect(focusNode.hasFocus, isTrue, reason: 'Focus lost after typing "An"');
+      expect(focusNode.hasFocus, isTrue,
+          reason: 'Focus lost after typing "An"');
 
       await tester.enterText(searchField, 'Ant');
       await tester.pump();
-      expect(focusNode.hasFocus, isTrue, reason: 'Focus lost after typing "Ant"');
+      expect(focusNode.hasFocus, isTrue,
+          reason: 'Focus lost after typing "Ant"');
 
       // Verify text was actually entered
       expect(textField.controller!.text, 'Ant');
     });
 
-    testWidgets('TextField widget not recreated on typing (stable instance)', (tester) async {
+    testWidgets('TextField widget not recreated on typing (stable instance)',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: ActionDetail(action: testAction),
@@ -96,7 +100,7 @@ void main() {
       await tester.pumpAndSettle();
 
       final searchField = find.byKey(const Key('EventDetail_searchField'));
-      
+
       // Get initial widget instance
       final initialWidget = tester.widget<TextField>(searchField);
       final initialController = initialWidget.controller;
@@ -108,12 +112,12 @@ void main() {
 
       // Get widget instance after typing
       final afterWidget = tester.widget<TextField>(searchField);
-      
+
       // Verify same controller and focus node (not recreated)
-      expect(afterWidget.controller, same(initialController), 
-        reason: 'TextEditingController should not be recreated');
+      expect(afterWidget.controller, same(initialController),
+          reason: 'TextEditingController should not be recreated');
       expect(afterWidget.focusNode, same(initialFocusNode),
-        reason: 'FocusNode should not be recreated');
+          reason: 'FocusNode should not be recreated');
     });
 
     testWidgets('Focus maintained during rapid typing', (tester) async {
@@ -134,18 +138,19 @@ void main() {
 
       // Rapid typing without pumpAndSettle (simulates real typing)
       final testStrings = ['A', 'An', 'Ant', 'Anto', 'Anton'];
-      
+
       for (final text in testStrings) {
         await tester.enterText(searchField, text);
         await tester.pump(const Duration(milliseconds: 50));
-        expect(focusNode.hasFocus, isTrue, 
-          reason: 'Focus lost after typing "$text"');
+        expect(focusNode.hasFocus, isTrue,
+            reason: 'Focus lost after typing "$text"');
       }
 
       expect(textField.controller!.text, 'Anton');
     });
 
-    testWidgets('Focus maintained when filtering results (setState calls)', (tester) async {
+    testWidgets('Focus maintained when filtering results (setState calls)',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: ActionDetail(action: testAction),
@@ -167,7 +172,7 @@ void main() {
 
       // Focus should still be maintained
       expect(focusNode.hasFocus, isTrue);
-      
+
       // Verify filtering worked (list updated)
       // Note: We're testing that setState rebuilt the list WITHOUT breaking focus
       expect(textField.controller!.text, 'Dvo');
@@ -176,13 +181,12 @@ void main() {
 
   group('Focus Management - ParticipantListScreen (PersonAutocomplete)', () {
     setUp(() async {
-      DatabaseWrapper.setTestMode();
-      await HardcodedTestSetup.setupTestData(
-        databaseType: TestDatabaseType.memory,
-      );
+      ModeCoordinator.setTestingMode();
+      await HardcodedTestSetup.setupTestData();
     });
 
-    testWidgets('PersonAutocomplete maintains focus during typing', (tester) async {
+    testWidgets('PersonAutocomplete maintains focus during typing',
+        (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: ParticipantListScreen(),
@@ -194,7 +198,8 @@ void main() {
       // Find TextField directly by its textFieldKey (not as descendant)
       final textFieldKey = const Key('ParticipantList_searchField');
       final textFieldFinder = find.byKey(textFieldKey);
-      expect(textFieldFinder, findsOneWidget, reason: 'TextField with key not found');
+      expect(textFieldFinder, findsOneWidget,
+          reason: 'TextField with key not found');
 
       // Tap to focus
       await tester.tap(textFieldFinder);
@@ -213,14 +218,17 @@ void main() {
 
       await tester.enterText(textFieldFinder, 'Dv');
       await tester.pump();
-      expect(focusNode.hasFocus, isTrue, reason: 'Focus lost after typing "Dv"');
+      expect(focusNode.hasFocus, isTrue,
+          reason: 'Focus lost after typing "Dv"');
 
       await tester.enterText(textFieldFinder, 'Dvo');
       await tester.pump();
-      expect(focusNode.hasFocus, isTrue, reason: 'Focus lost after typing "Dvo"');
+      expect(focusNode.hasFocus, isTrue,
+          reason: 'Focus lost after typing "Dvo"');
     });
 
-    testWidgets('PersonAutocomplete controllers stable (not recreated)', (tester) async {
+    testWidgets('PersonAutocomplete controllers stable (not recreated)',
+        (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: ParticipantListScreen(),
@@ -230,7 +238,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Find TextField directly by key
-      final textFieldFinder = find.byKey(const Key('ParticipantList_searchField'));
+      final textFieldFinder =
+          find.byKey(const Key('ParticipantList_searchField'));
       expect(textFieldFinder, findsOneWidget);
 
       // Get initial controllers
@@ -255,17 +264,16 @@ void main() {
     late MemoryOsoba testPerson;
 
     setUp(() async {
-      DatabaseWrapper.setTestMode();
-      await HardcodedTestSetup.setupTestData(
-        databaseType: TestDatabaseType.memory,
-      );
-      
+      ModeCoordinator.setTestingMode();
+      await HardcodedTestSetup.setupTestData();
+
       final dbInterface = DatabaseWrapper.getDatabase();
       final participants = await dbInterface.getParticipantsByCurrentEvent();
       testPerson = participants.first;
     });
 
-    testWidgets('PersonAutocomplete in NewRecordPage maintains focus', (tester) async {
+    testWidgets('PersonAutocomplete in NewRecordPage maintains focus',
+        (tester) async {
       // TODO: This test needs refactoring - PersonAutocomplete architecture changed
       // TextField key access requires passing textFieldKey parameter to PersonAutocomplete
       // which then needs to be tested in context of NewRecordPage
@@ -274,13 +282,12 @@ void main() {
 
   group('Focus Management - IntakePersonRow (PersonAutocomplete)', () {
     setUp(() async {
-      DatabaseWrapper.setTestMode();
-      await HardcodedTestSetup.setupTestData(
-        databaseType: TestDatabaseType.memory,
-      );
+      ModeCoordinator.setTestingMode();
+      await HardcodedTestSetup.setupTestData();
     });
 
-    testWidgets('PersonAutocomplete in IntakePersonRow maintains focus', (tester) async {
+    testWidgets('PersonAutocomplete in IntakePersonRow maintains focus',
+        (tester) async {
       final dbInterface = DatabaseWrapper.getDatabase();
       final participants = await dbInterface.getParticipantsByCurrentEvent();
 
@@ -318,12 +325,14 @@ void main() {
       // Type and verify focus maintained
       await tester.enterText(textFieldFinder, 'K');
       await tester.pump();
-      expect(focusNode.hasFocus, isTrue, reason: 'Focus lost in IntakePersonRow after typing');
+      expect(focusNode.hasFocus, isTrue,
+          reason: 'Focus lost in IntakePersonRow after typing');
     });
   });
 
   group('Focus Management - Architectural Patterns', () {
-    testWidgets('Demonstrates stable FocusNode pattern (recommended)', (tester) async {
+    testWidgets('Demonstrates stable FocusNode pattern (recommended)',
+        (tester) async {
       // This test demonstrates the correct pattern: stable controllers in StatefulWidget
       await tester.pumpWidget(
         const MaterialApp(
@@ -349,12 +358,14 @@ void main() {
       for (int i = 0; i < 5; i++) {
         await tester.enterText(textField, 'Test$i');
         await tester.pump();
-        expect(focusNode.hasFocus, isTrue, 
-          reason: 'Focus maintained on iteration $i with stable FocusNode pattern');
+        expect(focusNode.hasFocus, isTrue,
+            reason:
+                'Focus maintained on iteration $i with stable FocusNode pattern');
       }
     });
 
-    testWidgets('Demonstrates RawAutocomplete pattern (PersonAutocomplete)', (tester) async {
+    testWidgets('Demonstrates RawAutocomplete pattern (PersonAutocomplete)',
+        (tester) async {
       // TODO: Needs refactoring - requires passing textFieldKey parameter to PersonAutocomplete
       // to enable finding the internal TextField by key
     }, skip: true);
@@ -366,7 +377,8 @@ class _ArchitecturalDemoWidget extends StatefulWidget {
   const _ArchitecturalDemoWidget();
 
   @override
-  State<_ArchitecturalDemoWidget> createState() => _ArchitecturalDemoWidgetState();
+  State<_ArchitecturalDemoWidget> createState() =>
+      _ArchitecturalDemoWidgetState();
 }
 
 class _ArchitecturalDemoWidgetState extends State<_ArchitecturalDemoWidget> {
@@ -393,7 +405,8 @@ class _ArchitecturalDemoWidgetState extends State<_ArchitecturalDemoWidget> {
             focusNode: _focusNode,
             onChanged: (value) {
               setState(() {
-                _text = value; // setState triggers rebuild, but TextField stable
+                _text =
+                    value; // setState triggers rebuild, but TextField stable
               });
             },
           ),
