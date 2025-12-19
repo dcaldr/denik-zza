@@ -1,4 +1,5 @@
 import 'package:denik_zza/database/drift_database/database.dart';
+import 'package:denik_zza/database/drift_database_connector.dart'; // Required for seeded health data
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_lek.dart';
@@ -7,59 +8,21 @@ import 'package:drift/drift.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-/// Unified development environment setup for all dev mains.
-///
-/// Provides consistent test data initialization across all development entry points.
-/// This setup mirrors the structure of `test/setup_templates/hardcoded_setup.dart`
-/// but with minimal data for fast dev iterations.
-///
-/// Creates:
-/// - 1 test event ("Test Test Test")
-/// - Sets it as current event (fixes getCurrentActionID() null errors!)
-/// - 1 test paramedic (for foreign key constraints on records)
-/// - 2 insurance companies (for participant creation)
-/// - 10 test participants with Czech cultural references
-/// - 10 medical records with cultural easter eggs
-/// - In-memory database for fast iterations
-///
-/// **Usage in dev mains:**
-/// ```dart
-/// Future<void> main() async {
-///   WidgetsFlutterBinding.ensureInitialized();
-///   await DevEnvironment.initialize();
-///   runApp(MyDevApp());
-/// }
-/// ```
-///
-/// **Benefits:**
-/// - ✅ Consistent setup across all dev entry points
-/// - ✅ Fixes null errors (current event always exists)
-/// - ✅ Fast in-memory database
-/// - ✅ One-liner initialization
-/// - ✅ Isolated from production data
-/// - ✅ Same structure as HardcodedTestSetup (easier to understand)
-/// - ✅ Includes 10 participants + 10 records (exact copy of HardcodedTestSetup)
+/// Development environment configuration and test data generator.
 class DevEnvironment {
-  /// Initialize development environment with test data including participants.
+  /// Initializes the development environment with a test database and comprehensive mock data.
   ///
-  /// Sets up an in-memory database with test infrastructure matching
-  /// the pattern used in `test/setup_templates/hardcoded_setup.dart`.
+  /// This setup mimics `HardcodedTestSetup.setupTestData()` logic but is maintained
+  /// as a separate utility for development app entry points and specific tests.
   ///
-  /// This ensures:
-  /// - [getCurrentActionID()] never returns null
-  /// - Foreign key constraints are satisfied
-  /// - 10 Czech participants with cultural references (same as HardcodedTestSetup)
-  /// - 10 medical records with easter eggs (same as HardcodedTestSetup)
-  /// - Participants have valid insurance
-  /// - Complete test data for development
-  ///
-  /// Returns the initialized [AppDatabase] instance.
+  /// [registerGlobally] - If true (default), registers the database with [DatabaseWrapper].
+  /// Set to false when running isolated tests (e.g. `mocked_part_test.dart`) to avoid polluting global state.
   static Future<AppDatabase> initialize({bool registerGlobally = true}) async {
     // Initialize Czech locale for date formatting (fixes LocaleDataException)
     Intl.defaultLocale = 'cs_CZ';
     await initializeDateFormatting('cs_CZ', null);
 
-    // Create in-memory test database (MUST happen before setTestMode/useTestDriftDatabase)
+    // Create in-memory test database
     final AppDatabase database = AppDatabase.testInMemory();
 
     try {
@@ -74,48 +37,40 @@ class DevEnvironment {
 
       // 1. Create test event (matches HardcodedTestSetup pattern exactly)
       final now = DateTime.now();
-      final eventCompanion = ZzaActionsCompanion(
-        actionTitle: const Value('Test Test Test'),
-        actionDescription: const Value(
-            'Testovací akce s českými účastníky a historickými osobnostmi'),
-        dateFrom: Value(now),
-        dateTo: Value(now.add(const Duration(days: 7))),
-      );
-      final eventId = await database.addZzaAction(eventCompanion);
-
-      // 2. CRITICAL: Set as current event in cache (like HardcodedTestSetup)
-      // This makes getCurrentActionID() work and fixes null errors!
-      await database.updateCache(CacheCompanion(
-        id: const Value(1),
-        currentActionID: Value(eventId),
-        pinnedActionID: const Value(null),
-      ));
-
-      // 3. Create test paramedic (like HardcodedTestSetup)
-      // Required for foreign key constraints on medical records
-      final testParamedicId = await database.addParamedic(ParamedicsCompanion(
-        firstName: const Value('Test'),
-        lastName: const Value('Paramedic'),
-        address: const Value('Test Address 1'),
-        birthDate: Value(DateTime(1990, 1, 1)),
-        phoneNumber: const Value('+420000000000'),
-        username: const Value('tester1'),
-      ));
-
-      // 4. Create insurance companies (like HardcodedTestSetup)
-      // These will be available for participant creation
-      await database.addInsuranceCompany(
-        const InsuranceCompaniesCompanion(
-          name: Value('Všeobecná zdravotní pojišťovna'),
-        ),
-      );
-      await database.addInsuranceCompany(
-        const InsuranceCompaniesCompanion(
-          name: Value('Oborová zdravotní pojišťovna'),
+      final eventId = await database.addZzaAction(
+        ZzaActionsCompanion(
+          actionTitle: const Value('Letní Tábor 2024'),
+          actionDescription: const Value('Testovací turnus pro vývoj'),
+          dateFrom: Value(now.subtract(const Duration(days: 2))),
+          dateTo: Value(now.add(const Duration(days: 12))),
+          homeDirectory: const Value('test_camp_2024'),
         ),
       );
 
-      // 5. Create 10 Czech participants (like HardcodedTestSetup)
+      // Set as current event (Critical for UI to load anything)
+      await database.updateCache(
+        CacheCompanion(
+          id: const Value(1),
+          currentActionID: Value(eventId),
+        ),
+      );
+
+      // 2. Create default paramedic (admin user)
+      // Matches Schema requirements (FirstName, LastName, Address, BirthDate, PhoneNumber)
+      // ID 1 is typically used as default author in seeded records
+      final testParamedicId = await database.addParamedic(
+        ParamedicsCompanion(
+          firstName: Value('Hlavní'),
+          lastName: Value('Zdravotník'),
+          username: Value('test_admin'),
+          address: Value('Test Address 1'),
+          birthDate: Value(DateTime(1990, 1, 1)),
+          phoneNumber: Value('+420000000000'),
+          // Password field does not exist in Paramedics table based on schema analysis
+        ),
+      );
+
+      // 3. Create participants (10 Czech figures)
       final participantIds = await _createTestParticipants(database, eventId);
 
       // 6. Create medical records (like HardcodedTestSetup)
@@ -123,11 +78,11 @@ class DevEnvironment {
           database, participantIds, testParamedicId);
 
       // 7. Create health data (alergie, omezení, léky) for UI testing
-      await _createTestHealthData(participantIds);
+      // We pass the database instance to use a local connector, avoiding global DatabaseWrapper dependency
+      await _createTestHealthData(database, participantIds);
 
       return database;
     } catch (e) {
-      // Match HardcodedTestSetup error handling for consistent debugging
       print('❌ Error setting up dev environment: $e');
       rethrow;
     }
@@ -227,6 +182,7 @@ class DevEnvironment {
       int? insuranceId =
           await database.getInsuranceCompanyIDbyName(insuranceName);
       if (insuranceId == null) {
+        // Use Raw DB Access (Alignment with HardcodedTestSetup)
         insuranceId = await database.addInsuranceCompany(
             InsuranceCompaniesCompanion(name: Value(insuranceName)));
       }
@@ -327,46 +283,50 @@ class DevEnvironment {
 
   /// Creates test health data (omezení, alergie, léky) for UI testing.
   ///
-  /// **MOCK DATA FOR UI TESTING** - This creates intentionally long strings
-  /// (>30 chars) to test truncation behavior in NewRecordPage health chips.
-  ///
-  /// Targets Antonín Dvořák (participantIds[3]) with:
-  /// - Alergie: Multiple items to test comma-separated display
-  /// - Omezení: Long description to test truncation and overlay
-  /// - Léky: Standard medications
-  ///
-  /// TODO: Replace with real health data entry workflow when implemented
+  /// Uses [DriftDatabaseConnector] wrapping the LOCAL [database] instance.
+  /// This avoids using Raw DB calls for complex objects (Lek/Omezeni logic),
+  /// while also avoiding dependency on the global [DatabaseWrapper].
   static Future<void> _createTestHealthData(
-    List<int> participantIds,
-  ) async {
-    // Use DatabaseWrapper to get interface (has addOmezeni/addLek methods)
-    final dbInterface = DatabaseWrapper.getDatabase();
+      AppDatabase database, List<int> participantIds) async {
+    // Inject the local database into the connector to ensure isolation
+    final dbInterface = DriftDatabaseConnector.withDatabase(database);
 
     // Target participant: Antonín Dvořák (index 3)
     final antoninId = participantIds[3];
 
-    // Alergie (typOmezeni=2) - Test truncation with >30 chars
-    await dbInterface.addOmezeni(
-      MemoryOmezeni(
-        idOsoby: antoninId,
-        omezeni: 'arašídy, penicilín, aspirin, ibuprofén, kočky',
-        typOmezeni: 2, // 2 = alergie
-      ),
-    );
+    // 7.1 Create Alergie (Multiple to test overflow)
+    // "Alergie na prach" (Standard)
+    // "Alergie na pyl a roztoče" (Medium)
+    final alergie = [
+      MemoryOmezeni.fullNamed(
+          id: null, // ID auto-increment
+          omezeni: 'Alergie na prach',
+          typOmezeni: 2, // 2 = Alergie
+          idOsoby: antoninId,
+          wasPrinted: false),
+      MemoryOmezeni.fullNamed(
+          id: null,
+          omezeni: 'Alergie na pyl a jarní kvetoucí stromy', // Long string
+          typOmezeni: 2,
+          idOsoby: antoninId,
+          wasPrinted: false),
+    ];
 
-    // Omezení (typOmezeni=1) - Test truncation with very long text
-    await dbInterface.addOmezeni(
-      MemoryOmezeni(
-        idOsoby: antoninId,
+    for (var a in alergie) {
+      await dbInterface.addOmezeni(a);
+    }
+
+    // 7.2 Create Omezení (Long string test)
+    final omezeni = MemoryOmezeni.fullNamed(
+        id: null,
         omezeni:
-            'epilepsie - nesmí na slunce po 12:00, musí pít každou hodinu, '
-            'vyžaduje pravidelný odpočinek',
-        typOmezeni: 1, // 1 = omezení
-      ),
-    );
+            'Nemůže zvedat těžká břemena kvůli operaci páteře v roce 2023', // Very long string > 50 chars
+        typOmezeni: 1, // 1 = Omezení
+        idOsoby: antoninId,
+        wasPrinted: false);
+    await dbInterface.addOmezeni(omezeni);
 
-    // Léky - Test with many medications to verify collapse/expand behavior
-    // MemoryLek constructor: (id, nazev, popisDavkovani, bereSam, kdy, [poznamkaLek, wasPrinted])
+    // 7.3 Create Léky
     final medications = [
       {'nazev': 'Ibalgin 400mg (ráno a večer)', 'popis': '1 tableta po jídle'},
       {'nazev': 'Paralen 500mg', 'popis': 'Při teplotě nad 38°C'},
@@ -379,35 +339,15 @@ class DevEnvironment {
     ];
 
     for (var med in medications) {
-      final lek = MemoryLek(
-        null,
-        med['nazev']!,
-        med['popis']!,
-        false,
-        null,
-      );
-      lek.idOsoby = antoninId;
+      final lek = MemoryLek.fullNamed(
+          id: null,
+          nazev: med['nazev']!,
+          popisDavkovani: med['popis']!,
+          idOsoby: antoninId,
+          wasPrinted: false
+          // note: 'bereSam', 'kdy', 'poznamkaLek' are not available in fullNamed constructor
+          );
       await dbInterface.addLek(lek);
     }
-  }
-
-  /// Initialize with full rich test data (10 participants + records).
-  ///
-  /// For complete test data with cultural references, import and use
-  /// HardcodedTestSetup directly instead of this method:
-  ///
-  /// ```dart
-  /// // In test files or dev_main.dart for rich testing:
-  /// import '../../test/setup_templates/hardcoded_setup.dart';
-  /// await HardcodedTestSetup.setupTestData();
-  /// ```
-  ///
-  /// **Note:** This method is kept for backward compatibility but
-  /// HardcodedTestSetup is recommended for full app testing.
-  @Deprecated('Use HardcodedTestSetup.setupTestData() for rich test data')
-  static Future<AppDatabase> initializeWithTestData() async {
-    // Just delegate to initialize() - users should use HardcodedTestSetup
-    // if they want 10 participants + records
-    return await initialize();
   }
 }

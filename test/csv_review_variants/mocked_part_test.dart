@@ -109,7 +109,7 @@ void main() {
           reason: 'Should have at least one valid row to import');
 
       // Count participants BEFORE import
-      final dbInterface = DatabaseWrapper.getDatabase();
+      final dbInterface = DriftDatabaseConnector.withDatabase(database);
       final participantsBefore =
           await dbInterface.getParticipantsByCurrentEvent();
       final countBefore = participantsBefore.length;
@@ -167,7 +167,7 @@ void main() {
       expect(result.savedCount, 1);
 
       // Verify actual database content
-      final dbInterface = DatabaseWrapper.getDatabase();
+      final dbInterface = DriftDatabaseConnector.withDatabase(database);
       final participants = await dbInterface.getParticipantsByCurrentEvent();
       // DevEnvironment pre-populates DB with 10 participants, so we have 11 total now
       expect(participants.length, greaterThan(0),
@@ -212,7 +212,7 @@ void main() {
           reason: 'Should have at least one valid (non-rejected) row');
 
       // Count participants BEFORE import to handle DevEnvironment pre-population
-      final dbInterface = DatabaseWrapper.getDatabase();
+      final dbInterface = DriftDatabaseConnector.withDatabase(database);
       final participantsBefore =
           await dbInterface.getParticipantsByCurrentEvent();
       final countBefore = participantsBefore.length;
@@ -275,7 +275,7 @@ void main() {
       service = DefaultCsvImportService(
           database: DriftDatabaseConnector.withDatabase(database));
 
-      final dbInterface = DatabaseWrapper.getDatabase();
+      final dbInterface = DriftDatabaseConnector.withDatabase(database);
       final countInitial =
           (await dbInterface.getParticipantsByCurrentEvent()).length;
 
