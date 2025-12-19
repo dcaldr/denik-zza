@@ -26,7 +26,7 @@ Future<void> runScenario() async {
 
   // 1. Create Person
   final personId = await _createPerson(db);
-  debugPrint('SCENARIO: Created Person ID: $personId');
+  // debugPrint('SCENARIO: Created Person ID: $personId');
 
   // Mark Person as Printed
   db.setParticipantPrintedValue(personId, true);
@@ -50,7 +50,7 @@ Future<void> runScenario() async {
   // Record 4: Newest (Hudební terapie) - NOT PRINTED
   await _addRecord(db, personId, "Hudební terapie", now, false);
 
-  debugPrint('SCENARIO: Records created. Verifying DB state...');
+  // debugPrint('SCENARIO: Records created. Verifying DB state...');
 
   // 3. Verify DB State (Read-After-Write)
   final records = await db.getRecordsByParticipantID(personId);
@@ -59,7 +59,7 @@ Future<void> runScenario() async {
 
   bool verificationPassed = true;
   for (var r in records) {
-    debugPrint('DB CHECK: "${r.nazev}" -> isPrinted: ${r.isPrinted}');
+    // debugPrint('DB CHECK: "${r.nazev}" -> isPrinted: ${r.isPrinted}');
 
     if (r.nazev == "Hudební terapie") {
       if (r.isPrinted) {
@@ -79,7 +79,7 @@ Future<void> runScenario() async {
     return;
   }
 
-  debugPrint('SCENARIO: DB Verification PASSED. Launching UI...');
+  // debugPrint('SCENARIO: DB Verification PASSED. Launching UI...');
 
   // 4. Launch App
   runApp(buildDevAppWithBanner(

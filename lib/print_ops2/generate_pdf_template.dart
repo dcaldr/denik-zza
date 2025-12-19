@@ -137,17 +137,30 @@ class GeneratePdfTemplate {
     final recordRows = zaznamList?.map((z) => PersonPdfRecordRow(z)).toList();
 
     return [
-      pw.Page(
+      pw.MultiPage(
         theme: await _loadFonts(),
         build: (pw.Context context) {
-          return pw.Column(
-            children: [
-              header,
-              pw.SizedBox(height: 5),
-              if (recordRows != null)
-                PrintPdfRecords(recordRows: recordRows)
-                    .buildRecordsList(recordRows),
-            ],
+          return [
+            header,
+            pw.SizedBox(height: 5),
+            if (recordRows != null)
+              PrintPdfRecords(
+                      recordRows: recordRows,
+                      borderColor: GeneratePdfTemplate.headerPrimaryColor)
+                  .buildRecordsList(recordRows, forMultiPage: true),
+          ];
+        },
+        header: (pw.Context context) {
+          return pw.Container();
+        },
+        footer: (pw.Context context) {
+          final pageNum = context.pageNumber;
+          return pw.Container(
+            alignment: pw.Alignment.center,
+            child: pw.Text(
+              'Deník ZZA - $pageNum',
+              style: pw.TextStyle(fontSize: 8),
+            ),
           );
         },
       ),
@@ -324,7 +337,11 @@ class GeneratePdfTemplate {
 
           // Add records (using forMultiPage=true)
           if (recordRows.isNotEmpty) {
-            content.add(PrintPdfRecords(recordRows: recordRows)
+            final borderColor = maskPrintedRecords
+                ? transparentColor
+                : GeneratePdfTemplate.headerPrimaryColor;
+            content.add(PrintPdfRecords(
+                    recordRows: recordRows, borderColor: borderColor)
                 .buildRecordsList(recordRows, forMultiPage: true));
           }
 
@@ -333,53 +350,13 @@ class GeneratePdfTemplate {
         header: (pw.Context context) {
           final currentPage = _getPageNumber(context, logger);
           observedPages.add(currentPage);
-
-          // Hide header on mixed content page (handled in build via transparentHeaderWidget)
-          // If layout header handling is moved to build(), this might be redundant or for page numbers?
-          // The original code had:
-          /*
-          if (hideHeaderOnPage == currentPage) {
-             return pw.Container(); // Empty header
-           }
-           */
-          // But since we put the Person Header in body(build), this 'header' callback
-          // likely refers to the Page Number (Strana X) at top right?
-          // Let's check original code...
-          /*
-           return pw.Container(
-             alignment: pw.Alignment.centerRight,
-             child: pw.Text('Strana $currentPage', ...)
-           );
-           */
-          // If maskPrintedRecords is on, we should make this transparent too?
-          // Logic: If we are masking printed records, we are likely printing on top of old pages.
-          // So yes, make it transparent.
-
-          final textColor =
-              maskPrintedRecords ? transparentColor : PdfColor(0, 0, 0);
-
-          if (hideHeaderOnPage == currentPage) {
-            return pw
-                .Container(); // We still return empty here because mixing handling is done in body?
-            // Wait, if we return empty here, we lose the 'Strana X'.
-            // The original code returned empty here for 'hideHeaderOnPage'.
-            // But 'hideHeaderOnPage' was for the Person Info Header.
-            // The 'header' callback is for the Page Number.
-            // If the original code returned empty, then Page Number was missing on that page.
-            // Let's keep that behavior but respect transparency if needed.
-          }
-
-          return pw.Container(
-            alignment: pw.Alignment.centerRight,
-            child: pw.Text(
-              'Strana $currentPage',
-              style: pw.TextStyle(fontSize: 10, color: textColor),
-            ),
-          );
+          return pw.Container();
         },
         footer: (pw.Context context) {
           final currentPage = _getPageNumber(context, logger);
           observedPages.add(currentPage);
+          // Debug print to trace footer execution
+          // logger.d('Building footer for page $currentPage, mask=$maskPrintedRecords');
 
           final textColor =
               maskPrintedRecords ? transparentColor : PdfColor(0, 0, 0);
