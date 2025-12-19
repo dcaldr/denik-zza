@@ -29,7 +29,8 @@ class PrintCenterService {
   }
 
   /// Sets participant printed flag with error handling
-  Future<bool> setParticipantPrintedFlag(int participantId, bool wasPrinted) async {
+  Future<bool> setParticipantPrintedFlag(
+      int participantId, bool wasPrinted) async {
     try {
       final success = _db.setParticipantPrintedValue(participantId, wasPrinted);
       return success;
@@ -49,7 +50,8 @@ class PrintCenterService {
   }
 
   /// Sets multiple record printed flags
-  Future<List<bool>> setMultipleRecordPrintedFlags(List<int> recordIds, bool isPrinted) async {
+  Future<List<bool>> setMultipleRecordPrintedFlags(
+      List<int> recordIds, bool isPrinted) async {
     final results = <bool>[];
     for (final recordId in recordIds) {
       final success = await setRecordPrintedFlag(recordId, isPrinted);

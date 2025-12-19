@@ -12,8 +12,10 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
       osoba; // Should be MemoryOsoba, but kept dynamic for future event
   final List<dynamic>? omezeniList; // MemoryOmezeni list
   final List<dynamic>? lekList; // MemoryLek list
+  final PdfColor? textColor;
 
-  PersonPdfHeaderSection(this.osoba, {this.omezeniList, this.lekList});
+  PersonPdfHeaderSection(this.osoba,
+      {this.omezeniList, this.lekList, this.textColor});
 
   @override
   pw.Widget buildHeader() {
@@ -32,7 +34,8 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
         // Person info section
         pw.Container(
           decoration: pw.BoxDecoration(
-            border: pw.Border.all(width: 2.0, color: PdfColor(0, 0, 0)),
+            border: pw.Border.all(
+                width: 2.0, color: textColor ?? PdfColor(0, 0, 0)),
           ),
           child: pw.Padding(
             padding: const pw.EdgeInsets.all(5.0),
@@ -46,28 +49,34 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
                       pw.RichText(
                         text: pw.TextSpan(
                           text: 'Jméno: ',
-                          style: pw.TextStyle(fontWeight: pw.FontWeight.normal),
+                          style: pw.TextStyle(
+                              fontWeight: pw.FontWeight.normal,
+                              color: textColor),
                           children: [
                             pw.TextSpan(
                               text:
                                   '${osoba?.jmeno ?? ''} ${osoba?.prijmeni ?? ''}',
-                              style:
-                                  pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                              style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold,
+                                  color: textColor),
                             ),
                           ],
                         ),
                       ),
                       pw.Text(
-                          'Datum narození: ${formatDate(osoba?.datumNarozeni)}'),
+                          'Datum narození: ${formatDate(osoba?.datumNarozeni)}',
+                          style: pw.TextStyle(color: textColor)),
                       pw.Text(
                         'Pojištění: ${osoba?.cisloPojisteni ?? ''}${formatZdravotniPojistovna(osoba?.zdravotniPojistovna)}',
                         maxLines: 2,
                         overflow: pw.TextOverflow.clip,
+                        style: pw.TextStyle(color: textColor),
                       ),
                       pw.Text(
                         'Adresa: ${osoba?.adresa ?? ''}',
                         maxLines: 2,
                         overflow: pw.TextOverflow.clip,
+                        style: pw.TextStyle(color: textColor),
                       ),
                     ],
                   ),
@@ -79,10 +88,15 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text('Rodič: ${osoba?.jmenoRodice ?? ''}',
-                          maxLines: 2, overflow: pw.TextOverflow.clip),
+                          maxLines: 2,
+                          overflow: pw.TextOverflow.clip,
+                          style: pw.TextStyle(color: textColor)),
                       pw.Text('Tel. rodič: ${osoba?.telefonRodice ?? ''}',
-                          maxLines: 2, overflow: pw.TextOverflow.clip),
-                      pw.Text('Email rodič: ${osoba?.emailRodice ?? ''}'),
+                          maxLines: 2,
+                          overflow: pw.TextOverflow.clip,
+                          style: pw.TextStyle(color: textColor)),
+                      pw.Text('Email rodič: ${osoba?.emailRodice ?? ''}',
+                          style: pw.TextStyle(color: textColor)),
                     ],
                   ),
                 ),
@@ -95,7 +109,8 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
           pw.SizedBox(height: 5),
           pw.Container(
             decoration: pw.BoxDecoration(
-              border: pw.Border.all(width: 2.0, color: PdfColor(0, 0, 0)),
+              border: pw.Border.all(
+                  width: 2.0, color: textColor ?? PdfColor(0, 0, 0)),
             ),
             child: pw.Padding(
               padding: const pw.EdgeInsets.all(5.0),
@@ -107,10 +122,13 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Text('Omezení:',
-                            style:
-                                pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                        ...?omezeniList
-                            ?.map((omezeni) => pw.Text('- ${omezeni.omezeni}')),
+                            style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                                color: textColor)),
+                        ...?omezeniList?.map((omezeni) => pw.Text(
+                              '- ${omezeni.omezeni}',
+                              style: pw.TextStyle(color: textColor),
+                            )),
                       ],
                     ),
                   ),
@@ -120,9 +138,13 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Text('Léky:',
-                            style:
-                                pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                        ...?lekList?.map((lek) => pw.Text('- ${lek.nazev}')),
+                            style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                                color: textColor)),
+                        ...?lekList?.map((lek) => pw.Text(
+                              '- ${lek.nazev}',
+                              style: pw.TextStyle(color: textColor),
+                            )),
                       ],
                     ),
                   ),

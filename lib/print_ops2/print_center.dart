@@ -365,7 +365,7 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
 
   Widget _buildModeAndPreview(
       BuildContext context, PrintCenterController ctrl) {
-    final canAppendPlaceholder = ctrl.canAppendPlaceholder; // fallback logic
+    // Removed placeholder logic usage
     return LayoutBuilder(
       key: const ValueKey('mode-preview'),
       builder: (context, constraints) {
@@ -420,7 +420,7 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
                                 child: Icon(Icons.info_outline, size: 16)),
                           ],
                         ),
-                        subtitle: _appendSubtitle(ctrl, canAppendPlaceholder),
+                        subtitle: _appendSubtitle(ctrl),
                         secondary: (ctrl.appendPossible == false)
                             ? Tooltip(
                                 message:
@@ -434,7 +434,7 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
                 ),
                 const SizedBox(height: 12),
                 _AppendHintBox(
-                    mode: ctrl.mode, canAppend: canAppendPlaceholder),
+                    mode: ctrl.mode, canAppend: ctrl.appendPossible ?? false),
                 const SizedBox(height: 24),
                 Align(
                   alignment: Alignment.centerRight,
@@ -488,7 +488,7 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
     );
   }
 
-  Widget _appendSubtitle(PrintCenterController ctrl, bool fallback) {
+  Widget _appendSubtitle(PrintCenterController ctrl) {
     if (ctrl.appendChecking) {
       return const Text('Ověřuji podmínky…');
     }
@@ -501,10 +501,8 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
           ? 'Append je možný (validováno).'
           : 'Append není možný.');
     }
-    // fallback (před validací)
-    return Text(fallback
-        ? 'Předběžně vypadá OK (čekám na validaci).'
-        : 'Zatím nevypadá možné.');
+    // No validation result yet
+    return const Text('Čekám na validaci…');
   }
 
   Widget _buildPostConfirmation(
@@ -1027,8 +1025,8 @@ class _AppendHintBox extends StatelessWidget {
       icon:
           canAppend ? Icons.check_circle_outline : Icons.warning_amber_outlined,
       text: canAppend
-          ? 'Simulace: Dostisk je možný (placeholder logika).'
-          : 'Simulace: Podmínky dostisku nejsou splněny – UI jen náhled.',
+          ? 'Režim Dostisk: Připraveno k tisku nových záznamů.'
+          : 'Režim Dostisk: Podmínky nejsou splněny (viz výše).',
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:denik_zza/print_ops2/print_pdf_header.dart';
+// import 'package:flutter/foundation.dart'; // Unused
 import 'package:denik_zza/print_ops2/print_pdf_records.dart';
 import 'package:denik_zza/print_ops2/pdf_record_row.dart';
 import 'package:denik_zza/print_ops2/pdf_header_section.dart';
@@ -15,23 +16,24 @@ import '../database/in_memory_structures_tmp/memory_lek.dart';
 import '../database/in_memory_structures_tmp/memory_omezeni.dart';
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
 import '../database/in_memory_structures_tmp/memory_zaznam.dart';
+
 /// Generates a pdf template for the given person WARNING: still missing hiding logic
 ///
 /// The template consists of a header, restrictions, and records.
 /// The class doesn't check if the provided inputs match each other,
 /// it is the responsibility of the caller to provide the correct data.
 class GeneratePdfTemplate {
-  late pw.Widget header;
   static const headerPrimaryColor = PdfColor(0, 0, 0);
   static const hiddenColor = PdfColor(0, 0, 0, 0);
 
   MemoryOsoba? _osoba;
   List<MemoryZaznam>? _zaznamList;
+
   /// status for the records
   OkCodes _recordStatus = OkCodes.unset;
 
-  set osoba (MemoryOsoba? inOsoba){
-    if(inOsoba != _osoba){
+  set osoba(MemoryOsoba? inOsoba) {
+    if (inOsoba != _osoba) {
       _recordStatus = OkCodes.unset;
     }
     _osoba = inOsoba;
@@ -42,19 +44,20 @@ class GeneratePdfTemplate {
   GeneratePdfTemplate.named({
     required MemoryOsoba? osoba,
     List<MemoryZaznam>? zaznamList,
-  }) : _zaznamList = zaznamList, _osoba = osoba;
+  })  : _zaznamList = zaznamList,
+        _osoba = osoba;
 
   /// tests if appending is possible or needs to be completely recreated
   ///
   /// returns true if the given wasPrinted flags are in good configuration
   /// Header T -> Records T(all but lasts) - ok
   /// Header T -> Records F - ok
-  bool canAppend(){
+  bool canAppend() {
     // Check if osoba exists and was printed
     if (_osoba == null || !(_osoba?.wasPrinted ?? false)) {
       return false;
     }
-    
+
     // Special case: If there are no records at all, don't allow append
     // This is because append mode is designed to add new records to existing ones,
     // but without any records (even if the header exists), a full print makes more sense
@@ -63,69 +66,62 @@ class GeneratePdfTemplate {
       // becomes a valid use case, but for now, we explicitly disallow it
       return false;
     }
-    
+
     // here osoba(header) always printed
     isRecordsOk();
     // if records are broken return false
-    if(_recordStatus == OkCodes.broken){
+    if (_recordStatus == OkCodes.broken) {
       return false;
     }
 
     return true;
   }
 
-
   /// tests if records aren't blocking appending
   ///
   /// for entire safety it will order the list by time (but it should be already ordered)
-  void isRecordsOk(){
-    if(_recordStatus != OkCodes.unset){
+  void isRecordsOk() {
+    if (_recordStatus != OkCodes.unset) {
       return;
     }
-    if(_zaznamList == null){
+    if (_zaznamList == null) {
       _recordStatus = OkCodes.unprinted;
       return;
     }
 
     // if in testing mode check and Logger warn if not ordered
- assert(() {
-  var cmpList = List<MemoryZaznam>.from(_zaznamList!);
-  _zaznamList!.sort((a, b) => a.casZaznamu!.compareTo(b.casZaznamu!));
-  for (int i = 0; i < cmpList.length; i++) {
-    if (cmpList[i] != _zaznamList![i]) {
-      AppLogger.l.w("Records are not ordered by time, where expected in GeneratePdfTemplate");
+    assert(() {
+      var cmpList = List<MemoryZaznam>.from(_zaznamList!);
+      _zaznamList!.sort((a, b) => a.casZaznamu!.compareTo(b.casZaznamu!));
+      for (int i = 0; i < cmpList.length; i++) {
+        if (cmpList[i] != _zaznamList![i]) {
+          AppLogger.l.w(
+              "Records are not ordered by time, where expected in GeneratePdfTemplate");
+          return true;
+        }
+      }
       return true;
-    }
-  }
-  return true;
-}());
-
+    }());
 
     /// order by time of the record (oldest first)
     _zaznamList!.sort((a, b) => a.casZaznamu!.compareTo(b.casZaznamu!));
 
-
-
-
-
-  /// after finding first true all the rest should be true or its broken
-  bool prevItem = _zaznamList!.first.isPrinted;
+    /// after finding first true all the rest should be true or its broken
+    bool prevItem = _zaznamList!.first.isPrinted;
     for (var item in _zaznamList!) {
       // if isPrinted after some that wasn't printed
-      if(item.isPrinted && !prevItem){
+      if (item.isPrinted && !prevItem) {
         _recordStatus = OkCodes.broken;
         return;
       }
       prevItem = item.isPrinted;
     }
 
-
     /// for here : if last item is printed then all are printed
     _recordStatus = prevItem ? OkCodes.printed : OkCodes.unprinted;
   }
 
-
-/// generates list of pages for pdf from the given person
+  /// generates list of pages for pdf from the given person
   Future<List<pw.Page>> getPdfPages({
     required MemoryOsoba osoba,
     List<MemoryOmezeni>? omezeniList,
@@ -133,8 +129,9 @@ class GeneratePdfTemplate {
     List<MemoryZaznam>? zaznamList,
   }) async {
     // Use new abstractions - header includes restrictions for person
-    final headerSection = PersonPdfHeaderSection(osoba, omezeniList: omezeniList, lekList: lekList);
-    header = PrintPdfHeader(headerSection).buildHeader();
+    final headerSection = PersonPdfHeaderSection(osoba,
+        omezeniList: omezeniList, lekList: lekList);
+    final header = PrintPdfHeader(headerSection).buildHeader();
 
     // Convert MemoryZaznam to PersonPdfRecordRow
     final recordRows = zaznamList?.map((z) => PersonPdfRecordRow(z)).toList();
@@ -147,7 +144,9 @@ class GeneratePdfTemplate {
             children: [
               header,
               pw.SizedBox(height: 5),
-              if (recordRows != null) PrintPdfRecords(recordRows: recordRows).buildRecordsList(recordRows),
+              if (recordRows != null)
+                PrintPdfRecords(recordRows: recordRows)
+                    .buildRecordsList(recordRows),
             ],
           );
         },
@@ -157,10 +156,13 @@ class GeneratePdfTemplate {
 
   Future<pw.ThemeData> _loadFonts() async {
     return pw.ThemeData.withFont(
-      base: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Regular.ttf')),
+      base:
+          pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Regular.ttf')),
       bold: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Bold.ttf')),
-      italic: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Italic.ttf')),
-      boldItalic: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-BoldItalic.ttf')),
+      italic:
+          pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Italic.ttf')),
+      boldItalic: pw.Font.ttf(
+          await rootBundle.load('fonts/CourierPrime-BoldItalic.ttf')),
     );
   }
 
@@ -171,8 +173,8 @@ class GeneratePdfTemplate {
     List<MemoryLek>? lekList,
     List<MemoryZaznam>? zaznamList,
   }) async {
-  final logger = AppLogger.l;
-    
+    final logger = AppLogger.l;
+
     if (zaznamList == null || zaznamList.isEmpty) {
       logger.w('analyzeAndBuildAppend called with empty records list');
       // Generate as first print
@@ -183,13 +185,13 @@ class GeneratePdfTemplate {
         zaznamList: [],
         hideHeaderOnPage: -1,
       );
-      
+
       final analysis = AppendAnalysis.fromPageCounts(
         baselinePages: 0,
         pagesAfterFirst: 0,
         finalPages: result.pageCount,
       );
-      
+
       return AppendBuildResult(
         analysis: analysis,
         pdfBytes: result.bytes,
@@ -217,7 +219,7 @@ class GeneratePdfTemplate {
     if (unprintedRecords.isNotEmpty) {
       probeRecords.add(unprintedRecords.first);
     }
-    
+
     final probeResult = await _generateBasePdf(
       osoba: osoba,
       omezeniList: omezeniList,
@@ -241,15 +243,16 @@ class GeneratePdfTemplate {
       lekList: lekList,
       zaznamList: zaznamList,
       hideHeaderOnPage: analysis.hideHeaderOnPage,
+      maskPrintedRecords: true,
     );
-    
+
     // Update final analysis with actual final page count
     final finalAnalysis = AppendAnalysis.fromPageCounts(
       baselinePages: baselinePages,
       pagesAfterFirst: pagesAfterFirst,
       finalPages: finalResult.pageCount,
     );
-    
+
     logger.d('Final analysis: $finalAnalysis');
 
     return AppendBuildResult(
@@ -259,6 +262,9 @@ class GeneratePdfTemplate {
     );
   }
 
+  // Transparent color for "ghosting" records
+  static final PdfColor transparentColor = PdfColor.fromHex("#FFFFFF00");
+
   /// Generates PDF using MultiPage with header/footer control
   Future<DocWithCount> _generateBasePdf({
     required MemoryOsoba osoba,
@@ -266,90 +272,144 @@ class GeneratePdfTemplate {
     List<MemoryLek>? lekList,
     required List<MemoryZaznam> zaznamList,
     required int hideHeaderOnPage,
+    bool maskPrintedRecords = false,
   }) async {
-  final logger = AppLogger.l;
+    final logger = AppLogger.l;
     final theme = await _loadFonts();
     final doc = pw.Document();
-    
+
+    // Track pages for counting (fallback strategy)
     // Track pages for counting (fallback strategy)
     final Set<int> observedPages = <int>{};
-    
-    // Create header section
-    final headerSection = PersonPdfHeaderSection(osoba, omezeniList: omezeniList, lekList: lekList);
+
+    // Create visible header
+    final headerSection = PersonPdfHeaderSection(osoba,
+        omezeniList: omezeniList, lekList: lekList);
     final headerWidget = PrintPdfHeader(headerSection).buildHeader();
-    
-    // Convert records to rows
-    final recordRows = zaznamList.map((z) => PersonPdfRecordRow(z)).toList();
-    
+
+    // Create transparent header (for layout preservation)
+    final transparentHeaderSection = PersonPdfHeaderSection(osoba,
+        omezeniList: omezeniList,
+        lekList: lekList,
+        textColor: transparentColor);
+    final transparentHeaderWidget =
+        PrintPdfHeader(transparentHeaderSection).buildHeader();
+
+    // Convert records to rows with optional masking
+    final recordRows = zaznamList.map((z) {
+      final shouldHide = maskPrintedRecords && z.isPrinted;
+      return PersonPdfRecordRow(z,
+          isHidden: shouldHide,
+          textColor: shouldHide ? transparentColor : null);
+    }).toList();
+
     doc.addPage(
       pw.MultiPage(
         theme: theme,
         build: (pw.Context context) {
           final content = <pw.Widget>[];
-          
+
           // Add header (with visibility control)
           final currentPage = _getPageNumber(context, logger);
           observedPages.add(currentPage);
-          
+
           if (hideHeaderOnPage != currentPage) {
             content.add(headerWidget);
             content.add(pw.SizedBox(height: 5));
+          } else {
+            // Render transparent header to maintain layout
+            content.add(transparentHeaderWidget);
+            content.add(pw.SizedBox(height: 5));
           }
-          
+
           // Add records (using forMultiPage=true)
           if (recordRows.isNotEmpty) {
-            content.add(PrintPdfRecords(recordRows: recordRows).buildRecordsList(recordRows, forMultiPage: true));
+            content.add(PrintPdfRecords(recordRows: recordRows)
+                .buildRecordsList(recordRows, forMultiPage: true));
           }
-          
+
           return content;
         },
         header: (pw.Context context) {
           final currentPage = _getPageNumber(context, logger);
           observedPages.add(currentPage);
-          
-          // Hide header on mixed content page
+
+          // Hide header on mixed content page (handled in build via transparentHeaderWidget)
+          // If layout header handling is moved to build(), this might be redundant or for page numbers?
+          // The original code had:
+          /*
           if (hideHeaderOnPage == currentPage) {
-            return pw.Container(); // Empty header
+             return pw.Container(); // Empty header
+           }
+           */
+          // But since we put the Person Header in body(build), this 'header' callback
+          // likely refers to the Page Number (Strana X) at top right?
+          // Let's check original code...
+          /*
+           return pw.Container(
+             alignment: pw.Alignment.centerRight,
+             child: pw.Text('Strana $currentPage', ...)
+           );
+           */
+          // If maskPrintedRecords is on, we should make this transparent too?
+          // Logic: If we are masking printed records, we are likely printing on top of old pages.
+          // So yes, make it transparent.
+
+          final textColor =
+              maskPrintedRecords ? transparentColor : PdfColor(0, 0, 0);
+
+          if (hideHeaderOnPage == currentPage) {
+            return pw
+                .Container(); // We still return empty here because mixing handling is done in body?
+            // Wait, if we return empty here, we lose the 'Strana X'.
+            // The original code returned empty here for 'hideHeaderOnPage'.
+            // But 'hideHeaderOnPage' was for the Person Info Header.
+            // The 'header' callback is for the Page Number.
+            // If the original code returned empty, then Page Number was missing on that page.
+            // Let's keep that behavior but respect transparency if needed.
           }
-          
+
           return pw.Container(
             alignment: pw.Alignment.centerRight,
             child: pw.Text(
               'Strana $currentPage',
-              style: pw.TextStyle(fontSize: 10),
+              style: pw.TextStyle(fontSize: 10, color: textColor),
             ),
           );
         },
         footer: (pw.Context context) {
           final currentPage = _getPageNumber(context, logger);
           observedPages.add(currentPage);
-          
+
+          final textColor =
+              maskPrintedRecords ? transparentColor : PdfColor(0, 0, 0);
+
           return pw.Container(
             alignment: pw.Alignment.center,
             child: pw.Text(
               'Deník ZZA - $currentPage',
-              style: pw.TextStyle(fontSize: 8),
+              style: pw.TextStyle(fontSize: 8, color: textColor),
             ),
           );
         },
       ),
     );
-    
+
     final bytes = await doc.save();
-    
+
     // Determine page count using multiple strategies
     int pageCount;
     try {
       pageCount = doc.document.pdfPageList.pages.length;
-  logger.d('Page count from pdfPageList: $pageCount');
+      logger.d('Page count from pdfPageList: $pageCount');
     } catch (e) {
       pageCount = observedPages.isNotEmpty ? observedPages.length : 1;
-  logger.w('Page count fallback to observed pages: $pageCount');
+      logger.w('Page count fallback to observed pages: $pageCount');
     }
-    
+
     return DocWithCount(doc, pageCount, bytes);
   }
-  
+
   /// Safely get page number with fallback
   int _getPageNumber(pw.Context context, Logger logger) {
     try {
@@ -366,6 +426,7 @@ class GeneratePdfTemplate {
 abstract class PdfSection {
   pw.Widget buildSection(bool append);
 }
+
 enum OkCodes {
   unprinted,
   printed,

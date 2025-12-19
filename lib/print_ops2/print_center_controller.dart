@@ -134,6 +134,7 @@ class PrintCenterController extends ChangeNotifier {
         });
       _leky = l;
       _omezeni = o;
+
       // Trigger append validation
       await _evaluateAppend();
     } catch (e) {
@@ -149,16 +150,12 @@ class PrintCenterController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Generates PDF bytes based on current state and mode.
-  /// Used by both Preview and Real Print.
   Future<Uint8List> generateCurrentPdf() async {
     if (_selected == null) {
       throw Exception("No person selected");
     }
-
-    _generatingPdf = true;
-    _pdfGenerationError = null;
-    notifyListeners();
+    // Note: We intentionally avoid notifyListeners() here to prevent
+    // infinite rebuild loops when this is called from PdfPreview.build()
 
     try {
       if (_mode == PrintMode.append) {
@@ -189,11 +186,9 @@ class PrintCenterController extends ChangeNotifier {
       }
     } catch (e) {
       _pdfGenerationError = "Chyba generování PDF: $e";
+      // We notify on error so UI can show it, but only on error
       notifyListeners();
       rethrow;
-    } finally {
-      _generatingPdf = false;
-      notifyListeners();
     }
   }
 
@@ -315,13 +310,7 @@ class PrintCenterController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Rough (fallback) append possibility logic – legacy placeholder.
-  bool get canAppendPlaceholder {
-    // Kept for old UI compatibility; now only fallback if validated state is null
-    if (_appendPossible != null) return _appendPossible!;
-    if (_selected == null) return false;
-    return _records.any((r) => !r.isPrinted);
-  }
+  // Placeholder logic removed. UI must rely on _appendPossible (validated) or wait.
 
   void resetFlow() {
     _selected = null;

@@ -1,3 +1,4 @@
+import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 /// Abstract base for a record row in PDF (person/event)
@@ -7,13 +8,16 @@ abstract class PdfRecordRow {
 
 /// Concrete implementation for person record row
 class PersonPdfRecordRow extends PdfRecordRow {
-  final dynamic record; // Should be MemoryZaznam, but kept dynamic for future event
-  PersonPdfRecordRow(this.record);
+  final dynamic record;
+  final bool isHidden;
+  final PdfColor? textColor;
+
+  PersonPdfRecordRow(this.record, {this.isHidden = false, this.textColor});
 
   @override
   pw.Widget buildRow() {
     // Current implementation for MemoryZaznam
-    return pw.Row(
+    final rowContent = pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Align(
@@ -23,11 +27,11 @@ class PersonPdfRecordRow extends PdfRecordRow {
             children: [
               pw.Text(
                 '${record.casZaznamu?.day.toString().padLeft(2, '0')}.${record.casZaznamu?.month.toString().padLeft(2, '0')}.${record.casZaznamu?.year}',
-                style: const pw.TextStyle(fontSize: 8.0),
+                style: pw.TextStyle(fontSize: 8.0, color: textColor),
               ),
               pw.Text(
                 '${record.casZaznamu?.hour.toString().padLeft(2, '0')}:${record.casZaznamu?.minute.toString().padLeft(2, '0')}',
-                style: const pw.TextStyle(fontSize: 9.0),
+                style: pw.TextStyle(fontSize: 9.0, color: textColor),
               ),
             ],
           ),
@@ -37,11 +41,13 @@ class PersonPdfRecordRow extends PdfRecordRow {
           child: pw.RichText(
             text: pw.TextSpan(
               text: record.nazev != null ? '${record.nazev} - ' : ' ',
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              style: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold, color: textColor),
               children: <pw.TextSpan>[
                 pw.TextSpan(
                   text: record.popis,
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.normal),
+                  style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.normal, color: textColor),
                 ),
               ],
             ),
@@ -49,6 +55,8 @@ class PersonPdfRecordRow extends PdfRecordRow {
         ),
       ],
     );
+
+    return rowContent;
   }
 }
 
