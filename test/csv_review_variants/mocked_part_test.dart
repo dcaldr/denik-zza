@@ -3,6 +3,7 @@ import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/dev/dev_environment.dart';
 import 'package:denik_zza/input/csv_review_models.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
+import 'package:denik_zza/database/drift_database_connector.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Integration tests for CSV import with REAL database.
@@ -31,7 +32,7 @@ void main() {
     late DefaultCsvImportService service;
 
     tearDown(() async {
-      await DatabaseWrapper.dispose();
+      await database.close();
     });
 
     test('fails gracefully when no current event exists (the null error bug)',
@@ -40,8 +41,10 @@ void main() {
       // This is the scenario that caused the original bug!
       DatabaseWrapper.setTestMode();
       database = AppDatabase.testInMemory();
-      DatabaseWrapper.useTestDriftDatabase(database);
-      service = DefaultCsvImportService();
+      // Isolate: Do NOT use DatabaseWrapper
+      // DatabaseWrapper.useTestDriftDatabase(database);
+      service = DefaultCsvImportService(
+          database: DriftDatabaseConnector.withDatabase(database));
 
       // Load CSV successfully
       final session = await service.loadCsv('test/data/first.csv');
@@ -81,8 +84,9 @@ void main() {
     test('successfully imports participants when current event exists',
         () async {
       // Setup: Database WITH current event (using DevEnvironment)
-      database = await DevEnvironment.initialize();
-      service = DefaultCsvImportService();
+      database = await DevEnvironment.initialize(registerGlobally: false);
+      service = DefaultCsvImportService(
+          database: DriftDatabaseConnector.withDatabase(database));
 
       // Verify current event exists (this fixes the bug!)
       final currentId = await database.getCurrentActionID();
@@ -137,8 +141,9 @@ void main() {
 
     test('verifies imported participant data matches CSV fields', () async {
       // Setup with current event
-      database = await DevEnvironment.initialize();
-      service = DefaultCsvImportService();
+      database = await DevEnvironment.initialize(registerGlobally: false);
+      service = DefaultCsvImportService(
+          database: DriftDatabaseConnector.withDatabase(database));
 
       // Load CSV with known data
       final session = await service.loadCsv('test/data/first.csv');
@@ -179,8 +184,9 @@ void main() {
     test('handles multi_person_shuffled_order.csv (the bug trigger file!)',
         () async {
       // This is the exact file that triggered the null error bug
-      database = await DevEnvironment.initialize();
-      service = DefaultCsvImportService();
+      database = await DevEnvironment.initialize(registerGlobally: false);
+      service = DefaultCsvImportService(
+          database: DriftDatabaseConnector.withDatabase(database));
 
       // Load the problematic file
       final session =
@@ -230,8 +236,9 @@ void main() {
 
     test('reports failures correctly when some rows fail to save', () async {
       // Setup with current event
-      database = await DevEnvironment.initialize();
-      service = DefaultCsvImportService();
+      database = await DevEnvironment.initialize(registerGlobally: false);
+      service = DefaultCsvImportService(
+          database: DriftDatabaseConnector.withDatabase(database));
 
       // Load CSV
       final session = await service.loadCsv('test/data/first.csv');
@@ -264,8 +271,9 @@ void main() {
 
     test('database state persists across multiple imports', () async {
       // Setup
-      database = await DevEnvironment.initialize();
-      service = DefaultCsvImportService();
+      database = await DevEnvironment.initialize(registerGlobally: false);
+      service = DefaultCsvImportService(
+          database: DriftDatabaseConnector.withDatabase(database));
 
       final dbInterface = DatabaseWrapper.getDatabase();
       final countInitial =

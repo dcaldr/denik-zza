@@ -54,32 +54,35 @@ class DevEnvironment {
   /// - Complete test data for development
   ///
   /// Returns the initialized [AppDatabase] instance.
-  static Future<AppDatabase> initialize() async {
+  static Future<AppDatabase> initialize({bool registerGlobally = true}) async {
     // Initialize Czech locale for date formatting (fixes LocaleDataException)
     Intl.defaultLocale = 'cs_CZ';
     await initializeDateFormatting('cs_CZ', null);
-    
+
     // Create in-memory test database (MUST happen before setTestMode/useTestDriftDatabase)
     final AppDatabase database = AppDatabase.testInMemory();
-    
+
     try {
-      // Ensure the app uses this database instance (so UI + services see same data)
-      DatabaseWrapper.setTestMode();
-      DatabaseWrapper.useTestDriftDatabase(database);
-      
-      // Configure FileManager for in-memory mode (prevents disk writes during dev)
-      FileManager(isTesting: true);
-      
+      if (registerGlobally) {
+        // Ensure the app uses this database instance (so UI + services see same data)
+        DatabaseWrapper.setTestMode();
+        DatabaseWrapper.useTestDriftDatabase(database);
+
+        // Configure FileManager for in-memory mode (prevents disk writes during dev)
+        FileManager(isTesting: true);
+      }
+
       // 1. Create test event (matches HardcodedTestSetup pattern exactly)
       final now = DateTime.now();
       final eventCompanion = ZzaActionsCompanion(
         actionTitle: const Value('Test Test Test'),
-        actionDescription: const Value('Testovací akce s českými účastníky a historickými osobnostmi'),
+        actionDescription: const Value(
+            'Testovací akce s českými účastníky a historickými osobnostmi'),
         dateFrom: Value(now),
         dateTo: Value(now.add(const Duration(days: 7))),
       );
       final eventId = await database.addZzaAction(eventCompanion);
-      
+
       // 2. CRITICAL: Set as current event in cache (like HardcodedTestSetup)
       // This makes getCurrentActionID() work and fixes null errors!
       await database.updateCache(CacheCompanion(
@@ -87,7 +90,7 @@ class DevEnvironment {
         currentActionID: Value(eventId),
         pinnedActionID: const Value(null),
       ));
-      
+
       // 3. Create test paramedic (like HardcodedTestSetup)
       // Required for foreign key constraints on medical records
       final testParamedicId = await database.addParamedic(ParamedicsCompanion(
@@ -98,7 +101,7 @@ class DevEnvironment {
         phoneNumber: const Value('+420000000000'),
         username: const Value('tester1'),
       ));
-      
+
       // 4. Create insurance companies (like HardcodedTestSetup)
       // These will be available for participant creation
       await database.addInsuranceCompany(
@@ -111,27 +114,28 @@ class DevEnvironment {
           name: Value('Oborová zdravotní pojišťovna'),
         ),
       );
-      
+
       // 5. Create 10 Czech participants (like HardcodedTestSetup)
       final participantIds = await _createTestParticipants(database, eventId);
-      
+
       // 6. Create medical records (like HardcodedTestSetup)
-      await _createCzechMedicalRecords(database, participantIds, testParamedicId);
-      
+      await _createCzechMedicalRecords(
+          database, participantIds, testParamedicId);
+
       // 7. Create health data (alergie, omezení, léky) for UI testing
       await _createTestHealthData(participantIds);
-      
+
       return database;
-      
     } catch (e) {
       // Match HardcodedTestSetup error handling for consistent debugging
       print('❌ Error setting up dev environment: $e');
       rethrow;
     }
   }
-  
+
   /// Create test participants (exact copy from HardcodedTestSetup)
-  static Future<List<int>> _createTestParticipants(AppDatabase database, int eventId) async {
+  static Future<List<int>> _createTestParticipants(
+      AppDatabase database, int eventId) async {
     final participantIds = <int>[];
     // Czech historical and cultural figures with subtle references
     final participants = [
@@ -185,7 +189,7 @@ class DevEnvironment {
       },
       {
         'firstName': 'Tomáš',
-        'lastName': 'Baťa', // Tomáš Baťa - shoe entrepreneur  
+        'lastName': 'Baťa', // Tomáš Baťa - shoe entrepreneur
         'birthDate': DateTime(2005, 4, 3),
         'address': 'Zlín, náměstí Míru 12',
         'note': 'Sbírá staré boty a opravuje je',
@@ -216,17 +220,17 @@ class DevEnvironment {
         'insurance': 'Všeobecná zdravotní pojišťovna',
       },
     ];
-    
+
     for (final participant in participants) {
       // Get insurance company ID
       final insuranceName = participant['insurance'] as String;
-      int? insuranceId = await database.getInsuranceCompanyIDbyName(insuranceName);
+      int? insuranceId =
+          await database.getInsuranceCompanyIDbyName(insuranceName);
       if (insuranceId == null) {
         insuranceId = await database.addInsuranceCompany(
-          InsuranceCompaniesCompanion(name: Value(insuranceName))
-        );
+            InsuranceCompaniesCompanion(name: Value(insuranceName)));
       }
-      
+
       final companion = ParticipantsCompanion(
         firstName: Value(participant['firstName'] as String),
         lastName: Value(participant['lastName'] as String),
@@ -240,19 +244,21 @@ class DevEnvironment {
         arrivedConfirmation: const Value(true),
         wasPrinted: const Value(false),
       );
-      
+
       final id = await database.addParticipant(companion);
       participantIds.add(id);
     }
     return participantIds;
   }
-  
+
   /// Creates medical records with Czech cultural easter eggs (exact copy from HardcodedTestSetup)
-  static Future<void> _createCzechMedicalRecords(AppDatabase database, List<int> participantIds, int paramedicId) async {
+  static Future<void> _createCzechMedicalRecords(
+      AppDatabase database, List<int> participantIds, int paramedicId) async {
     final czechRecords = [
       {
         'title': 'Kontrola zdraví',
-        'description': 'má velrybí stoličku a hodně ho bolí', // The requested easter egg
+        'description':
+            'má velrybí stoličku a hodně ho bolí', // The requested easter egg
         'participantIndex': 0, // Václav Havlík
       },
       {
@@ -272,7 +278,8 @@ class DevEnvironment {
       },
       {
         'title': 'Existenciální krize',
-        'description': 'trpí nesnesitelnou lehkostí bytí, doporučen filozofický klid',
+        'description':
+            'trpí nesnesitelnou lehkostí bytí, doporučen filozofický klid',
         'participantIndex': 4, // Milan Kundera
       },
       {
@@ -297,11 +304,12 @@ class DevEnvironment {
       },
       {
         'title': 'Kafka-esque situace',
-        'description': 'proměnil se v brouka během spánku, ale ráno byl zase normální',
+        'description':
+            'proměnil se v brouka během spánku, ale ráno byl zase normální',
         'participantIndex': 9, // Franz Kafka
       },
     ];
-    
+
     for (int i = 0; i < czechRecords.length; i++) {
       final record = czechRecords[i];
       final companion = RecordsCompanion(
@@ -318,22 +326,22 @@ class DevEnvironment {
   }
 
   /// Creates test health data (omezení, alergie, léky) for UI testing.
-  /// 
+  ///
   /// **MOCK DATA FOR UI TESTING** - This creates intentionally long strings
   /// (>30 chars) to test truncation behavior in NewRecordPage health chips.
-  /// 
+  ///
   /// Targets Antonín Dvořák (participantIds[3]) with:
   /// - Alergie: Multiple items to test comma-separated display
   /// - Omezení: Long description to test truncation and overlay
   /// - Léky: Standard medications
-  /// 
+  ///
   /// TODO: Replace with real health data entry workflow when implemented
   static Future<void> _createTestHealthData(
     List<int> participantIds,
   ) async {
     // Use DatabaseWrapper to get interface (has addOmezeni/addLek methods)
     final dbInterface = DatabaseWrapper.getDatabase();
-    
+
     // Target participant: Antonín Dvořák (index 3)
     final antoninId = participantIds[3];
 
@@ -350,7 +358,8 @@ class DevEnvironment {
     await dbInterface.addOmezeni(
       MemoryOmezeni(
         idOsoby: antoninId,
-        omezeni: 'epilepsie - nesmí na slunce po 12:00, musí pít každou hodinu, '
+        omezeni:
+            'epilepsie - nesmí na slunce po 12:00, musí pít každou hodinu, '
             'vyžaduje pravidelný odpočinek',
         typOmezeni: 1, // 1 = omezení
       ),
@@ -368,7 +377,7 @@ class DevEnvironment {
       {'nazev': 'Antihistaminikum cetirizin', 'popis': 'Večer před spánkem'},
       {'nazev': 'Ventolin inhaler', 'popis': 'Při potřebě'},
     ];
-    
+
     for (var med in medications) {
       final lek = MemoryLek(
         null,
@@ -381,7 +390,7 @@ class DevEnvironment {
       await dbInterface.addLek(lek);
     }
   }
-  
+
   /// Initialize with full rich test data (10 participants + records).
   ///
   /// For complete test data with cultural references, import and use

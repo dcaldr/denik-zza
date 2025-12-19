@@ -16,7 +16,6 @@ void main() {
     late List<MemoryOsoba> testParticipants;
 
     setUp(() async {
-      print('[TMP] Test: setUp started');
       ModeCoordinator.setTestingMode();
 
       database = await HardcodedTestSetup.setupTestData();
@@ -35,15 +34,11 @@ void main() {
                 wasPrinted: p.wasPrinted,
               ))
           .toList();
-      print(
-          '[TMP] Test: setUp finished. Participants: ${testParticipants.length}');
     });
 
     tearDown(() async {
-      print('[TMP] Test: tearDown started');
       await database.close();
       await DatabaseWrapper.dispose();
-      print('[TMP] Test: tearDown finished');
     });
 
     group('Warning Behavior Tests', () {
@@ -175,8 +170,6 @@ void main() {
     group('Validation Combination Tests', () {
       testWidgets('SCENARIO: Multiple validation errors at once',
           (WidgetTester tester) async {
-        print(
-            '[TMP] Test: SCENARIO: Multiple validation errors at once STARTED');
         final participant = testParticipants.first;
 
         await tester.pumpWidget(

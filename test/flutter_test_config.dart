@@ -8,8 +8,19 @@ import 'package:drift/drift.dart';
 import 'package:logger/logger.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/utils/mode_coordinator.dart';
 
 FutureOr<void> testExecutable(FutureOr<void> Function() testMain) {
+  // Ensure binding is initialized for plugins
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  // GLOBAL SETUP:
+  // Ensure every test starts in a clean "Testing Mode" (in-memory DB, no direct file access).
+  // This bypasses the need for mocking path_provider in most unit/widget tests.
+  setUp(() {
+    ModeCoordinator.setTestingMode();
+  });
+
   // Suppress Drift multiple-database warnings globally for tests.
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 

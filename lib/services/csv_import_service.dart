@@ -102,13 +102,17 @@ abstract class CsvImportService {
 
 /// Default service implementation coordinating CSV parsing and review DTO generation.
 class DefaultCsvImportService implements CsvImportService {
-  DefaultCsvImportService({InputParser Function()? parserFactory})
-      : _parserFactory = parserFactory ?? InputParser.new,
+  DefaultCsvImportService({
+    InputParser Function()? parserFactory,
+    DatabaseInterface? database,
+  })  : _parserFactory = parserFactory ?? InputParser.new,
+        _database = database,
         _logger = AppLogger.l {
     _columnKeyToIndex = _buildColumnKeyIndex(CsvColumnDefinitions.main);
   }
 
   final InputParser Function() _parserFactory;
+  final DatabaseInterface? _database;
   final Logger _logger;
   late final Map<String, int> _columnKeyToIndex;
 
@@ -210,7 +214,8 @@ class DefaultCsvImportService implements CsvImportService {
     required Map<int, CsvRowDecision> decisions,
   }) async {
     final List<int> approvedIndices = decisions.entries
-        .where((MapEntry<int, CsvRowDecision> entry) => entry.value == CsvRowDecision.approved)
+        .where((MapEntry<int, CsvRowDecision> entry) =>
+            entry.value == CsvRowDecision.approved)
         .map((MapEntry<int, CsvRowDecision> entry) => entry.key)
         .toList();
     final int rejectedCount = decisions.values
@@ -226,10 +231,12 @@ class DefaultCsvImportService implements CsvImportService {
       );
     }
 
-    final DatabaseInterface database = DatabaseWrapper.getDatabase();
+    final DatabaseInterface database =
+        _database ?? DatabaseWrapper.getDatabase();
     final InputParser parser = _parserFactory();
     final Map<int, CsvReviewRow> rowsByIndex = <int, CsvReviewRow>{
-      for (final CsvReviewRow row in session.review.rows) row.originalIndex: row,
+      for (final CsvReviewRow row in session.review.rows)
+        row.originalIndex: row,
     };
 
     final List<int> savedRows = <int>[];
@@ -291,7 +298,8 @@ class DefaultCsvImportService implements CsvImportService {
       return const <int, List<CsvDuplicateCandidate>>{};
     }
 
-    final DatabaseInterface database = DatabaseWrapper.getDatabase();
+    final DatabaseInterface database =
+        _database ?? DatabaseWrapper.getDatabase();
     List<MemoryOsoba> existingParticipants = <MemoryOsoba>[];
     try {
       existingParticipants = await database.getParticipantsByCurrentEvent();
@@ -309,7 +317,8 @@ class DefaultCsvImportService implements CsvImportService {
     }
 
     final InputParser parser = _parserFactory();
-    final Map<int, List<CsvDuplicateCandidate>> result = <int, List<CsvDuplicateCandidate>>{};
+    final Map<int, List<CsvDuplicateCandidate>> result =
+        <int, List<CsvDuplicateCandidate>>{};
 
     for (final CsvReviewRow row in session.review.rows) {
       try {
@@ -344,7 +353,8 @@ class DefaultCsvImportService implements CsvImportService {
     return result;
   }
 
-  Future<MemoryOsoba> _buildPersonFromRow(InputParser parser, CsvReviewRow row) async {
+  Future<MemoryOsoba> _buildPersonFromRow(
+      InputParser parser, CsvReviewRow row) async {
     final Map<int, String> sparseData = <int, String>{};
 
     row.fields.forEach((String key, CsvFieldReview field) {
@@ -354,8 +364,9 @@ class DefaultCsvImportService implements CsvImportService {
       }
       final String? rawValue = field.originalValue?.trim();
       final String? formattedValue = field.normalizedValue?.trim();
-      final String value =
-          (rawValue != null && rawValue.isNotEmpty) ? rawValue : (formattedValue ?? '');
+      final String value = (rawValue != null && rawValue.isNotEmpty)
+          ? rawValue
+          : (formattedValue ?? '');
       sparseData[columnIndex] = value;
     });
 
@@ -399,12 +410,15 @@ class DefaultCsvImportService implements CsvImportService {
     final String? importedRc = _normalized(imported.cisloPojisteni);
     final String? existingRc = _normalized(existing.cisloPojisteni);
 
-    if (importedRc != null && importedRc.isNotEmpty && importedRc == existingRc) {
+    if (importedRc != null &&
+        importedRc.isNotEmpty &&
+        importedRc == existingRc) {
       return 'Stejné rodné číslo';
     }
 
-    final bool sameNames = _normalized(imported.jmeno) == _normalized(existing.jmeno) &&
-        _normalized(imported.prijmeni) == _normalized(existing.prijmeni);
+    final bool sameNames =
+        _normalized(imported.jmeno) == _normalized(existing.jmeno) &&
+            _normalized(imported.prijmeni) == _normalized(existing.prijmeni);
     if (!sameNames) {
       return null;
     }
@@ -418,7 +432,8 @@ class DefaultCsvImportService implements CsvImportService {
     }
 
     if (_normalized(imported.telefonRodice) != null &&
-        _normalized(imported.telefonRodice) == _normalized(existing.telefonRodice)) {
+        _normalized(imported.telefonRodice) ==
+            _normalized(existing.telefonRodice)) {
       return 'Stejné jméno a telefon zákonného zástupce';
     }
 
