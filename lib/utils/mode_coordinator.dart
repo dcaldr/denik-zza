@@ -92,7 +92,10 @@ class ModeCoordinator {
     _currentTestName = testName;
 
     await DatabaseWrapper.dispose(); // Uses file-based database
-    FileManager().setPersistentTestMode('test_outputs/$testName');
+    // Use unique path per run to avoid Windows file locking issues
+    // on previous run's database file.
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    FileManager().setPersistentTestMode('test_outputs/${testName}_$timestamp');
 
     _logger.d('ModeCoordinator: Debug mode - $testName');
   }

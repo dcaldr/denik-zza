@@ -11,12 +11,22 @@ Developers should **never** have to manually set up or tear down the database in
 ## 2. Architecture: The "Smart Singleton" & Global Safety
 We solve the "Immortal Singleton" and "Zombie Database" anti-patterns with a two-layer defense:
 
-### Layer 1: Self-Cleaning Wrapper (`DatabaseWrapper`)
-The `DatabaseWrapper` is refactored to be "smart":
--   **Implicit Tracking**: It tracks *every* database instance it creates, even the implicit ones created by `getDatabase()` in test mode.
--   **Safe Disposal**: It exposes a `dispose()` method that closes all tracked connections and resets the state to production.
+### Layer 1: Resettable Lazy Singleton (`DriftDatabaseConnector`)
+The core database connector is now a **Resettable Lazy Singleton**:
+-   **No More Zombies**: The `reset()` method explicitly kills the connection and nullifies the singleton.
+-   **Lazy Init**: It re-initializes exactly when needed by the next test.
 
-### Layer 2: Global Automation (`flutter_test_config.dart`)
+### Layer 2: Self-Cleaning Wrapper (`DatabaseWrapper`)
+The `DatabaseWrapper` acts as the lifecycle manager:
+-   **Tracks State**: Manages `DatabaseMode` (Testing vs Production).
+-   **Enforces Reset**: Its `dispose()` method calls `DriftDatabaseConnector.reset()`, guaranteeing a clean slate.
+
+### Layer 3: Windows Locking Prevention (`ModeCoordinator`)
+To bypass OS-level file locking on Windows:
+-   **Unique Paths**: Debug Mode generates a **timestamped directory** for every single run (e.g., `test_outputs/debug_session_1700...`).
+-   **Result**: Tests never clash for file access, even if the previous run's file is still locked by the OS.
+
+### Layer 4: Global Automation (`flutter_test_config.dart`)
 We use Flutter's global test configuration to enforce hygiene:
 -   **Global Teardown**: A system-wide `tearDown` hook calls `DatabaseWrapper.dispose()` after *every single test*.
 -   **Result**: Even if a developer forgets `tearDown`, the system cleans up after them.

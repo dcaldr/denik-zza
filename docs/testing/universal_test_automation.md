@@ -58,6 +58,15 @@ test('My Unit Test', () {
 *   **`AppDatabase.testInMemory()`**: Creates Drift databases with `closeStreamsSynchronously: true` to prevent stream leaks in widget tests.
 
 ## 5. Troubleshooting
-
 *   **"Database already open"**: Should not happen with this strategy. If it does, ensure you aren't manually creating `AppDatabase` instances outside of `DatabaseWrapper`.
 *   **"Stream not closed"**: Ensure you are using `DatabaseWrapper` (which uses `testInMemory`) and not creating raw `NativeDatabase` instances.
+
+### Windows-Specific Issues
+*   **"FileSystemException: The process cannot access the file..."**:
+    *   **Cause**: Windows holds file locks on SQLite databases even after the test process tries to delete them.
+    *   **Solution**: The `ModeCoordinator` automatically generates **Unique Timestamped Paths** for every debug run to bypass this. If you are manually managing files, ensure you adopt this strategy.
+
+### Legacy Code
+*   **"Unique constraint failed"**:
+    *   **Cause**: The "Zombie Singleton" bug. A static `DriftDatabaseConnector` from a previous test is still alive and writing to an old database.
+    *   **Solution**: Ensure you are calling `DatabaseWrapper.dispose()` in `tearDown`. This now triggers a hard `reset()` of the Drift singleton.

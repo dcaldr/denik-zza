@@ -129,6 +129,10 @@ class DatabaseWrapper {
       _cachedImplicitTestDb = null;
     }
 
+    // CRITICAL: Reset the Drift singleton to close any open connections
+    // that might be holding file locks (especially in Debug Mode).
+    await DriftDatabaseConnector.reset();
+
     _databaseMode = DatabaseMode.production;
   }
 

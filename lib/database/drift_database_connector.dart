@@ -11,19 +11,29 @@ import 'package:denik_zza/database/drift_database/database.dart';
 /// Singleton Connector to Drift database
 ///
 /// bridge between the app and the sqlite (drift) database
+///
+/// **Architecture Note (Testing):**
+/// This class implements a "Resettable Lazy Singleton".
+/// Unlike a standard final singleton, this instance can be destroyed via [reset].
+/// This is required to support isolated tests where the database connection
+/// must be potentially closed and re-opened pointing to a new path.
+///
+/// **Do not revert to `static final` without alternative isolation strategy.**
 class DriftDatabaseConnector implements DatabaseInterface {
-  static final DriftDatabaseConnector _singleton =
-      DriftDatabaseConnector._internal();
+  static DriftDatabaseConnector? _singleton;
+
   // Singleton factory for default production usage
   factory DriftDatabaseConnector() {
-    return _singleton;
+    _singleton ??= DriftDatabaseConnector._internal();
+    return _singleton!;
   }
+
   DriftDatabaseConnector._internal() : _driftDatabase = AppDatabase();
 
   /// Drift database instance (defaults to production AppDatabase()).
   /// In tests or dev runs, use [DriftDatabaseConnector.withDatabase] to inject
   /// an in-memory AppDatabase created with AppDatabase.testInMemory().
-  final AppDatabase _driftDatabase;
+  AppDatabase _driftDatabase;
 
   /// Test-only: Create a connector bound to a provided [AppDatabase].
   ///
@@ -31,6 +41,15 @@ class DriftDatabaseConnector implements DatabaseInterface {
   /// without affecting the production singleton state globally.
   DriftDatabaseConnector.withDatabase(AppDatabase database)
       : _driftDatabase = database;
+
+  /// Resets the singleton and closes the database connection.
+  /// This is CRITICAL for test isolation.
+  static Future<void> reset() async {
+    if (_singleton != null) {
+      await _singleton!.close();
+      _singleton = null;
+    }
+  }
 
   @override
   Future<int?> addOsobaAndReturnId(MemoryOsoba osoba) async {
