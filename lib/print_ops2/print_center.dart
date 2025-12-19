@@ -2,14 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'print_center_controller.dart';
 import 'print_center_service.dart';
-import 'generate_pdf_template.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import '../database/in_memory_structures_tmp/memory_zaznam.dart';
+import 'package:pdf/pdf.dart';
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
-import '../database/in_memory_structures_tmp/memory_lek.dart';
-import '../database/in_memory_structures_tmp/memory_omezeni.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
 
 /// NOVÉ TISK CENTRUM (UI ONLY) -------------------------------------------------
@@ -242,11 +237,11 @@ class PrintCenterPage extends StatelessWidget {
                     text: ctrl.participantError!,
                   ),
                 const SizedBox(height: 12),
-                Text('Poznámka',
+                Text('Stav systému',
                     style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 4),
                 Text(
-                  'Toto je UI náhled napojený na databázi (read‑only). Skutečné operace tisku a update printed flagů budou doplněny později.',
+                  'Tiskový modul je plně aktivní. Generuje PDF pomocí systémového dialogu a zapisuje stav vytištění zpět do databáze.',
                   style: TextStyle(fontSize: 12, color: AppColors.greyText),
                 ),
               ],
@@ -445,20 +440,31 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
                   alignment: Alignment.centerRight,
                   child: FilledButton.icon(
                     icon: const Icon(Icons.print),
-                    label: const Text('Simulovat tisk'),
-                    onPressed: () => _showConfirmDialog(context, ctrl),
+                    label: const Text('Tisk'),
+                    onPressed: () async {
+                      Future<void> runPrintCycle() async {
+                        try {
+                          await Printing.layoutPdf(
+                            onLayout: (_) => ctrl.generateCurrentPdf(),
+                            name: 'Osoba_${ctrl.selected?.id ?? "export"}',
+                          );
+                          if (context.mounted) {
+                            await _showConfirmDialog(context, ctrl,
+                                onReprint: runPrintCycle);
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Chyba tisku: $e')),
+                            );
+                          }
+                        }
+                      }
+
+                      await runPrintCycle();
+                    },
                   ),
                 ),
-                const SizedBox(height: 32),
-                Text('TODO poznámky',
-                    style: Theme.of(context).textTheme.titleSmall),
-                const SizedBox(height: 4),
-                const Text('''
-- Reálné ověření append režimu
-- Vázání na GeneratePdfTemplate
-- Přidat reálný PdfPreview (výkonnostně oddělit)
-- Správa stavových příznaků isPrinted / wasPrinted
-'''),
               ],
             ),
           ),
@@ -512,11 +518,11 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
           children: [
             Icon(Icons.check_circle, color: AppColors.greenIcon, size: 64),
             const SizedBox(height: 16),
-            Text('Tisk označen jako úspěšný (UI simulace).',
+            Text('Tisk dokončen?',
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             Text(
-              'Ve skutečné implementaci by zde proběhlo nastavení příznaků wasPrinted/isPrinted a uložení do DB.',
+              'Pokud se tisk zdařil, potvrďte prosím úspěch v dialogu.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: AppColors.greyText),
             ),
@@ -544,7 +550,8 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
   }
 
   Future<void> _showConfirmDialog(
-      BuildContext context, PrintCenterController ctrl) async {
+      BuildContext context, PrintCenterController ctrl,
+      {VoidCallback? onReprint}) async {
     await showDialog<void>(
       context: context,
       builder: (c) => AlertDialog(
@@ -603,7 +610,7 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
           TextButton.icon(
             onPressed: () {
               Navigator.of(c).pop();
-              ctrl.simulateResult(PrintSimulationResult.noChange);
+              ctrl.confirmPrintResult(PrintSimulationResult.noChange);
             },
             icon: const Icon(Icons.remove_done),
             label: const Text('Neměnit'),
@@ -621,16 +628,16 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
                     TextButton.icon(
                       onPressed: () {
                         Navigator.of(sc).pop();
-                        ctrl.simulateResult(PrintSimulationResult.reset);
+                        ctrl.confirmPrintResult(PrintSimulationResult.reset);
                       },
                       icon: const Icon(Icons.restart_alt),
                       label: const Text('Jen reset'),
                     ),
                     FilledButton.icon(
                       onPressed: () {
-                        Navigator.of(sc).pop();
-                        ctrl.simulateResult(PrintSimulationResult
-                            .resetAndReprint); /* TODO: trigger reprint flow */
+                        ctrl.confirmPrintResult(
+                            PrintSimulationResult.resetAndReprint);
+                        onReprint?.call();
                       },
                       icon: const Icon(Icons.restart_alt),
                       label: const Text('Reset + znovu'),
@@ -645,7 +652,7 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
           OutlinedButton.icon(
             onPressed: () {
               Navigator.of(c).pop();
-              ctrl.simulateResult(PrintSimulationResult.repeat);
+              ctrl.confirmPrintResult(PrintSimulationResult.repeat);
             },
             icon: const Icon(Icons.replay_circle_filled_outlined),
             label: const Text('Zopakovat'),
@@ -653,7 +660,7 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
           FilledButton.icon(
             onPressed: () {
               Navigator.of(c).pop();
-              ctrl.simulateResult(PrintSimulationResult.success);
+              ctrl.confirmPrintResult(PrintSimulationResult.success);
             },
             icon: const Icon(Icons.check_circle),
             label: const Text('Vše OK'),
@@ -832,20 +839,7 @@ class _PersonPdfPreviewPane extends StatelessWidget {
           ),
           Expanded(
             child: PdfPreview(
-              build: (format) async {
-                final template = GeneratePdfTemplate();
-                final pages = await template.getPdfPages(
-                  osoba: controller.selected!,
-                  omezeniList: controller.omezeni,
-                  lekList: controller.leky,
-                  zaznamList: controller.records,
-                );
-                final doc = pw.Document();
-                for (final p in pages) {
-                  doc.addPage(p);
-                }
-                return doc.save();
-              },
+              build: (format) => controller.generateCurrentPdf(),
               initialPageFormat: PdfPageFormat.a4,
               maxPageWidth: 600,
               canChangeOrientation: false,
@@ -917,40 +911,6 @@ class _EventPrintFlowPageState extends State<SelectedAggregatedPrintPage> {
                     'Agregovaný tisk: záznamy budou řazeny podle času napříč osobami.',
                     style: TextStyle(fontSize: 12, color: AppColors.greyText)),
                 const Spacer(),
-                OutlinedButton.icon(
-                  onPressed: _selectedIds.isEmpty || _loadingPdf
-                      ? null
-                      : () async {
-                          setState(() => _loadingPdf = true);
-                          try {
-                            if (_selectedIds.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      'Vyberte alespoň jednoho účastníka k tisku.'),
-                                  backgroundColor: AppColors.orangeText,
-                                ),
-                              );
-                              return;
-                            }
-
-                            if (context.mounted) {
-                              await showDialog(
-                                context: context,
-                                builder: (_) => _AggregatedPreviewDialog(
-                                    ids: _selectedIds.toList(),
-                                    controller: ctrl),
-                              );
-                            }
-                          } finally {
-                            if (mounted) {
-                              setState(() => _loadingPdf = false);
-                            }
-                          }
-                        },
-                  icon: const Icon(Icons.visibility),
-                  label: const Text('Náhled'),
-                ),
                 const SizedBox(width: 12),
                 FilledButton.icon(
                   onPressed: _selectedIds.isEmpty || _loadingPdf
@@ -970,14 +930,18 @@ class _EventPrintFlowPageState extends State<SelectedAggregatedPrintPage> {
                             }
 
                             if (context.mounted) {
-                              await showDialog(
-                                context: context,
-                                builder: (_) => _AggregatedPreviewDialog(
-                                  ids: _selectedIds.toList(),
-                                  controller: ctrl,
-                                  forceFullPrint: true,
-                                ),
+                              // Real Print execution
+                              await Printing.layoutPdf(
+                                onLayout: (_) => ctrl.generateAggregatedPdf(
+                                    _selectedIds.toList()),
+                                name:
+                                    'Export_Hromadny_${DateTime.now().millisecondsSinceEpoch}',
                               );
+
+                              if (context.mounted) {
+                                await _showAggregatedConfirmDialog(
+                                    context, ctrl);
+                              }
                             }
                           } finally {
                             if (mounted) {
@@ -995,99 +959,49 @@ class _EventPrintFlowPageState extends State<SelectedAggregatedPrintPage> {
       ),
     );
   }
-}
 
-// Dialog s agregovaným PDF náhledem s použitím stejné šablony jako pro jednotlivé osoby
-class _AggregatedPreviewDialog extends StatelessWidget {
-  final List<int> ids;
-  final PrintCenterController controller;
-  final bool forceFullPrint;
-  const _AggregatedPreviewDialog(
-      {required this.ids,
-      required this.controller,
-      this.forceFullPrint = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      child: SizedBox(
-        width: 720,
-        height: 640,
-        child: Column(
+  Future<void> _showAggregatedConfirmDialog(
+      BuildContext context, PrintCenterController ctrl) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false, // Force user decision
+      builder: (c) => AlertDialog(
+        title: Row(
           children: [
-            AppBar(
-              title: const Text('Náhled – Tisk vybraných'),
-              automaticallyImplyLeading: false,
-              actions: [
-                IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close)),
-              ],
-            ),
-            Expanded(
-              child: ids.isEmpty
-                  ? const Center(
-                      child: Text('Není vybrána žádná osoba k tisku.'))
-                  : PdfPreview(
-                      build: (format) async {
-                        final doc = pw.Document();
-
-                        // Process each selected person
-                        for (final pid in ids) {
-                          MemoryOsoba? person;
-                          try {
-                            person = controller.participants
-                                .firstWhere((p) => p.id == pid);
-                          } catch (_) {
-                            continue; // Skip if person not found
-                          }
-
-                          // Fetch all data needed for this person's PDF
-                          final personData =
-                              await controller.fetchParticipantPdfData(pid);
-                          final personRecords =
-                              personData['records'] as List<MemoryZaznam>;
-                          final personMedications =
-                              personData['medications'] as List<MemoryLek>;
-                          final personRestrictions =
-                              personData['restrictions'] as List<MemoryOmezeni>;
-
-                          // Use the same template as single-person printing
-                          final template = GeneratePdfTemplate();
-                          final pages = await template.getPdfPages(
-                            osoba: person,
-                            omezeniList: personRestrictions,
-                            lekList: personMedications,
-                            zaznamList: personRecords,
-                          );
-
-                          // Add all pages for this person to the document
-                          for (final page in pages) {
-                            doc.addPage(page);
-                          }
-                        }
-
-                        return doc.save();
-                      },
-                      initialPageFormat: PdfPageFormat.a4,
-                      maxPageWidth: 600,
-                      canChangeOrientation: false,
-                      canChangePageFormat: false,
-                    ),
-            ),
-            const SizedBox(height: 4),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Poznámka: Pro každou vybranou osobu je vygenerována hlavička s kompletními informacemi, i když nemá žádné záznamy.',
-                  style: TextStyle(fontSize: 11, color: AppColors.greyText),
-                ),
-              ),
-            )
+            Icon(Icons.check_circle, color: AppColors.greenIcon),
+            const SizedBox(width: 8),
+            const Text('Potvrzení hromadného tisku'),
           ],
         ),
+        content: const Text(
+          'Pokud se tisk zdařil, potvrďte prosím úspěch.\n\n'
+          'Tato akce označí všechny vybrané osoby a jejich záznamy jako vytištěné (wasPrinted/isPrinted = true).',
+        ),
+        actions: [
+          OutlinedButton(
+            onPressed: () => Navigator.pop(c), // Cancel = no change
+            child: const Text('Zrušit (nic neměnit)'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(c);
+              await ctrl.confirmAggregatedPrint(_selectedIds.toList());
+              if (mounted) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Hromadný tisk potvrzen a uložen.')),
+                  );
+                }
+                // Optional: Clear selection or stay
+                setState(() {
+                  _selectedIds.clear();
+                });
+              }
+            },
+            child: const Text('Potvrdit úspěšný tisk'),
+          ),
+        ],
       ),
     );
   }
