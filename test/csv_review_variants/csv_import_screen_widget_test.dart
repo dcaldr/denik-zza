@@ -406,8 +406,7 @@ void main() {
 
     // At this point _isPicking should be true (during file picker dialog)
     // The InkWell's onTap should be null when disabled
-    final fileBox = find.byKey(const Key('CsvImportScreen_file_box'));
-    final inkWell = tester.widget<InkWell>(fileBox);
+    find.byKey(const Key('CsvImportScreen_file_box'));
 
     // Note: This test may not catch the _isPicking state reliably because
     // the file picker completes immediately in tests. The key insight is
