@@ -1,8 +1,8 @@
 /// CSV Input parsing controller class
-/// 
+///
 /// Handles CSV file loading and converts data into person objects
 /// Might be subject to change: rename/refactor to different files
-/// 
+///
 /// TODO: CRITICAL - Implement conflict resolution for CSV import
 /// - Detect duplicate persons (by name, rodné číslo, or other criteria)
 /// - Handle person already exists in database scenarios
@@ -16,21 +16,14 @@ import 'package:denik_zza/input/csv_review_models.dart';
 import 'package:denik_zza/input/input_hold.dart';
 import 'package:denik_zza/input/rodne_cislo.dart';
 import 'package:denik_zza/input/text_tools.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 import 'package:logger/logger.dart';
 import '../csv/csv_definitions.dart';
 import '../csv/csv_reader.dart';
 
-var logger = Logger(
-  printer: PrettyPrinter(),
-);
-
-var loggerNoStack = Logger(
-  printer: PrettyPrinter(methodCount: 0),
-);
-
-
 /// Controlling class for CSV parsing and data processing
 class InputParser {
+  static final Logger _logger = AppLogger.l;
   late Future<List<List<String>>?> loadedData; // CSV data loaded from file
   String filePath = ''; // FIXME: change to Path object
   List<InputHold> definition = CsvColumnDefinitions.main;
@@ -50,13 +43,13 @@ class InputParser {
   /// Now accepts sparse data - only processes fields that are actually present
   Future<Answer> parseLine(Map<int, String> sparseData) async {
     Answer answer = Answer();
-    
+
     // For each present field, parse with a fresh instance cloned from definition
     final Map<int, InputHold> parsedHolds = {};
     for (final entry in sparseData.entries) {
       final int defIdx = entry.key;
       final String value = entry.value;
-      
+
       if (defIdx >= 0 && defIdx < definition.length) {
         final InputHold def = definition[defIdx];
         final InputHold hold = def.fresh();
@@ -65,7 +58,7 @@ class InputParser {
       }
     }
     answer.dataMap = parsedHolds;
-    
+
     // TODO: Check errors from between lines
     answer.lineStatus = ParseStatus.ok;
     return answer;
@@ -81,36 +74,39 @@ class InputParser {
       loadedData = reader.readData();
       await parseData();
     } else {
-      logger.e('Cannot load file: $filePath');
+      _logger.e('Cannot load file: $filePath');
     }
   }
 
   /// Converts loaded data into [parsedData]
   /// Also creates [PersonResult]
   Future<void> parseData() async {
-    loggerNoStack.i("Parsing data");
+    _logger.i("Parsing data");
     List<List<String>>? data = await loadedData;
     if (data == null) {
       // TODO: better handling of this
-      loggerNoStack.i("No data loaded.");
+      _logger.i("No data loaded.");
       return;
     }
-    
+
     // For each line - do async parseLine, capture results in a list
     try {
       // If header wasn't prepared (e.g., manual injection of data), build a passthrough mapping
       if (!_headerPrepared) {
-        _buildPassthroughMapping(data.isNotEmpty ? data.first.length : definition.length);
+        _buildPassthroughMapping(
+            data.isNotEmpty ? data.first.length : definition.length);
       }
 
-      parsedData = await Future.wait(List<Future<Answer>>.generate(data.length, (int rowIndex) async {
+      parsedData = await Future.wait(
+          List<Future<Answer>>.generate(data.length, (int rowIndex) async {
         final List<String> line = data[rowIndex];
         // Create sparse data map: only include fields that have corresponding headers
         final Map<int, String> sparseData = {};
         for (int defIdx = 0; defIdx < definition.length; defIdx++) {
           final int hdrIdx = _defToHeaderIdx[defIdx] ?? -1;
           if (hdrIdx >= 0 && hdrIdx < line.length) {
-            sparseData[defIdx] = line[hdrIdx]; // Include even empty values for present columns
+            sparseData[defIdx] =
+                line[hdrIdx]; // Include even empty values for present columns
           }
           // Skip missing columns entirely - don't add them to sparseData
         }
@@ -119,7 +115,7 @@ class InputParser {
         return answer;
       }));
     } catch (e, stackTrace) {
-      logger.e("An error occurred during parsing: $e", stackTrace: stackTrace);
+      _logger.e("An error occurred during parsing: $e", stackTrace: stackTrace);
     }
     review = CsvImportReviewBuilder(
       definition: definition,
@@ -166,26 +162,30 @@ class InputParser {
       }
 
       // Log mandatory headers if missing
-      final int jmenoIdx = definition.indexWhere((d) => TextTools.looseCmp(d.columnName, 'jméno'));
-      final int prijmeniIdx = definition.indexWhere((d) => TextTools.looseCmp(d.columnName, 'příjmení'));
+      final int jmenoIdx = definition
+          .indexWhere((d) => TextTools.looseCmp(d.columnName, 'jméno'));
+      final int prijmeniIdx = definition
+          .indexWhere((d) => TextTools.looseCmp(d.columnName, 'příjmení'));
       if (jmenoIdx >= 0) {
         if ((_defToHeaderIdx[jmenoIdx] ?? -1) == -1) {
-          logger.w('Mandatory column "jméno" not found in header.');
+          _logger.w('Mandatory column "jméno" not found in header.');
         }
       }
       if (prijmeniIdx >= 0) {
         if ((_defToHeaderIdx[prijmeniIdx] ?? -1) == -1) {
-          logger.w('Mandatory column "příjmení" not found in header.');
+          _logger.w('Mandatory column "příjmení" not found in header.');
         }
       }
 
       if (_extraHeaderIdx.isNotEmpty) {
         final extras = _extraHeaderIdx.map((i) => _header![i]).join(', ');
-        loggerNoStack.i('Extra columns ignored: $extras');
+        _logger.i('Extra columns ignored: $extras');
       }
       _headerPrepared = true;
     } catch (e, st) {
-      logger.w('Failed to prepare header mapping, using passthrough. Error: $e', stackTrace: st);
+      _logger.w(
+          'Failed to prepare header mapping, using passthrough. Error: $e',
+          stackTrace: st);
       _buildPassthroughMapping(definition.length);
       _headerPrepared = true;
     }
@@ -237,27 +237,31 @@ class PassingPersonEntry {
   bool get isWarn => status == ParseStatus.warn;
 }
 
-class PersonResult{
-/// persons that were ok during parsing
+class PersonResult {
+  static final Logger _logger = AppLogger.l;
+
+  /// persons that were ok during parsing
   List<MemoryOsoba> goodPersons = [];
+
   /// persons with warnining during parsing
   ///
   /// mostly where something was guessed, in future this could be separeted into format and warn
   /// key is person, value is error
-  Map<MemoryOsoba,ErrorLine> warnPersons = {};
+  Map<MemoryOsoba, ErrorLine> warnPersons = {};
   List<PassingPersonEntry> passingPersons = [];
   List<ErrorLine> errors = [];
-  List<Answer> answers =[];
+  List<Answer> answers = [];
   CsvImportReview? review;
 
   PersonResult(List<Answer> inAnswers, {this.review}) {
-    loggerNoStack.t("Person result");
+    _logger.t("Person result");
     answers = inAnswers;
 
     for (int i = 0; i < inAnswers.length; i++) {
       final Answer answer = inAnswers[i];
       final ParseStatus status = answer.lineStatus;
-      final int originalIndex = answer.originalIndex > 0 ? answer.originalIndex : i + 1;
+      final int originalIndex =
+          answer.originalIndex > 0 ? answer.originalIndex : i + 1;
 
       if (status == ParseStatus.bad) {
         errors.add(answer.error);
@@ -291,32 +295,39 @@ class PersonResult{
         continue;
       }
 
-      loggerNoStack.w("Person result unexpected value");
+      _logger.w("Person result unexpected value");
     }
   }
 
-  Iterable<MemoryOsoba> get passingPersonOsoby => passingPersons.map((PassingPersonEntry entry) => entry.person);
+  Iterable<MemoryOsoba> get passingPersonOsoby =>
+      passingPersons.map((PassingPersonEntry entry) => entry.person);
 
   int get passingCount => passingPersons.length;
 }
-class ErrorLine{
-  String errorMsg="";
-  String lineContents="";
+
+class ErrorLine {
+  String errorMsg = "";
+  String lineContents = "";
   int? lineNum;
 }
 
 class CsvReviewMessageCatalog {
   static const String missingFirstNameValue = 'Jméno nesmí být prázdné.';
-  static const String missingFirstNameColumn = 'Sloupec "jméno" chybí v souboru.';
+  static const String missingFirstNameColumn =
+      'Sloupec "jméno" chybí v souboru.';
   static const String missingSurnameValue = 'Příjmení nesmí být prázdné.';
-  static const String missingSurnameColumn = 'Sloupec "příjmení" chybí v souboru.';
+  static const String missingSurnameColumn =
+      'Sloupec "příjmení" chybí v souboru.';
   static const String rcMissing = 'Rodné číslo není vyplněno.';
   static const String rcInvalidFormat = 'Rodné číslo má neplatný formát.';
-  static const String rcInvalidChecksum = 'Rodné číslo má podezřelý kontrolní součet.';
+  static const String rcInvalidChecksum =
+      'Rodné číslo má podezřelý kontrolní součet.';
   static const String genderInferred = 'Pohlaví bylo odvozeno z rodného čísla.';
   static const String genderMismatch = 'Pohlaví neodpovídá rodnému číslu.';
-  static const String birthdateInferred = 'Datum narození bylo odvozeno z rodného čísla.';
-  static const String birthdateMismatch = 'Datum narození neodpovídá rodnému číslu.';
+  static const String birthdateInferred =
+      'Datum narození bylo odvozeno z rodného čísla.';
+  static const String birthdateMismatch =
+      'Datum narození neodpovídá rodnému číslu.';
   static const String birthdateInvalid = 'Datum narození má neplatný formát.';
   static const String parentEmailInvalid = 'Email rodič má neplatný formát.';
 }
@@ -331,8 +342,10 @@ class CsvImportReviewBuilder {
     required this.definition,
     Set<int>? missingColumnIndices,
     List<String>? unparsedColumns,
-  })  : _missingColumnIndices = Set<int>.unmodifiable(missingColumnIndices ?? const <int>{}),
-        _unparsedColumns = List<String>.unmodifiable(unparsedColumns ?? const <String>[]);
+  })  : _missingColumnIndices =
+            Set<int>.unmodifiable(missingColumnIndices ?? const <int>{}),
+        _unparsedColumns =
+            List<String>.unmodifiable(unparsedColumns ?? const <String>[]);
 
   final List<InputHold> definition;
   final Set<int> _missingColumnIndices;
@@ -404,7 +417,8 @@ class CsvImportReviewBuilder {
       fieldMap[field.columnKey] = field.toFieldReview();
     }
 
-    final int rowIndex = answer.originalIndex > 0 ? answer.originalIndex : _nextFallbackIndex++;
+    final int rowIndex =
+        answer.originalIndex > 0 ? answer.originalIndex : _nextFallbackIndex++;
 
     return CsvReviewRow(
       originalIndex: rowIndex,
@@ -463,7 +477,8 @@ class CsvImportReviewBuilder {
     return current;
   }
 
-  static CsvRowReviewStatus _statusFromSeverity(CsvReviewMessageSeverity severity) {
+  static CsvRowReviewStatus _statusFromSeverity(
+      CsvReviewMessageSeverity severity) {
     switch (severity) {
       case CsvReviewMessageSeverity.error:
         return CsvRowReviewStatus.rejected;
@@ -474,7 +489,8 @@ class CsvImportReviewBuilder {
     }
   }
 
-  static const Map<CsvRowReviewStatus, int> _rowStatusWeights = <CsvRowReviewStatus, int>{
+  static const Map<CsvRowReviewStatus, int> _rowStatusWeights =
+      <CsvRowReviewStatus, int>{
     CsvRowReviewStatus.ok: 0,
     CsvRowReviewStatus.info: 1,
     CsvRowReviewStatus.warn: 2,
@@ -497,7 +513,9 @@ class CsvImportReviewBuilder {
           message: computation.index == 0
               ? CsvReviewMessageCatalog.missingFirstNameColumn
               : CsvReviewMessageCatalog.missingSurnameColumn,
-          code: computation.index == 0 ? 'missing_column_jmeno' : 'missing_column_prijmeni',
+          code: computation.index == 0
+              ? 'missing_column_jmeno'
+              : 'missing_column_prijmeni',
         );
         pushMessage(computation, message);
       }
@@ -505,13 +523,16 @@ class CsvImportReviewBuilder {
     }
 
     if (isMandatory) {
-      if (computation.status == CsvFieldReviewStatus.bad || computation.status == CsvFieldReviewStatus.empty) {
+      if (computation.status == CsvFieldReviewStatus.bad ||
+          computation.status == CsvFieldReviewStatus.empty) {
         final CsvReviewMessage message = CsvReviewMessage(
           severity: CsvReviewMessageSeverity.error,
           message: computation.index == 0
               ? CsvReviewMessageCatalog.missingFirstNameValue
               : CsvReviewMessageCatalog.missingSurnameValue,
-          code: computation.index == 0 ? 'missing_value_jmeno' : 'missing_value_prijmeni',
+          code: computation.index == 0
+              ? 'missing_value_jmeno'
+              : 'missing_value_prijmeni',
         );
         pushMessage(computation, message);
       }
@@ -552,7 +573,8 @@ class CsvImportReviewBuilder {
       );
       return;
     }
-    final RodneCislo? rc = hold.output is RodneCislo ? hold.output as RodneCislo : null;
+    final RodneCislo? rc =
+        hold.output is RodneCislo ? hold.output as RodneCislo : null;
     if (rc == null) {
       pushMessage(
         computation,
@@ -694,7 +716,8 @@ class CsvImportReviewBuilder {
     final _FieldComputation? birthField = _findField(fields, 5);
     if (birthField != null) {
       final dynamic birthValue = birthField.hold.output;
-      final DateTime? providedBirth = birthValue is DateTime ? birthValue : null;
+      final DateTime? providedBirth =
+          birthValue is DateTime ? birthValue : null;
       final DateTime derivedBirth = rc.getDatumNarozeni();
       final String derivedBirthValue = _formatOutput(derivedBirth)!;
       if (providedBirth == null) {
@@ -784,16 +807,15 @@ class _FieldComputation {
   }
 }
 
-  ///4) check errors between lines
-  ///5) create persons for database
-
+///4) check errors between lines
+///5) create persons for database
 
 /// Holds result and stats of entire parsing process
 /// Works regardless of shape
-class InputResult{
+class InputResult {
   List<Answer> answers = [];
-
 }
+
 /// holds one line of processed data, with its outcome
 class Answer {
   // String errorMsg = '';
@@ -832,7 +854,6 @@ class Answer {
     }
   }
 
-
   ///TODO: fix hardcoded indexes
   /// Calculates status of the line before reading from it
   void calculateStatus() {
@@ -852,16 +873,17 @@ class Answer {
 
     final s0 = _dataMap[0]!.status;
     final s1 = _dataMap[1]!.status;
-    
+
     // Check if required fields (jméno, příjmení) are OK
     if (s0 != ParseStatus.ok || s1 != ParseStatus.ok) {
       error.errorMsg += 'Jméno nebo příjmení chybí,\n';
       lineStatus = ParseStatus.bad;
       return;
     }
-    
+
     // If rodné číslo is present, check its status
-    final s2 = _dataMap.containsKey(2) ? _dataMap[2]!.status : ParseStatus.empty;
+    final s2 =
+        _dataMap.containsKey(2) ? _dataMap[2]!.status : ParseStatus.empty;
     if (s2 == ParseStatus.bad) {
       // Missing or invalid RC → warn (not immediate hard fail)
       error.errorMsg += 'Rodné číslo chybí,\n';
@@ -895,19 +917,20 @@ class Answer {
       if (_dataMap.containsKey(index)) {
         return _dataMap[index]!.getOutput() as T?;
       }
-      
+
       // Provide defaults for missing fields that have business-meaningful defaults
-      if (index == 9) { // způsobilost - defaults to false when missing
+      if (index == 9) {
+        // způsobilost - defaults to false when missing
         return false as T?;
       }
-      
+
       return null;
     }
 
     // Get required fields - these must exist for minimal CSV
     final String? jmeno = getFieldOutput<String>(0);
     final String? prijmeni = getFieldOutput<String>(1);
-    
+
     if (jmeno == null || prijmeni == null) {
       throw StateError('Missing required fields: jméno or příjmení');
     }
@@ -934,9 +957,8 @@ class Answer {
         emailRodice: getFieldOutput<String>(8),
         zpusobilost: getFieldOutput<bool>(9),
         zdravotniPojistovna: getFieldOutput<String>(10),
-        poznamka: getFieldOutput<String>(11)
-    );
-    
+        poznamka: getFieldOutput<String>(11));
+
     // if rč is present and valid, use it for guessing missing fields
     if (_dataMap.containsKey(2) && _dataMap[2]!.status == ParseStatus.ok) {
       // if rč in good format for guessing
@@ -948,12 +970,12 @@ class Answer {
     }
     return osoba;
   }
-  }
+}
 
+enum ParseStatus { ok, format, warn, bad, empty }
 
-enum ParseStatus{ ok, format, warn, bad, empty }
 extension ParseStatusCmp on ParseStatus {
-  int compareTo(ParseStatus other) =>index.compareTo(other.index);
+  int compareTo(ParseStatus other) => index.compareTo(other.index);
   bool operator <(ParseStatus other) => index < other.index;
   bool operator >(ParseStatus other) => index > other.index;
   bool operator <=(ParseStatus other) => index <= other.index;

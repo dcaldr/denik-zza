@@ -22,6 +22,8 @@ class ActionDetail extends StatefulWidget {
 }
 
 class _ActionDetailState extends State<ActionDetail> {
+  final Logger _logger = AppLogger.l;
+
   /// Database instance for interacting with the data.
   final DatabaseInterface database = DatabaseWrapper.getDatabase();
   final TextEditingController _searchController = TextEditingController();
@@ -59,7 +61,7 @@ class _ActionDetailState extends State<ActionDetail> {
         _error = null;
       });
     } catch (e) {
-      Logger().e('Chyba při načítání účastníků akce', error: e);
+      _logger.e('Chyba při načítání účastníků akce', error: e);
       if (!mounted) return;
       setState(() {
         _error = e.toString();

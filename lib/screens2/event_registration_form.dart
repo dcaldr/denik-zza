@@ -3,6 +3,7 @@ import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/widgets/custom_date_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 import 'package:logger/logger.dart';
 import '../database/database_wrapper.dart';
 import '../database/in_memory_structures_tmp/memory_akce.dart';
@@ -19,6 +20,7 @@ class EventRegistrationForm extends StatefulWidget {
 }
 
 class _EventRegistrationFormState extends State<EventRegistrationForm> {
+  final Logger _logger = AppLogger.l;
   final _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _controllers = {
     'nadpis': TextEditingController(),
@@ -81,7 +83,7 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
                 DatabaseWrapper.getDatabase()
                     .updateCurrentEvent(lastAction.idAkce!);
               } else {
-                Logger().e(
+                _logger.e(
                     'Sanity check failed: Last action details do not match the form input.');
               }
             });

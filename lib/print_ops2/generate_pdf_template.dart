@@ -23,6 +23,7 @@ import '../database/in_memory_structures_tmp/memory_zaznam.dart';
 /// The class doesn't check if the provided inputs match each other,
 /// it is the responsibility of the caller to provide the correct data.
 class GeneratePdfTemplate {
+  static final Logger _logger = AppLogger.l;
   static const headerPrimaryColor = PdfColor(0, 0, 0);
   static const hiddenColor = PdfColor(0, 0, 0, 0);
 
@@ -95,7 +96,7 @@ class GeneratePdfTemplate {
       _zaznamList!.sort((a, b) => a.casZaznamu!.compareTo(b.casZaznamu!));
       for (int i = 0; i < cmpList.length; i++) {
         if (cmpList[i] != _zaznamList![i]) {
-          AppLogger.l.w(
+          _logger.w(
               "Records are not ordered by time, where expected in GeneratePdfTemplate");
           return true;
         }
@@ -186,10 +187,8 @@ class GeneratePdfTemplate {
     List<MemoryLek>? lekList,
     List<MemoryZaznam>? zaznamList,
   }) async {
-    final logger = AppLogger.l;
-
     if (zaznamList == null || zaznamList.isEmpty) {
-      logger.w('analyzeAndBuildAppend called with empty records list');
+      _logger.w('analyzeAndBuildAppend called with empty records list');
       // Generate as first print
       final result = await _generateBasePdf(
         osoba: osoba,
@@ -225,7 +224,7 @@ class GeneratePdfTemplate {
       hideHeaderOnPage: -1,
     );
     final baselinePages = baselineResult.pageCount;
-    logger.d('Baseline pages: $baselinePages');
+    _logger.d('Baseline pages: $baselinePages');
 
     // Pass 2: Add just the first unprinted record to detect page break
     final probeRecords = [...printedRecords];
@@ -241,7 +240,7 @@ class GeneratePdfTemplate {
       hideHeaderOnPage: -1,
     );
     final pagesAfterFirst = probeResult.pageCount;
-    logger.d('Pages after first new record: $pagesAfterFirst');
+    _logger.d('Pages after first new record: $pagesAfterFirst');
 
     // Pass 3: Generate final PDF with all content
     final analysis = AppendAnalysis.fromPageCounts(
@@ -266,7 +265,7 @@ class GeneratePdfTemplate {
       finalPages: finalResult.pageCount,
     );
 
-    logger.d('Final analysis: $finalAnalysis');
+    _logger.d('Final analysis: $finalAnalysis');
 
     return AppendBuildResult(
       analysis: finalAnalysis,
@@ -287,7 +286,6 @@ class GeneratePdfTemplate {
     required int hideHeaderOnPage,
     bool maskPrintedRecords = false,
   }) async {
-    final logger = AppLogger.l;
     final theme = await _loadFonts();
     final doc = pw.Document();
 
@@ -323,7 +321,7 @@ class GeneratePdfTemplate {
           final content = <pw.Widget>[];
 
           // Add header (with visibility control)
-          final currentPage = _getPageNumber(context, logger);
+          final currentPage = _getPageNumber(context);
           observedPages.add(currentPage);
 
           if (hideHeaderOnPage != currentPage) {
@@ -348,12 +346,12 @@ class GeneratePdfTemplate {
           return content;
         },
         header: (pw.Context context) {
-          final currentPage = _getPageNumber(context, logger);
+          final currentPage = _getPageNumber(context);
           observedPages.add(currentPage);
           return pw.Container();
         },
         footer: (pw.Context context) {
-          final currentPage = _getPageNumber(context, logger);
+          final currentPage = _getPageNumber(context);
           observedPages.add(currentPage);
           // Debug print to trace footer execution
           // logger.d('Building footer for page $currentPage, mask=$maskPrintedRecords');
@@ -378,23 +376,23 @@ class GeneratePdfTemplate {
     int pageCount;
     try {
       pageCount = doc.document.pdfPageList.pages.length;
-      logger.d('Page count from pdfPageList: $pageCount');
+      _logger.d('Page count from pdfPageList: $pageCount');
     } catch (e) {
       pageCount = observedPages.isNotEmpty ? observedPages.length : 1;
-      logger.w('Page count fallback to observed pages: $pageCount');
+      _logger.w('Page count fallback to observed pages: $pageCount');
     }
 
     return DocWithCount(doc, pageCount, bytes);
   }
 
   /// Safely get page number with fallback
-  int _getPageNumber(pw.Context context, Logger logger) {
+  int _getPageNumber(pw.Context context) {
     try {
       final pageNum = context.pageNumber;
       return pageNum > 0 ? pageNum : 1;
     } catch (e) {
       // This occurs in some test-only paths; reduce to debug to avoid noise.
-      logger.d('Failed to get page number, using fallback: $e');
+      _logger.d('Failed to get page number, using fallback: $e');
       return 1;
     }
   }
