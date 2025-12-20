@@ -1,10 +1,11 @@
-///FIXME: Right now it "just works"  but needs to be heavily refactored
+// FIXME: Right now it "just works" but needs to be heavily refactored
 import 'package:denik_zza/database/database_interface.dart';
-import 'package:denik_zza/screens/participants/add_participant_page.dart';
+import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:denik_zza/screens2/widgets/participant_list_item.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:flutter/material.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 import 'package:logger/logger.dart';
 
 import '../../database/database_wrapper.dart';
@@ -176,7 +177,7 @@ class _ActionDetailState extends State<ActionDetail> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          const AddParticipantPage()),
+                                          const ParticipantRegistrationForm()),
                                 );
                               },
                             ),

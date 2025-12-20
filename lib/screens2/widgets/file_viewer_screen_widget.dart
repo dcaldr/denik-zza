@@ -11,7 +11,7 @@ class FileViewerScreen extends StatefulWidget {
   const FileViewerScreen({super.key, required this.initialFilePath});
 
   @override
-  _FileViewerScreenState createState() => _FileViewerScreenState();
+  State<FileViewerScreen> createState() => _FileViewerScreenState();
 }
 
 class _FileViewerScreenState extends State<FileViewerScreen> {

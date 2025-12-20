@@ -16,7 +16,7 @@ class EventRegistrationForm extends StatefulWidget {
   const EventRegistrationForm({super.key, this.action});
 
   @override
-  _EventRegistrationFormState createState() => _EventRegistrationFormState();
+  State<EventRegistrationForm> createState() => _EventRegistrationFormState();
 }
 
 class _EventRegistrationFormState extends State<EventRegistrationForm> {
@@ -63,49 +63,52 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
       );
 
       if (widget.action == null) {
-        DatabaseWrapper.getDatabase().addEvent(newAction).then((success) {
-          final message =
-              success ? 'Akce úspěšně přidána' : 'Přidání Akce se nezdařilo';
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(message)));
+        final success = await DatabaseWrapper.getDatabase().addEvent(newAction);
+        if (!mounted) return;
 
-          if (success) {
-            //mark as selected event
-            //DatabaseWrapper.getDatabase().updateCurrentEvent(newAction.idAkce!);
-            //workaround
-            DatabaseWrapper.getDatabase().getAllZzaActions().then((actions) {
-              final lastAction = actions.last;
-              if (lastAction.nadpis == _controllers['nadpis']!.text &&
-                  DateFormat('dd.MM.yyyy').format(lastAction.odkdy) ==
-                      _controllers['odkdy']!.text &&
-                  DateFormat('dd.MM.yyyy').format(lastAction.dokdy) ==
-                      _controllers['dokdy']!.text) {
-                DatabaseWrapper.getDatabase()
-                    .updateCurrentEvent(lastAction.idAkce!);
-              } else {
-                _logger.e(
-                    'Sanity check failed: Last action details do not match the form input.');
-              }
-            });
-            Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (context) => EventList()));
+        final message =
+            success ? 'Akce úspěšně přidána' : 'Přidání Akce se nezdařilo';
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(message)));
+
+        if (success) {
+          //mark as selected event
+          //DatabaseWrapper.getDatabase().updateCurrentEvent(newAction.idAkce!);
+          //workaround
+          final actions =
+              await DatabaseWrapper.getDatabase().getAllZzaActions();
+          if (!mounted) return;
+
+          final lastAction = actions.last;
+          if (lastAction.nadpis == _controllers['nadpis']!.text &&
+              DateFormat('dd.MM.yyyy').format(lastAction.odkdy) ==
+                  _controllers['odkdy']!.text &&
+              DateFormat('dd.MM.yyyy').format(lastAction.dokdy) ==
+                  _controllers['dokdy']!.text) {
+            DatabaseWrapper.getDatabase()
+                .updateCurrentEvent(lastAction.idAkce!);
+          } else {
+            _logger.e(
+                'Sanity check failed: Last action details do not match the form input.');
           }
-        });
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => EventList()));
+        }
       } else {
-        DatabaseWrapper.getDatabase()
-            .updateEvent(action: newAction)
-            .then((updateResult) {
-          final message = updateResult > 0
-              ? 'Akce úspěšně aktualizována'
-              : 'Aktualizace Akce se nezdařila';
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(message)));
+        final updateResult =
+            await DatabaseWrapper.getDatabase().updateEvent(action: newAction);
+        if (!mounted) return;
 
-          if (updateResult > 0) {
-            Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (context) => EventList()));
-          }
-        });
+        final message = updateResult > 0
+            ? 'Akce úspěšně aktualizována'
+            : 'Aktualizace Akce se nezdařila';
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(message)));
+
+        if (updateResult > 0) {
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => EventList()));
+        }
       }
     }
   }
