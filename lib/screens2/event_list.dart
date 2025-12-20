@@ -15,7 +15,7 @@ class EventList extends StatefulWidget {
   EventList({super.key});
 
   @override
-  _EventListState createState() => _EventListState();
+  State<EventList> createState() => _EventListState();
 }
 
 class _EventListState extends State<EventList> {
@@ -47,6 +47,7 @@ class _EventListState extends State<EventList> {
           style: EventListConstants.titleStyle),
       actions: <Widget>[
         IconButton(
+          key: const Key('EventList_add_button'),
           icon: const Icon(Icons.add),
           onPressed: () => _navigateToEventRegistration(context),
         ),
@@ -105,6 +106,7 @@ class _EventListState extends State<EventList> {
           return Text('Error: ${participantSnapshot.error}');
         } else {
           return ListTile(
+            key: Key('EventList_select_action_${action.idAkce}'),
             title: Text(action.nadpis),
             subtitle: Text(
                 '${dateFormat.format(action.odkdy)} - ${dateFormat.format(action.dokdy)}'),

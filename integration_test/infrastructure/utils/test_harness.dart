@@ -1,0 +1,32 @@
+import 'package:denik_zza/main.dart';
+import 'package:denik_zza/utils/mode_coordinator.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
+
+/// The root harness for all Integration Tests.
+///
+/// Handles:
+/// 1. Initializing IntegrationTestWidgetsFlutterBinding
+/// 2. Setting ModeCoordinator to 'integrationTest' (Mock System, Isolated DB)
+/// 3. Initializing Locale (cs_CZ)
+class TestHarness {
+  static Future<void> setUp() async {
+    IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+    // Strict CZ Locale (matches main.dart)
+    Intl.defaultLocale = 'cs_CZ';
+    await initializeDateFormatting('cs_CZ', null);
+
+    // Forces Mock System Interface & Isolated Directory logic
+    await ModeCoordinator.setIntegrationTestMode(
+        testName: 'integration_harness');
+  }
+
+  static Future<void> pumpApp(WidgetTester tester) async {
+    // MyApp includes MaterialApp, ZzaTheme, and Localization
+    await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+  }
+}
