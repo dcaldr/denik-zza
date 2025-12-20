@@ -1,5 +1,6 @@
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/input/file_manager.dart';
+import 'package:denik_zza/services/system/system_interface.dart';
 import 'package:logger/logger.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:path_provider/path_provider.dart';
@@ -7,9 +8,9 @@ import 'dart:io';
 
 /// Centralized coordinator for application mode switching.
 ///
-/// Synchronizes DatabaseWrapper and FileManager to ensure they always use
-/// compatible modes. Provides single point of control for switching between
-/// testing, debugging, and production modes.
+/// Synchronizes DatabaseWrapper, FileManager, and SystemInterface to ensure
+/// they always use compatible modes. Provides single point of control for
+/// switching between testing, debugging, and production modes.
 ///
 /// ## Usage Examples:
 ///
@@ -50,7 +51,7 @@ class ModeCoordinator {
   static AppMode get currentMode => _currentMode;
   static String? get currentTestName => _currentTestName;
 
-  /// Switch to testing mode: in-memory database, no file operations.
+  /// Switch to testing mode: in-memory database, no file operations, MOCKED SystemInterface.
   /// Fastest mode for unit and widget tests.
   static void setTestingMode() {
     _currentMode = AppMode.testing;
@@ -58,14 +59,16 @@ class ModeCoordinator {
 
     DatabaseWrapper.setTestMode();
     FileManager().setTestMode();
+    SystemInterface.registerWith(TestSystemInterface());
 
-    _logger.d('ModeCoordinator: Switched to testing mode (in-memory)');
+    _logger.d(
+        'ModeCoordinator: Switched to testing mode (in-memory, mock system)');
   }
 
   /// Switch to integration test mode: in-memory database, real file operations
-  /// in isolated directory.
+  /// in isolated directory, MOCKED SystemInterface (no OS dialogs).
   ///
-  /// Each test gets its own subfolder: Documents/DenikZZA/integration_test_output/<testName>/
+  /// Each test gets its own subfolder: Documents/DenikZZA/integration_test_output/`testName`/
   ///
   /// **When to use:** Integration tests that need to verify file operations
   /// (PDF generation, file uploads, etc.) while keeping data separate from production.
@@ -80,6 +83,9 @@ class ModeCoordinator {
     final integrationTestDir = await _getIntegrationTestDirectory(testName);
     FileManager().setMode(FileManagerMode.production); // Real file operations
     FileManager().homeDir = integrationTestDir; // But in test directory
+
+    // Use Mock System Interface (No OS Dialogs)
+    SystemInterface.registerWith(TestSystemInterface());
 
     _logger.i('ModeCoordinator: Integration test mode - $testName');
     _logger.d('Integration test directory: ${integrationTestDir.path}');
@@ -97,22 +103,27 @@ class ModeCoordinator {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     FileManager().setPersistentTestMode('test_outputs/${testName}_$timestamp');
 
+    // Debug Mode uses REAL system interfaces (unless we want to test mocks explicitly)
+    // For now, keep it real to debug interactions.
+    SystemInterface.registerWith(RealSystemInterface());
+
     _logger.d('ModeCoordinator: Debug mode - $testName');
   }
 
-  /// Switch to production mode: real database, real file operations.
+  /// Switch to production mode: real database, real file operations, REAL system interface.
   static Future<void> setProductionMode() async {
     _currentMode = AppMode.production;
     _currentTestName = null;
 
     await DatabaseWrapper.dispose();
     FileManager().setProductionMode();
+    SystemInterface.registerWith(RealSystemInterface());
 
     _logger.d('ModeCoordinator: Switched to production mode');
   }
 
   /// Get integration test directory for a specific test.
-  /// Creates: Documents/DenikZZA/integration_test_output/<testName>/
+  /// Creates: Documents/DenikZZA/integration_test_output/`testName`/
   static Future<Directory> _getIntegrationTestDirectory(String testName) async {
     final docs = await getApplicationDocumentsDirectory();
     final integrationDir =

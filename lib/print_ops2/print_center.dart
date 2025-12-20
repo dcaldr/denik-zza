@@ -6,6 +6,7 @@ import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
+import 'package:denik_zza/services/system/system_interface.dart';
 
 /// NOVÉ TISK CENTRUM (UI ONLY) -------------------------------------------------
 /// Tento modul obsahuje pouze uživatelské rozhraní bez implementované logiky tisku.
@@ -395,42 +396,43 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
                 Text('Režim tisku',
                     style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
-                RadioGroup<PrintMode>(
-                  groupValue: ctrl.mode,
-                  onChanged: (v) {
-                    if (v != null) ctrl.changeMode(v);
-                  },
-                  child: Column(
-                    children: [
-                      RadioListTile<PrintMode>(
-                        value: PrintMode.full,
-                        title: const Text('Úplný tisk'),
-                        subtitle: const Text(
-                            'Vygeneruje celý dokument od začátku (reset).'),
+                Column(
+                  children: [
+                    RadioListTile<PrintMode>(
+                      value: PrintMode.full,
+                      groupValue: ctrl.mode,
+                      onChanged: (v) {
+                        if (v != null) ctrl.changeMode(v);
+                      },
+                      title: const Text('Úplný tisk'),
+                      subtitle: const Text(
+                          'Vygeneruje celý dokument od začátku (reset).'),
+                    ),
+                    RadioListTile<PrintMode>(
+                      value: PrintMode.append,
+                      groupValue: ctrl.mode,
+                      onChanged: (v) {
+                        if (v != null) ctrl.changeMode(v);
+                      },
+                      title: Row(
+                        children: const [
+                          Text('Dostisk (append)'),
+                          SizedBox(width: 6),
+                          Tooltip(
+                              message: 'Pouze nové záznamy, ostatní průhledně',
+                              child: Icon(Icons.info_outline, size: 16)),
+                        ],
                       ),
-                      RadioListTile<PrintMode>(
-                        value: PrintMode.append,
-                        title: Row(
-                          children: const [
-                            Text('Dostisk (append)'),
-                            SizedBox(width: 6),
-                            Tooltip(
-                                message:
-                                    'Pouze nové záznamy, ostatní průhledně',
-                                child: Icon(Icons.info_outline, size: 16)),
-                          ],
-                        ),
-                        subtitle: _appendSubtitle(ctrl),
-                        secondary: (ctrl.appendPossible == false)
-                            ? Tooltip(
-                                message:
-                                    'Nelze použít – pořadí nebo stav neumožňuje dostisk',
-                                child: Icon(Icons.block,
-                                    color: AppColors.greyIcon))
-                            : null,
-                      ),
-                    ],
-                  ),
+                      subtitle: _appendSubtitle(ctrl),
+                      secondary: (ctrl.appendPossible == false)
+                          ? Tooltip(
+                              message:
+                                  'Nelze použít – pořadí nebo stav neumožňuje dostisk',
+                              child:
+                                  Icon(Icons.block, color: AppColors.greyIcon))
+                          : null,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 _AppendHintBox(
@@ -444,7 +446,7 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
                     onPressed: () async {
                       Future<void> runPrintCycle() async {
                         try {
-                          await Printing.layoutPdf(
+                          await SystemInterface.instance.printPdf(
                             onLayout: (_) => ctrl.generateCurrentPdf(),
                             name: 'Osoba_${ctrl.selected?.id ?? "export"}',
                           );

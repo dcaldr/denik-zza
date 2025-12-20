@@ -2,29 +2,30 @@ import 'dart:typed_data';
 
 import 'package:denik_zza/screens2/csv/import_screen.dart';
 import 'package:denik_zza/screens2/csv/table_overview_screen.dart';
+import 'package:denik_zza/services/system/system_interface.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:pdf/pdf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late _StubFilePicker stubPlatform;
-  late _FakeFilePicker fakePlatform;
+  late MockSystemInterface mockSystem;
 
   setUp(() {
-    stubPlatform = _StubFilePicker();
-    fakePlatform = _FakeFilePicker(stubPlatform);
-    FilePicker.platform = fakePlatform;
+    mockSystem = MockSystemInterface();
+    SystemInterface.registerWith(mockSystem);
   });
 
   tearDown(() {
-    FilePicker.platform = stubPlatform;
+    // Reset to real implementation or test stub default if needed
+    SystemInterface.registerWith(RealSystemInterface());
   });
 
   testWidgets('shows validation error for non-CSV selection',
       (WidgetTester tester) async {
-    fakePlatform.enqueueResult(
+    mockSystem.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(name: 'report.txt', size: 0, path: 'report.txt'),
       ]),
@@ -43,7 +44,7 @@ void main() {
 
   testWidgets('enables continue button after valid selection',
       (WidgetTester tester) async {
-    fakePlatform.enqueueResult(
+    mockSystem.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(
           name: 'first.csv',
@@ -66,7 +67,7 @@ void main() {
 
   testWidgets('shows snackbar when payload preparation fails',
       (WidgetTester tester) async {
-    fakePlatform.enqueueResult(
+    mockSystem.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(
           name: 'broken.csv',
@@ -94,7 +95,7 @@ void main() {
 
   testWidgets('navigates to table overview after continue',
       (WidgetTester tester) async {
-    fakePlatform.enqueueResult(
+    mockSystem.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(
           name: 'first.csv',
@@ -136,7 +137,7 @@ void main() {
   testWidgets('handles user cancelling file picker gracefully',
       (WidgetTester tester) async {
     // User cancels file picker - returns null
-    fakePlatform.enqueueResult(null);
+    mockSystem.enqueueResult(null);
 
     await tester.pumpWidget(const MaterialApp(home: CsvImportScreen()));
 
@@ -156,7 +157,7 @@ void main() {
 
   testWidgets('prevents double-tap during file picking',
       (WidgetTester tester) async {
-    fakePlatform.enqueueResult(
+    mockSystem.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(
           name: 'test.csv',
@@ -189,7 +190,7 @@ void main() {
   testWidgets('cleans up when disposed during file picking',
       (WidgetTester tester) async {
     // This test verifies the dispose() cleanup doesn't crash
-    fakePlatform.enqueueResult(
+    mockSystem.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(
           name: 'test.csv',
@@ -216,7 +217,7 @@ void main() {
 
   testWidgets('prevents navigation during existing navigation attempt',
       (WidgetTester tester) async {
-    fakePlatform.enqueueResult(
+    mockSystem.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(
           name: 'test.csv',
@@ -254,7 +255,7 @@ void main() {
   testWidgets('handles empty file picker result (no files)',
       (WidgetTester tester) async {
     // Edge case: FilePickerResult exists but files list is empty
-    fakePlatform.enqueueResult(FilePickerResult(<PlatformFile>[]));
+    mockSystem.enqueueResult(FilePickerResult(<PlatformFile>[]));
 
     await tester.pumpWidget(const MaterialApp(home: CsvImportScreen()));
 
@@ -268,7 +269,7 @@ void main() {
 
   testWidgets('handles file with empty name gracefully',
       (WidgetTester tester) async {
-    fakePlatform.enqueueResult(
+    mockSystem.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(
           name: '', // Empty name - should trigger validation error
@@ -297,7 +298,7 @@ void main() {
 
   testWidgets('file box click triggers file picker',
       (WidgetTester tester) async {
-    fakePlatform.enqueueResult(
+    mockSystem.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(name: 'test.csv', size: 100, path: 'test.csv'),
       ]),
@@ -315,7 +316,7 @@ void main() {
 
   testWidgets('only filename is selectable, not label prefix',
       (WidgetTester tester) async {
-    fakePlatform.enqueueResult(
+    mockSystem.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(name: 'my_file.csv', size: 100, path: 'my_file.csv'),
       ]),
@@ -391,7 +392,7 @@ void main() {
   testWidgets('file box click disabled when picking',
       (WidgetTester tester) async {
     // Queue result for the delayed picker
-    fakePlatform.enqueueResult(
+    mockSystem.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(name: 'test.csv', size: 100, path: 'test.csv'),
       ]),
@@ -420,7 +421,7 @@ void main() {
 
   testWidgets('filename without extension shows correctly',
       (WidgetTester tester) async {
-    fakePlatform.enqueueResult(
+    mockSystem.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(name: 'noextension', size: 100, path: 'noextension'),
       ]),
@@ -441,7 +442,7 @@ void main() {
 
   testWidgets('file box shows filename in SelectableText widget',
       (WidgetTester tester) async {
-    fakePlatform.enqueueResult(
+    mockSystem.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(name: 'data_file.csv', size: 200, path: 'data_file.csv'),
       ]),
@@ -474,10 +475,7 @@ void main() {
   });
 }
 
-class _FakeFilePicker extends FilePicker {
-  _FakeFilePicker(this._delegate);
-
-  final FilePicker _delegate;
+class MockSystemInterface implements SystemInterface {
   final List<FilePickerResult?> _queue = <FilePickerResult?>[];
 
   void enqueueResult(FilePickerResult? result) {
@@ -486,18 +484,16 @@ class _FakeFilePicker extends FilePicker {
 
   @override
   Future<FilePickerResult?> pickFiles({
-    bool allowCompression = true,
-    bool allowMultiple = false,
-    List<String>? allowedExtensions,
-    int compressionQuality = 30,
     String? dialogTitle,
     String? initialDirectory,
-    bool lockParentWindow = false,
-    void Function(FilePickerStatus status)? onFileLoading,
-    bool readSequential = false,
     FileType type = FileType.any,
+    List<String>? allowedExtensions,
+    dynamic onFileLoading,
+    bool allowMultiple = false,
     bool withData = false,
     bool withReadStream = false,
+    bool lockParentWindow = false,
+    bool readSequential = false,
   }) async {
     if (_queue.isEmpty) {
       return null;
@@ -506,89 +502,14 @@ class _FakeFilePicker extends FilePicker {
   }
 
   @override
-  Future<bool?> clearTemporaryFiles() {
-    return _delegate.clearTemporaryFiles();
-  }
-
-  @override
-  Future<String?> saveFile({
-    List<String>? allowedExtensions,
-    Uint8List? bytes,
-    String? dialogTitle,
-    String? fileName,
-    String? initialDirectory,
-    bool lockParentWindow = false,
-    FileType type = FileType.any,
-  }) {
-    return _delegate.saveFile(
-      allowedExtensions: allowedExtensions,
-      bytes: bytes,
-      dialogTitle: dialogTitle,
-      fileName: fileName,
-      initialDirectory: initialDirectory,
-      lockParentWindow: lockParentWindow,
-      type: type,
-    );
-  }
-
-  @override
-  Future<String?> getDirectoryPath({
-    String? dialogTitle,
-    String? initialDirectory,
-    bool lockParentWindow = false,
-  }) {
-    return _delegate.getDirectoryPath(
-      dialogTitle: dialogTitle,
-      initialDirectory: initialDirectory,
-      lockParentWindow: lockParentWindow,
-    );
-  }
-}
-
-class _StubFilePicker extends FilePicker {
-  @override
-  Future<FilePickerResult?> pickFiles({
-    bool allowCompression = true,
-    bool allowMultiple = false,
-    List<String>? allowedExtensions,
-    int compressionQuality = 30,
-    String? dialogTitle,
-    String? initialDirectory,
-    bool lockParentWindow = false,
-    void Function(FilePickerStatus status)? onFileLoading,
-    bool readSequential = false,
-    FileType type = FileType.any,
-    bool withData = false,
-    bool withReadStream = false,
+  Future<void> printPdf({
+    required String name,
+    required Future<Uint8List> Function(PdfPageFormat format) onLayout,
+    PdfPageFormat format = PdfPageFormat.standard,
+    bool usePrinterSettings = false,
+    bool dynamicLayout = true,
   }) async {
-    return null;
-  }
-
-  @override
-  Future<bool?> clearTemporaryFiles() async {
-    return true;
-  }
-
-  @override
-  Future<String?> saveFile({
-    List<String>? allowedExtensions,
-    Uint8List? bytes,
-    String? dialogTitle,
-    String? fileName,
-    String? initialDirectory,
-    bool lockParentWindow = false,
-    FileType type = FileType.any,
-  }) async {
-    return null;
-  }
-
-  @override
-  Future<String?> getDirectoryPath({
-    String? dialogTitle,
-    String? initialDirectory,
-    bool lockParentWindow = false,
-  }) async {
-    return null;
+    // Stub implementation
   }
 }
 

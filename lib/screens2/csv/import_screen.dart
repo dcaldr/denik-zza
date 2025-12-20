@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:denik_zza/screens2/csv/table_overview_screen.dart';
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
@@ -13,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/design_system/tokens/app_radii.dart';
+import 'package:denik_zza/services/system/system_interface.dart';
 
 /// Entry screen for the CSV review flow allowing the operator to pick a file
 /// and launch the table overview review experience.
@@ -178,7 +178,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
     });
 
     try {
-      final FilePickerResult? result = await FilePicker.platform.pickFiles(
+      final FilePickerResult? result = await SystemInterface.instance.pickFiles(
         allowMultiple: false,
         type: FileType.custom,
         allowedExtensions: const <String>['csv'],

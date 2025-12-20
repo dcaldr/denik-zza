@@ -21,9 +21,16 @@ To enable automated integration testing, we must abstract the native OS interact
 ## Proposed Changes
 
 ### 1. System Service Layer
-#### [NEW] [system_interface.dart](file:///d:/dev/my_flutter_projects/our-awesome-semestral/lib/services/system/system_interface.dart)
-Define the abstract contract and the production implementation.
-*   **Validation:** Run `flutter analyze`.
+#### [x] Implement Facade
+- [x] Create `lib/services/system/system_interface.dart`.
+- [x] Update `lib/utils/mode_coordinator.dart` to inject `SystemInterface`.
+- [x] Refactor `import_screen.dart` and `print_center.dart` to use `SystemInterface.instance`.
+- [x] **Validation**: Run `flutter analyze` and `flutter test`.
+
+#### [ ] Manual Verification (Dev Mode)
+- [ ] Run app in Debug Mode.
+- [ ] Verify `Import Screen` opens native file picker.
+- [ ] Verify `Print Center` opens native print dialog / generating PDF.
 
 ```dart
 abstract class SystemInterface {
