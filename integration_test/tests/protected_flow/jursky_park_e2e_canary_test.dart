@@ -6,7 +6,6 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import '../../infrastructure/data/simulation_profiles.dart';
 import '../../infrastructure/robots/dashboard_robot.dart';
 import '../../infrastructure/robots/event_detail_robot.dart';
-import '../../infrastructure/data/hardcoded_test_setup.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +16,8 @@ void main() {
         (tester) async {
       // 1. Setup & Logging
       print('DEBUG: Starting Canary Test Setup');
-      HardcodedTestSetup.setup();
+      // Inline setup to avoid extra file dependency
+      // AppLogger.configure(true); // Uncomment if AppLogger is improved to handle test environment
 
       // 2. Database & Seeding
       print('DEBUG: Seeding Database');
