@@ -287,6 +287,7 @@ class _ParticipantRegistrationFormState
               AppSpacing.largeGap,
               Center(
                 child: FilledButton(
+                  key: const Key('ParticipantRegistrationForm_submit_button'),
                   onPressed: _submitForm,
                   child: Text(
                       widget.osoba == null ? 'Registrovat' : 'Uložit změny'),
@@ -317,6 +318,8 @@ class _ParticipantRegistrationFormState
               Expanded(
                   flex: 2,
                   child: CustomDatePicker(
+                      key: const Key(
+                          'ParticipantRegistrationForm_datumNarozeni_input'),
                       controller: _controllers['datumNarozeni']!,
                       labelText: 'Datum Narození')),
               const SizedBox(width: AppSpacing.s),
@@ -355,6 +358,7 @@ class _ParticipantRegistrationFormState
   Widget _buildTextField(String key, String labelText, String? validatorText,
       {int maxLines = 1, String? hintText}) {
     return TextFormField(
+      key: Key('ParticipantRegistrationForm_${key}_input'),
       controller: _controllers[key],
       decoration: InputDecoration(
         labelText: labelText,
@@ -387,6 +391,8 @@ class _ParticipantRegistrationFormState
           children: [
             Expanded(
               child: CheckboxListTile(
+                key: const Key(
+                    'ParticipantRegistrationForm_bezinfekcnost_checkbox'),
                 title: const Text('Má bezinfekčnost'),
                 value: _bezinfekcnost,
                 onChanged: (bool? value) {
@@ -399,6 +405,8 @@ class _ParticipantRegistrationFormState
             ),
             Expanded(
               child: CheckboxListTile(
+                key: const Key(
+                    'ParticipantRegistrationForm_zpusobilost_checkbox'),
                 title: const Text('Má potvrzení o způsobilosti'),
                 value: _zpusobilost,
                 onChanged: (bool? value) {

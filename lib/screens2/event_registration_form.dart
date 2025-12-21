@@ -132,12 +132,14 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
                 children: [
                   Expanded(
                       child: CustomDatePicker(
+                          key: const Key('EventRegistrationForm_odkdy_input'),
                           controller: _controllers['odkdy']!,
                           labelText: 'Od kdy',
                           validatorText: 'Prosím zadejte datum začátku')),
                   const SizedBox(width: AppSpacing.s),
                   Expanded(
                       child: CustomDatePicker(
+                          key: const Key('EventRegistrationForm_dokdy_input'),
                           controller: _controllers['dokdy']!,
                           labelText: 'Do kdy',
                           validatorText: 'Prosím zadejte datum konce')),
@@ -145,6 +147,7 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
               ),
               AppSpacing.largeGap,
               FilledButton(
+                  key: const Key('EventRegistrationForm_submit_button'),
                   onPressed: _submitForm,
                   child:
                       Text(widget.action == null ? 'Odeslat' : 'Aktualizovat')),
@@ -158,6 +161,7 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
   Widget _buildTextFormField(
       String key, String labelText, String validatorText) {
     return TextFormField(
+      key: Key('EventRegistrationForm_${key}_input'),
       controller: _controllers[key],
       decoration: InputDecoration(
         labelText: labelText,
@@ -171,6 +175,7 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
   Widget _buildTextFieldWithCounter(
       String key, String labelText, int maxLength) {
     return TextField(
+      key: Key('EventRegistrationForm_${key}_input'),
       controller: _controllers[key],
       maxLines: 3,
       maxLength: maxLength,

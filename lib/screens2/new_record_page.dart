@@ -1274,7 +1274,7 @@ class NewRecordPageState extends State<NewRecordPage> {
 
                                   // Title field
                                   TextFormField(
-                                    key: const Key('title_field'),
+                                    key: const Key('NewRecordPage_title_input'),
                                     controller: _titleController,
                                     enabled: _selectedParticipant != null,
                                     maxLines: 1,
@@ -1369,7 +1369,8 @@ class NewRecordPageState extends State<NewRecordPage> {
                                         Expanded(
                                           flex: 4,
                                           child: TextFormField(
-                                            key: const Key('description_field'),
+                                            key: const Key(
+                                                'NewRecordPage_description_input'),
                                             controller: _descriptionController,
                                             enabled:
                                                 _selectedParticipant != null,
@@ -1455,7 +1456,8 @@ class NewRecordPageState extends State<NewRecordPage> {
                                         Expanded(
                                           flex: 1,
                                           child: TextFormField(
-                                            key: const Key('poznamka_field'),
+                                            key: const Key(
+                                                'NewRecordPage_poznamka_input'),
                                             controller: _poznamkaController,
                                             enabled:
                                                 _selectedParticipant != null,
@@ -1546,7 +1548,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                 Expanded(
                                   flex: 3,
                                   child: FilledButton.icon(
-                                    key: const Key('save_button'),
+                                    key: const Key('NewRecordPage_save_button'),
                                     onPressed: _isSaving ? null : _saveRecord,
                                     // Removed styleFrom to use theme styling
                                     icon: _isSaving
@@ -1579,7 +1581,8 @@ class NewRecordPageState extends State<NewRecordPage> {
                                 Expanded(
                                   flex: 2,
                                   child: OutlinedButton.icon(
-                                    key: const Key('cancel_button'),
+                                    key: const Key(
+                                        'NewRecordPage_cancel_button'),
                                     onPressed:
                                         _isSaving ? null : _cancelAndReturn,
                                     style: OutlinedButton.styleFrom(
