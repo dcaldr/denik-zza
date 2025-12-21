@@ -145,6 +145,7 @@ _Last generated: 2025-10-05_
 
 ## 11. Testing Architecture
 - **Strategy:** Documented in `rules/testingRules.md` emphasising pyramid (unit > widget > integration > golden).
+- **Robot Verification:** Page Object Robots (`integration_test/infrastructure/robots/`) MUST be verified with isolated Widget Tests (`test/robots/`) before use in E2E flows to prevent key mismatches.
 - **Helpers:** `test/utils/` provides database helpers, unified setup, fake loggers. `HardcodedTestSetup` seeds data for integration flows.
 - **Boundaries:** Tests toggle DatabaseWrapper modes or create in-memory `AppDatabase` instances. Widget tests rely on keys per architecture guideline.
 - **Data strategy:** Hardcoded fixtures and CSV sample data; future direction encourages builders and deterministic clocks.

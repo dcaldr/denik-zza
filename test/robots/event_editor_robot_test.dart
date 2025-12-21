@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/screens2/event_registration_form.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 // Import Robot from integration_test relative path
 import '../../integration_test/infrastructure/robots/event_editor_robot.dart';
 
 void main() {
+  setUpAll(() async {
+    await initializeDateFormatting('cs_CZ', null);
+  });
+
   testWidgets('EventEditorRobot finds input fields on EventRegistrationForm',
       (tester) async {
     // 1. Pump the widget
@@ -12,9 +18,12 @@ void main() {
       const MaterialApp(
         home: EventRegistrationForm(),
         localizationsDelegates: [
-          DefaultMaterialLocalizations.delegate,
-          DefaultWidgetsLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
         ],
+        supportedLocales: [Locale('cs', 'CZ')],
+        locale: Locale('cs', 'CZ'),
       ),
     );
 

@@ -57,7 +57,15 @@ void main() {
     // 6. Verify Dashboard has new event
     log('DEBUG: Verifying New Event');
     await dashboard.verifyPageShown();
-    await dashboard.verifyEventPresent('Test Turnus 2024');
+    // Use PumpAndSettle with longer timeout/loop if needed, but for now ensure we wait.
+    await tester.pumpAndSettle(const Duration(milliseconds: 500));
+    try {
+      await dashboard.verifyEventPresent('Test Turnus 2024');
+    } catch (e) {
+      log('ERROR: Event not found. Dumping widget tree text...');
+      // Simplified dump or just fail
+      rethrow;
+    }
 
     log('DEBUG: Test Complete');
   });

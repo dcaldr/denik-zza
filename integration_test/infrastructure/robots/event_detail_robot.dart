@@ -42,4 +42,10 @@ class EventDetailRobot extends BaseRobot {
   Future<void> tapParticipantDetailButtonByIndex(int index) async {
     await tap(findKey('ParticipantListItem_${index}_detailButton'));
   }
+
+  Finder get addParticipantButton => findKey('EventDetail_addButton');
+
+  Future<void> tapAddParticipant() async {
+    await tap(addParticipantButton);
+  }
 }
