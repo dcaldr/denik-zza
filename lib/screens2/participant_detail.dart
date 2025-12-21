@@ -58,6 +58,7 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
             Text('${widget.participant.jmeno} ${widget.participant.prijmeni}'),
         actions: [
           IconButton(
+            key: const Key('ParticipantDetail_edit_button'),
             icon: const Icon(Icons.edit),
             onPressed: () async {
               final result = await Navigator.of(context).push(
@@ -111,6 +112,7 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 FilledButton.icon(
+                  key: const Key('ParticipantDetail_newRecord_button'),
                   onPressed: () async {
                     final result = await Navigator.of(context).push(
                       MaterialPageRoute(
@@ -127,6 +129,7 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
                   label: const Text('Nový záznam'),
                 ),
                 FilledButton.icon(
+                  key: const Key('ParticipantDetail_print_button'),
                   onPressed: () async {
                     // TODO: This should be moved to a service/controller
                     final woodoo = PrinterWoodoo();
