@@ -1,29 +1,16 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/screens2/event_registration_form.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import '../utils/base_test_widget.dart';
 // Import Robot from integration_test relative path
 import '../../integration_test/infrastructure/robots/event_editor_robot.dart';
 
 void main() {
-  setUpAll(() async {
-    await initializeDateFormatting('cs_CZ', null);
-  });
-
   testWidgets('EventEditorRobot finds input fields on EventRegistrationForm',
       (tester) async {
-    // 1. Pump the widget
+    // 1. Pump the widget using BaseTestWidget which handles localization
     await tester.pumpWidget(
-      const MaterialApp(
-        home: EventRegistrationForm(),
-        localizationsDelegates: [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: [Locale('cs', 'CZ')],
-        locale: Locale('cs', 'CZ'),
+      const BaseTestWidget(
+        child: EventRegistrationForm(),
       ),
     );
 
@@ -44,17 +31,7 @@ void main() {
 
     // 5. Verify Submit
     expect(robot.submitButton, findsOneWidget);
-    // We call submit to verify the method works (interacts with the button)
-    // In a widget test without a real Navigator/DB, this might trigger the button's onPressed.
-    // Since EventRegistrationForm uses DatabaseWrapper, it might fail if we don't mock it?
-    // Wait, EventRegistrationForm uses DatabaseWrapper.getDatabase().
-    // If we run this test, and it calls DB, it might crash or use InMemory one?
-    // The user said "Widget Tests". Usually we verify interactions.
-    // If submit() triggers a DB call, we might error.
-    // BUT user said "make full widget tests".
-    // I will call submit. If it fails, I might need to mock DB.
-    // But for now, let's include it to be "FULL".
-    // Actually, calling submit() is the only way to test the `submit` method of the robot.
+
     try {
       await robot.submit();
     } catch (e) {
