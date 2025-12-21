@@ -34,4 +34,26 @@ class BaseRobot {
 
   /// Helper to find a widget by Text content.
   Finder findText(String text) => find.text(text);
+
+  /// Helper to confirm date picker dialogs.
+  Future<void> confirmDatePicker() async {
+    // Try standard material "OK" (English/Default)
+    if (find.text('OK').evaluate().isNotEmpty) {
+      await tap(find.text('OK'));
+      await pumpAndSettle();
+      return;
+    }
+    // Try "Uložit"
+    if (find.text('Uložit').evaluate().isNotEmpty) {
+      await tap(find.text('Uložit'));
+      await pumpAndSettle();
+      return;
+    }
+    // Try "Vybrat"
+    if (find.text('Vybrat').evaluate().isNotEmpty) {
+      await tap(find.text('Vybrat'));
+      await pumpAndSettle();
+      return;
+    }
+  }
 }

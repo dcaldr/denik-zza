@@ -6,6 +6,20 @@ class DashboardRobot extends BaseRobot {
 
   Finder get addEventButton => findKey('EventList_add_button');
 
+  Future<void> verifyPageShown() async {
+    await pumpAndSettle();
+    expect(find.text('Všechny akce'), findsOneWidget);
+  }
+
+  Future<void> verifyEventPresent(String eventName) async {
+    await pumpAndSettle();
+    expect(find.text(eventName), findsOneWidget);
+  }
+
+  Future<void> tapEvent(String name) async {
+    await tap(find.text(name));
+  }
+
   Future<void> tapCreateNewEvent() async {
     await tap(addEventButton);
   }
