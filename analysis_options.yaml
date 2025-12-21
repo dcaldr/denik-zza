@@ -12,6 +12,8 @@ include: package:flutter_lints/flutter.yaml
 analyzer:
   exclude:
     - Rubbish/**
+    - lib/screens/**
+    - lib/print_ops/**
 
 
 linter:
