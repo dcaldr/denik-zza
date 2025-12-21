@@ -17,7 +17,8 @@ class IntakeActionButtons extends StatelessWidget {
     required this.onFileUploaded,
     required this.handleSave,
     required this.participantRegistrationForm,
-  });  @override
+  });
+  @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -25,11 +26,12 @@ class IntakeActionButtons extends StatelessWidget {
         Tooltip(
           message: 'uložit a přišel',
           child: ElevatedButton.icon(
+            key: const Key('IntakeForm_saveAndArrived_button'),
             onPressed: () => handleSave(context, true),
             icon: const Icon(Icons.check_circle, color: Colors.white),
             label: const Text('uložit a přišel'),
             style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white, 
+              foregroundColor: Colors.white,
               backgroundColor: Colors.green,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(
@@ -42,10 +44,12 @@ class IntakeActionButtons extends StatelessWidget {
         Tooltip(
           message: 'uložit',
           child: ElevatedButton.icon(
+            key: const Key('IntakeForm_save_button'),
             onPressed: () => handleSave(context, false),
             icon: const Icon(Icons.save, color: Colors.white),
             label: const Text('uložit'),
-            style: ElevatedButton.styleFrom(              foregroundColor: Colors.white, 
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white,
               backgroundColor: Colors.blue,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(
@@ -58,13 +62,14 @@ class IntakeActionButtons extends StatelessWidget {
         Tooltip(
           message: 'neukládat',
           child: ElevatedButton.icon(
+            key: const Key('IntakeForm_cancel_button'),
             onPressed: () {
               // Add your onPressed code here!
             },
             icon: const Icon(Icons.cancel, color: Colors.white),
             label: const Text('neukládat'),
             style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white, 
+              foregroundColor: Colors.white,
               backgroundColor: Colors.red,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(
