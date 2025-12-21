@@ -4,6 +4,7 @@ import 'package:denik_zza/services/system/system_interface.dart';
 import 'package:logger/logger.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:intl/intl.dart';
 import 'dart:io';
 
 /// Centralized coordinator for application mode switching.
@@ -51,7 +52,21 @@ class ModeCoordinator {
   /// Available application modes
   static AppMode get currentMode => _currentMode;
   static String? get currentTestName => _currentTestName;
-  static String? get currentRunId => _currentRunId;
+
+  /// Get or generate the current run ID.
+  /// Generated once per process (Dart VM session) on first access.
+  /// Format: yyMMdd_HHmmss (e.g., 241221_220800)
+  static String get currentRunId {
+    _currentRunId ??= DateFormat('yyMMdd_HHmmss').format(DateTime.now());
+    return _currentRunId!;
+  }
+
+  /// Initialize run ID from flutter_test_config.dart.
+  /// Call this ONCE at the start of a test suite to ensure all tests share
+  /// the same run ID. If not called, [currentRunId] auto-generates on first access.
+  static void initializeRunId(String runId) {
+    _currentRunId = runId;
+  }
 
   /// Switch to testing mode: in-memory database, no file operations, MOCKED SystemInterface.
   /// Fastest mode for unit and widget tests.
@@ -81,25 +96,23 @@ class ModeCoordinator {
   ///
   /// **For in-memory (faster) tests:** Use [setTestingMode] instead.
   /// **For canary/critical path tests:** Use [setCanaryTestMode] (same behavior, different folder).
-  static Future<void> setIntegrationTestMode({
-    required String runId,
-    required String testName,
-  }) async {
+  static Future<void> setIntegrationTestMode({required String testName}) async {
     _currentMode = AppMode.integrationTest;
     _currentTestName = testName;
-    _currentRunId = runId;
 
     // Use file-based database for inspection and debugging
     await DatabaseWrapper.dispose();
 
     // Use real file system in isolated per-test directory
-    final testDir = await _getTestDirectory('integration', runId, testName);
+    final testDir =
+        await _getTestDirectory('integration', currentRunId, testName);
     FileManager().setPersistentTestMode(testDir.path);
 
     // Use Mock System Interface (No OS Dialogs)
     SystemInterface.registerWith(TestSystemInterface());
 
-    _logger.i('ModeCoordinator: Integration test mode - $runId/$testName');
+    _logger
+        .i('ModeCoordinator: Integration test mode - $currentRunId/$testName');
     _logger.d('Integration test directory: ${testDir.path}');
   }
 
@@ -107,24 +120,20 @@ class ModeCoordinator {
   ///
   /// Use for critical path tests that need persistent DB for debugging.
   /// Folder: Documents/DenikZZA/test_outputs/canary/run_{runId}/{testName}/
-  static Future<void> setCanaryTestMode({
-    required String runId,
-    required String testName,
-  }) async {
+  static Future<void> setCanaryTestMode({required String testName}) async {
     _currentMode = AppMode.canary;
     _currentTestName = testName;
-    _currentRunId = runId;
 
     // Use file-based database (like debug mode)
     await DatabaseWrapper.dispose();
 
-    final testDir = await _getTestDirectory('canary', runId, testName);
+    final testDir = await _getTestDirectory('canary', currentRunId, testName);
     FileManager().setPersistentTestMode(testDir.path);
 
     // Mock OS dialogs (unlike debug mode)
     SystemInterface.registerWith(TestSystemInterface());
 
-    _logger.i('ModeCoordinator: Canary test mode - $runId/$testName');
+    _logger.i('ModeCoordinator: Canary test mode - $currentRunId/$testName');
     _logger.d('Canary test directory: ${testDir.path}');
   }
 

@@ -12,18 +12,13 @@ import 'package:denik_zza/utils/app_logger.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/utils/mode_coordinator.dart';
 
-/// Run ID shared across all tests in this suite execution.
-/// Generated once per `flutter test integration_test/` invocation.
-String? _currentRunId;
-
-/// Get current run ID for per-test folder creation.
-String get currentRunId => _currentRunId ?? 'unknown';
-
 FutureOr<void> testExecutable(FutureOr<void> Function() testMain) async {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  // Generate run ID ONCE per test suite execution (format: 241221_211900)
-  _currentRunId ??= DateFormat('yyMMdd_HHmmss').format(DateTime.now());
+  // Generate and set run ID ONCE per test suite execution (format: 241221_211900)
+  // This ensures all tests in this suite share the same runId for folder grouping.
+  final runId = DateFormat('yyMMdd_HHmmss').format(DateTime.now());
+  ModeCoordinator.initializeRunId(runId);
 
   // Suppress Drift multiple-database warnings globally for tests
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
