@@ -30,8 +30,7 @@ class CustomDatePicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      key:
-          key, // Pass widget's key to inner TextFormField for robot testability
+      // Note: Don't pass 'key' to child - outer widget has the key for robot testability
       controller: controller,
       decoration: InputDecoration(
         labelText: labelText,

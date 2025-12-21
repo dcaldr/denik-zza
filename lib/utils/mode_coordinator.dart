@@ -67,13 +67,20 @@ class ModeCoordinator {
         'ModeCoordinator: Switched to testing mode (in-memory, mock system)');
   }
 
-  /// Switch to integration test mode: in-memory database, real file operations
+  /// Switch to integration test mode: **FILE-BASED database** (default), real file operations
   /// in isolated directory, MOCKED SystemInterface (no OS dialogs).
   ///
-  /// Folder structure: Documents/DenikZZA/test_outputs/integration/run_{runId}/{testName}/
+  /// This is the **default mode for integration tests**. Uses a persistent SQLite database
+  /// file that can be inspected after test runs for debugging.
   ///
-  /// **When to use:** Integration tests that need to verify file operations
-  /// (PDF generation, file uploads, etc.) while keeping data separate from production.
+  /// Folder structure: Documents/DenikZZA/test_outputs/integration/run_{runId}/{testName}/
+  /// Database file: {testDir}/db.sqlite
+  ///
+  /// **When to use:** Most integration tests. The file-based DB allows inspection of
+  /// test data after a run completes or fails, making debugging easier.
+  ///
+  /// **For in-memory (faster) tests:** Use [setTestingMode] instead.
+  /// **For canary/critical path tests:** Use [setCanaryTestMode] (same behavior, different folder).
   static Future<void> setIntegrationTestMode({
     required String runId,
     required String testName,
@@ -82,13 +89,12 @@ class ModeCoordinator {
     _currentTestName = testName;
     _currentRunId = runId;
 
-    // Use in-memory database for speed and isolation
-    DatabaseWrapper.setTestMode();
+    // Use file-based database for inspection and debugging
+    await DatabaseWrapper.dispose();
 
     // Use real file system in isolated per-test directory
     final testDir = await _getTestDirectory('integration', runId, testName);
-    FileManager().setMode(FileManagerMode.production); // Real file operations
-    FileManager().homeDir = testDir; // But in test directory
+    FileManager().setPersistentTestMode(testDir.path);
 
     // Use Mock System Interface (No OS Dialogs)
     SystemInterface.registerWith(TestSystemInterface());

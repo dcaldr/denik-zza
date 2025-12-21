@@ -6,6 +6,7 @@ import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'dart:io';
 import 'package:denik_zza/utils/mode_coordinator.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 import 'package:denik_zza/input/file_manager.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'setup_templates/hardcoded_setup.dart';
@@ -87,30 +88,38 @@ void main() {
     });
 
     // =========================================================================
-    // MODE 2: INTEGRATION MODE (File-Based, Isolated)
+    // MODE 2: INTEGRATION MODE (File-Based DB + Real File Ops)
     // =========================================================================
     group('2. Integration Mode (File Isolation)', () {
       late DatabaseInterface databaseInterface;
       final testName = 'showcase_integration_test';
 
       setUp(() async {
-        // 1. Set Mode: Integration (File-based, isolated folder)
+        // 1. Set Mode: Integration (File-based DB in isolated folder)
         await ModeCoordinator.setIntegrationTestMode(
           runId: 'test_run',
           testName: testName,
         );
-        print(
-            'DEBUG: ModeCoordinator set. FileManager homeDir: ${FileManager().homeDir?.path}');
+        AppLogger.l.d(
+            'ModeCoordinator set. FileManager homeDir: ${FileManager().homeDir?.path}');
 
-        // 2. Populate DB using HardcodedTestSetup
-        // It automatically uses the DB provided by DatabaseWrapper.
-        // Note: ModeCoordinator.setIntegrationTestMode sets DatabaseWrapper to 'testing' (memory)
-        // but FileManager to 'production' (real files). This is the standard integration setup.
-        // If we wanted a FILE DB for integration, we'd need to configure DatabaseWrapper differently,
-        // but for now we follow the standard behavior.
+        // 2. Clean up previous run's DB if exists (ensure idempotency)
+        // Since Integration Mode now uses file-based DB, we must clear it
+        final dbPath = await FileManager().getDbFilePath();
+        if (dbPath != null) {
+          final file = File('$dbPath/db.sqlite');
+          if (await file.exists()) {
+            await file.delete();
+            AppLogger.l.d('Deleted stale test database at: $dbPath');
+          }
+        }
+
+        // 3. Populate DB using HardcodedTestSetup
+        // NOTE: setIntegrationTestMode now uses FILE-BASED DB (not in-memory)
+        // This allows inspection of test data after runs for debugging.
         await HardcodedTestSetup.setupTestData();
 
-        // 3. Get Interface for testing
+        // 4. Get Interface for testing
         databaseInterface = DatabaseWrapper.getDatabase();
       });
 
@@ -119,10 +128,11 @@ void main() {
       });
 
       test('should create files in isolated directory', () async {
-        // Verify Mode
-        expect(DatabaseWrapper.getCurrentMode(), equals(DatabaseMode.testing));
-        expect(FileManager().currentMode,
-            equals(FileManagerMode.production)); // Real file ops
+        // Verify Mode - now file-based (production mode uses FileManager path)
+        expect(
+            DatabaseWrapper.getCurrentMode(), equals(DatabaseMode.production));
+        expect(FileManager().isPersistMode,
+            isTrue); // Persist mode for file-based test
 
         print(
             'DEBUG: Test running. FileManager homeDir: ${FileManager().homeDir?.path}');

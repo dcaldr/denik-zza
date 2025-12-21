@@ -3,13 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:denik_zza/main.dart' as app;
 import 'package:denik_zza/database/database_wrapper.dart';
-import 'dart:io';
-
-void log(String message) {
-  final file = File('debug_trace_sanity.txt');
-  file.writeAsStringSync('$message\n', mode: FileMode.append);
-  print(message);
-}
+import 'package:denik_zza/utils/mode_coordinator.dart';
+import 'package:denik_zza/utils/app_logger.dart';
+import 'package:intl/intl.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -18,40 +14,46 @@ void main() {
   // No complex seeding, just pure launch.
   testWidgets('Sanity Check: App Launches and Shows Home Screen',
       (tester) async {
-    File('debug_trace_sanity.txt').writeAsStringSync('Starting Sanity Check\n');
-    log('DEBUG: Sanity Check Starting');
+    // 1. Setup: Use Integration mode (file-based DB in isolated folder)
+    final runId = DateFormat('yyMMdd_HHmmss').format(DateTime.now());
+    await ModeCoordinator.setIntegrationTestMode(
+      runId: runId,
+      testName: 'sanity_check',
+    );
+    AppLogger.l.d('Sanity Check: Mode set - $runId/sanity_check');
 
-    // Ensure DB is ready (even if empty)
-    log('DEBUG: Calling DatabaseWrapper.getDatabase()');
+    // 2. Ensure DB is ready (even if empty)
+    AppLogger.l.d('Calling DatabaseWrapper.getDatabase()');
     try {
       DatabaseWrapper.getDatabase();
-      log('DEBUG: DB Initialized');
+      AppLogger.l.d('DB Initialized');
     } catch (e) {
-      log('DEBUG: DB Init Failed: $e');
+      AppLogger.l.e('DB Init Failed: $e');
       rethrow;
     }
 
-    log('DEBUG: Calling app.main()');
+    // 3. Launch app
+    AppLogger.l.d('Calling app.main()');
     try {
       app.main();
-      log('DEBUG: App Main Called');
+      AppLogger.l.d('App Main Called');
     } catch (e) {
-      log('DEBUG: App Main Failed: $e');
+      AppLogger.l.e('App Main Failed: $e');
       rethrow;
     }
 
-    log('DEBUG: PumpAndSettle Starting');
+    AppLogger.l.d('PumpAndSettle Starting');
     await tester.pumpAndSettle();
-    log('DEBUG: App Pumped');
+    AppLogger.l.d('App Pumped');
 
-    // Verify Title "Všechny akce"
-    log('DEBUG: Checking for Title');
+    // 4. Verify Title "Všechny akce"
+    AppLogger.l.d('Checking for Title');
     expect(find.text('Všechny akce'), findsOneWidget);
-    log('DEBUG: Title Found');
+    AppLogger.l.d('Title Found');
 
-    // Verify we are at least on a screen with a Scaffold
-    log('DEBUG: Checking for ListView');
+    // 5. Verify we are at least on a screen with a Scaffold
+    AppLogger.l.d('Checking for ListView');
     expect(find.byType(ListView), findsOneWidget); // EventList uses ListView
-    log('DEBUG: Sanity Check Complete');
+    AppLogger.l.d('Sanity Check Complete');
   });
 }

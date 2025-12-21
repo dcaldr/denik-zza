@@ -2,71 +2,66 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:denik_zza/main.dart' as app;
 import 'package:denik_zza/database/database_wrapper.dart';
-import 'dart:io';
+import 'package:denik_zza/utils/mode_coordinator.dart';
+import 'package:denik_zza/utils/app_logger.dart';
+import 'package:intl/intl.dart';
 
 import '../../infrastructure/robots/dashboard_robot.dart';
 import '../../infrastructure/robots/event_editor_robot.dart';
-
-void log(String message) {
-  final file = File('debug_trace_create_event.txt');
-  file.writeAsStringSync('$message\n', mode: FileMode.append);
-  print(message);
-}
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('Sanity 2: Create Event Workflow', (tester) async {
-    File('debug_trace_create_event.txt')
-        .writeAsStringSync('Starting Create Event Test\n');
-    log('DEBUG: Test Starting');
+    // 1. Setup: Use Integration mode (file-based DB in isolated folder)
+    final runId = DateFormat('yyMMdd_HHmmss').format(DateTime.now());
+    await ModeCoordinator.setIntegrationTestMode(
+      runId: runId,
+      testName: 'create_event',
+    );
+    AppLogger.l.d('Create Event Test: Mode set - $runId/create_event');
 
-    // 1. Setup - Ensure Clean(-ish) DB
-    // We don't wipe for now, just append. Ideally we start fresh.
-    // Assuming Sanity check didn't corrupt anything.
+    // 2. Get DB and launch app
     DatabaseWrapper.getDatabase();
     app.main();
     await tester.pumpAndSettle();
-    log('DEBUG: App Launched');
+    AppLogger.l.d('App Launched');
 
     final dashboard = DashboardRobot(tester);
     final eventEditor = EventEditorRobot(tester);
 
-    // 2. Verify Dashboard
+    // 3. Verify Dashboard
     await dashboard.verifyPageShown();
-    log('DEBUG: Dashboard Verified');
+    AppLogger.l.d('Dashboard Verified');
 
-    // 3. Navigate to Event Creation
-    log('DEBUG: Tapping Add');
+    // 4. Navigate to Event Creation
+    AppLogger.l.d('Tapping Add');
     await dashboard.tapCreateNewEvent();
 
-    // 4. Fill Form
-    log('DEBUG: Filling Form');
-    log('DEBUG: Entering Name');
+    // 5. Fill Form
+    AppLogger.l.d('Filling Form - Entering Name');
     await eventEditor.enterEventName('Test Turnus 2024');
 
     // Default dates (Today) by tapping input then OK
-    log('DEBUG: Entering Dates');
+    AppLogger.l.d('Entering Dates');
     await eventEditor.enterDates(DateTime.now(), DateTime.now());
-    log('DEBUG: Dates Entered');
+    AppLogger.l.d('Dates Entered');
 
-    // 5. Save
-    log('DEBUG: Submitting');
+    // 6. Save
+    AppLogger.l.d('Submitting');
     await eventEditor.submit();
 
-    // 6. Verify Dashboard has new event
-    log('DEBUG: Verifying New Event');
+    // 7. Verify Dashboard has new event
+    AppLogger.l.d('Verifying New Event');
     await dashboard.verifyPageShown();
-    // Use PumpAndSettle with longer timeout/loop if needed, but for now ensure we wait.
     await tester.pumpAndSettle(const Duration(milliseconds: 500));
     try {
       await dashboard.verifyEventPresent('Test Turnus 2024');
     } catch (e) {
-      log('ERROR: Event not found. Dumping widget tree text...');
-      // Simplified dump or just fail
+      AppLogger.l.e('Event not found: $e');
       rethrow;
     }
 
-    log('DEBUG: Test Complete');
+    AppLogger.l.d('Test Complete');
   });
 }
