@@ -1,0 +1,47 @@
+// Global configuration for integration tests.
+// Ensures all integration tests start with proper mode setup.
+
+import 'dart:async';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+import 'package:drift/drift.dart';
+import 'package:logger/logger.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:denik_zza/utils/app_logger.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/utils/mode_coordinator.dart';
+
+/// Run ID shared across all tests in this suite execution.
+/// Generated once per `flutter test integration_test/` invocation.
+String? _currentRunId;
+
+/// Get current run ID for per-test folder creation.
+String get currentRunId => _currentRunId ?? 'unknown';
+
+FutureOr<void> testExecutable(FutureOr<void> Function() testMain) async {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  // Generate run ID ONCE per test suite execution (format: 241221_211900)
+  _currentRunId ??= DateFormat('yyMMdd_HHmmss').format(DateTime.now());
+
+  // Suppress Drift multiple-database warnings globally for tests
+  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+
+  // Silence non-error logs to keep CI output readable
+  AppLogger.configureForTests(level: Level.error);
+
+  // Locale initialization (matches main.dart)
+  Intl.defaultLocale = 'cs_CZ';
+  await initializeDateFormatting('cs_CZ', null);
+
+  // Cleanup old runs (keep last 5 per category)
+  await ModeCoordinator.cleanupOldRuns(keepLast: 5);
+
+  // Global tearDown - ensures no database leaks between tests
+  tearDown(() async {
+    await DatabaseWrapper.dispose();
+  });
+
+  return testMain();
+}

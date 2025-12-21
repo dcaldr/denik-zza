@@ -46,10 +46,12 @@ class ModeCoordinator {
   static final Logger _logger = AppLogger.l;
   static AppMode _currentMode = AppMode.production;
   static String? _currentTestName;
+  static String? _currentRunId;
 
   /// Available application modes
   static AppMode get currentMode => _currentMode;
   static String? get currentTestName => _currentTestName;
+  static String? get currentRunId => _currentRunId;
 
   /// Switch to testing mode: in-memory database, no file operations, MOCKED SystemInterface.
   /// Fastest mode for unit and widget tests.
@@ -68,27 +70,56 @@ class ModeCoordinator {
   /// Switch to integration test mode: in-memory database, real file operations
   /// in isolated directory, MOCKED SystemInterface (no OS dialogs).
   ///
-  /// Each test gets its own subfolder: Documents/DenikZZA/integration_test_output/`testName`/
+  /// Folder structure: Documents/DenikZZA/test_outputs/integration/run_{runId}/{testName}/
   ///
   /// **When to use:** Integration tests that need to verify file operations
   /// (PDF generation, file uploads, etc.) while keeping data separate from production.
-  static Future<void> setIntegrationTestMode({required String testName}) async {
+  static Future<void> setIntegrationTestMode({
+    required String runId,
+    required String testName,
+  }) async {
     _currentMode = AppMode.integrationTest;
     _currentTestName = testName;
+    _currentRunId = runId;
 
     // Use in-memory database for speed and isolation
     DatabaseWrapper.setTestMode();
 
-    // Use real file system in isolated directory
-    final integrationTestDir = await _getIntegrationTestDirectory(testName);
+    // Use real file system in isolated per-test directory
+    final testDir = await _getTestDirectory('integration', runId, testName);
     FileManager().setMode(FileManagerMode.production); // Real file operations
-    FileManager().homeDir = integrationTestDir; // But in test directory
+    FileManager().homeDir = testDir; // But in test directory
 
     // Use Mock System Interface (No OS Dialogs)
     SystemInterface.registerWith(TestSystemInterface());
 
-    _logger.i('ModeCoordinator: Integration test mode - $testName');
-    _logger.d('Integration test directory: ${integrationTestDir.path}');
+    _logger.i('ModeCoordinator: Integration test mode - $runId/$testName');
+    _logger.d('Integration test directory: ${testDir.path}');
+  }
+
+  /// Canary test mode: File-based DB for inspection + mocked OS dialogs.
+  ///
+  /// Use for critical path tests that need persistent DB for debugging.
+  /// Folder: Documents/DenikZZA/test_outputs/canary/run_{runId}/{testName}/
+  static Future<void> setCanaryTestMode({
+    required String runId,
+    required String testName,
+  }) async {
+    _currentMode = AppMode.canary;
+    _currentTestName = testName;
+    _currentRunId = runId;
+
+    // Use file-based database (like debug mode)
+    await DatabaseWrapper.dispose();
+
+    final testDir = await _getTestDirectory('canary', runId, testName);
+    FileManager().setPersistentTestMode(testDir.path);
+
+    // Mock OS dialogs (unlike debug mode)
+    SystemInterface.registerWith(TestSystemInterface());
+
+    _logger.i('ModeCoordinator: Canary test mode - $runId/$testName');
+    _logger.d('Canary test directory: ${testDir.path}');
   }
 
   /// Switch to debug mode: persistent database and file operations in test_outputs/.
@@ -114,6 +145,7 @@ class ModeCoordinator {
   static Future<void> setProductionMode() async {
     _currentMode = AppMode.production;
     _currentTestName = null;
+    _currentRunId = null;
 
     await DatabaseWrapper.dispose();
     FileManager().setProductionMode();
@@ -122,19 +154,24 @@ class ModeCoordinator {
     _logger.d('ModeCoordinator: Switched to production mode');
   }
 
-  /// Get integration test directory for a specific test.
-  /// Creates: Documents/DenikZZA/integration_test_output/`testName`/
-  static Future<Directory> _getIntegrationTestDirectory(String testName) async {
+  /// Get test directory for a specific test.
+  /// Creates: Documents/DenikZZA/test_outputs/{category}/run_{runId}/{testName}/
+  static Future<Directory> _getTestDirectory(
+    String category,
+    String runId,
+    String testName,
+  ) async {
     final docs = await getApplicationDocumentsDirectory();
-    final integrationDir =
-        Directory('${docs.path}/DenikZZA/integration_test_output/$testName');
+    final testDir = Directory(
+      '${docs.path}/DenikZZA/test_outputs/$category/run_$runId/$testName',
+    );
 
-    if (!await integrationDir.exists()) {
-      await integrationDir.create(recursive: true);
-      _logger.d('Created integration test directory: ${integrationDir.path}');
+    if (!await testDir.exists()) {
+      await testDir.create(recursive: true);
+      _logger.d('Created test directory: ${testDir.path}');
     }
 
-    return integrationDir;
+    return testDir;
   }
 
   /// Clean up integration test outputs (optional, for CI/CD cleanup)
@@ -150,6 +187,43 @@ class ModeCoordinator {
       }
     } catch (e) {
       _logger.w('Failed to cleanup integration test outputs: $e');
+    }
+  }
+
+  /// Clean up old test runs, keeping the most recent N.
+  ///
+  /// Deletes run folders from both 'integration/' and 'canary/'.
+  static Future<void> cleanupOldRuns({int keepLast = 5}) async {
+    try {
+      final docs = await getApplicationDocumentsDirectory();
+
+      for (final category in ['integration', 'canary']) {
+        final categoryDir = Directory(
+          '${docs.path}/DenikZZA/test_outputs/$category',
+        );
+
+        if (!await categoryDir.exists()) continue;
+
+        final runs = <Directory>[];
+        await for (final entity in categoryDir.list()) {
+          if (entity is Directory && entity.path.contains('run_')) {
+            runs.add(entity);
+          }
+        }
+
+        // Sort by name (timestamp in name = chronological order)
+        runs.sort((a, b) => b.path.compareTo(a.path)); // Newest first
+
+        // Delete oldest runs beyond keepLast
+        for (var i = keepLast; i < runs.length; i++) {
+          await runs[i].delete(recursive: true);
+          _logger.d('Cleaned up old test run: ${runs[i].path}');
+        }
+      }
+
+      _logger.i('Cleanup complete (kept last $keepLast runs per category)');
+    } catch (e) {
+      _logger.w('Cleanup failed: $e');
     }
   }
 
@@ -172,6 +246,9 @@ enum AppMode {
   /// In-memory database, real file operations in isolated directory
   /// (for integration tests that need to verify file operations)
   integrationTest,
+
+  /// File-based database + mocked OS dialogs (for canary/critical path tests)
+  canary,
 
   /// Persistent database and files in test_outputs/ (for debugging)
   debug,

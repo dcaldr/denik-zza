@@ -20,8 +20,11 @@ class TestHarness {
     await initializeDateFormatting('cs_CZ', null);
 
     // Forces Mock System Interface & Isolated Directory logic
+    final runId = DateFormat('yyMMdd_HHmmss').format(DateTime.now());
     await ModeCoordinator.setIntegrationTestMode(
-        testName: 'integration_harness');
+      runId: runId,
+      testName: 'integration_harness',
+    );
   }
 
   static Future<void> pumpApp(WidgetTester tester) async {

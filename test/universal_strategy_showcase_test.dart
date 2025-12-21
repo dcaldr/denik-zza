@@ -95,7 +95,10 @@ void main() {
 
       setUp(() async {
         // 1. Set Mode: Integration (File-based, isolated folder)
-        await ModeCoordinator.setIntegrationTestMode(testName: testName);
+        await ModeCoordinator.setIntegrationTestMode(
+          runId: 'test_run',
+          testName: testName,
+        );
         print(
             'DEBUG: ModeCoordinator set. FileManager homeDir: ${FileManager().homeDir?.path}');
 

@@ -1,6 +1,7 @@
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/drift_database_connector.dart';
 import 'package:denik_zza/database/database_interface.dart';
+import 'package:flutter/widgets.dart';
 
 /// Database selection modes for better type safety and clarity
 enum DatabaseMode {
@@ -88,9 +89,26 @@ class DatabaseWrapper {
   /// **Important**: In test mode, this method ensures that if an implicit database is created,
   /// it is cached in `_cachedImplicitTestDb` so it can be properly closed by `dispose()`.
   static DatabaseInterface getDatabase() {
-    // Production safety check
+    // Production safety check - fails if integration test context detected without proper mode
     assert(() {
-      // Production safety check is now handled by _databaseMode enforcement
+      if (_databaseMode == DatabaseMode.production) {
+        try {
+          // Check if running in integration test binding
+          // We use runtimeType.toString() to avoid integration_test package dependency in lib/
+          final bindingType = WidgetsBinding.instance.runtimeType.toString();
+          if (bindingType.contains('IntegrationTest')) {
+            throw StateError(
+              'INTEGRATION TEST SAFETY VIOLATION: DatabaseWrapper.getDatabase() called '
+              'in production mode while IntegrationTestWidgetsFlutterBinding is active. '
+              'Did you forget to call ModeCoordinator.setTestingMode() or '
+              'ModeCoordinator.setIntegrationTestMode()?',
+            );
+          }
+        } catch (e) {
+          if (e is StateError) rethrow;
+          // WidgetsBinding not initialized yet, safe to proceed
+        }
+      }
       return true;
     }());
 
