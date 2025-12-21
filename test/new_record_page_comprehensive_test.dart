@@ -524,7 +524,7 @@ Future<void> _pumpNewRecordPage(WidgetTester tester,
 
 /// Enters text in the title field using a stable key
 Future<void> _enterTitle(WidgetTester tester, String text) async {
-  final titleField = find.byKey(const Key('title_field'));
+  final titleField = find.byKey(const Key('NewRecordPage_title_input'));
   expect(titleField, findsOneWidget);
   await tester.ensureVisible(titleField);
   await tester.tap(titleField);
@@ -535,7 +535,8 @@ Future<void> _enterTitle(WidgetTester tester, String text) async {
 
 /// Enters text in the description field using a stable key
 Future<void> _enterDescription(WidgetTester tester, String text) async {
-  final descriptionField = find.byKey(const Key('description_field'));
+  final descriptionField =
+      find.byKey(const Key('NewRecordPage_description_input'));
   expect(descriptionField, findsOneWidget);
   await tester.ensureVisible(descriptionField);
   await tester.tap(descriptionField);
@@ -571,7 +572,7 @@ Future<void> _setDateTimeDirectly(
 
 /// Taps the save button using a stable key
 Future<void> _saveRecord(WidgetTester tester) async {
-  final saveButton = find.byKey(const Key('save_button'));
+  final saveButton = find.byKey(const Key('NewRecordPage_save_button'));
   expect(saveButton, findsOneWidget);
   await tester.ensureVisible(saveButton);
   await tester.tap(saveButton);

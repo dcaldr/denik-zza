@@ -1,14 +1,13 @@
 import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/design_system/zza_app_config.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:intl/date_symbol_data_local.dart';
 
 /// A standardized wrapper for widget tests in the Zza app.
 ///
 /// This widget:
 /// 1. Wraps your [child] in a [MaterialApp] and [Scaffold].
 /// 2. Ensures the database is in test mode.
-/// 3. Configures Czech localization defaults.
+/// 3. Configures Czech localization defaults via [ZzaAppConfig].
 ///
 /// Usage:
 /// ```dart
@@ -38,17 +37,15 @@ class BaseTestWidget extends StatelessWidget {
     // This acts as a "Zero-Config" safety net.
     DatabaseWrapper.setTestMode();
 
-    // Ensure date formatting is initialized (idempotent)
-    initializeDateFormatting('cs_CZ', null);
+    // Ensure localization data is ready using shared config
+    ZzaAppConfig.initialize();
 
     return MaterialApp(
-      locale: const Locale('cs', 'CZ'),
-      supportedLocales: const [Locale('cs', 'CZ')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      title: ZzaAppConfig.appTitle,
+      theme: ZzaAppConfig.theme,
+      locale: ZzaAppConfig.supportedLocales.first,
+      supportedLocales: ZzaAppConfig.supportedLocales,
+      localizationsDelegates: ZzaAppConfig.delegates,
       home: Scaffold(
         body: isDrawer ? null : child,
         drawer: isDrawer ? child : null,

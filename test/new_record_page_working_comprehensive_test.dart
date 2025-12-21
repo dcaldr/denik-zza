@@ -4,7 +4,6 @@ import 'package:drift/drift.dart' as drift;
 import 'package:denik_zza/screens2/new_record_page.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
-import 'utils/database_test_helper.dart';
 import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'setup_templates/hardcoded_setup.dart';
 
@@ -133,7 +132,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Try to save without selecting participant
-        final saveButton = find.byKey(const Key('save_button'));
+        final saveButton = find.byKey(const Key('NewRecordPage_save_button'));
         await tester.tap(saveButton);
         await tester.pumpAndSettle();
 
@@ -152,7 +151,7 @@ void main() {
           await tester.pumpAndSettle();
 
           // Try to save without title
-          final saveButton = find.byKey(const Key('save_button'));
+          final saveButton = find.byKey(const Key('NewRecordPage_save_button'));
           await tester.tap(saveButton);
           await tester.pumpAndSettle();
 
@@ -179,7 +178,7 @@ void main() {
           expect(find.text('Test Injury Title'), findsOneWidget);
 
           // Try to save - should work (or at least not show validation errors)
-          final saveButton = find.byKey(const Key('save_button'));
+          final saveButton = find.byKey(const Key('NewRecordPage_save_button'));
           await tester.tap(saveButton);
           await tester.pumpAndSettle();
 
@@ -286,7 +285,7 @@ void main() {
           expect(find.text('Neuloženo'), findsOneWidget);
 
           // 3. Try to save (should work since we have title and participant)
-          final saveButton = find.byKey(const Key('save_button'));
+          final saveButton = find.byKey(const Key('NewRecordPage_save_button'));
           await tester.tap(saveButton);
           await tester.pumpAndSettle();
 

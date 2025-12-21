@@ -4,7 +4,6 @@ import 'package:drift/drift.dart' as drift;
 import 'package:denik_zza/screens2/new_record_page.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
-import 'utils/database_test_helper.dart';
 import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'setup_templates/hardcoded_setup.dart';
@@ -82,8 +81,9 @@ void main() {
             findsOneWidget);
 
         // Form should be enabled
-        final titleField = find.byKey(const Key('title_field'));
-        final descriptionField = find.byKey(const Key('description_field'));
+        final titleField = find.byKey(const Key('NewRecordPage_title_input'));
+        final descriptionField =
+            find.byKey(const Key('NewRecordPage_description_input'));
         expect(titleField, findsOneWidget);
         expect(descriptionField, findsOneWidget);
         // Check enabled state
@@ -230,7 +230,7 @@ Future<void> pumpNewRecordPage(WidgetTester tester,
 
 /// Enters text in the title field
 Future<void> enterTitle(WidgetTester tester, String text) async {
-  final titleField = find.byKey(const Key('title_field'));
+  final titleField = find.byKey(const Key('NewRecordPage_title_input'));
   expect(titleField, findsOneWidget);
   await tester.ensureVisible(titleField);
   await tester.tap(titleField);
@@ -241,7 +241,8 @@ Future<void> enterTitle(WidgetTester tester, String text) async {
 
 /// Enters text in the description field
 Future<void> enterDescription(WidgetTester tester, String text) async {
-  final descriptionField = find.byKey(const Key('description_field'));
+  final descriptionField =
+      find.byKey(const Key('NewRecordPage_description_input'));
   expect(descriptionField, findsOneWidget);
   await tester.ensureVisible(descriptionField);
   await tester.tap(descriptionField);
@@ -252,7 +253,7 @@ Future<void> enterDescription(WidgetTester tester, String text) async {
 
 /// Taps the save button
 Future<void> tapSaveButton(WidgetTester tester) async {
-  final saveButton = find.byKey(const Key('save_button'));
+  final saveButton = find.byKey(const Key('NewRecordPage_save_button'));
   expect(saveButton, findsOneWidget);
   await tester.tap(saveButton);
   await tester.pumpAndSettle();

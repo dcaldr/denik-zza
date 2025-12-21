@@ -271,7 +271,8 @@ void main() {
         await _pumpNewRecordPage(tester);
 
         // Save button should be present (use key to avoid text brittleness)
-        expect(find.byKey(const Key('save_button')), findsOneWidget);
+        expect(
+            find.byKey(const Key('NewRecordPage_save_button')), findsOneWidget);
 
         // Should be tappable
         await _tapSaveButton(tester);
@@ -282,7 +283,8 @@ void main() {
         await _pumpNewRecordPage(tester);
 
         // Cancel button should be present - use key for stability
-        final cancelButton = find.byKey(const Key('cancel_button'));
+        final cancelButton =
+            find.byKey(const Key('NewRecordPage_cancel_button'));
         expect(cancelButton, findsOneWidget);
         await tester.tap(cancelButton);
         await tester.pumpAndSettle();
@@ -405,13 +407,13 @@ Future<void> _pumpNewRecordPage(WidgetTester tester,
 /// Finds the title form field
 Finder _findTitleField(WidgetTester tester) {
   // Use stable key to locate the title field
-  return find.byKey(const Key('title_field'));
+  return find.byKey(const Key('NewRecordPage_title_input'));
 }
 
 /// Finds the description form field
 Finder _findDescriptionField(WidgetTester tester) {
   // Use stable key to locate the description field
-  return find.byKey(const Key('description_field'));
+  return find.byKey(const Key('NewRecordPage_description_input'));
 }
 
 /// Enters text in the title field (if enabled)
@@ -468,7 +470,7 @@ String _getDescriptionText(WidgetTester tester) {
 
 /// Taps the save button
 Future<void> _tapSaveButton(WidgetTester tester) async {
-  final saveButton = find.byKey(const Key('save_button'));
+  final saveButton = find.byKey(const Key('NewRecordPage_save_button'));
   if (saveButton.evaluate().isNotEmpty) {
     await tester.tap(saveButton);
     await tester.pumpAndSettle();

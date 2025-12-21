@@ -1,18 +1,16 @@
-import 'package:denik_zza/design_system/theme/zza_theme.dart';
+import 'package:denik_zza/design_system/zza_app_config.dart';
 import 'package:denik_zza/screens2/event_list.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import '../input/file_manager.dart';
 
 void main() async {
-  // tests if can be commented out the 3 lines below
-  // WidgetsFlutterBinding.ensureInitialized();
-//  Intl.defaultLocale = 'cs_CZ';
-//  await initializeDateFormatting('cs_CZ', null);
+  // Shared initialization (Locales, Formatting)
+  await ZzaAppConfig.initialize();
 
+  // Backend initialization (Files, DB)
   FileManager();
-  //db stuff here
   FileManager().changeEvent();
+
   runApp(const MyApp());
 }
 
@@ -22,20 +20,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Event Registration',
-      theme: ZzaTheme.lightTheme,
+      title: ZzaAppConfig.appTitle,
+      theme: ZzaAppConfig.theme,
       // home: const EventRegistrationForm(),
       //home: const ParticipantRegistrationForm(),
       home: EventList(),
-      locale: const Locale('cs', 'CZ'),
-      supportedLocales: const [
-        Locale('cs', 'CZ'),
-      ],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      locale: ZzaAppConfig.supportedLocales.first,
+      supportedLocales: ZzaAppConfig.supportedLocales,
+      localizationsDelegates: ZzaAppConfig.delegates,
     );
   }
 }

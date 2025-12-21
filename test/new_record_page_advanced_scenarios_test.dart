@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/screens2/new_record_page.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
-import 'utils/database_test_helper.dart';
 import 'setup_templates/hardcoded_setup.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/utils/mode_coordinator.dart';
@@ -96,7 +95,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Try to save
-        final saveButton = find.byKey(const Key('save_button'));
+        final saveButton = find.byKey(const Key('NewRecordPage_save_button'));
         await tester.tap(saveButton);
         await tester.pumpAndSettle();
 
@@ -178,7 +177,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Try to save with empty form
-        final saveButton = find.byKey(const Key('save_button'));
+        final saveButton = find.byKey(const Key('NewRecordPage_save_button'));
         await tester.tap(saveButton);
         await tester.pumpAndSettle();
 
@@ -208,7 +207,7 @@ void main() {
         }
 
         // Try to save
-        final saveButton = find.byKey(const Key('save_button'));
+        final saveButton = find.byKey(const Key('NewRecordPage_save_button'));
         await tester.tap(saveButton);
         await tester.pumpAndSettle();
 
@@ -231,7 +230,8 @@ void main() {
         expect(find.textContaining('Vyhledat'),
             findsNWidgets(2)); // Button label + TextField hint
         expect(find.text('Čas záznamu'), findsOneWidget);
-        expect(find.byKey(const Key('save_button')), findsOneWidget);
+        expect(
+            find.byKey(const Key('NewRecordPage_save_button')), findsOneWidget);
 
         // Test with participant
         final participant = testParticipants.first;
@@ -245,7 +245,8 @@ void main() {
         expect(find.textContaining('Nadpis'), findsOneWidget);
         expect(find.text('Popis úrazu a ošetření'), findsOneWidget);
         expect(find.text('Čas záznamu'), findsOneWidget);
-        expect(find.byKey(const Key('save_button')), findsOneWidget);
+        expect(
+            find.byKey(const Key('NewRecordPage_save_button')), findsOneWidget);
       });
 
       testWidgets('SCENARIO: Search functionality is always available',
@@ -275,7 +276,7 @@ void main() {
         expect(find.text('Nejprve vyberte účastníka'), findsWidgets);
 
         // 2. Try to save anyway
-        final saveButton = find.byKey(const Key('save_button'));
+        final saveButton = find.byKey(const Key('NewRecordPage_save_button'));
         await tester.tap(saveButton);
         await tester.pumpAndSettle();
 
@@ -307,7 +308,7 @@ void main() {
         expect(find.text('Neuloženo'), findsOneWidget);
 
         // 4. Save should work (no validation errors)
-        final saveButton = find.byKey(const Key('save_button'));
+        final saveButton = find.byKey(const Key('NewRecordPage_save_button'));
         await tester.tap(saveButton);
         await tester.pumpAndSettle();
 

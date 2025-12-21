@@ -2,19 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/screens2/new_record_page.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
-import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'setup_templates/hardcoded_setup.dart';
 
 void main() {
   group('NewRecordPage Widget Tests', () {
     late List<MemoryOsoba> testPersons;
-    late AppDatabase testDb;
 
     setUp(() async {
       // Use HardcodedTestSetup for robust data initialization
       // This ensures events, participants, and cache are correctly set up
-      testDb = await HardcodedTestSetup.setupTestData();
+      await HardcodedTestSetup.setupTestData();
 
       // Get the participants created by the setup
       final dbInterface = DatabaseWrapper.getDatabase();
@@ -58,13 +56,17 @@ void main() {
       expect(find.byKey(const Key('NewRecordPage_participantAutocomplete')),
           findsOneWidget);
       // Form fields (by keys)
-      expect(find.byKey(const Key('title_field')), findsOneWidget);
-      expect(find.byKey(const Key('description_field')), findsOneWidget);
+      expect(
+          find.byKey(const Key('NewRecordPage_title_input')), findsOneWidget);
+      expect(find.byKey(const Key('NewRecordPage_description_input')),
+          findsOneWidget);
       // Datetime and actions
       expect(find.text('Čas záznamu'), findsOneWidget);
       expect(find.byKey(const Key('datetime_change_button')), findsOneWidget);
-      expect(find.byKey(const Key('save_button')), findsOneWidget);
-      expect(find.byKey(const Key('cancel_button')), findsOneWidget);
+      expect(
+          find.byKey(const Key('NewRecordPage_save_button')), findsOneWidget);
+      expect(
+          find.byKey(const Key('NewRecordPage_cancel_button')), findsOneWidget);
     });
 
     testWidgets('should show participant selection interface',
@@ -86,9 +88,12 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert - Check for form elements (by keys/labels)
-      expect(find.byKey(const Key('title_field')), findsOneWidget);
-      expect(find.byKey(const Key('description_field')), findsOneWidget);
-      expect(find.byKey(const Key('save_button')), findsOneWidget);
+      expect(
+          find.byKey(const Key('NewRecordPage_title_input')), findsOneWidget);
+      expect(find.byKey(const Key('NewRecordPage_description_input')),
+          findsOneWidget);
+      expect(
+          find.byKey(const Key('NewRecordPage_save_button')), findsOneWidget);
     });
 
     testWidgets('should allow text input in description field',
@@ -99,7 +104,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Act - Enter text in description field
-      final descriptionField = find.byKey(const Key('description_field'));
+      final descriptionField =
+          find.byKey(const Key('NewRecordPage_description_input'));
       // Note: Without a selected participant, the field is disabled but still accepts tester.enterText
       await tester.enterText(descriptionField, 'Test injury description');
       await tester.pumpAndSettle();
@@ -128,13 +134,13 @@ void main() {
       await tester.pumpAndSettle();
 
       // Act - Tap save button (without valid data)
-      final saveButton = find.byKey(const Key('save_button'));
+      final saveButton = find.byKey(const Key('NewRecordPage_save_button'));
       await tester.tap(saveButton);
       await tester.pumpAndSettle();
 
       // Assert - Should handle the interaction (may show validation errors)
       // The exact behavior depends on validation logic
-      expect(find.byKey(const Key('save_button')),
+      expect(find.byKey(const Key('NewRecordPage_save_button')),
           findsOneWidget); // Button should still be there
     });
 
@@ -146,13 +152,15 @@ void main() {
       await tester.pumpAndSettle();
 
       // Act - Enter some text
-      final textField = find.byKey(const Key('description_field'));
+      final textField =
+          find.byKey(const Key('NewRecordPage_description_input'));
       await tester.enterText(textField, 'Test content that should persist');
       await tester.pumpAndSettle();
 
       // There is no standalone refresh button anymore; ensure structure persists
       expect(find.text('Nový záznam úrazu'), findsOneWidget);
-      expect(find.byKey(const Key('description_field')), findsOneWidget);
+      expect(find.byKey(const Key('NewRecordPage_description_input')),
+          findsOneWidget);
     });
 
     testWidgets('should show proper form layout', (WidgetTester tester) async {
@@ -163,12 +171,12 @@ void main() {
       // Assert - Check layout elements
       expect(find.text('Nový záznam úrazu'), findsOneWidget); // Page title
       expect(find.text('Účastník'), findsOneWidget); // Participant section
-      expect(
-          find.byKey(const Key('title_field')), findsOneWidget); // Title field
-      expect(find.byKey(const Key('description_field')),
+      expect(find.byKey(const Key('NewRecordPage_title_input')),
+          findsOneWidget); // Title field
+      expect(find.byKey(const Key('NewRecordPage_description_input')),
           findsOneWidget); // Description field
-      expect(
-          find.byKey(const Key('save_button')), findsOneWidget); // Save button
+      expect(find.byKey(const Key('NewRecordPage_save_button')),
+          findsOneWidget); // Save button
     });
 
     testWidgets('should handle widget lifecycle correctly',

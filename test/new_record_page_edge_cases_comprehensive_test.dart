@@ -6,6 +6,7 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'utils/database_test_helper.dart';
+import 'utils/base_test_widget.dart';
 import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'setup_templates/hardcoded_setup.dart';
 
@@ -610,8 +611,8 @@ Future<MemoryOsoba> _createTestParticipant(
 Future<void> _pumpNewRecordPage(WidgetTester tester,
     {MemoryOsoba? participant}) async {
   await tester.pumpWidget(
-    MaterialApp(
-      home: NewRecordPage(participant: participant),
+    BaseTestWidget(
+      child: NewRecordPage(participant: participant),
     ),
   );
   await tester.pumpAndSettle();
@@ -619,26 +620,28 @@ Future<void> _pumpNewRecordPage(WidgetTester tester,
 
 /// Enters text in the title field
 Future<void> _enterTitle(WidgetTester tester, String text) async {
-  final titleField = find.byKey(const Key('title_field'));
+  final titleField = find.byKey(const Key('NewRecordPage_title_input'));
   await tester.enterText(titleField, text);
 }
 
 /// Enters text in the description field
 Future<void> _enterDescription(WidgetTester tester, String text) async {
-  final descriptionField = find.byKey(const Key('description_field'));
+  final descriptionField =
+      find.byKey(const Key('NewRecordPage_description_input'));
   await tester.enterText(descriptionField, text);
 }
 
 /// Gets the current text in the title field
 String _getTitleText(WidgetTester tester) {
-  final titleField = find.byKey(const Key('title_field'));
+  final titleField = find.byKey(const Key('NewRecordPage_title_input'));
   final widget = tester.widget<TextFormField>(titleField);
   return widget.controller?.text ?? '';
 }
 
 /// Gets the current text in the description field
 String _getDescriptionText(WidgetTester tester) {
-  final descriptionField = find.byKey(const Key('description_field'));
+  final descriptionField =
+      find.byKey(const Key('NewRecordPage_description_input'));
   final widget = tester.widget<TextFormField>(descriptionField);
   return widget.controller?.text ?? '';
 }
@@ -675,7 +678,7 @@ bool _hasUnsavedChangesInUI(WidgetTester tester) {
 /// Checks if the form is currently enabled (participant selected)
 bool _isFormEnabled(WidgetTester tester) {
   try {
-    final titleField = find.byKey(const Key('title_field'));
+    final titleField = find.byKey(const Key('NewRecordPage_title_input'));
     final widget = tester.widget<TextFormField>(titleField);
     return widget.enabled;
   } catch (e) {
@@ -685,7 +688,7 @@ bool _isFormEnabled(WidgetTester tester) {
 
 /// Taps the save button
 Future<void> _saveRecord(WidgetTester tester) async {
-  final saveButton = find.byKey(const Key('save_button'));
+  final saveButton = find.byKey(const Key('NewRecordPage_save_button'));
   await tester.tap(saveButton,
       warnIfMissed: false); // Don't warn if button is off-screen
   await tester.pumpAndSettle();
@@ -700,11 +703,12 @@ void _verifyAllUIElementsPresent(WidgetTester tester) {
       reason: 'Participant section should be present');
 
   // Form elements using keys for reliability
-  expect(find.byKey(const Key('title_field')), findsOneWidget,
+  expect(find.byKey(const Key('NewRecordPage_title_input')), findsOneWidget,
       reason: 'Title field should be present');
-  expect(find.byKey(const Key('description_field')), findsOneWidget,
+  expect(
+      find.byKey(const Key('NewRecordPage_description_input')), findsOneWidget,
       reason: 'Description field should be present');
-  expect(find.byKey(const Key('save_button')), findsOneWidget,
+  expect(find.byKey(const Key('NewRecordPage_save_button')), findsOneWidget,
       reason: 'Save button should be present');
 
   // Controls using keys
