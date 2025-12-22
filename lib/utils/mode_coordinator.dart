@@ -145,24 +145,21 @@ class ModeCoordinator {
 
   /// @deprecated Use [setIntegrationTestMode] instead.
   ///
-  /// Debug mode is now essentially [setIntegrationTestMode] with real system interface.
+  /// Debug mode redirects file operations to test_outputs/ but uses production
+  /// database behavior. For file-based DB, use [setIntegrationTestMode].
   @Deprecated('Use setIntegrationTestMode for persistent test data')
   static Future<void> setDebugMode({required String testName}) async {
     _currentMode = AppMode.debug;
     _currentTestName = testName;
 
     await DatabaseWrapper.dispose();
+    // NOTE: Does NOT set DatabaseWrapper mode - uses production DB behavior
+    // Only FileManager paths are redirected
 
-    // Use 'debug' subfolder with timestamp for backward compatibility
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final testDir = Directory('test_outputs/${testName}_$timestamp');
-    await testDir.create(recursive: true);
+    FileManager().setPersistentTestMode('test_outputs/${testName}_$timestamp');
 
-    final dbPath = '${testDir.path}/db.sqlite';
-    DatabaseWrapper.setIntegrationTestMode(dbPath);
-    FileManager().setPersistentTestMode(testDir.path);
-
-    // Debug Mode uses REAL system interfaces (unlike integration test mode)
+    // Debug Mode uses REAL system interfaces
     SystemInterface.registerWith(RealSystemInterface());
 
     _logger.d('ModeCoordinator: Debug mode (deprecated) - $testName');

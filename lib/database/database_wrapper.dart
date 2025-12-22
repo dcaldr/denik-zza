@@ -138,14 +138,17 @@ class DatabaseWrapper {
       return true;
     }());
 
+    // Priority 1: Use injected DB if provided (works for ANY mode)
+    // This allows HardcodedTestSetup and other components to inject a DB
+    // that will be used regardless of the current mode.
+    if (_injectedTestDb != null) {
+      return DriftDatabaseConnector.withDatabase(_injectedTestDb!);
+    }
+
+    // Priority 2: Mode-specific defaults
     if (_databaseMode == DatabaseMode.testing) {
-      if (_injectedTestDb != null) {
-        return DriftDatabaseConnector.withDatabase(_injectedTestDb!);
-      } else {
-        // Reuse the cached implicit DB if it exists, otherwise create and cache it.
-        _cachedImplicitTestDb ??= AppDatabase.testInMemory();
-        return DriftDatabaseConnector.withDatabase(_cachedImplicitTestDb!);
-      }
+      _cachedImplicitTestDb ??= AppDatabase.testInMemory();
+      return DriftDatabaseConnector.withDatabase(_cachedImplicitTestDb!);
     }
 
     if (_databaseMode == DatabaseMode.integrationTest) {
