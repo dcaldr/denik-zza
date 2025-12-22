@@ -35,6 +35,11 @@ class DriftDatabaseConnector implements DatabaseInterface {
   /// an in-memory AppDatabase created with AppDatabase.testInMemory().
   AppDatabase _driftDatabase;
 
+  /// Expose underlying AppDatabase for direct operations.
+  ///
+  /// Use sparingly - prefer interface methods when possible.
+  AppDatabase get appDatabase => _driftDatabase;
+
   /// Test-only: Create a connector bound to a provided [AppDatabase].
   ///
   /// This is useful to inject an in-memory database for tests or dev runs

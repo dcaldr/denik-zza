@@ -4,6 +4,7 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_lek.dart';
 import 'package:denik_zza/input/file_manager.dart';
+import 'package:denik_zza/shared/czech_test_data.dart';
 import 'package:drift/drift.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -70,11 +71,12 @@ class DevEnvironment {
         ),
       );
 
-      // 3. Create participants (10 Czech figures)
-      final participantIds = await _createTestParticipants(database, eventId);
+      // 3. Create participants using shared generators
+      final participantIds =
+          await CzechTestData.createParticipants(database, eventId);
 
-      // 6. Create medical records (like HardcodedTestSetup)
-      await _createCzechMedicalRecords(
+      // 6. Create medical records using shared generators
+      await CzechTestData.createMedicalRecords(
           database, participantIds, testParamedicId);
 
       // 7. Create health data (alergie, omezení, léky) for UI testing
@@ -88,198 +90,7 @@ class DevEnvironment {
     }
   }
 
-  /// Create test participants (exact copy from HardcodedTestSetup)
-  static Future<List<int>> _createTestParticipants(
-      AppDatabase database, int eventId) async {
-    final participantIds = <int>[];
-    // Czech historical and cultural figures with subtle references
-    final participants = [
-      {
-        'firstName': 'Václav',
-        'lastName': 'Havlík', // Reference to Václav Havel
-        'birthDate': DateTime(2010, 10, 5),
-        'address': 'Hradčanské náměstí 1, Praha',
-        'note': 'Rád hraje divadlo a píše básně',
-        'insurance': 'Všeobecná zdravotní pojišťovna',
-      },
-      {
-        'firstName': 'Karel',
-        'lastName': 'Čapková', // Reference to Karel Čapek
-        'birthDate': DateTime(2009, 1, 9),
-        'address': 'Vinohrady 42, Praha',
-        'note': 'Miluje roboty a sci-fi příběhy',
-        'insurance': 'Oborová zdravotní pojišťovna',
-      },
-      {
-        'firstName': 'Bedřich',
-        'lastName': 'Smetana', // Bedřich Smetana - composer
-        'birthDate': DateTime(2008, 3, 2),
-        'address': 'Kampa Island 5, Praha',
-        'note': 'Hraje na klavír Vltavu',
-        'insurance': 'Všeobecná zdravotní pojišťovna',
-      },
-      {
-        'firstName': 'Antonín',
-        'lastName': 'Dvořák', // Antonín Dvořák - composer
-        'birthDate': DateTime(2007, 9, 8),
-        'address': 'Nelahozeves 123',
-        'note': 'Komponuje melodie z Nového světa',
-        'insurance': 'Všeobecná zdravotní pojišťovna',
-      },
-      {
-        'firstName': 'Milan',
-        'lastName': 'Kundera', // Milan Kundera - writer
-        'birthDate': DateTime(2006, 4, 1),
-        'address': 'Brno, Moravské náměstí 1',
-        'note': 'Píše o nesnesitelné lehkosti bytí',
-        'insurance': 'Oborová zdravotní pojišťovna',
-      },
-      {
-        'firstName': 'Jaroslav',
-        'lastName': 'Hašek', // Jaroslav Hašek - author of Švejk
-        'birthDate': DateTime(2011, 4, 30),
-        'address': 'U Fleku 11, Praha',
-        'note': 'Vyprávě historky o dobrém vojákovi',
-        'insurance': 'Všeobecná zdravotní pojišťovna',
-      },
-      {
-        'firstName': 'Tomáš',
-        'lastName': 'Baťa', // Tomáš Baťa - shoe entrepreneur
-        'birthDate': DateTime(2005, 4, 3),
-        'address': 'Zlín, náměstí Míru 12',
-        'note': 'Sbírá staré boty a opravuje je',
-        'insurance': 'Oborová zdravotní pojišťovna',
-      },
-      {
-        'firstName': 'Ema',
-        'lastName': 'Destinnová', // Ema Destinnová - opera singer
-        'birthDate': DateTime(2004, 2, 26),
-        'address': 'Vinohrady, Korunní 15, Praha',
-        'note': 'Zpívá árie z Prodané nevěsty',
-        'insurance': 'Všeobecná zdravotní pojišťovna',
-      },
-      {
-        'firstName': 'Jan',
-        'lastName': 'Komenský', // Jan Amos Komenský
-        'birthDate': DateTime(2003, 3, 28),
-        'address': 'Nivnice 456, Zlínský kraj',
-        'note': 'Zajímá se o vzdělávání a učí ostatní',
-        'insurance': 'Oborová zdravotní pojišťovna',
-      },
-      {
-        'firstName': 'Franz',
-        'lastName': 'Kafka', // Franz Kafka
-        'birthDate': DateTime(2002, 7, 3),
-        'address': 'Staroměstské náměstí 27, Praha',
-        'note': 'Píše podivné příběhy o proměnách',
-        'insurance': 'Všeobecná zdravotní pojišťovna',
-      },
-    ];
-
-    for (final participant in participants) {
-      // Get insurance company ID
-      final insuranceName = participant['insurance'] as String;
-      int? insuranceId =
-          await database.getInsuranceCompanyIDbyName(insuranceName);
-      if (insuranceId == null) {
-        // Use Raw DB Access (Alignment with HardcodedTestSetup)
-        insuranceId = await database.addInsuranceCompany(
-            InsuranceCompaniesCompanion(name: Value(insuranceName)));
-      }
-
-      final companion = ParticipantsCompanion(
-        firstName: Value(participant['firstName'] as String),
-        lastName: Value(participant['lastName'] as String),
-        birthDate: Value(participant['birthDate'] as DateTime),
-        address: Value(participant['address'] as String),
-        note: Value(participant['note'] as String),
-        insuranceCompanyFK: Value(insuranceId),
-        zzaActionFK: Value(eventId),
-        eligibleConfirmation: const Value(true),
-        nonInfectiousConfirmation: const Value(true),
-        arrivedConfirmation: const Value(true),
-        wasPrinted: const Value(false),
-      );
-
-      final id = await database.addParticipant(companion);
-      participantIds.add(id);
-    }
-    return participantIds;
-  }
-
-  /// Creates medical records with Czech cultural easter eggs (exact copy from HardcodedTestSetup)
-  static Future<void> _createCzechMedicalRecords(
-      AppDatabase database, List<int> participantIds, int paramedicId) async {
-    final czechRecords = [
-      {
-        'title': 'Kontrola zdraví',
-        'description':
-            'má velrybí stoličku a hodně ho bolí', // The requested easter egg
-        'participantIndex': 0, // Václav Havlík
-      },
-      {
-        'title': 'Preventivní prohlídka',
-        'description': 'stěžuje si na roboty v břiše, možná sci-fi alergie',
-        'participantIndex': 1, // Karel Čapková
-      },
-      {
-        'title': 'Hudební terapie',
-        'description': 'Vltava mu teče v uších, doporučujeme méně klavíru',
-        'participantIndex': 2, // Bedřich Smetana
-      },
-      {
-        'title': 'Bolest hlavy',
-        'description': 'hlava bolí z příliš mnoha symfonií, potřebuje klid',
-        'participantIndex': 3, // Antonín Dvořák
-      },
-      {
-        'title': 'Existenciální krize',
-        'description':
-            'trpí nesnesitelnou lehkostí bytí, doporučen filozofický klid',
-        'participantIndex': 4, // Milan Kundera
-      },
-      {
-        'title': 'Vojenské vyšetření',
-        'description': 'simuluje nemoc jako dobrý voják Švejk, ale je zdravý',
-        'participantIndex': 5, // Jaroslav Hašek
-      },
-      {
-        'title': 'Pracovní úraz',
-        'description': 'poranil si nohu při výrobě bot, rychlé hojení',
-        'participantIndex': 6, // Tomáš Baťa
-      },
-      {
-        'title': 'Hlasové problémy',
-        'description': 'přepěla se při áriích, doporučen hlasový klid',
-        'participantIndex': 7, // Ema Destinnová
-      },
-      {
-        'title': 'Únava z učení',
-        'description': 'vyčerpání z příliš mnoho vzdělávání, potřebuje pauzu',
-        'participantIndex': 8, // Jan Komenský
-      },
-      {
-        'title': 'Kafka-esque situace',
-        'description':
-            'proměnil se v brouka během spánku, ale ráno byl zase normální',
-        'participantIndex': 9, // Franz Kafka
-      },
-    ];
-
-    for (int i = 0; i < czechRecords.length; i++) {
-      final record = czechRecords[i];
-      final companion = RecordsCompanion(
-        title: Value(record['title'] as String),
-        description: Value(record['description'] as String),
-        note: const Value('Záznam s českým kulturním odkazem'),
-        participantFK: Value(participantIds[record['participantIndex'] as int]),
-        paramedicFK: Value(paramedicId),
-        dateAndTime: Value(DateTime.now().subtract(Duration(hours: i * 2))),
-        wasPrinted: const Value(false),
-      );
-      await database.addRecord(companion);
-    }
-  }
+  // Participant and record creation moved to lib/shared/czech_test_data.dart
 
   /// Creates test health data (omezení, alergie, léky) for UI testing.
   ///
