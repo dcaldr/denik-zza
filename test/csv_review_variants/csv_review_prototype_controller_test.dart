@@ -6,6 +6,8 @@ import 'package:denik_zza/services/models/csv_import_payload.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../utils/csv_test_builders.dart';
+import 'package:logger/logger.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 
 void main() {
   group('CsvReviewPrototypeController', () {
@@ -65,6 +67,9 @@ void main() {
     // ═══════════════════════════════════════════════════════════════
 
     test('handles load error gracefully', () async {
+      AppLogger.configureForTests(level: Level.off);
+      addTearDown(() => AppLogger.configureForTests(level: Level.error));
+
       final _ErrorThrowingService errorService = _ErrorThrowingService();
       final CsvReviewPrototypeController errorController =
           CsvReviewPrototypeController.fromPath(
@@ -105,6 +110,9 @@ void main() {
     });
 
     test('handles reparse failure during edit', () async {
+      AppLogger.configureForTests(level: Level.off);
+      addTearDown(() => AppLogger.configureForTests(level: Level.error));
+
       final _ReparseErrorService reparseErrorService = _ReparseErrorService();
       final CsvReviewPrototypeController reparseController =
           CsvReviewPrototypeController.fromPath(
@@ -148,6 +156,9 @@ void main() {
     });
 
     test('cleans up resources on dispose', () async {
+      AppLogger.configureForTests(level: Level.off);
+      addTearDown(() => AppLogger.configureForTests(level: Level.error));
+
       await controller.load();
       expect(controller.hasSession, isTrue);
 
@@ -201,7 +212,8 @@ class _FakeCsvReviewService implements CsvImportService {
     if (payload.hasPath) {
       return loadCsv(payload.path!);
     }
-    throw UnsupportedError('In-memory payloads are not supported in this test.');
+    throw UnsupportedError(
+        'In-memory payloads are not supported in this test.');
   }
 
   @override
@@ -315,7 +327,8 @@ class _ReparseErrorService implements CsvImportService {
     if (payload.hasPath) {
       return loadCsv(payload.path!);
     }
-    throw UnsupportedError('In-memory payloads are not supported in this test.');
+    throw UnsupportedError(
+        'In-memory payloads are not supported in this test.');
   }
 
   @override
@@ -413,7 +426,8 @@ class _ErrorThrowingService implements CsvImportService {
     if (payload.hasPath) {
       return loadCsv(payload.path!);
     }
-    throw UnsupportedError('In-memory payloads are not supported in this test.');
+    throw UnsupportedError(
+        'In-memory payloads are not supported in this test.');
   }
 
   @override

@@ -398,10 +398,11 @@ void main() {
         find.byKey(const Key('CsvTableOverview_scrollable_body'));
     expect(scrollableBodyFinder, findsOneWidget);
 
-    await tester.drag(
-      scrollableBodyFinder,
+    final Offset startPoint =
+        tester.getTopLeft(scrollableBodyFinder) + const Offset(20, 20);
+    await tester.dragFrom(
+      startPoint,
       const Offset(0, -400),
-      warnIfMissed: false,
     );
     await tester.pumpAndSettle();
 
@@ -566,7 +567,9 @@ void main() {
     expect(headerScrollFinder, findsOneWidget);
 
     // Scroll horizontally on the table body
-    await tester.drag(horizontalScrollFinder, const Offset(-200, 0));
+    final Offset startPoint =
+        tester.getTopLeft(horizontalScrollFinder) + const Offset(20, 20);
+    await tester.dragFrom(startPoint, const Offset(-200, 0));
     await tester.pumpAndSettle();
 
     // Get the scroll controllers to verify synchronization

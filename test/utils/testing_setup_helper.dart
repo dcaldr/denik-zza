@@ -1,5 +1,5 @@
 import 'package:denik_zza/database/database_wrapper.dart';
-import '../../lib/database/drift_database/database.dart';
+import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'test_configuration.dart';
 import 'unified_test_setup.dart';
@@ -103,8 +103,9 @@ class TestingSetupHelper {
       if (!isValid) return false;
 
       // Check DatabaseWrapper is in test mode
-      if (DatabaseWrapper.getCurrentMode() != DatabaseMode.testing)
+      if (DatabaseWrapper.getCurrentMode() != DatabaseMode.testing) {
         return false;
+      }
 
       // Check database is available
       if (_currentDatabase == null) return false;

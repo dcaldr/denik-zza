@@ -1,14 +1,15 @@
-import '../../lib/database/drift_database/database.dart';
-import '../../lib/input/file_manager.dart';
+import 'package:denik_zza/database/drift_database/database.dart';
+import 'package:denik_zza/input/file_manager.dart';
 import 'test_configuration.dart';
 import 'test_output_manager.dart';
 
 /// Unified test setup coordinating all testing infrastructure components
 class UnifiedTestSetup {
   /// Create a test database with proper mode configuration
-  static Future<AppDatabase> createDatabase({bool useFileManagerPersist = false, bool useRunDir = true}) async {
+  static Future<AppDatabase> createDatabase(
+      {bool useFileManagerPersist = false, bool useRunDir = true}) async {
     final testMode = TestConfiguration.getTestMode();
-    
+
     switch (testMode) {
       case TestMode.inMemory:
         return AppDatabase.testInMemory();
@@ -18,30 +19,36 @@ class UnifiedTestSetup {
         // paths ending with .db as file paths and open them directly.
         if (useFileManagerPersist) {
           // Optionally configure FileManager to point to the per-run directory
-          final runDir = await TestOutputManager.getOrCreatePersistRunDirectory();
+          final runDir =
+              await TestOutputManager.getOrCreatePersistRunDirectory();
           FileManager().setPersistentTestMode(runDir);
         }
-        final dbPath = await TestOutputManager.getDatabasePath('test_database.db', useRunDir: useRunDir);
+        final dbPath = await TestOutputManager.getDatabasePath(
+            'test_database.db',
+            useRunDir: useRunDir);
         return AppDatabase(dbPath);
       case TestMode.production:
         if (!TestConfiguration.isProductionSafe) {
-          throw Exception('Production testing requires CONFIRM_PRODUCTION_TESTING=yes');
+          throw Exception(
+              'Production testing requires CONFIRM_PRODUCTION_TESTING=yes');
         }
         await TestOutputManager.initialize();
-        final dbPath = await TestOutputManager.getDatabasePath('production_test_database.db', useRunDir: useRunDir);
+        final dbPath = await TestOutputManager.getDatabasePath(
+            'production_test_database.db',
+            useRunDir: useRunDir);
         return AppDatabase(dbPath);
     }
   }
-  
+
   /// Initialize test environment for all modes
   static Future<void> initializeTestEnvironment() async {
     await TestOutputManager.initialize();
   }
-  
+
   /// Clean up test environment
   static Future<void> cleanupTestEnvironment() async {
     final testMode = TestConfiguration.getTestMode();
-    
+
     switch (testMode) {
       case TestMode.inMemory:
         // No cleanup needed for in-memory
@@ -54,7 +61,7 @@ class UnifiedTestSetup {
         break;
     }
   }
-  
+
   /// Get complete test environment summary
   static Map<String, dynamic> getEnvironmentSummary() {
     return {
@@ -63,24 +70,25 @@ class UnifiedTestSetup {
       'timestamp': DateTime.now().toIso8601String(),
     };
   }
-  
+
   /// Validate test environment is properly configured
   static Future<bool> validateEnvironment() async {
     try {
       final testMode = TestConfiguration.getTestMode();
-      
+
       // Check production safety
-      if (testMode == TestMode.production && !TestConfiguration.isProductionSafe) {
+      if (testMode == TestMode.production &&
+          !TestConfiguration.isProductionSafe) {
         return false;
       }
-      
+
       // Try to initialize test environment
       await initializeTestEnvironment();
-      
+
       // Try to create a test database
       final db = await createDatabase();
       await db.close();
-      
+
       return true;
     } catch (e) {
       return false;

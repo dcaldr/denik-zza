@@ -169,6 +169,8 @@ void main() {
 
       setUp(() async {
         // 1. Set Mode: Debug (Persistent output)
+        // ignore: deprecated_member_use_from_same_package
+        // ignore: deprecated_member_use_from_same_package
         await ModeCoordinator.setDebugMode(testName: testName);
 
         // 2. Clean up previous run's DB if exists (ensure idempotency)

@@ -3,6 +3,7 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/input/file_manager.dart';
 import 'package:drift/drift.dart';
 import '../utils/database_test_helper.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 
 /// Hardcoded setup for testing with predefined test data
 ///
@@ -106,7 +107,7 @@ class HardcodedTestSetup {
 
       return database;
     } catch (e) {
-      print('❌ Error setting up test data: $e');
+      AppLogger.l.e('❌ Error setting up test data: $e');
       rethrow;
     }
   }
@@ -205,10 +206,8 @@ class HardcodedTestSetup {
       final insuranceName = participant['insurance'] as String;
       int? insuranceId =
           await database.getInsuranceCompanyIDbyName(insuranceName);
-      if (insuranceId == null) {
-        insuranceId = await database.addInsuranceCompany(
-            InsuranceCompaniesCompanion(name: Value(insuranceName)));
-      }
+      insuranceId ??= await database.addInsuranceCompany(
+          InsuranceCompaniesCompanion(name: Value(insuranceName)));
 
       final companion = ParticipantsCompanion(
         firstName: Value(participant['firstName'] as String),

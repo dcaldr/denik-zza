@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import '../../lib/database/drift_database/database.dart';
-import '../../lib/input/file_manager.dart';
+import 'package:denik_zza/database/drift_database/database.dart';
+import 'package:denik_zza/input/file_manager.dart';
 
 import '../utils/test_configuration.dart';
 import '../utils/test_output_manager.dart';
@@ -52,13 +52,15 @@ void main() {
       await database.close();
     });
 
-    test('persist mode: DB file and FileManager outputs align in the same run directory', () async {
+    test(
+        'persist mode: DB file and FileManager outputs align in the same run directory',
+        () async {
       // Skip test body if not in persist mode
       if (!TestConfiguration.isPersist) {
         return;
       }
 
-  // 1) Verify DB file path under runDir after a simple write to materialize the file
+      // 1) Verify DB file path under runDir after a simple write to materialize the file
       final insertId = await database.addInsuranceCompany(
         InsuranceCompaniesCompanion.insert(name: 'Persist Check Company'),
       );
@@ -70,16 +72,22 @@ void main() {
       // Allow a short delay for filesystem to flush on Windows
       await Future.delayed(const Duration(milliseconds: 75));
 
-  // Database path expectations
-    // createDatabase(useRunDir: true) uses TestOutputManager.getDatabasePath('test_database.db', useRunDir: true)
-    // Internally AppDatabase treats explicit .db file path as a file and opens it directly
-  final dbFile = File('${runDir!}/test_database.db');
-      expect(await dbFile.exists(), isTrue, reason: 'DB file should exist under per-run directory');
-      expect(dbFile.path.replaceAll('\\', '/').startsWith(runDir!.replaceAll('\\', '/')), isTrue);
+      // Database path expectations
+      // createDatabase(useRunDir: true) uses TestOutputManager.getDatabasePath('test_database.db', useRunDir: true)
+      // Internally AppDatabase treats explicit .db file path as a file and opens it directly
+      final dbFile = File('${runDir!}/test_database.db');
+      expect(await dbFile.exists(), isTrue,
+          reason: 'DB file should exist under per-run directory');
+      expect(
+          dbFile.path
+              .replaceAll('\\', '/')
+              .startsWith(runDir!.replaceAll('\\', '/')),
+          isTrue);
 
       // 2) Verify FileManager points to the same runDir and can write a file there
       final fm = FileManager();
-      expect(fm.isPersistMode, isTrue, reason: 'FileManager should be in persist mode');
+      expect(fm.isPersistMode, isTrue,
+          reason: 'FileManager should be in persist mode');
 
       final home = await fm.getHomeDir();
       expect(home, isNotNull);
@@ -100,7 +108,11 @@ void main() {
       expect(content, 'hello persist');
 
       // Paths must be under the same runDir
-      expect(testFile.path.replaceAll('\\', '/').startsWith(runDir!.replaceAll('\\', '/')), isTrue);
+      expect(
+          testFile.path
+              .replaceAll('\\', '/')
+              .startsWith(runDir!.replaceAll('\\', '/')),
+          isTrue);
     });
   });
 }

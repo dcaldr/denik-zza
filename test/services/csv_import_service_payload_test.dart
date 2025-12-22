@@ -6,6 +6,8 @@ import 'package:denik_zza/input/file_manager.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/services/models/csv_import_payload.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:logger/logger.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -57,6 +59,9 @@ void main() {
   });
 
   test('loadCsvFromPayload handles empty bytes', () async {
+    AppLogger.configureForTests(level: Level.off);
+    addTearDown(() => AppLogger.configureForTests(level: Level.error));
+
     // Empty bytes should be caught at payload creation
     expect(
       () => CsvImportPayload.fromBytes(
@@ -68,6 +73,9 @@ void main() {
   });
 
   test('loadCsvFromPayload handles malformed CSV bytes', () async {
+    AppLogger.configureForTests(level: Level.off);
+    addTearDown(() => AppLogger.configureForTests(level: Level.error));
+
     // Create a file with invalid CSV structure
     final bytes =
         Uint8List.fromList('not,valid,csv\ngarbage\nmore garbage'.codeUnits);
@@ -108,6 +116,9 @@ void main() {
   });
 
   test('loadCsvFromPayload with invalid path throws', () async {
+    AppLogger.configureForTests(level: Level.off);
+    addTearDown(() => AppLogger.configureForTests(level: Level.error));
+
     final payload = CsvImportPayload.fromPath(
       path: 'test/data/nonexistent.csv',
       displayName: 'missing.csv',
@@ -122,6 +133,9 @@ void main() {
   });
 
   test('loadCsvFromPayload with null payload fields throws', () async {
+    AppLogger.configureForTests(level: Level.off);
+    addTearDown(() => AppLogger.configureForTests(level: Level.error));
+
     // This tests the payload validation logic
     expect(
       () => CsvImportPayload.fromPath(path: '', displayName: 'test.csv'),

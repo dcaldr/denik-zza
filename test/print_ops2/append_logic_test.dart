@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 import 'package:denik_zza/print_ops2/generate_pdf_template.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
@@ -46,7 +47,7 @@ void main() {
         adresa: 'Test Address',
       );
 
-      print('Determining page capacity...');
+      AppLogger.l.d('Determining page capacity...');
       for (int i = 1; i < 100; i++) {
         final records = generateRecords(i, printed: true);
 
@@ -58,13 +59,13 @@ void main() {
 
         if (result.analysis.finalPages > 1) {
           pageCapacity = i - 1; // Previous count fit on 1 page
-          print('Capacity determined: $pageCapacity records per page.');
+          AppLogger.l.d('Capacity determined: $pageCapacity records per page.');
           return;
         }
       }
       pageCapacity =
           18; // Fallback if something weird happens (e.g. infinite page)
-      print('Capacity fallback: 18');
+      AppLogger.l.d('Capacity fallback: 18');
     });
 
     test('Scenario 1: Same Page Append (Below Capacity)', () async {
@@ -88,7 +89,8 @@ void main() {
         zaznamList: allRecords,
       );
 
-      print('Scenario 1 (${effectiveUsed}old + ${effectiveNew}new): $result');
+      AppLogger.l
+          .d('Scenario 1 (${effectiveUsed}old + ${effectiveNew}new): $result');
       expect(result.analysis.finalPages, 1);
       expect(result.analysis.reusedLastPage, true);
     });
@@ -111,7 +113,7 @@ void main() {
         zaznamList: allRecords,
       );
 
-      print('Scenario 2 (${usedCount}old + ${newCount}new): $result');
+      AppLogger.l.d('Scenario 2 (${usedCount}old + ${newCount}new): $result');
       expect(result.analysis.finalPages, 2);
       expect(result.analysis.reusedLastPage, false,
           reason: 'Old page was full, should NOT reuse');
@@ -138,7 +140,8 @@ void main() {
         zaznamList: allRecords,
       );
 
-      print('Scenario 3 (${effectiveUsed}old + ${newCount}new): $result');
+      AppLogger.l
+          .d('Scenario 3 (${effectiveUsed}old + ${newCount}new): $result');
       expect(result.analysis.finalPages, 2);
       expect(result.analysis.reusedLastPage, true,
           reason: 'Had space on Page 1, should start there');

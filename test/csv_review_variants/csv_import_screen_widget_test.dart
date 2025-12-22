@@ -7,6 +7,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:pdf/pdf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:logger/logger.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -67,6 +69,9 @@ void main() {
 
   testWidgets('shows snackbar when payload preparation fails',
       (WidgetTester tester) async {
+    AppLogger.configureForTests(level: Level.off);
+    addTearDown(() => AppLogger.configureForTests(level: Level.error));
+
     mockSystem.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(

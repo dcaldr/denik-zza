@@ -6,7 +6,7 @@ import 'package:denik_zza/screens2/widgets/participant_list_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'setup_templates/hardcoded_setup.dart';
-import 'utils/database_test_helper.dart';
+
 import 'package:denik_zza/utils/mode_coordinator.dart';
 
 /// Comprehensive tests for ParticipantListScreen including challenging scenarios
