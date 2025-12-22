@@ -35,7 +35,7 @@ void main() {
     late MemoryAction testAction;
 
     setUp(() async {
-      ModeCoordinator.setTestingMode();
+      // Mode handled by flutter_test_config.dart
       await HardcodedTestSetup.setupTestData();
 
       // Get the current action using DatabaseWrapper
@@ -181,7 +181,7 @@ void main() {
 
   group('Focus Management - ParticipantListScreen (PersonAutocomplete)', () {
     setUp(() async {
-      ModeCoordinator.setTestingMode();
+      // Mode handled by flutter_test_config.dart
       await HardcodedTestSetup.setupTestData();
     });
 
@@ -264,7 +264,7 @@ void main() {
     late MemoryOsoba testPerson;
 
     setUp(() async {
-      ModeCoordinator.setTestingMode();
+      // Mode handled by flutter_test_config.dart
       await HardcodedTestSetup.setupTestData();
 
       final dbInterface = DatabaseWrapper.getDatabase();
@@ -282,7 +282,7 @@ void main() {
 
   group('Focus Management - IntakePersonRow (PersonAutocomplete)', () {
     setUp(() async {
-      ModeCoordinator.setTestingMode();
+      // Mode handled by flutter_test_config.dart
       await HardcodedTestSetup.setupTestData();
     });
 

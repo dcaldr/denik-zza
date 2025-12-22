@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/screens2/main_UI_dev.dart';
 
-import 'package:denik_zza/utils/mode_coordinator.dart';
-
 void main() {
   setUp(() {
-    ModeCoordinator.setTestingMode();
+    // Mode handled by flutter_test_config.dart
   });
 
   testWidgets('Main UI dev app smoke test', (WidgetTester tester) async {

@@ -27,8 +27,7 @@ void main() {
       // Initialize Flutter binding for widget tests
       TestWidgetsFlutterBinding.ensureInitialized();
 
-      // Set test mode explicitly
-      ModeCoordinator.setTestingMode();
+      // Mode handled by flutter_test_config.dart
       // Set up test database with participants using existing setup functions
       database = await HardcodedTestSetup.setupTestData();
 
@@ -458,8 +457,7 @@ void main() {
     late AppDatabase helperDb;
 
     setUp(() async {
-      // Ensure the wrapper provides a valid in-memory database for this group
-      DatabaseWrapper.setTestMode();
+      // Mode handled by flutter_test_config.dart
       helperDb = AppDatabase.testInMemory();
       DatabaseWrapper.useTestDriftDatabase(helperDb);
     });

@@ -13,8 +13,7 @@ void main() {
   });
 
   setUp(() {
-    ModeCoordinator.setTestingMode();
-    DatabaseWrapper.setTestMode();
+    // Mode handled by flutter_test_config.dart
   });
 
   /// Creates a test participant for widget tests.

@@ -19,7 +19,7 @@ void main() {
     late DatabaseInterface db;
 
     setUp(() async {
-      ModeCoordinator.setTestingMode();
+      // Mode handled by flutter_test_config.dart
       database = await HardcodedTestSetup.setupTestData();
       service = PrintCenterService();
       db = DatabaseWrapper.getDatabase();

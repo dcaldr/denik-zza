@@ -1,28 +1,46 @@
 # Test Modes Quick Reference
 
-## Two Modes
+## Zero-Config for Unit Tests
+
+```dart
+// flutter_test_config.dart calls setTestingMode() globally.
+// NO setup needed in individual test files!
+```
+
+---
+
+## Mode Overview
 
 | Mode | Database | Files | Use Case |
 |------|----------|-------|----------|
-| `setTestingMode()` | In-memory | None | Unit/widget tests |
-| `setIntegrationTestMode()` | **Disk file** | Isolated folder | Integration tests |
+| `testing` | In-memory | None | Unit/widget tests |
+| `integrationTest` | Disk file | Isolated folder | Integration tests |
+| `canary` | Disk file | Isolated folder | Same as integrationTest |
+| `debug` | Disk file | Persistent folder | Dev environment |
+| `production` | Disk file | App documents | Real app |
 
-## Usage
+---
 
-### Unit/Widget Tests (`test/` folder)
+## Unit/Widget Tests (`test/` folder)
 
 ```dart
-// Automatic! flutter_test_config.dart calls setTestingMode() globally.
-// Just write your test - no setup needed.
+// Automatic! Just write your test - no setup needed.
+void main() {
+  test('my test', () {
+    // Mode already set by flutter_test_config.dart
+    final db = DatabaseWrapper.getDatabase();  // In-memory DB
+  });
+}
 ```
 
-### Integration Tests (`integration_test/` folder)
+---
+
+## Integration Tests (`integration_test/` folder)
 
 ```dart
 testWidgets('my test', (tester) async {
   await ModeCoordinator.setIntegrationTestMode(testName: 'my_test');
-  // DB file: Documents/DenikZZA/test_outputs/integration/run_YYMMDD_HHMMSS/my_test/db.sqlite
-  // Files: Documents/DenikZZA/test_outputs/integration/run_YYMMDD_HHMMSS/my_test/
+  // DB: Documents/DenikZZA/test_outputs/integration/run_{runId}/{testName}/db.sqlite
   
   app.main();
   await tester.pumpAndSettle();
@@ -30,21 +48,19 @@ testWidgets('my test', (tester) async {
 });
 ```
 
-## Deprecated Modes
-
-These modes still work but are deprecated:
-
-| Mode | Replacement |
-|------|-------------|
-| `setCanaryTestMode()` | Use `setIntegrationTestMode()` |
-| `setDebugMode()` | Use `setIntegrationTestMode()` |
+---
 
 ## File Locations
 
-| Mode | test/` Output | `integration_test/` Output |
-|------|---------------|---------------------------|
-| Testing | No files | N/A |
-| IntegrationTest | N/A | `Documents/DenikZZA/test_outputs/integration/run_{runId}/{testName}/` |
+| Mode | Output Location |
+|------|-----------------|
+| testing | No files (in-memory) |
+| integrationTest | `Documents/DenikZZA/test_outputs/integration/run_{runId}/{testName}/` |
+| canary | Same as integrationTest |
+| debug | `Documents/DenikZZA/debug/` |
+| production | `Documents/DenikZZA/` |
+
+---
 
 ## DatabaseMode Enum
 
@@ -52,6 +68,6 @@ These modes still work but are deprecated:
 enum DatabaseMode {
   production,       // Real singleton (production app)
   testing,          // In-memory (unit/widget tests)
-  integrationTest,  // File-based in isolated folder (integration tests)
+  integrationTest,  // File-based in isolated folder
 }
 ```

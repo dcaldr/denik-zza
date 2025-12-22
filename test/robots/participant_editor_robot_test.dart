@@ -11,8 +11,7 @@ void main() {
   });
 
   setUp(() {
-    ModeCoordinator.setTestingMode();
-    DatabaseWrapper.setTestMode();
+    // Mode handled by flutter_test_config.dart
   });
 
   group('ParticipantEditorRobot', () {

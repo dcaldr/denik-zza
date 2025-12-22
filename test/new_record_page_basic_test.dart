@@ -15,7 +15,7 @@ void main() {
     late List<MemoryOsoba> testParticipants;
 
     setUp(() async {
-      ModeCoordinator.setTestingMode();
+      // Mode handled by flutter_test_config.dart
       // Set up test database with participants using existing setup functions
       database = await HardcodedTestSetup.setupTestData();
 

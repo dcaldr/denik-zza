@@ -11,7 +11,7 @@ void main() {
     late AppDatabase testDb;
 
     setUp(() async {
-      DatabaseWrapper.setTestMode();
+      // Mode handled by flutter_test_config.dart
       DatabaseTestHelper.disableDriftWarnings();
       testDb = AppDatabase.testInMemory();
       DatabaseWrapper.useTestDriftDatabase(testDb);

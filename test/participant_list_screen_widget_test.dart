@@ -27,9 +27,7 @@ void main() {
   late AppDatabase database;
 
   setUp(() async {
-    // CRITICAL FIX: Set test mode FIRST, before creating any widgets
-    // This ensures DatabaseWrapper.getDatabase() returns the test database
-    ModeCoordinator.setTestingMode();
+    // Mode handled by flutter_test_config.dart
 
     database = await HardcodedTestSetup.setupTestData();
 

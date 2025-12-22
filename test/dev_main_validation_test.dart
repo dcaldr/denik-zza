@@ -8,8 +8,7 @@ import 'package:denik_zza/utils/mode_coordinator.dart';
 void main() {
   group('Dev Main Setup Validation', () {
     test('hardcoded setup creates expected data correctly', () async {
-      // Setup test data with memory database (fast SQLite in memory)
-      ModeCoordinator.setTestingMode();
+      // Mode handled by flutter_test_config.dart
       final database = await HardcodedTestSetup.setupTestData();
 
       // Verify event was created and selected
