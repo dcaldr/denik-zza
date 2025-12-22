@@ -9,7 +9,15 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 /// Service vrstva pro Tisk Centrum.
 /// Nemá žádnou UI logiku, pouze získává data a vrací je dále controlleru.
 class PrintCenterService {
-  final DatabaseInterface _db = DatabaseWrapper.getDatabase();
+  final DatabaseInterface _db;
+
+  /// Constructor injection for testing and DI.
+  PrintCenterService({DatabaseInterface? database})
+      : _db = database ?? DatabaseWrapper.getDatabase();
+
+  /// Factory for use with AppDependencies (future).
+  // factory PrintCenterService.fromDeps(AppDependencies deps) =>
+  //     PrintCenterService(database: deps.database);
 
   /// Sleduje účastníky aktuální akce.
   Stream<List<MemoryOsoba>> watchCurrentEventParticipants() {
