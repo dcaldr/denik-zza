@@ -3,13 +3,22 @@ import 'package:denik_zza/database/drift_database_connector.dart';
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:flutter/widgets.dart';
 
-/// Database selection modes for better type safety and clarity
+/// Database selection modes for better type safety and clarity.
+///
+/// **Usage:**
+/// - [production]: Real app with persistent storage (default).
+/// - [testing]: Unit/widget tests with in-memory DB (fast, isolated).
+/// - [integrationTest]: Integration tests with file-based DB (inspectable).
 enum DatabaseMode {
   /// Default Drift database with persistent file storage (production)
   production,
 
   /// In-memory database for testing (fast, isolated)
   testing,
+
+  /// File-based database in isolated test directory (for integration tests).
+  /// Use when you need to inspect DB after test failure.
+  integrationTest,
 }
 
 /// Selects the correct [DatabaseInterface] instance.
@@ -41,8 +50,12 @@ class DatabaseWrapper {
   }
   DatabaseWrapper._internal();
 
-  /// NEW: Database mode selection (safer than int-based selection)
+  /// Database mode selection (safer than int-based selection)
   static DatabaseMode _databaseMode = DatabaseMode.production;
+
+  /// Path to the integration test database file.
+  /// Only used when [_databaseMode] is [DatabaseMode.integrationTest].
+  static String? _integrationTestDbPath;
 
   /// Optional test database to use when in testing mode.
   static AppDatabase? _injectedTestDb;
@@ -57,12 +70,25 @@ class DatabaseWrapper {
     _injectedTestDb = db;
   }
 
-  /// Set database mode for testing purposes.
+  /// Set database mode for unit/widget tests (in-memory).
   ///
   /// **IMPORTANT**: This method is intended for testing only.
   /// Do NOT use in production code - use only in test setUp methods.
+  ///
+  /// For integration tests that need file-based DB, use [setIntegrationTestMode].
   static void setTestMode() {
     _databaseMode = DatabaseMode.testing;
+  }
+
+  /// Set integration test mode with file-based database.
+  ///
+  /// The database will be created at [dbPath] (e.g., 'test_outputs/my_test/db.sqlite').
+  /// This allows post-mortem inspection of test data.
+  ///
+  /// **Usage:** Called by [ModeCoordinator.setIntegrationTestMode].
+  static void setIntegrationTestMode(String dbPath) {
+    _databaseMode = DatabaseMode.integrationTest;
+    _integrationTestDbPath = dbPath;
   }
 
   /// Get current database mode (for debugging/testing purposes)
@@ -116,12 +142,16 @@ class DatabaseWrapper {
       if (_injectedTestDb != null) {
         return DriftDatabaseConnector.withDatabase(_injectedTestDb!);
       } else {
-        // Fix: Reuse the cached implicit DB if it exists, otherwise create and cache it.
-        if (_cachedImplicitTestDb == null) {
-          _cachedImplicitTestDb = AppDatabase.testInMemory();
-        } else {}
+        // Reuse the cached implicit DB if it exists, otherwise create and cache it.
+        _cachedImplicitTestDb ??= AppDatabase.testInMemory();
         return DriftDatabaseConnector.withDatabase(_cachedImplicitTestDb!);
       }
+    }
+
+    if (_databaseMode == DatabaseMode.integrationTest) {
+      // File-based database for integration tests (inspectable after test)
+      _cachedImplicitTestDb ??= AppDatabase(_integrationTestDbPath);
+      return DriftDatabaseConnector.withDatabase(_cachedImplicitTestDb!);
     }
 
     return DriftDatabaseConnector();
@@ -151,6 +181,8 @@ class DatabaseWrapper {
     // that might be holding file locks (especially in Debug Mode).
     await DriftDatabaseConnector.reset();
 
+    // Clear integration test path
+    _integrationTestDbPath = null;
     _databaseMode = DatabaseMode.production;
   }
 

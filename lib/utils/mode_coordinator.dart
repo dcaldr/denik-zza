@@ -82,7 +82,7 @@ class ModeCoordinator {
         'ModeCoordinator: Switched to testing mode (in-memory, mock system)');
   }
 
-  /// Switch to integration test mode: **FILE-BASED database** (default), real file operations
+  /// Switch to integration test mode: **FILE-BASED database**, real file operations
   /// in isolated directory, MOCKED SystemInterface (no OS dialogs).
   ///
   /// This is the **default mode for integration tests**. Uses a persistent SQLite database
@@ -95,17 +95,22 @@ class ModeCoordinator {
   /// test data after a run completes or fails, making debugging easier.
   ///
   /// **For in-memory (faster) tests:** Use [setTestingMode] instead.
-  /// **For canary/critical path tests:** Use [setCanaryTestMode] (same behavior, different folder).
   static Future<void> setIntegrationTestMode({required String testName}) async {
     _currentMode = AppMode.integrationTest;
     _currentTestName = testName;
 
-    // Use file-based database for inspection and debugging
+    // Dispose any existing database first
     await DatabaseWrapper.dispose();
 
-    // Use real file system in isolated per-test directory
+    // Get isolated test directory
     final testDir =
         await _getTestDirectory('integration', currentRunId, testName);
+
+    // Set file-based database for inspection and debugging
+    final dbPath = '${testDir.path}/db.sqlite';
+    DatabaseWrapper.setIntegrationTestMode(dbPath);
+
+    // Use real file system in isolated per-test directory
     FileManager().setPersistentTestMode(testDir.path);
 
     // Use Mock System Interface (No OS Dialogs)
@@ -113,47 +118,54 @@ class ModeCoordinator {
 
     _logger
         .i('ModeCoordinator: Integration test mode - $currentRunId/$testName');
-    _logger.d('Integration test directory: ${testDir.path}');
+    _logger.d('DB path: $dbPath');
   }
 
-  /// Canary test mode: File-based DB for inspection + mocked OS dialogs.
+  /// @deprecated Use [setIntegrationTestMode] instead.
   ///
-  /// Use for critical path tests that need persistent DB for debugging.
-  /// Folder: Documents/DenikZZA/test_outputs/canary/run_{runId}/{testName}/
+  /// Canary tests should use `@Tags(['protected'])` for categorization.
+  /// This method now redirects to [setIntegrationTestMode] with a 'canary' folder.
+  @Deprecated('Use setIntegrationTestMode with @Tags for categorization')
   static Future<void> setCanaryTestMode({required String testName}) async {
-    _currentMode = AppMode.canary;
+    _currentMode = AppMode.canary; // Keep enum for backward compat
     _currentTestName = testName;
 
-    // Use file-based database (like debug mode)
     await DatabaseWrapper.dispose();
 
+    // Use 'canary' subfolder for backward compatibility
     final testDir = await _getTestDirectory('canary', currentRunId, testName);
+    final dbPath = '${testDir.path}/db.sqlite';
+    DatabaseWrapper.setIntegrationTestMode(dbPath);
     FileManager().setPersistentTestMode(testDir.path);
-
-    // Mock OS dialogs (unlike debug mode)
     SystemInterface.registerWith(TestSystemInterface());
 
-    _logger.i('ModeCoordinator: Canary test mode - $currentRunId/$testName');
-    _logger.d('Canary test directory: ${testDir.path}');
+    _logger.i(
+        'ModeCoordinator: Canary test mode (deprecated) - $currentRunId/$testName');
   }
 
-  /// Switch to debug mode: persistent database and file operations in test_outputs/.
-  /// Useful for debugging tests with real data persistence.
+  /// @deprecated Use [setIntegrationTestMode] instead.
+  ///
+  /// Debug mode is now essentially [setIntegrationTestMode] with real system interface.
+  @Deprecated('Use setIntegrationTestMode for persistent test data')
   static Future<void> setDebugMode({required String testName}) async {
     _currentMode = AppMode.debug;
     _currentTestName = testName;
 
-    await DatabaseWrapper.dispose(); // Uses file-based database
-    // Use unique path per run to avoid Windows file locking issues
-    // on previous run's database file.
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    FileManager().setPersistentTestMode('test_outputs/${testName}_$timestamp');
+    await DatabaseWrapper.dispose();
 
-    // Debug Mode uses REAL system interfaces (unless we want to test mocks explicitly)
-    // For now, keep it real to debug interactions.
+    // Use 'debug' subfolder with timestamp for backward compatibility
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final testDir = Directory('test_outputs/${testName}_$timestamp');
+    await testDir.create(recursive: true);
+
+    final dbPath = '${testDir.path}/db.sqlite';
+    DatabaseWrapper.setIntegrationTestMode(dbPath);
+    FileManager().setPersistentTestMode(testDir.path);
+
+    // Debug Mode uses REAL system interfaces (unlike integration test mode)
     SystemInterface.registerWith(RealSystemInterface());
 
-    _logger.d('ModeCoordinator: Debug mode - $testName');
+    _logger.d('ModeCoordinator: Debug mode (deprecated) - $testName');
   }
 
   /// Switch to production mode: real database, real file operations, REAL system interface.

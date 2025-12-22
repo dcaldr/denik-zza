@@ -126,9 +126,9 @@ void main() {
       });
 
       test('should create files in isolated directory', () async {
-        // Verify Mode - now file-based (production mode uses FileManager path)
-        expect(
-            DatabaseWrapper.getCurrentMode(), equals(DatabaseMode.production));
+        // Verify Mode - now uses integrationTest DatabaseMode (file-based)
+        expect(DatabaseWrapper.getCurrentMode(),
+            equals(DatabaseMode.integrationTest));
         expect(FileManager().isPersistMode,
             isTrue); // Persist mode for file-based test
 
