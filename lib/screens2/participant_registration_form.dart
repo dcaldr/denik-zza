@@ -193,6 +193,13 @@ class _ParticipantRegistrationFormState
           osoba.id = participantId;
           widget.onOsobaEdited?.call(osoba);
         }
+        // Clear form for next entry: ONLY for NEW participants on standalone page.
+        // IntakeForm is NOT affected - it uses controller-based saves, not this button.
+        // Edit mode (widget.osoba != null) does NOT clear to preserve context.
+        if (widget.osoba == null) {
+          clearFields();
+          setState(() {}); // Refresh UI to show cleared form
+        }
       } else {
         _showSnackBar('Chyba při ukládání účastníka');
       }
