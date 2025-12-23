@@ -5,12 +5,18 @@ class EventEditorRobot extends BaseRobot {
   EventEditorRobot(super.tester);
 
   Finder get nameInput => findKey('EventRegistrationForm_nadpis_input');
+  Finder get descriptionInput => findKey('EventRegistrationForm_popis_input');
   Finder get odkdyInput => findKey('EventRegistrationForm_odkdy_input');
   Finder get dokdyInput => findKey('EventRegistrationForm_dokdy_input');
   Finder get submitButton => findKey('EventRegistrationForm_submit_button');
 
   Future<void> enterEventName(String name) async {
     await enterText(nameInput, name);
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> enterDescription(String description) async {
+    await enterText(descriptionInput, description);
     await tester.pumpAndSettle();
   }
 

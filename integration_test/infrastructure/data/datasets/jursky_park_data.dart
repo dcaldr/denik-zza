@@ -582,7 +582,7 @@ const jurskyParkParticipants = [
 /// Jurský Park event definition
 const jurskyParkEvent = (
   title: 'Jurský park',
-  description: 'Letní táborový turnus zaměřený na historii a přírodu',
+  description: 'Dinosauří dobrodružství čeká! 🦖',
   dateFrom: '2025-07-10',
   dateTo: '2025-07-24',
   homeDirectory: 'jursky_park_2025',

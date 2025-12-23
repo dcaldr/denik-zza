@@ -229,6 +229,7 @@ void main() {
         await dashboard.waitForKey('EventRegistrationForm_nadpis_input');
 
         await eventEditor.enterEventName(jurskyParkEvent.title);
+        await eventEditor.enterDescription(jurskyParkEvent.description);
         await eventEditor.enterDates(
           DateTime.parse(jurskyParkEvent.dateFrom),
           DateTime.parse(jurskyParkEvent.dateTo),
