@@ -177,7 +177,7 @@ class _ActionDetailState extends State<ActionDetail> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          const ParticipantRegistrationForm()),
+                                          const ParticipantRegistrationPage()),
                                 );
                               },
                             ),

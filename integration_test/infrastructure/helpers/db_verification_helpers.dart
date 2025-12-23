@@ -243,4 +243,35 @@ class DbVerificationHelpers {
       return null;
     }
   }
+
+  /// Verifies participant arrival status (prisel field).
+  ///
+  /// Used after intake to verify arrival was saved to database.
+  Future<void> verifyArrivalStatus({
+    required String jmeno,
+    required String prijmeni,
+    required bool expectedArrived,
+  }) async {
+    final participants = await db.getParticipantsByCurrentEvent();
+    final found = participants.where(
+      (p) => p.jmeno == jmeno && p.prijmeni == prijmeni,
+    );
+    expect(found.length, equals(1),
+        reason: 'Participant $jmeno $prijmeni not found');
+
+    final p = found.first;
+    expect(p.prisel, equals(expectedArrived),
+        reason:
+            'Participant $jmeno $prijmeni arrival status mismatch: expected $expectedArrived, got ${p.prisel}');
+  }
+
+  /// Verifies count of arrived participants.
+  ///
+  /// Used after intake phase to verify correct number arrived.
+  Future<void> verifyArrivedCount(int expectedCount) async {
+    final participants = await db.getParticipantsByCurrentEvent();
+    final arrivedCount = participants.where((p) => p.prisel).length;
+    expect(arrivedCount, equals(expectedCount),
+        reason: 'Expected $expectedCount arrived, got $arrivedCount');
+  }
 }

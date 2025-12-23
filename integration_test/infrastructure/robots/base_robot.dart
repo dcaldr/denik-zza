@@ -124,4 +124,48 @@ class BaseRobot {
       return;
     }
   }
+
+  // ==================== DRAWER NAVIGATION ====================
+
+  /// Opens the app drawer by tapping the menu icon.
+  Future<void> openDrawer() async {
+    await tap(findIcon(Icons.menu));
+  }
+
+  /// Taps the Intake Form item in the drawer.
+  ///
+  /// Requires drawer to be open first.
+  Future<void> tapDrawerIntakeForm() async {
+    await tap(findKey('AppDrawer_intake_form'));
+  }
+
+  /// Taps the New Record item in the drawer.
+  Future<void> tapDrawerNewRecord() async {
+    await tap(findKey('AppDrawer_new_record'));
+  }
+
+  /// Taps the Print Center item in the drawer.
+  Future<void> tapDrawerPrintCenter() async {
+    await tap(findKey('AppDrawer_print_center'));
+  }
+
+  /// Navigates to Intake Form via drawer.
+  ///
+  /// Opens drawer and taps intake form button.
+  Future<void> navigateToIntakeForm() async {
+    await openDrawer();
+    await tapDrawerIntakeForm();
+  }
+
+  /// Navigates to New Record Page via drawer.
+  Future<void> navigateToNewRecordPage() async {
+    await openDrawer();
+    await tapDrawerNewRecord();
+  }
+
+  /// Navigates to Print Center via drawer.
+  Future<void> navigateToPrintCenter() async {
+    await openDrawer();
+    await tapDrawerPrintCenter();
+  }
 }
