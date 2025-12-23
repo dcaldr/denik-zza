@@ -23,10 +23,9 @@ class ActionDetail extends StatefulWidget {
 }
 
 class _ActionDetailState extends State<ActionDetail> {
+  late final DatabaseInterface database;
   final Logger _logger = AppLogger.l;
 
-  /// Database instance for interacting with the data.
-  final DatabaseInterface database = DatabaseWrapper.getDatabase();
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode(); // Stable focus node
   String _searchQuery = '';
@@ -39,6 +38,7 @@ class _ActionDetailState extends State<ActionDetail> {
   @override
   void initState() {
     super.initState();
+    database = DatabaseWrapper.getDatabase();
     _loadParticipants();
   }
 

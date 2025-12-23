@@ -10,25 +10,25 @@ import '../../database/database_wrapper.dart';
 import '../../database/in_memory_structures_tmp/memory_akce.dart';
 
 class EventList extends StatefulWidget {
-  final DatabaseInterface database = DatabaseWrapper.getDatabase();
-
-  EventList({super.key});
+  const EventList({super.key});
 
   @override
   State<EventList> createState() => _EventListState();
 }
 
 class _EventListState extends State<EventList> {
+  late final DatabaseInterface database;
   int? _currentEventID;
 
   @override
   void initState() {
     super.initState();
+    database = DatabaseWrapper.getDatabase();
     _fetchCurrentEventID();
   }
 
   void _fetchCurrentEventID() async {
-    _currentEventID = await widget.database.getCurrentEventID();
+    _currentEventID = await database.getCurrentEventID();
     setState(() {});
   }
 
@@ -60,7 +60,7 @@ class _EventListState extends State<EventList> {
 
   Widget _buildActionList() {
     return FutureBuilder<List<MemoryAction>>(
-      future: widget.database.getAllZzaActions(),
+      future: database.getAllZzaActions(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const CircularProgressIndicator();
@@ -83,9 +83,9 @@ class _EventListState extends State<EventList> {
   void _handlePinnedChanged(MemoryAction event) {
     setState(() {
       if (event.idAkce == _currentEventID) {
-        widget.database.updateCurrentEvent(null);
+        database.updateCurrentEvent(null);
       } else {
-        widget.database.updateCurrentEvent(event.idAkce);
+        database.updateCurrentEvent(event.idAkce);
       }
 
       _fetchCurrentEventID();
@@ -98,7 +98,7 @@ class _EventListState extends State<EventList> {
   Widget _buildActionItem(BuildContext context, MemoryAction action) {
     final dateFormat = DateFormat('dd.MM.yyyy', 'cs_CZ');
     return FutureBuilder<int>(
-      future: widget.database.getParticipantCountInAction(action.idAkce ?? -1),
+      future: database.getParticipantCountInAction(action.idAkce ?? -1),
       builder: (context, participantSnapshot) {
         if (participantSnapshot.connectionState == ConnectionState.waiting) {
           return const CircularProgressIndicator();
