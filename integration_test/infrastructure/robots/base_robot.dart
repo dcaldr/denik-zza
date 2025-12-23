@@ -13,6 +13,16 @@ class BaseRobot {
     await tester.pumpAndSettle();
   }
 
+  /// Pumps a single frame without waiting for animations to settle.
+  ///
+  /// Use this instead of pumpAndSettle when:
+  /// - You need control over timing
+  /// - There are infinite animations (loaders) that prevent settling
+  /// - You want faster test execution for simple operations
+  Future<void> pump([Duration? duration]) async {
+    await tester.pump(duration);
+  }
+
   /// Taps a widget found by [finder] and waits for animations.
   Future<void> tap(Finder finder) async {
     // print('tapping $finder'); // Optional debug logging
@@ -34,6 +44,64 @@ class BaseRobot {
 
   /// Helper to find a widget by Text content.
   Finder findText(String text) => find.text(text);
+
+  /// Waits for a widget with the given key to appear.
+  ///
+  /// Use this instead of pumpAndSettle when there are infinite animations
+  /// (like CircularProgressIndicator) that prevent settling.
+  ///
+  /// Returns true if widget was found within timeout, false otherwise.
+  ///
+  /// Example:
+  /// ```dart
+  /// final found = await waitForKey('ParticipantList_container');
+  /// expect(found, isTrue);
+  /// ```
+  Future<bool> waitForKey(
+    String key, {
+    Duration timeout = const Duration(seconds: 10),
+    Duration pollInterval = const Duration(milliseconds: 100),
+  }) async {
+    final stopwatch = Stopwatch()..start();
+    final finder = findKey(key);
+
+    while (stopwatch.elapsed < timeout) {
+      await pump(pollInterval);
+      if (finder.evaluate().isNotEmpty) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Waits for text to appear in the widget tree.
+  ///
+  /// Use this instead of pumpAndSettle when there are infinite animations
+  /// (like CircularProgressIndicator) that prevent settling.
+  ///
+  /// Returns true if text was found within timeout, false otherwise.
+  ///
+  /// Example:
+  /// ```dart
+  /// final found = await waitForText('Karel Čapek');
+  /// expect(found, isTrue, reason: 'Participant should appear in list');
+  /// ```
+  Future<bool> waitForText(
+    String text, {
+    Duration timeout = const Duration(seconds: 10),
+    Duration pollInterval = const Duration(milliseconds: 100),
+  }) async {
+    final stopwatch = Stopwatch()..start();
+    final finder = findText(text);
+
+    while (stopwatch.elapsed < timeout) {
+      await pump(pollInterval);
+      if (finder.evaluate().isNotEmpty) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   /// Helper to confirm date picker dialogs.
   Future<void> confirmDatePicker() async {

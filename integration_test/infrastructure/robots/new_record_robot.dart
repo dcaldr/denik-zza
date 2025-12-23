@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'base_robot.dart';
 
+// Import test data models for createRecordFromTestData
+import '../data/models/test_record.dart';
+
 /// Robot for interacting with [NewRecordPage].
 ///
 /// This robot provides methods to:
@@ -8,6 +11,7 @@ import 'base_robot.dart';
 /// - Fill record title and description
 /// - Save/cancel records
 /// - Navigate to print flows
+/// - Create records from TestRecord data (E2E helper)
 ///
 /// ## Keys Used (from `new_record_page.dart`):
 /// - `NewRecordPage_participantAutocomplete`
@@ -51,6 +55,24 @@ class NewRecordRobot extends BaseRobot {
     expect(saveButton, findsOneWidget);
   }
 
+  /// Selects a participant by name via autocomplete.
+  ///
+  /// Types the full name into the autocomplete field and taps the
+  /// matching suggestion from the dropdown.
+  ///
+  /// [fullName] should be in format "Jméno Příjmení" (e.g., "Karel Čapek")
+  Future<void> selectParticipant(String fullName) async {
+    // Enter text into autocomplete field
+    await enterText(participantAutocomplete, fullName);
+    await pump();
+
+    // Wait for dropdown to appear and tap matching suggestion
+    // Find text in the overlay dropdown, use .first if name appears multiple times
+    final suggestion = find.text(fullName).first;
+    await tester.tap(suggestion);
+    await pumpAndSettle();
+  }
+
   /// Enters text into the title field.
   Future<void> enterTitle(String title) async {
     await enterText(titleInput, title);
@@ -84,5 +106,34 @@ class NewRecordRobot extends BaseRobot {
   /// Taps the append print button.
   Future<void> tapPrintAppend() async {
     await tap(printAppendButton);
+  }
+
+  /// Creates a medical record for a participant using TestRecord data.
+  ///
+  /// Convenience method that:
+  /// 1. Selects participant by name
+  /// 2. Fills title and description from TestRecord
+  /// 3. Saves the record
+  ///
+  /// Example:
+  /// ```dart
+  /// await robot.createRecordFromTestData(
+  ///   'Karel Čapek',
+  ///   TestRecord(nazev: 'Bolest hlavy', popis: 'Podán Ibalgin'),
+  /// );
+  /// ```
+  Future<void> createRecordFromTestData(
+    String participantFullName,
+    TestRecord record,
+  ) async {
+    await selectParticipant(participantFullName);
+    await enterTitle(record.nazev);
+    await enterDescription(record.popis);
+
+    if (record.poznamka != null) {
+      await enterNote(record.poznamka!);
+    }
+
+    await tapSave();
   }
 }

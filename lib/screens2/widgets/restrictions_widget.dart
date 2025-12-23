@@ -152,7 +152,9 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
           // _controller = textEditingController; // This might be tricky with Autocomplete
         }
 
+        // Key for E2E testing - allows testing robots to find this field
         return TextField(
+          key: Key('RestrictionsWidget_${_logic.getText()}_input'),
           controller: textEditingController,
           focusNode: focusNode,
           textInputAction: TextInputAction.done,
@@ -170,7 +172,9 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
   }
 
   Widget _buildAddButton() {
+    // Key for E2E testing - allows testing robots to tap add button
     return IconButton(
+      key: Key('RestrictionsWidget_${_logic.getText()}_add_button'),
       icon: const Icon(Icons.add_circle),
       color: Theme.of(context).primaryColor,
       tooltip: 'Přidat',
