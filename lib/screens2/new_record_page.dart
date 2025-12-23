@@ -13,11 +13,13 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/print_ops2/print_center.dart';
 import 'package:denik_zza/print_ops2/print_center_controller.dart';
 import 'package:denik_zza/print_ops2/print_center_service.dart';
+import 'package:denik_zza/design_system/tokens/app_breakpoints.dart';
 import 'package:intl/intl.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 
 /// Enhanced new record page that matches the old system functionality
 /// but with improved architecture and validation
@@ -114,7 +116,7 @@ class NewRecordPageState extends State<NewRecordPage> {
       });
     } catch (e) {
       // Handle error silently or show a message
-      print('Error loading participants: $e');
+      AppLogger.l.e('Error loading participants: $e');
     }
   }
 
@@ -545,6 +547,9 @@ class NewRecordPageState extends State<NewRecordPage> {
     );
 
     if (pickedTime != null) {
+      // Guard against async gap before second picker
+      if (!mounted) return;
+
       // If time was selected, then show date picker
       DateTime? pickedDate = await showDatePicker(
         context: context,
@@ -553,6 +558,7 @@ class NewRecordPageState extends State<NewRecordPage> {
         lastDate: DateTime(2101),
       );
 
+      if (!mounted) return; // Guard against async gap
       if (pickedDate != null) {
         // Both time and date selected
         setState(() {
@@ -646,7 +652,7 @@ class NewRecordPageState extends State<NewRecordPage> {
         return;
       }
 
-      final newRecord = MemoryZaznam.oldUI(
+      final newRecord = MemoryZaznam.fullNamed(
         nazev: _titleController.text.trim(),
         popis: _descriptionController.text.trim(),
         idPacient: _selectedParticipant!.id,
@@ -654,6 +660,9 @@ class NewRecordPageState extends State<NewRecordPage> {
         casZaznamu: _getFinalDateTime(),
         isPrinted: false,
         idAuthor: 1, // Assuming a logged-in user with ID 1
+        poznamka: null,
+        teplota: null,
+        obrazekPath: null,
       );
 
       try {
@@ -743,8 +752,10 @@ class NewRecordPageState extends State<NewRecordPage> {
       drawer: const AppDrawer(),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          // Adjust spacing and layout based on available height
-          final isCompact = constraints.maxHeight <= 600;
+          // Use centralized breakpoint instead of magic number.
+          // See AppBreakpoints for all responsive thresholds.
+          final isCompact =
+              AppBreakpoints.isCompactHeight(constraints.maxHeight);
           final spacing = isCompact ? 8.0 : 12.0; // Increased spacing
           final titleSpacing = isCompact ? 8.0 : 12.0; // Increased spacing
 
@@ -765,7 +776,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                         Theme.of(context)
                             .colorScheme
                             .primaryContainer
-                            .withOpacity(0.5),
+                            .withValues(alpha: 0.5),
                       ],
                     ),
                     borderRadius: AppRadii.containerRadius, // 12px rounded

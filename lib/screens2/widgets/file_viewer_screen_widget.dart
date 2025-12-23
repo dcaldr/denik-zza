@@ -55,32 +55,42 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
   }
 
   Widget _buildPDFView() {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height /
-            1.3, //note: eye balling the height
-        maxWidth: MediaQuery.of(context).size.width / 2,
-      ),
-      child: PdfPreview(
-        build: (format) => File(filePath).readAsBytesSync(),
-        maxPageWidth: MediaQuery.of(context).size.width * 4,
-      ),
+    // Use LayoutBuilder for parent-relative sizing.
+    // MediaQuery.of(context).size gives global screen size, not available space.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: constraints.maxHeight * 0.8,
+            maxWidth: constraints.maxWidth * 0.9,
+          ),
+          child: PdfPreview(
+            build: (format) => File(filePath).readAsBytesSync(),
+            maxPageWidth: constraints.maxWidth * 2,
+          ),
+        );
+      },
     );
   }
 
   Widget _buildImageView() {
-    return InteractiveViewer(
-      minScale: 0.2,
-      maxScale: 10,
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height,
-        ),
-        child: Image.file(
-          File(filePath),
-          fit: BoxFit.contain,
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return InteractiveViewer(
+          minScale: 0.2,
+          maxScale: 10,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: constraints.maxHeight,
+              maxWidth: constraints.maxWidth,
+            ),
+            child: Image.file(
+              File(filePath),
+              fit: BoxFit.contain,
+            ),
+          ),
+        );
+      },
     );
   }
 }

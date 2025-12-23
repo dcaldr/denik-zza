@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
+import 'package:denik_zza/design_system/tokens/app_colors.dart';
+import 'package:denik_zza/design_system/tokens/app_radii.dart';
 
 class RestrictionsWidget extends StatefulWidget {
   final LogicInterface logic;
@@ -23,12 +25,33 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
   late final LogicInterface _logic;
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  final ScrollController _scrollController = ScrollController();
+  bool _hasMoreBelow = false;
 
   @override
   void initState() {
     super.initState();
     _logic = widget.logic;
     _fetchData();
+    _scrollController.addListener(_updateScrollIndicator);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_updateScrollIndicator);
+    _scrollController.dispose();
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _updateScrollIndicator() {
+    if (!_scrollController.hasClients) return;
+    final hasMore = _scrollController.position.pixels <
+        _scrollController.position.maxScrollExtent - 10;
+    if (hasMore != _hasMoreBelow) {
+      setState(() => _hasMoreBelow = hasMore);
+    }
   }
 
   Future<void> _fetchData() async {
@@ -52,79 +75,134 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _logic.getText(),
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          const SizedBox(height: AppSpacing.s),
-
-          // List of existing items
-          if (_logic.items.isNotEmpty)
-            SizedBox(
-              width:
-                  300, // Slightly wider than original 200 to accommodate content
-              child: ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _logic.items.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.check_circle_outline, size: 16),
-                    title: Text(
-                      _logic.items[index],
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  );
-                },
+    // Removed SingleChildScrollView to prevent nested scroll wiggle.
+    // Parent form handles scrolling. See /scroll-wiggle-prompt workflow.
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _logic.getText(),
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
               ),
-            ),
+        ),
+        const SizedBox(height: AppSpacing.s),
 
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                // If width is too small, stack vertically
-                if (constraints.maxWidth < 200) {
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: double.infinity,
-                        child: _buildAutocomplete(),
-                      ),
-                      const SizedBox(height: AppSpacing.s),
-                      SizedBox(
-                        width: 48,
-                        height: 48,
-                        child: _buildAddButton(),
-                      ),
-                    ],
-                  );
-                }
+        // Height-bounded list with scroll indicator (pattern from record_list_widget)
+        if (_logic.items.isNotEmpty) _buildBoundedList(),
 
-                // For normal widths, use horizontal layout
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // If width is too small, stack vertically
+              if (constraints.maxWidth < 200) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
+                    SizedBox(
+                      width: double.infinity,
                       child: _buildAutocomplete(),
                     ),
-                    const SizedBox(width: AppSpacing.s),
-                    _buildAddButton(),
+                    const SizedBox(height: AppSpacing.s),
+                    SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: _buildAddButton(),
+                    ),
                   ],
                 );
-              },
-            ),
+              }
+
+              // For normal widths, use horizontal layout
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _buildAutocomplete(),
+                  ),
+                  const SizedBox(width: AppSpacing.s),
+                  _buildAddButton(),
+                ],
+              );
+            },
           ),
+        ),
+      ],
+    );
+  }
+
+  /// Builds height-bounded list with scroll indicator when scrollable.
+  Widget _buildBoundedList() {
+    // Check for scroll indicator after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _updateScrollIndicator();
+    });
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 300, maxHeight: 150),
+      child: Stack(
+        children: [
+          ListView.builder(
+            controller: _scrollController,
+            shrinkWrap: true,
+            physics: const ClampingScrollPhysics(),
+            itemCount: _logic.items.length,
+            itemBuilder: (context, index) {
+              return ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.check_circle_outline, size: 16),
+                title: Text(
+                  _logic.items[index],
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              );
+            },
+          ),
+          // Gradient indicator when there's more content below
+          if (_hasMoreBelow)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(
+                child: Container(
+                  height: 30,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppColors.greyBackground.withValues(alpha: 0.0),
+                        AppColors.greyBackground.withValues(alpha: 0.9),
+                      ],
+                    ),
+                  ),
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.blueBackground,
+                        borderRadius: AppRadii.containerRadius,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.keyboard_arrow_down,
+                              size: 12, color: AppColors.blueText),
+                          Text('více',
+                              style: TextStyle(
+                                  fontSize: 10, color: AppColors.blueText)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

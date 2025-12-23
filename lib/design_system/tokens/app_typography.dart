@@ -19,7 +19,7 @@ class AppTypography {
     // Display styles (large headings) - rarely used in your app
     displayLarge: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 28,
+      fontSize: 26, // Reduced from 28
       fontWeight: FontWeight.bold,
       letterSpacing: -0.5,
       height: 1.2,
@@ -27,14 +27,14 @@ class AppTypography {
     ),
     displayMedium: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 24,
+      fontSize: 22, // Reduced from 24
       fontWeight: FontWeight.bold,
       height: 1.2,
       locale: Locale('cs', 'CZ'),
     ),
     displaySmall: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 20,
+      fontSize: 18, // Reduced from 20
       fontWeight: FontWeight.bold,
       height: 1.3,
       locale: Locale('cs', 'CZ'),
@@ -43,21 +43,21 @@ class AppTypography {
     // Headline styles (section headers)
     headlineLarge: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 18,
+      fontSize: 16, // Reduced from 18
       fontWeight: FontWeight.w600,
       height: 1.3,
       locale: Locale('cs', 'CZ'),
     ),
     headlineMedium: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 16,
+      fontSize: 15, // Reduced from 16
       fontWeight: FontWeight.w600,
       height: 1.3,
       locale: Locale('cs', 'CZ'),
     ),
     headlineSmall: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 15,
+      fontSize: 14, // Reduced from 15
       fontWeight: FontWeight.w600,
       height: 1.3,
       locale: Locale('cs', 'CZ'),
@@ -66,14 +66,14 @@ class AppTypography {
     // Title styles (CSV uses theme.textTheme.titleMedium for labels)
     titleLarge: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 16,
+      fontSize: 15, // Reduced from 16
       fontWeight: FontWeight.w600,
       height: 1.4,
       locale: Locale('cs', 'CZ'),
     ),
     titleMedium: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 15, // Matches NewRecord title fields (non-compact)
+      fontSize: 14, // Reduced from 15
       fontWeight: FontWeight.w500,
       letterSpacing: 0.15,
       height: 1.4,
@@ -81,7 +81,7 @@ class AppTypography {
     ),
     titleSmall: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 13,
+      fontSize: 12, // Reduced from 13
       fontWeight: FontWeight.w500,
       letterSpacing: 0.1,
       height: 1.4,
@@ -92,7 +92,7 @@ class AppTypography {
     // CRITICAL: These match your actual code!
     bodyLarge: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 15, // CSV import file label uses bodyLarge
+      fontSize: 14, // Reduced from 15
       fontWeight: FontWeight.normal,
       letterSpacing: 0.5,
       height: 1.5,
@@ -100,7 +100,7 @@ class AppTypography {
     ),
     bodyMedium: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 14, // NewRecord description field (non-compact)
+      fontSize: 13, // Reduced from 14
       fontWeight: FontWeight.normal,
       letterSpacing: 0.25,
       height: 1.5,
@@ -108,7 +108,7 @@ class AppTypography {
     ),
     bodySmall: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 12, // NewRecord poznámka label
+      fontSize: 11, // Reduced from 12
       fontWeight: FontWeight.normal,
       letterSpacing: 0.4,
       height: 1.5,
@@ -118,7 +118,7 @@ class AppTypography {
     // Label styles (buttons, small UI elements)
     labelLarge: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 14,
+      fontSize: 13, // Reduced from 14
       fontWeight: FontWeight.w500,
       letterSpacing: 0.1,
       height: 1.4,
@@ -126,7 +126,7 @@ class AppTypography {
     ),
     labelMedium: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 12,
+      fontSize: 11, // Reduced from 12
       fontWeight: FontWeight.w500,
       letterSpacing: 0.5,
       height: 1.4,
@@ -134,7 +134,7 @@ class AppTypography {
     ),
     labelSmall: TextStyle(
       fontFamily: fontFamily,
-      fontSize: 11, // NewRecord health chip text
+      fontSize: 10, // Reduced from 11
       fontWeight: FontWeight.w500,
       letterSpacing: 0.5,
       height: 1.4,

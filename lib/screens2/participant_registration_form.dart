@@ -9,6 +9,7 @@ import '../input/input_hold.dart';
 import '../input/rodne_cislo.dart';
 import '../input/text_tools.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
+import 'package:denik_zza/design_system/tokens/app_breakpoints.dart';
 import 'package:denik_zza/screens2/widgets/memory_restriction_widget.dart';
 
 class ParticipantRegistrationForm extends StatefulWidget {
@@ -341,17 +342,46 @@ class _ParticipantRegistrationFormState
     );
   }
 
+  /// Builds a responsive form row: 3 columns on desktop, 2 on tablet, 1 on mobile.
   Widget _buildFormRow(List<Widget> fields) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: fields
-          .map((field) => Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: field,
-                ),
-              ))
-          .toList(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = AppBreakpoints.getColumnCount(constraints.maxWidth);
+
+        if (columns == 1) {
+          // Mobile: Stack vertically with spacing
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: fields
+                .map((field) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: field,
+                    ))
+                .toList(),
+          );
+        }
+
+        // Tablet/Desktop: Chunk into rows with column count
+        final rows = <Widget>[];
+        for (var i = 0; i < fields.length; i += columns) {
+          final chunk = fields.skip(i).take(columns).toList();
+          rows.add(Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: chunk
+                .map((field) => Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: field,
+                      ),
+                    ))
+                .toList(),
+          ));
+          if (i + columns < fields.length) {
+            rows.add(const SizedBox(height: 4));
+          }
+        }
+        return Column(children: rows);
+      },
     );
   }
 
@@ -423,34 +453,46 @@ class _ParticipantRegistrationFormState
     );
   }
 
-  /// Build the restrictions and medications section
+  /// Build the restrictions and medications section with responsive layout.
   Widget _buildRestrictionsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Omezení a léky',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 16),
-        Row(
+    // Removed duplicate "Omezení a léky" header - each widget shows its own.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = AppBreakpoints.isMobile(constraints.maxWidth);
+
+        final widgets = [
+          RestrictionsWidget(
+            logic: _omezeniLogic,
+            participantId: widget.osoba?.id,
+          ),
+          RestrictionsWidget(
+            logic: _lekLogic,
+            participantId: widget.osoba?.id,
+          ),
+        ];
+
+        if (isNarrow) {
+          // Mobile: Stack vertically
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              widgets[0],
+              const SizedBox(height: 16),
+              widgets[1],
+            ],
+          );
+        }
+
+        // Desktop/Tablet: Side by side
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: RestrictionsWidget(
-                logic: _omezeniLogic,
-                participantId: widget.osoba?.id,
-              ),
-            ),
+            Expanded(child: widgets[0]),
             AppSpacing.buttonGap,
-            Expanded(
-              child: RestrictionsWidget(
-                logic: _lekLogic,
-                participantId: widget.osoba?.id,
-              ),
-            ),
+            Expanded(child: widgets[1]),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 }
