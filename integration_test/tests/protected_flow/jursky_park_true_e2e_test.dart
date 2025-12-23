@@ -193,29 +193,38 @@ void main() {
     });
 
     // ========================================
-    // GROUP 1: PreEvent Phase - Setup
+    // MAIN E2E WORKFLOW (Single Sequential Test)
+    // All phases in one test for data persistence
     // ========================================
-    group('Phase 1: PreEvent - Create Event & Participants', () {
-      testWidgets('Create Event and ALL 15 Participants via UI',
+    group('Complete Workflow', () {
+      testWidgets('Full Jurský Park E2E: Create → Intake → Records → Append',
           (tester) async {
-        // Launch app
+        // Launch app once for entire workflow
         app.main();
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 500));
 
-        // Initialize robots
+        // Initialize all robots
         final dashboard = DashboardRobot(tester);
         final eventEditor = EventEditorRobot(tester);
         final eventDetail = EventDetailRobot(tester);
         final participantEditor = ParticipantEditorRobot(tester);
+        final intake = IntakeRobot(tester);
+        final newRecord = NewRecordRobot(tester);
 
         // Get DB for verification
         final db = DatabaseWrapper.getDatabase();
         final dbHelpers = DbVerificationHelpers(db);
 
-        // ==================== CREATE EVENT ====================
-        AppLogger.l.i('Creating event: ${jurskyParkEvent.title}');
+        // ============================================================
+        // PHASE 1: PreEvent - Create Event & Participants
+        // ============================================================
+        AppLogger.l.i('═══════════════════════════════════════════════');
+        AppLogger.l.i('PHASE 1: PreEvent - Create Event & Participants');
+        AppLogger.l.i('═══════════════════════════════════════════════');
 
+        // CREATE EVENT
+        AppLogger.l.i('Creating event: ${jurskyParkEvent.title}');
         await dashboard.tapCreateNewEvent();
         await dashboard.waitForKey('EventRegistrationForm_nadpis_input');
 
@@ -226,7 +235,7 @@ void main() {
         );
         await eventEditor.submit();
 
-        // Wait for event to appear in list (may have loader)
+        // Wait for event to appear
         final eventFound = await dashboard.waitForText(jurskyParkEvent.title,
             timeout: const Duration(seconds: 15));
         expect(eventFound, isTrue, reason: 'Event should appear in dashboard');
@@ -235,65 +244,39 @@ void main() {
         await dbHelpers.verifyEventExists(jurskyParkEvent.title);
         AppLogger.l.i('✅ Event created and verified in DB');
 
-        // ==================== OPEN EVENT ====================
+        // OPEN EVENT
         await dashboard.tapEvent(jurskyParkEvent.title);
         await eventDetail.waitForKey('EventDetail_addButton');
 
-        // ==================== CREATE ALL 15 PARTICIPANTS ====================
+        // CREATE ALL 15 PARTICIPANTS
         for (int i = 0; i < jurskyParkParticipants.length; i++) {
           final p = jurskyParkParticipants[i];
           AppLogger.l
               .i('Adding participant ${i + 1}/15: ${p.jmeno} ${p.prijmeni}');
 
-          // Navigate to participant form
           await eventDetail.tapAddParticipant();
           await participantEditor
               .waitForKey('ParticipantRegistrationForm_jmeno_input');
-
-          // Fill complete data including medications and restrictions
           await participantEditor.fillCompleteFromTestData(p);
-
-          // Submit
           await participantEditor.tapSubmit();
           await tester.pump(const Duration(milliseconds: 300));
-
-          // Wait for return to event detail
           await eventDetail.waitForKey('EventDetail_addButton');
 
-          // ✅ DB VERIFICATION: Participant exists with all data
+          // ✅ DB VERIFICATION
           final verified = await dbHelpers.verifyCompleteParticipant(p);
           AppLogger.l.i(
               '✅ Participant ${i + 1}/15 verified: ${p.jmeno} ${p.prijmeni} (ID: ${verified.id})');
         }
 
-        // ✅ FINAL COUNT VERIFICATION
         await dbHelpers.verifyParticipantCount(15);
-        AppLogger.l.i('✅ ALL 15 participants created and verified in DB');
-      });
-    });
+        AppLogger.l.i('✅ PHASE 1 COMPLETE: All 15 participants created');
 
-    // ========================================
-    // GROUP 2: Intake Phase - Mark Arrivals
-    // ========================================
-    group('Phase 2: Intake - Process Arrivals', () {
-      testWidgets('Mark first 5 participants as arrived via Intake Form',
-          (tester) async {
-        // Launch app
-        app.main();
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 500));
-
-        final dashboard = DashboardRobot(tester);
-        final intake = IntakeRobot(tester);
-
-        // Get DB for verification
-        final db = DatabaseWrapper.getDatabase();
-        final dbHelpers = DbVerificationHelpers(db);
-
-        // Open event first to set current event context
-        await dashboard.waitForText(jurskyParkEvent.title);
-        await dashboard.tapEvent(jurskyParkEvent.title);
-        await tester.pump(const Duration(milliseconds: 300));
+        // ============================================================
+        // PHASE 2: Intake - Process Arrivals
+        // ============================================================
+        AppLogger.l.i('═══════════════════════════════════════════════');
+        AppLogger.l.i('PHASE 2: Intake - Process Arrivals');
+        AppLogger.l.i('═══════════════════════════════════════════════');
 
         // Navigate to Intake Form via drawer
         AppLogger.l.i('Opening Intake Form via drawer');
@@ -306,16 +289,11 @@ void main() {
           AppLogger.l
               .i('Processing intake ${i + 1}/5: ${p.jmeno} ${p.prijmeni}');
 
-          // The intake form has autocomplete to select participant
-          // After selecting, mark as arrived
-          // Note: Intake form may auto-select first unarrived participant
           await intake.tapSaveAndArrived();
           await tester.pump(const Duration(milliseconds: 300));
-
-          // Wait for form to reset for next participant
           await intake.waitForKey('IntakeForm_saveAndArrived_button');
 
-          // ✅ DB VERIFICATION: Arrival status saved
+          // ✅ DB VERIFICATION
           await dbHelpers.verifyArrivalStatus(
             jmeno: p.jmeno,
             prijmeni: p.prijmeni,
@@ -325,40 +303,22 @@ void main() {
               '✅ Participant ${i + 1}/5 arrival verified: ${p.jmeno} ${p.prijmeni}');
         }
 
-        // ✅ FINAL COUNT VERIFICATION
         await dbHelpers.verifyArrivedCount(5);
-        AppLogger.l.i('✅ Intake complete - 5 participants arrived');
-      });
-    });
+        AppLogger.l.i('✅ PHASE 2 COMPLETE: 5 participants arrived');
 
-    // ========================================
-    // GROUP 3: Event Phase - Medical Records
-    // ========================================
-    group('Phase 3: Event - Medical Records & Printing', () {
-      testWidgets('Create medical records from TestRecord data',
-          (tester) async {
-        // Launch app
-        app.main();
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 500));
-
-        final dashboard = DashboardRobot(tester);
-        final newRecord = NewRecordRobot(tester);
-
-        final db = DatabaseWrapper.getDatabase();
-        final dbHelpers = DbVerificationHelpers(db);
-
-        // Open event first to set current event context
-        await dashboard.waitForText(jurskyParkEvent.title);
-        await dashboard.tapEvent(jurskyParkEvent.title);
-        await tester.pump(const Duration(milliseconds: 300));
+        // ============================================================
+        // PHASE 3: Event - Medical Records & Print
+        // ============================================================
+        AppLogger.l.i('═══════════════════════════════════════════════');
+        AppLogger.l.i('PHASE 3: Event - Medical Records & Print');
+        AppLogger.l.i('═══════════════════════════════════════════════');
 
         // Navigate to NewRecordPage via drawer
         AppLogger.l.i('Opening NewRecordPage via drawer');
         await dashboard.navigateToNewRecordPage();
         await newRecord.waitForKey('NewRecordPage_participantAutocomplete');
 
-        // Create records for Karel Čapek (first participant with 2 records)
+        // Create records for Karel Čapek
         final karel = jurskyParkParticipants[0];
         if (karel.zaznamy.isNotEmpty) {
           AppLogger.l.i(
@@ -372,7 +332,7 @@ void main() {
             await tester.pump(const Duration(milliseconds: 200));
           }
 
-          // ✅ DB VERIFICATION: Records exist
+          // ✅ DB VERIFICATION
           final karelId =
               await dbHelpers.getParticipantId(karel.jmeno, karel.prijmeni);
           if (karelId != null) {
@@ -384,62 +344,27 @@ void main() {
           }
         }
 
-        AppLogger.l.i('✅ Medical records created');
-      });
-
-      testWidgets('Full Print for participants with records', (tester) async {
-        // Launch app
-        app.main();
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 500));
-
-        final dashboard = DashboardRobot(tester);
-
-        // Open event first to set current event context
-        await dashboard.waitForText(jurskyParkEvent.title);
-        await dashboard.tapEvent(jurskyParkEvent.title);
-        await tester.pump(const Duration(milliseconds: 300));
-
-        // Navigate to Print Center via drawer
+        // Navigate to Print Center
         AppLogger.l.i('Opening Print Center via drawer');
         await dashboard.navigateToPrintCenter();
         await tester.pump(const Duration(milliseconds: 500));
-        // Note: PrintCenterPage needs key analysis for robot creation
+        AppLogger.l
+            .i('✅ PHASE 3 COMPLETE: Records created, print page reached');
 
-        AppLogger.l.i('✅ Full print page reached');
-      });
-    });
+        // ============================================================
+        // PHASE 4: Event Continued - Append Print
+        // ============================================================
+        AppLogger.l.i('═══════════════════════════════════════════════');
+        AppLogger.l.i('PHASE 4: Event Continued - Append Print');
+        AppLogger.l.i('═══════════════════════════════════════════════');
 
-    // ========================================
-    // GROUP 4: Append Print Phase
-    // ========================================
-    group('Phase 4: Event Continued - Append Print', () {
-      testWidgets('Add new records and verify in DB', (tester) async {
-        // Launch app
-        app.main();
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 500));
-
-        final dashboard = DashboardRobot(tester);
-        final newRecord = NewRecordRobot(tester);
-
-        // Get DB for verification
-        final db = DatabaseWrapper.getDatabase();
-        final dbHelpers = DbVerificationHelpers(db);
-
-        // Open event first to set current event context
-        await dashboard.waitForText(jurskyParkEvent.title);
-        await dashboard.tapEvent(jurskyParkEvent.title);
-        await tester.pump(const Duration(milliseconds: 300));
-
-        // Navigate to NewRecordPage via drawer
+        // Navigate to NewRecordPage for append
         AppLogger.l.i('Opening NewRecordPage for additional record');
         await dashboard.navigateToNewRecordPage();
         await newRecord.waitForKey('NewRecordPage_participantAutocomplete');
 
-        // Create additional record for Milada Horáková (has 1 record in dataset)
-        // This tests the "append" scenario - adding to existing records
-        final milada = jurskyParkParticipants[7]; // Milada Horáková
+        // Create additional record for Milada Horáková
+        final milada = jurskyParkParticipants[7];
         final appendRecord = TestRecord(
           nazev: 'Follow-up observation',
           popis: 'Patient continues to improve, ready for activities',
@@ -454,7 +379,7 @@ void main() {
         );
         await tester.pump(const Duration(milliseconds: 300));
 
-        // ✅ DB VERIFICATION: New record exists
+        // ✅ DB VERIFICATION
         final miladaId =
             await dbHelpers.getParticipantId(milada.jmeno, milada.prijmeni);
         if (miladaId != null) {
@@ -466,7 +391,14 @@ void main() {
               '✅ Append record verified for ${milada.jmeno} ${milada.prijmeni}');
         }
 
-        AppLogger.l.i('✅ Append flow complete with DB verification');
+        AppLogger.l.i('✅ PHASE 4 COMPLETE: Append workflow verified');
+
+        // ============================================================
+        // FINAL SUMMARY
+        // ============================================================
+        AppLogger.l.i('═══════════════════════════════════════════════');
+        AppLogger.l.i('✅✅✅ FULL E2E WORKFLOW COMPLETE ✅✅✅');
+        AppLogger.l.i('═══════════════════════════════════════════════');
       });
     });
   });

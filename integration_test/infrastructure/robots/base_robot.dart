@@ -127,9 +127,17 @@ class BaseRobot {
 
   // ==================== DRAWER NAVIGATION ====================
 
-  /// Opens the app drawer by tapping the menu icon.
+  /// Opens the app drawer using ScaffoldState.
+  ///
+  /// Uses ScaffoldState.openDrawer() which is more reliable than finding
+  /// the menu icon, especially on wide screens where hamburger may be hidden.
   Future<void> openDrawer() async {
-    await tap(findIcon(Icons.menu));
+    final scaffoldFinder = find.byType(Scaffold);
+    expect(scaffoldFinder, findsWidgets,
+        reason: 'No Scaffold found to open drawer');
+    final ScaffoldState scaffold = tester.firstState(scaffoldFinder);
+    scaffold.openDrawer();
+    await tester.pump(const Duration(milliseconds: 300));
   }
 
   /// Taps the Intake Form item in the drawer.
