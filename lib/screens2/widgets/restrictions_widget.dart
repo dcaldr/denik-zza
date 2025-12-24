@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:denik_zza/design_system/tokens/app_breakpoints.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
 import 'package:denik_zza/design_system/tokens/app_radii.dart';
+import 'package:denik_zza/input/text_tools.dart';
 
 class RestrictionsWidget extends StatefulWidget {
   final LogicInterface logic;
@@ -12,13 +15,6 @@ class RestrictionsWidget extends StatefulWidget {
 
   @override
   State<RestrictionsWidget> createState() => _RestrictionsWidgetState();
-
-  void update() {
-    // Note: Creating a new state instance here doesn't actually update the widget in the tree.
-    // This seems to be a flaw in the original logic, but preserving it as requested (no logic changes).
-    _RestrictionsWidgetState? state = _RestrictionsWidgetState();
-    state._updateData();
-  }
 }
 
 class _RestrictionsWidgetState extends State<RestrictionsWidget> {
@@ -27,6 +23,7 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
   final FocusNode _focusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
   bool _hasMoreBelow = false;
+  String _ghostSuffix = ''; // For inline gray suggestion
 
   @override
   void initState() {
@@ -59,18 +56,33 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
     if (mounted) setState(() {});
   }
 
-  Future<void> _updateData() async {
-    await _logic.update();
-    if (mounted) setState(() {});
-  }
-
   void _addItem(String name) {
     if (name.trim().isEmpty) return;
     setState(() {
       _logic.addItem(name);
       _controller.clear();
+      _ghostSuffix = ''; // Clear ghost on add
     });
     _focusNode.requestFocus();
+  }
+
+  /// Update ghost text suffix for inline suggestion preview.
+  void _updateGhostSuffix(String input) {
+    if (input.isEmpty) {
+      if (_ghostSuffix.isNotEmpty) setState(() => _ghostSuffix = '');
+      return;
+    }
+    final normalizedInput = TextTools.normText(input);
+    final match = _logic.names.firstWhere(
+      (n) => TextTools.normText(n).startsWith(normalizedInput),
+      orElse: () => '',
+    );
+    final newSuffix = match.isNotEmpty && match.length > input.length
+        ? match.substring(input.length)
+        : '';
+    if (newSuffix != _ghostSuffix) {
+      setState(() => _ghostSuffix = newSuffix);
+    }
   }
 
   @override
@@ -140,71 +152,83 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
       if (mounted) _updateScrollIndicator();
     });
 
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 300, maxHeight: 150),
-      child: Stack(
-        children: [
-          ListView.builder(
-            controller: _scrollController,
-            shrinkWrap: true,
-            physics: const ClampingScrollPhysics(),
-            itemCount: _logic.items.length,
-            itemBuilder: (context, index) {
-              return ListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.check_circle_outline, size: 16),
-                title: Text(
-                  _logic.items[index],
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              );
-            },
-          ),
-          // Gradient indicator when there's more content below
-          if (_hasMoreBelow)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: IgnorePointer(
-                child: Container(
-                  height: 30,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        AppColors.greyBackground.withValues(alpha: 0.0),
-                        AppColors.greyBackground.withValues(alpha: 0.9),
-                      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Use centralized helper: show 3 items + 25% peek for scroll hint
+        final maxHeight = AppBreakpoints.listHeightForItems(
+          context,
+          constraints,
+          itemCount: 3,
+        );
+        final maxWidth = constraints.maxWidth.clamp(0.0, 300.0);
+
+        return ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),
+          child: Stack(
+            children: [
+              ListView.builder(
+                controller: _scrollController,
+                shrinkWrap: true,
+                physics: const ClampingScrollPhysics(),
+                itemCount: _logic.items.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.check_circle_outline, size: 16),
+                    title: Text(
+                      _logic.items[index],
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
-                  ),
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.blueBackground,
-                        borderRadius: AppRadii.containerRadius,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.keyboard_arrow_down,
-                              size: 12, color: AppColors.blueText),
-                          Text('více',
-                              style: TextStyle(
-                                  fontSize: 10, color: AppColors.blueText)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                  );
+                },
               ),
-            ),
-        ],
-      ),
+              // Gradient indicator when there's more content below
+              if (_hasMoreBelow)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: IgnorePointer(
+                    child: Container(
+                      height: 30,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            AppColors.greyBackground.withValues(alpha: 0.0),
+                            AppColors.greyBackground.withValues(alpha: 0.9),
+                          ],
+                        ),
+                      ),
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.blueBackground,
+                            borderRadius: AppRadii.containerRadius,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.keyboard_arrow_down,
+                                  size: 12, color: AppColors.blueText),
+                              Text('více',
+                                  style: TextStyle(
+                                      fontSize: 10, color: AppColors.blueText)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -233,21 +257,86 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
           if (_controller.text != textEditingController.text) {
             _controller.text = textEditingController.text;
           }
+          // Update ghost suggestion
+          _updateGhostSuffix(textEditingController.text);
         });
 
         // Key for E2E testing - allows testing robots to find this field
-        return TextField(
-          key: Key('RestrictionsWidget_${_logic.getText()}_input'),
-          controller: textEditingController,
-          focusNode: focusNode,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (value) {
-            _addItem(value);
-            onFieldSubmitted(); // Important for Autocomplete to close
+        // Wrap in Focus to capture Tab key for autocomplete
+        return Focus(
+          skipTraversal: true, // Don't include in tab traversal
+          onKeyEvent: (node, event) {
+            if (event is KeyDownEvent &&
+                event.logicalKey == LogicalKeyboardKey.tab) {
+              // Tab autocomplete with diacritics support
+              final normalizedInput =
+                  TextTools.normText(textEditingController.text);
+              if (normalizedInput.isEmpty) return KeyEventResult.ignored;
+
+              final match = _logic.names.firstWhere(
+                (n) => TextTools.normText(n).contains(normalizedInput),
+                orElse: () => '',
+              );
+              if (match.isNotEmpty) {
+                textEditingController.text = match;
+                textEditingController.selection = TextSelection.collapsed(
+                  offset: match.length,
+                );
+                return KeyEventResult.handled; // Consume Tab
+              }
+            }
+            return KeyEventResult.ignored;
           },
-          decoration: const InputDecoration(
-            labelText: 'Zadejte položku',
-            // Border and styling handled by ZzaTheme
+          child: Stack(
+            children: [
+              // Ghost text layer (shows gray suffix)
+              if (_ghostSuffix.isNotEmpty)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 16),
+                      child: Row(
+                        children: [
+                          // Invisible spacer for typed text width
+                          Text(
+                            textEditingController.text,
+                            style:
+                                Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      color: Colors.transparent,
+                                    ),
+                          ),
+                          // Gray ghost suffix
+                          Text(
+                            _ghostSuffix,
+                            style:
+                                Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      color: Colors.grey.shade400,
+                                    ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              // Actual TextField (on top)
+              TextField(
+                key: Key('RestrictionsWidget_${_logic.getText()}_input'),
+                controller: textEditingController,
+                focusNode: focusNode,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (value) {
+                  _addItem(value);
+                  textEditingController.clear(); // Fix prefill bug
+                  setState(() => _ghostSuffix = ''); // Clear ghost
+                  onFieldSubmitted(); // Important for Autocomplete to close
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Zadejte položku',
+                  // Border and styling handled by ZzaTheme
+                ),
+              ),
+            ],
           ),
         );
       },

@@ -130,4 +130,58 @@ void main() {
       expect(lekLogic.items, contains('Ibuprofen'));
     });
   });
+
+  group('Input Clearing Behavior', () {
+    testWidgets('input field clears after adding item via Enter',
+        (tester) async {
+      await tester.pumpWidget(
+        BaseTestWidget(
+          child: RestrictionsWidget(logic: omezeniLogic),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final inputFinder =
+          find.byKey(const Key('RestrictionsWidget_Omezení a alergie_input'));
+
+      // Type and submit
+      await tester.enterText(inputFinder, 'Test Restriction');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      // Verify item was added AND field is cleared
+      expect(omezeniLogic.items, contains('Test Restriction'));
+
+      // The TextField should be empty now (no prefill bug)
+      final textField = tester.widget<TextField>(inputFinder);
+      expect(textField.controller?.text, isEmpty);
+    });
+
+    testWidgets('no prefill bug - second entry starts empty', (tester) async {
+      await tester.pumpWidget(
+        BaseTestWidget(
+          child: RestrictionsWidget(logic: omezeniLogic),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final inputFinder =
+          find.byKey(const Key('RestrictionsWidget_Omezení a alergie_input'));
+
+      // Add first item
+      await tester.enterText(inputFinder, 'First Item');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      // Add second item - should start with empty field
+      await tester.enterText(inputFinder, 'Second Item');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      // Both items should be in list (not 'First ItemSecond Item')
+      expect(omezeniLogic.items, contains('First Item'));
+      expect(omezeniLogic.items, contains('Second Item'));
+      expect(omezeniLogic.items.length, 2);
+    });
+  });
 }

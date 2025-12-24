@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 /// Centralized breakpoint constants and responsive helpers.
 ///
@@ -60,5 +60,41 @@ class AppBreakpoints {
   /// Returns optimal column count from BoxConstraints.
   static int getColumnCountFromConstraints(BoxConstraints constraints) {
     return getColumnCount(constraints.maxWidth);
+  }
+
+  /// Calculate height for bounded list showing [itemCount] items
+  /// plus partial visibility of next item to indicate scrollability.
+  ///
+  /// Reads item height from theme for responsive sizing.
+  /// Uses [peekRatio] to show hint of next item (default 25%).
+  ///
+  /// Example:
+  /// ```dart
+  /// LayoutBuilder(builder: (context, constraints) {
+  ///   final maxHeight = AppBreakpoints.listHeightForItems(
+  ///     context, constraints, itemCount: 3,
+  ///   );
+  ///   return ConstrainedBox(constraints: BoxConstraints(maxHeight: maxHeight), ...);
+  /// })
+  /// ```
+  static double listHeightForItems(
+    BuildContext context,
+    BoxConstraints constraints, {
+    required int itemCount,
+    double peekRatio = 0.25,
+    bool dense = true,
+  }) {
+    // Read from theme: ListTile height based on text style
+    final textStyle = Theme.of(context).listTileTheme.titleTextStyle ??
+        Theme.of(context).textTheme.bodyMedium;
+    final fontSize = textStyle?.fontSize ?? 14.0;
+    // Dense ListTile ~2.8x font, regular ~3.5x
+    final itemHeight = dense ? fontSize * 2.8 : fontSize * 3.5;
+
+    final targetHeight = (itemCount + peekRatio) * itemHeight;
+    return targetHeight.clamp(
+      constraints.maxHeight * 0.1,
+      constraints.maxHeight * 0.5,
+    );
   }
 }
