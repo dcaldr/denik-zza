@@ -20,10 +20,16 @@ class RestrictionsWidget extends StatefulWidget {
 class _RestrictionsWidgetState extends State<RestrictionsWidget> {
   late final LogicInterface _logic;
   final TextEditingController _controller = TextEditingController();
-  final FocusNode _focusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
   bool _hasMoreBelow = false;
   String _ghostSuffix = ''; // For inline gray suggestion
+
+  // References to Autocomplete's internal objects
+  TextEditingController? _autocompleteController;
+  VoidCallback? _textListener;
+
+  // For preventing double-add: onSubmitted defers add, onSelected cancels it
+  String? _pendingSubmitValue;
 
   @override
   void initState() {
@@ -38,7 +44,10 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
     _scrollController.removeListener(_updateScrollIndicator);
     _scrollController.dispose();
     _controller.dispose();
-    _focusNode.dispose();
+    // Clean up Autocomplete listener if registered
+    if (_textListener != null && _autocompleteController != null) {
+      _autocompleteController!.removeListener(_textListener!);
+    }
     super.dispose();
   }
 
@@ -57,13 +66,25 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
   }
 
   void _addItem(String name) {
+    print('tmp_DEBUG: _addItem called with: "$name"');
     if (name.trim().isEmpty) return;
     setState(() {
       _logic.addItem(name);
       _controller.clear();
+      _autocompleteController?.clear(); // Also clear visible TextField
       _ghostSuffix = ''; // Clear ghost on add
     });
-    _focusNode.requestFocus();
+    print('tmp_DEBUG: _addItem completed, items now: ${_logic.items}');
+    // Auto-scroll to bottom so newly added item is visible
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients && mounted) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   /// Update ghost text suffix for inline suggestion preview.
@@ -101,8 +122,8 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
         ),
         const SizedBox(height: AppSpacing.s),
 
-        // Height-bounded list with scroll indicator (pattern from record_list_widget)
-        if (_logic.items.isNotEmpty) _buildBoundedList(),
+        // Height-bounded list - always show to reserve fixed space
+        _buildBoundedList(),
 
         Padding(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
@@ -155,6 +176,7 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
     return LayoutBuilder(
       builder: (context, constraints) {
         // Use centralized helper: show 3 items + 25% peek for scroll hint
+        // Handles both bounded and unbounded constraints
         final maxHeight = AppBreakpoints.listHeightForItems(
           context,
           constraints,
@@ -162,8 +184,10 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
         );
         final maxWidth = constraints.maxWidth.clamp(0.0, 300.0);
 
-        return ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),
+        // Use SizedBox to reserve fixed space (doesn't shrink when empty)
+        return SizedBox(
+          width: maxWidth,
+          height: maxHeight,
           child: Stack(
             children: [
               ListView.builder(
@@ -245,21 +269,36 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
         });
       },
       onSelected: (selection) {
-        // Autosuggest: fill field with selection, don't auto-add
-        // User must press Enter or Add button to confirm
-        _controller.text = selection;
+        print('tmp_DEBUG: onSelected FIRED with: "$selection"');
+        // Cancel any pending submit from onSubmitted (prevents double-add)
+        _pendingSubmitValue = null;
+        print('tmp_DEBUG: Cancelled pending submit value');
+        // Add the selected suggestion
+        _addItem(selection);
+        // Clear the autocomplete's text field after frame
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          print('tmp_DEBUG: postFrameCallback - clearing autocomplete field');
+          _autocompleteController?.clear();
+          setState(() => _ghostSuffix = '');
+        });
       },
       fieldViewBuilder:
           (context, textEditingController, focusNode, onFieldSubmitted) {
-        // Sync Autocomplete's controller value to our controller for Add button
-        // Using addListener instead of replacing reference to avoid lifecycle issues
-        textEditingController.addListener(() {
-          if (_controller.text != textEditingController.text) {
-            _controller.text = textEditingController.text;
+        // Register listener ONLY ONCE (Fix listener accumulation bug)
+        if (_autocompleteController != textEditingController) {
+          // Remove old listener if controller changed
+          if (_textListener != null && _autocompleteController != null) {
+            _autocompleteController!.removeListener(_textListener!);
           }
-          // Update ghost suggestion
-          _updateGhostSuffix(textEditingController.text);
-        });
+          _autocompleteController = textEditingController;
+          _textListener = () {
+            if (_controller.text != textEditingController.text) {
+              _controller.text = textEditingController.text;
+            }
+            _updateGhostSuffix(textEditingController.text);
+          };
+          textEditingController.addListener(_textListener!);
+        }
 
         // Key for E2E testing - allows testing robots to find this field
         // Wrap in Focus to capture Tab key for autocomplete
@@ -289,53 +328,77 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
           },
           child: Stack(
             children: [
-              // Ghost text layer (shows gray suffix)
-              if (_ghostSuffix.isNotEmpty)
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 16),
-                      child: Row(
-                        children: [
-                          // Invisible spacer for typed text width
-                          Text(
-                            textEditingController.text,
-                            style:
-                                Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      color: Colors.transparent,
-                                    ),
-                          ),
-                          // Gray ghost suffix
-                          Text(
-                            _ghostSuffix,
-                            style:
-                                Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      color: Colors.grey.shade400,
-                                    ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              // Actual TextField (on top)
+              // TextField first (at bottom of stack)
               TextField(
                 key: Key('RestrictionsWidget_${_logic.getText()}_input'),
                 controller: textEditingController,
                 focusNode: focusNode,
-                textInputAction: TextInputAction.done,
+                textInputAction:
+                    TextInputAction.done, // Enable Enter submission
                 onSubmitted: (value) {
-                  _addItem(value);
-                  textEditingController.clear(); // Fix prefill bug
-                  setState(() => _ghostSuffix = ''); // Clear ghost
-                  onFieldSubmitted(); // Important for Autocomplete to close
+                  print('tmp_DEBUG: onSubmitted FIRED with: "$value"');
+                  // Defer add to next frame - allows onSelected to cancel if it fires
+                  _pendingSubmitValue = value;
+                  print(
+                      'tmp_DEBUG: Set pending submit value, deferring add to next frame');
+                  final hadFocus = focusNode.hasFocus;
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    // Only add if onSelected didn't cancel it
+                    if (_pendingSubmitValue != null) {
+                      print(
+                          'tmp_DEBUG: Pending value still set, adding: "$_pendingSubmitValue"');
+                      _addItem(_pendingSubmitValue!);
+                      _pendingSubmitValue = null;
+                      onFieldSubmitted(); // Close autocomplete dropdown
+                      // Refocus if was focused
+                      if (hadFocus && mounted) {
+                        focusNode.requestFocus();
+                      }
+                    } else {
+                      print(
+                          'tmp_DEBUG: Pending value was cancelled by onSelected');
+                    }
+                  });
                 },
                 decoration: const InputDecoration(
                   labelText: 'Zadejte položku',
                   // Border and styling handled by ZzaTheme
                 ),
               ),
+              // Ghost text overlay second (on top with IgnorePointer)
+              if (_ghostSuffix.isNotEmpty)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: Padding(
+                      // Match TextField's text baseline (title medium with label)
+                      padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
+                      child: Row(
+                        children: [
+                          // Invisible spacer for typed text width
+                          Text(
+                            textEditingController.text,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  color: Colors.transparent,
+                                ),
+                          ),
+                          // Gray ghost suffix
+                          Text(
+                            _ghostSuffix,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  color: Colors.grey.shade400,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         );

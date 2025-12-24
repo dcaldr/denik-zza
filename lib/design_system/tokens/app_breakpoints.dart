@@ -92,6 +92,12 @@ class AppBreakpoints {
     final itemHeight = dense ? fontSize * 2.8 : fontSize * 3.5;
 
     final targetHeight = (itemCount + peekRatio) * itemHeight;
+
+    // Handle unbounded constraints (e.g., inside Column with MainAxisSize.min)
+    if (!constraints.maxHeight.isFinite) {
+      return targetHeight;
+    }
+
     return targetHeight.clamp(
       constraints.maxHeight * 0.1,
       constraints.maxHeight * 0.5,
