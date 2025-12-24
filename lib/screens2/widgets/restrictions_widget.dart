@@ -221,14 +221,19 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
         });
       },
       onSelected: (selection) {
-        _addItem(selection);
+        // Autosuggest: fill field with selection, don't auto-add
+        // User must press Enter or Add button to confirm
+        _controller.text = selection;
       },
       fieldViewBuilder:
           (context, textEditingController, focusNode, onFieldSubmitted) {
-        // Sync controller if needed, but be careful not to break the loop
-        if (_controller != textEditingController) {
-          // _controller = textEditingController; // This might be tricky with Autocomplete
-        }
+        // Sync Autocomplete's controller value to our controller for Add button
+        // Using addListener instead of replacing reference to avoid lifecycle issues
+        textEditingController.addListener(() {
+          if (_controller.text != textEditingController.text) {
+            _controller.text = textEditingController.text;
+          }
+        });
 
         // Key for E2E testing - allows testing robots to find this field
         return TextField(

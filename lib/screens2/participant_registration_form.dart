@@ -504,15 +504,38 @@ class _ParticipantRegistrationFormState
   }
 }
 
-class ParticipantRegistrationPage extends StatelessWidget {
+class ParticipantRegistrationPage extends StatefulWidget {
   const ParticipantRegistrationPage({super.key});
+
+  @override
+  State<ParticipantRegistrationPage> createState() =>
+      _ParticipantRegistrationPageState();
+}
+
+class _ParticipantRegistrationPageState
+    extends State<ParticipantRegistrationPage> {
+  final GlobalKey<_ParticipantRegistrationFormState> _formKey =
+      GlobalKey<_ParticipantRegistrationFormState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Registrace Účastníka')),
+      appBar: AppBar(
+        title: const Text('Registrace Účastníka'),
+        actions: [
+          IconButton(
+            key: const Key('ParticipantRegistrationPage_refresh_button'),
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Vymazat formulář',
+            onPressed: () {
+              _formKey.currentState?.clearFields();
+              _formKey.currentState?.setState(() {});
+            },
+          ),
+        ],
+      ),
       drawer: const AppDrawer(),
-      body: const ParticipantRegistrationForm(),
+      body: ParticipantRegistrationForm(key: _formKey),
     );
   }
 }
