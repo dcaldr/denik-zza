@@ -77,7 +77,6 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
   }
 
   void _addItem(String name) {
-    print('tmp_DEBUG: _addItem called with: "$name"');
     if (name.trim().isEmpty) return;
     setState(() {
       _logic.addItem(name);
@@ -85,7 +84,6 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
       _autocompleteController?.clear(); // Also clear visible TextField
       _ghostSuffix = ''; // Clear ghost on add
     });
-    print('tmp_DEBUG: _addItem completed, items now: ${_logic.items}');
     // Auto-scroll to bottom so newly added item is visible
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients && mounted) {
@@ -171,8 +169,6 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
 
     // UNBOUNDED: Use fixed height based on 3 items
     final listHeight = AppBreakpoints.getListHeight(context, itemCount: 3);
-    print('=== _buildBoundedList UNBOUNDED (${_logic.getText()}) ===');
-    print('  listHeight: $listHeight');
 
     return SizedBox(
       height: listHeight,
@@ -182,8 +178,6 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
 
   /// Builds the actual list content with scroll indicator
   Widget _buildListContent() {
-    print('=== _buildListContent called ===');
-    print('  items count: ${_logic.items.length}');
     return Stack(
       children: [
         ListView.builder(
@@ -304,15 +298,12 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
         });
       },
       onSelected: (selection) {
-        print('tmp_DEBUG: onSelected FIRED with: "$selection"');
         // Cancel any pending submit from onSubmitted (prevents double-add)
         _pendingSubmitValue = null;
-        print('tmp_DEBUG: Cancelled pending submit value');
         // Add the selected suggestion
         _addItem(selection);
         // Clear the autocomplete's text field after frame
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          print('tmp_DEBUG: postFrameCallback - clearing autocomplete field');
           _autocompleteController?.clear();
           setState(() => _ghostSuffix = '');
         });
@@ -371,17 +362,12 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
                 textInputAction:
                     TextInputAction.done, // Enable Enter submission
                 onSubmitted: (value) {
-                  print('tmp_DEBUG: onSubmitted FIRED with: "$value"');
                   // Defer add to next frame - allows onSelected to cancel if it fires
                   _pendingSubmitValue = value;
-                  print(
-                      'tmp_DEBUG: Set pending submit value, deferring add to next frame');
                   final hadFocus = focusNode.hasFocus;
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     // Only add if onSelected didn't cancel it
                     if (_pendingSubmitValue != null) {
-                      print(
-                          'tmp_DEBUG: Pending value still set, adding: "$_pendingSubmitValue"');
                       _addItem(_pendingSubmitValue!);
                       _pendingSubmitValue = null;
                       onFieldSubmitted(); // Close autocomplete dropdown
@@ -389,9 +375,6 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
                       if (hadFocus && mounted) {
                         focusNode.requestFocus();
                       }
-                    } else {
-                      print(
-                          'tmp_DEBUG: Pending value was cancelled by onSelected');
                     }
                   });
                 },

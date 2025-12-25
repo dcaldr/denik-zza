@@ -284,18 +284,9 @@ class _ParticipantRegistrationFormState
         key: _formKey,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            print('');
-            print('=== FORM LayoutBuilder ===');
-            print('  maxHeight: ${constraints.maxHeight}');
-            print('  maxWidth: ${constraints.maxWidth}');
-            print('  isBounded: ${constraints.maxHeight.isFinite}');
-            print('');
-
             // Use design system breakpoint for height decision
             final useScrollLayout =
                 AppBreakpoints.isCompactHeight(constraints.maxHeight);
-            print(
-                '  useScrollLayout: $useScrollLayout (height ${useScrollLayout ? "<=" : ">"} ${AppBreakpoints.compactHeight})');
 
             if (!useScrollLayout) {
               // Bounded layout: Column fills space, restrictions get remaining
@@ -532,9 +523,6 @@ class _ParticipantRegistrationFormState
     required bool isNarrow,
     required bool isBounded,
   }) {
-    print(
-        '=== _buildRestrictionsSection(isNarrow: $isNarrow, isBounded: $isBounded) ===');
-
     final widgets = [
       RestrictionsWidget(
         logic: _omezeniLogic,
