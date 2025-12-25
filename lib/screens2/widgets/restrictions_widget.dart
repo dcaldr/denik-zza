@@ -22,6 +22,7 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _hasMoreBelow = false;
+  bool _hasMoreAbove = false;
   String _ghostSuffix = ''; // For inline gray suggestion
 
   // References to Autocomplete's internal objects
@@ -53,10 +54,15 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
 
   void _updateScrollIndicator() {
     if (!_scrollController.hasClients) return;
-    final hasMore = _scrollController.position.pixels <
+    final hasMoreBelow = _scrollController.position.pixels <
         _scrollController.position.maxScrollExtent - 10;
-    if (hasMore != _hasMoreBelow) {
-      setState(() => _hasMoreBelow = hasMore);
+    final hasMoreAbove = _scrollController.position.pixels > 10;
+
+    if (hasMoreBelow != _hasMoreBelow || hasMoreAbove != _hasMoreAbove) {
+      setState(() {
+        _hasMoreBelow = hasMoreBelow;
+        _hasMoreAbove = hasMoreAbove;
+      });
     }
   }
 
@@ -78,11 +84,16 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
     // Auto-scroll to bottom so newly added item is visible
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients && mounted) {
-        _scrollController.animateTo(
+        _scrollController
+            .animateTo(
           _scrollController.position.maxScrollExtent,
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOut,
-        );
+        )
+            .then((_) {
+          // Update scroll indicator after animation
+          if (mounted) _updateScrollIndicator();
+        });
       }
     });
   }
@@ -108,10 +119,10 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // Now receives BOUNDED constraints from parent Row(stretch)
-    // Use max + Expanded to fill available space
+    // Receives bounded constraints from parent Row(stretch)
+    // Use Flexible to allow list to shrink when space is tight
     return Column(
-      mainAxisSize: MainAxisSize.max, // FILL bounded height
+      mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -120,13 +131,17 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
                 fontWeight: FontWeight.bold,
               ),
         ),
-        const SizedBox(height: AppSpacing.s),
+        const SizedBox(height: AppSpacing.xs), // Reduced from s to xs
 
-        // Expanded: list fills remaining bounded space
-        Expanded(child: _buildBoundedList()),
+        // Flexible: list can shrink if space is limited
+        Flexible(
+          fit: FlexFit.loose,
+          child: _buildBoundedList(),
+        ),
 
+        // Input area - always visible at bottom
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
+          padding: const EdgeInsets.only(top: AppSpacing.xs),
           child: LayoutBuilder(
             builder: (context, inputConstraints) {
               // If width is too small, stack vertically
@@ -138,7 +153,7 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
                       width: double.infinity,
                       child: _buildAutocomplete(),
                     ),
-                    const SizedBox(height: AppSpacing.s),
+                    const SizedBox(height: AppSpacing.xs),
                     SizedBox(
                       width: 48,
                       height: 48,
@@ -263,6 +278,48 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.keyboard_arrow_down,
+                            size: 12, color: AppColors.blueText),
+                        Text('více',
+                            style: TextStyle(
+                                fontSize: 10, color: AppColors.blueText)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        // Top gradient indicator when there's more content above
+        if (_hasMoreAbove)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: IgnorePointer(
+              child: Container(
+                height: 30,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      AppColors.greyBackground.withValues(alpha: 0.0),
+                      AppColors.greyBackground.withValues(alpha: 0.9),
+                    ],
+                  ),
+                ),
+                child: Center(
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.blueBackground,
+                      borderRadius: AppRadii.containerRadius,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.keyboard_arrow_up,
                             size: 12, color: AppColors.blueText),
                         Text('více',
                             style: TextStyle(
