@@ -278,31 +278,46 @@ class _ParticipantRegistrationFormState
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: AppSpacing.screenPadding,
+      // Compact padding to give more space to list
+      padding: AppSpacing.containerPadding,
       child: Form(
         key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildGridView(),
-              AppSpacing.mediumGap,
-              _buildTextField('poznamka', 'Poznámka', null, maxLines: 3),
-              AppSpacing.mediumGap,
-              _buildCheckboxSection(),
-              AppSpacing.largeGap,
-              _buildRestrictionsSection(),
-              AppSpacing.largeGap,
-              Center(
-                child: FilledButton(
-                  key: const Key('ParticipantRegistrationForm_submit_button'),
-                  onPressed: _submitForm,
-                  child: Text(
-                      widget.osoba == null ? 'Registrovat' : 'Uložit změny'),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            print('');
+            print('=== FORM LayoutBuilder ===');
+            print('  maxHeight: ${constraints.maxHeight}');
+            print('  maxWidth: ${constraints.maxWidth}');
+            print('  isBounded: ${constraints.maxHeight.isFinite}');
+            print('');
+
+            // FIX: No SingleChildScrollView - use Column(max) + Flexible
+            // This passes BOUNDED constraints to restrictions section
+            return Column(
+              mainAxisSize: MainAxisSize.max, // FILL available space
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildGridView(),
+                SizedBox(height: AppSpacing.s), // Compact gap (8px)
+                _buildTextField('poznamka', 'Poznámka', null,
+                    minLines: 2, maxLines: 7), // Shows 2 lines, scrolls up to 7
+                SizedBox(height: AppSpacing.s), // Compact gap (8px)
+                _buildCheckboxSection(),
+                SizedBox(height: AppSpacing.xs), // Minimal gap (4px)
+                // Flexible: takes REMAINING bounded space
+                Flexible(child: _buildRestrictionsSection()),
+                SizedBox(height: AppSpacing.xs), // Minimal gap (4px)
+                Center(
+                  child: FilledButton(
+                    key: const Key('ParticipantRegistrationForm_submit_button'),
+                    onPressed: _submitForm,
+                    child: Text(
+                        widget.osoba == null ? 'Registrovat' : 'Uložit změny'),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -393,14 +408,16 @@ class _ParticipantRegistrationFormState
   }
 
   Widget _buildTextField(String key, String labelText, String? validatorText,
-      {int maxLines = 1, String? hintText}) {
+      {int? maxLines = 1, int? minLines, String? hintText}) {
     return TextFormField(
       key: Key('ParticipantRegistrationForm_${key}_input'),
       controller: _controllers[key],
       decoration: InputDecoration(
         labelText: labelText,
         hintText: hintText,
-        border: maxLines > 1 ? const OutlineInputBorder() : null,
+        border: (maxLines != null && maxLines > 1) || minLines != null
+            ? const OutlineInputBorder()
+            : null,
       ),
       validator: (value) {
         if (key == 'poznamka' && (value == null || value.isEmpty)) {
@@ -411,6 +428,7 @@ class _ParticipantRegistrationFormState
         }
         return _validators[key]?.validator(value);
       },
+      minLines: minLines,
       maxLines: maxLines,
     );
   }
@@ -462,9 +480,14 @@ class _ParticipantRegistrationFormState
 
   /// Build the restrictions and medications section with responsive layout.
   Widget _buildRestrictionsSection() {
-    // Removed duplicate "Omezení a léky" header - each widget shows its own.
     return LayoutBuilder(
       builder: (context, constraints) {
+        print('=== _buildRestrictionsSection ===');
+        print('  maxWidth: ${constraints.maxWidth}');
+        print('  maxHeight: ${constraints.maxHeight}');
+        print('  isBounded: ${constraints.maxHeight.isFinite}');
+        print('');
+
         final isNarrow = AppBreakpoints.isMobile(constraints.maxWidth);
 
         final widgets = [
@@ -490,9 +513,9 @@ class _ParticipantRegistrationFormState
           );
         }
 
-        // Desktop/Tablet: Side by side
+        // Desktop/Tablet: Side by side - stretch to fill bounded height
         return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(child: widgets[0]),
             AppSpacing.buttonGap,

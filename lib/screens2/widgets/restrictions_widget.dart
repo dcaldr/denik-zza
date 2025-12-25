@@ -108,10 +108,10 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // Removed SingleChildScrollView to prevent nested scroll wiggle.
-    // Parent form handles scrolling. See /scroll-wiggle-prompt workflow.
+    // Now receives BOUNDED constraints from parent Row(stretch)
+    // Use max + Expanded to fill available space
     return Column(
-      mainAxisSize: MainAxisSize.min,
+      mainAxisSize: MainAxisSize.max, // FILL bounded height
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -122,15 +122,15 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
         ),
         const SizedBox(height: AppSpacing.s),
 
-        // Height-bounded list - always show to reserve fixed space
-        _buildBoundedList(),
+        // Expanded: list fills remaining bounded space
+        Expanded(child: _buildBoundedList()),
 
         Padding(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
           child: LayoutBuilder(
-            builder: (context, constraints) {
+            builder: (context, inputConstraints) {
               // If width is too small, stack vertically
-              if (constraints.maxWidth < 200) {
+              if (inputConstraints.maxWidth < 200) {
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -175,84 +175,106 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Use centralized helper: show 3 items + 25% peek for scroll hint
-        // Handles both bounded and unbounded constraints
-        final maxHeight = AppBreakpoints.listHeightForItems(
-          context,
-          constraints,
-          itemCount: 3,
-        );
+        print('=== _buildBoundedList (${_logic.getText()}) ===');
+        print('  maxWidth: ${constraints.maxWidth}');
+        print('  maxHeight: ${constraints.maxHeight}');
+        print('  isBounded: ${constraints.maxHeight.isFinite}');
+
         final maxWidth = constraints.maxWidth.clamp(0.0, 300.0);
 
-        // Use SizedBox to reserve fixed space (doesn't shrink when empty)
-        return SizedBox(
-          width: maxWidth,
-          height: maxHeight,
-          child: Stack(
-            children: [
-              ListView.builder(
-                controller: _scrollController,
-                shrinkWrap: true,
-                physics: const ClampingScrollPhysics(),
-                itemCount: _logic.items.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.check_circle_outline, size: 16),
-                    title: Text(
-                      _logic.items[index],
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  );
-                },
+        if (constraints.maxHeight.isFinite) {
+          print('  -> BOUNDED branch: using height ${constraints.maxHeight}');
+          print('');
+          // BOUNDED: Fill available space (parent handles layout)
+          return SizedBox(
+            width: maxWidth,
+            height: constraints.maxHeight,
+            child: _buildListContent(),
+          );
+        } else {
+          // UNBOUNDED: Use fixed item-based height
+          final listHeight = AppBreakpoints.listHeightForItems(
+            context,
+            constraints,
+            itemCount: 3,
+          );
+          print(
+              '  -> UNBOUNDED branch: listHeightForItems returned $listHeight');
+          print('');
+          return SizedBox(
+            width: maxWidth,
+            height: listHeight,
+            child: _buildListContent(),
+          );
+        }
+      },
+    );
+  }
+
+  /// Builds the actual list content with scroll indicator
+  Widget _buildListContent() {
+    return Stack(
+      children: [
+        ListView.builder(
+          controller: _scrollController,
+          shrinkWrap: false, // Let it fill available space
+          physics: const ClampingScrollPhysics(),
+          itemCount: _logic.items.length,
+          itemBuilder: (context, index) {
+            return ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.check_circle_outline, size: 16),
+              title: Text(
+                _logic.items[index],
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
-              // Gradient indicator when there's more content below
-              if (_hasMoreBelow)
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: IgnorePointer(
-                    child: Container(
-                      height: 30,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            AppColors.greyBackground.withValues(alpha: 0.0),
-                            AppColors.greyBackground.withValues(alpha: 0.9),
-                          ],
-                        ),
-                      ),
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.blueBackground,
-                            borderRadius: AppRadii.containerRadius,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.keyboard_arrow_down,
-                                  size: 12, color: AppColors.blueText),
-                              Text('více',
-                                  style: TextStyle(
-                                      fontSize: 10, color: AppColors.blueText)),
-                            ],
-                          ),
-                        ),
-                      ),
+            );
+          },
+        ),
+        // Gradient indicator when there's more content below
+        if (_hasMoreBelow)
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: IgnorePointer(
+              child: Container(
+                height: 30,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppColors.greyBackground.withValues(alpha: 0.0),
+                      AppColors.greyBackground.withValues(alpha: 0.9),
+                    ],
+                  ),
+                ),
+                child: Center(
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.blueBackground,
+                      borderRadius: AppRadii.containerRadius,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.keyboard_arrow_down,
+                            size: 12, color: AppColors.blueText),
+                        Text('více',
+                            style: TextStyle(
+                                fontSize: 10, color: AppColors.blueText)),
+                      ],
                     ),
                   ),
                 ),
-            ],
+              ),
+            ),
           ),
-        );
-      },
+      ],
     );
   }
 
