@@ -9,9 +9,14 @@ import 'package:denik_zza/input/text_tools.dart';
 class RestrictionsWidget extends StatefulWidget {
   final LogicInterface logic;
   final int? participantId;
+  final bool isBounded; // Whether parent has bounded height (Flexible mode)
 
-  const RestrictionsWidget(
-      {super.key, required this.logic, this.participantId});
+  const RestrictionsWidget({
+    super.key,
+    required this.logic,
+    this.participantId,
+    this.isBounded = false, // Default: assume scroll mode (unbounded)
+  });
 
   @override
   State<RestrictionsWidget> createState() => _RestrictionsWidgetState();
@@ -119,11 +124,12 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // Receives bounded constraints from parent Row(stretch)
-    // Use Flexible to allow list to shrink when space is tight
+    // Structure depends on whether parent provides bounded height
+    // BOUNDED: Column(max) fills parent, Expanded list fills remaining
+    // UNBOUNDED: Column(min) shrink-wraps, fixed height list
     return Column(
-      mainAxisSize: MainAxisSize.max,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: widget.isBounded ? MainAxisSize.max : MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           _logic.getText(),
@@ -131,103 +137,53 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
                 fontWeight: FontWeight.bold,
               ),
         ),
-        const SizedBox(height: AppSpacing.xs), // Reduced from s to xs
+        const SizedBox(height: AppSpacing.xs),
 
-        // Flexible: list can shrink if space is limited
-        Flexible(
-          fit: FlexFit.loose,
-          child: _buildBoundedList(),
-        ),
+        // List: Expanded if bounded, SizedBox if unbounded
+        if (widget.isBounded)
+          Expanded(child: _buildListContent())
+        else
+          _buildBoundedList(),
 
-        // Input area - always visible at bottom
+        // Input area
         Padding(
           padding: const EdgeInsets.only(top: AppSpacing.xs),
-          child: LayoutBuilder(
-            builder: (context, inputConstraints) {
-              // If width is too small, stack vertically
-              if (inputConstraints.maxWidth < 200) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      child: _buildAutocomplete(),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    SizedBox(
-                      width: 48,
-                      height: 48,
-                      child: _buildAddButton(),
-                    ),
-                  ],
-                );
-              }
-
-              // For normal widths, use horizontal layout
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _buildAutocomplete(),
-                  ),
-                  const SizedBox(width: AppSpacing.s),
-                  _buildAddButton(),
-                ],
-              );
-            },
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: _buildAutocomplete()),
+              const SizedBox(width: AppSpacing.s),
+              _buildAddButton(),
+            ],
           ),
         ),
       ],
     );
   }
 
-  /// Builds height-bounded list with scroll indicator when scrollable.
+  /// Builds fixed-height list for UNBOUNDED (scroll) mode only.
+  /// In bounded mode, Expanded is used instead (see build method).
   Widget _buildBoundedList() {
     // Check for scroll indicator after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _updateScrollIndicator();
     });
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        print('=== _buildBoundedList (${_logic.getText()}) ===');
-        print('  maxWidth: ${constraints.maxWidth}');
-        print('  maxHeight: ${constraints.maxHeight}');
-        print('  isBounded: ${constraints.maxHeight.isFinite}');
+    // UNBOUNDED: Use fixed height based on 3 items
+    final listHeight = AppBreakpoints.getListHeight(context, itemCount: 3);
+    print('=== _buildBoundedList UNBOUNDED (${_logic.getText()}) ===');
+    print('  listHeight: $listHeight');
 
-        final maxWidth = constraints.maxWidth.clamp(0.0, 300.0);
-
-        if (constraints.maxHeight.isFinite) {
-          print('  -> BOUNDED branch: using height ${constraints.maxHeight}');
-          print('');
-          // BOUNDED: Fill available space (parent handles layout)
-          return SizedBox(
-            width: maxWidth,
-            height: constraints.maxHeight,
-            child: _buildListContent(),
-          );
-        } else {
-          // UNBOUNDED: Use fixed item-based height
-          final listHeight = AppBreakpoints.listHeightForItems(
-            context,
-            constraints,
-            itemCount: 3,
-          );
-          print(
-              '  -> UNBOUNDED branch: listHeightForItems returned $listHeight');
-          print('');
-          return SizedBox(
-            width: maxWidth,
-            height: listHeight,
-            child: _buildListContent(),
-          );
-        }
-      },
+    return SizedBox(
+      height: listHeight,
+      child: _buildListContent(),
     );
   }
 
   /// Builds the actual list content with scroll indicator
   Widget _buildListContent() {
+    print('=== _buildListContent called ===');
+    print('  items count: ${_logic.items.length}');
     return Stack(
       children: [
         ListView.builder(

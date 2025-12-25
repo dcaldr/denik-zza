@@ -291,32 +291,80 @@ class _ParticipantRegistrationFormState
             print('  isBounded: ${constraints.maxHeight.isFinite}');
             print('');
 
-            // FIX: No SingleChildScrollView - use Column(max) + Flexible
-            // This passes BOUNDED constraints to restrictions section
-            return Column(
-              mainAxisSize: MainAxisSize.max, // FILL available space
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildGridView(),
-                SizedBox(height: AppSpacing.s), // Compact gap (8px)
-                _buildTextField('poznamka', 'Poznámka', null,
-                    minLines: 2, maxLines: 7), // Shows 2 lines, scrolls up to 7
-                SizedBox(height: AppSpacing.s), // Compact gap (8px)
-                _buildCheckboxSection(),
-                SizedBox(height: AppSpacing.xs), // Minimal gap (4px)
-                // Flexible: takes REMAINING bounded space
-                Flexible(child: _buildRestrictionsSection()),
-                SizedBox(height: AppSpacing.xs), // Minimal gap (4px)
-                Center(
-                  child: FilledButton(
-                    key: const Key('ParticipantRegistrationForm_submit_button'),
-                    onPressed: _submitForm,
-                    child: Text(
-                        widget.osoba == null ? 'Registrovat' : 'Uložit změny'),
+            // Use design system breakpoint for height decision
+            final useScrollLayout =
+                AppBreakpoints.isCompactHeight(constraints.maxHeight);
+            print(
+                '  useScrollLayout: $useScrollLayout (height ${useScrollLayout ? "<=" : ">"} ${AppBreakpoints.compactHeight})');
+
+            if (!useScrollLayout) {
+              // Bounded layout: Column fills space, restrictions get remaining
+              // Flexible(fit: loose) allows restrictions to shrink to 0 if needed
+              return Column(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.stretch, // Fill width
+                children: [
+                  _buildGridView(),
+                  SizedBox(height: AppSpacing.s),
+                  _buildTextField('poznamka', 'Poznámka', null,
+                      minLines: 2, maxLines: 7),
+                  SizedBox(height: AppSpacing.s),
+                  _buildCheckboxSection(),
+                  SizedBox(height: AppSpacing.xs),
+                  // Calculate isNarrow and isBounded once at root level
+                  Expanded(
+                    // MUST fill remaining space, not Flexible(loose)
+                    child: _buildRestrictionsSection(
+                      isNarrow: AppBreakpoints.isMobile(constraints.maxWidth),
+                      isBounded: true, // Bounded: list fills remaining space
+                    ),
                   ),
+                  SizedBox(height: AppSpacing.xs),
+                  Center(
+                    child: FilledButton(
+                      key: const Key(
+                          'ParticipantRegistrationForm_submit_button'),
+                      onPressed: _submitForm,
+                      child: Text(widget.osoba == null
+                          ? 'Registrovat'
+                          : 'Uložit změny'),
+                    ),
+                  ),
+                ],
+              );
+            } else {
+              // Scrollable layout: when height is compact, allow scrolling
+              return SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch, // Fill width
+                  children: [
+                    _buildGridView(),
+                    SizedBox(height: AppSpacing.s),
+                    _buildTextField('poznamka', 'Poznámka', null,
+                        minLines: 2, maxLines: 7),
+                    SizedBox(height: AppSpacing.s),
+                    _buildCheckboxSection(),
+                    SizedBox(height: AppSpacing.xs),
+                    _buildRestrictionsSection(
+                      isNarrow: AppBreakpoints.isMobile(constraints.maxWidth),
+                      isBounded: false, // Unbounded: list uses fixed height
+                    ),
+                    SizedBox(height: AppSpacing.xs),
+                    Center(
+                      child: FilledButton(
+                        key: const Key(
+                            'ParticipantRegistrationForm_submit_button'),
+                        onPressed: _submitForm,
+                        child: Text(widget.osoba == null
+                            ? 'Registrovat'
+                            : 'Uložit změny'),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            );
+              );
+            }
           },
         ),
       ),
@@ -479,50 +527,63 @@ class _ParticipantRegistrationFormState
   }
 
   /// Build the restrictions and medications section with responsive layout.
-  Widget _buildRestrictionsSection() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        print('=== _buildRestrictionsSection ===');
-        print('  maxWidth: ${constraints.maxWidth}');
-        print('  maxHeight: ${constraints.maxHeight}');
-        print('  isBounded: ${constraints.maxHeight.isFinite}');
-        print('');
+  /// [isNarrow] and [isBounded] are calculated once at root LayoutBuilder level.
+  Widget _buildRestrictionsSection({
+    required bool isNarrow,
+    required bool isBounded,
+  }) {
+    print(
+        '=== _buildRestrictionsSection(isNarrow: $isNarrow, isBounded: $isBounded) ===');
 
-        final isNarrow = AppBreakpoints.isMobile(constraints.maxWidth);
+    final widgets = [
+      RestrictionsWidget(
+        logic: _omezeniLogic,
+        participantId: widget.osoba?.id,
+        isBounded: isBounded,
+      ),
+      RestrictionsWidget(
+        logic: _lekLogic,
+        participantId: widget.osoba?.id,
+        isBounded: isBounded,
+      ),
+    ];
 
-        final widgets = [
-          RestrictionsWidget(
-            logic: _omezeniLogic,
-            participantId: widget.osoba?.id,
-          ),
-          RestrictionsWidget(
-            logic: _lekLogic,
-            participantId: widget.osoba?.id,
-          ),
-        ];
-
-        if (isNarrow) {
-          // Mobile: Stack vertically
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              widgets[0],
-              const SizedBox(height: 16),
-              widgets[1],
-            ],
-          );
-        }
-
-        // Desktop/Tablet: Side by side - stretch to fill bounded height
-        return Row(
+    if (isNarrow) {
+      // Mobile: Stack vertically
+      // In bounded mode, wrap in Expanded for each widget to share space
+      if (isBounded) {
+        return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(child: widgets[0]),
-            AppSpacing.buttonGap,
+            SizedBox(height: AppSpacing.s),
             Expanded(child: widgets[1]),
           ],
         );
-      },
+      }
+      // In scroll mode: min sizing
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          widgets[0],
+          SizedBox(height: AppSpacing.s),
+          widgets[1],
+        ],
+      );
+    }
+
+    // Desktop/Tablet: Side by side
+    // In bounded mode: stretch to fill height
+    // In scroll mode: align to start
+    return Row(
+      crossAxisAlignment:
+          isBounded ? CrossAxisAlignment.stretch : CrossAxisAlignment.start,
+      children: [
+        Expanded(child: widgets[0]),
+        AppSpacing.buttonGap,
+        Expanded(child: widgets[1]),
+      ],
     );
   }
 }

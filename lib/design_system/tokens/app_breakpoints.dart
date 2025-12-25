@@ -62,21 +62,53 @@ class AppBreakpoints {
     return getColumnCount(constraints.maxWidth);
   }
 
-  /// Calculate height for bounded list showing [itemCount] items
-  /// plus partial visibility of next item to indicate scrollability.
-  ///
-  /// Reads item height from theme for responsive sizing.
-  /// Uses [peekRatio] to show hint of next item (default 25%).
+  /// Item height based on typography (not hardcoded pixels).
+  /// Dense mode for compact lists, regular for spacious lists.
+  static double getItemHeight(BuildContext context, {bool dense = true}) {
+    final fontSize = Theme.of(context).textTheme.bodyMedium?.fontSize ?? 14.0;
+    return dense ? fontSize * 2.8 : fontSize * 3.5;
+  }
+
+  /// Responsive gap that adapts to screen width.
+  /// Mobile: 12px, Tablet: 16px, Desktop: 24px.
+  static double getGap(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    if (screenWidth < mobile) return 12.0;
+    if (screenWidth < tablet) return 16.0;
+    return 24.0;
+  }
+
+  /// Grid columns based on screen width.
+  /// Mobile: 1, Tablet: 2, Desktop: 3.
+  static int getGridColumns(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (width < mobile) return 1;
+    if (width < tablet) return 2;
+    return 3;
+  }
+
+  /// Calculate list height for [itemCount] items without LayoutBuilder.
+  /// Uses theme typography for responsive sizing.
   ///
   /// Example:
   /// ```dart
-  /// LayoutBuilder(builder: (context, constraints) {
-  ///   final maxHeight = AppBreakpoints.listHeightForItems(
-  ///     context, constraints, itemCount: 3,
-  ///   );
-  ///   return ConstrainedBox(constraints: BoxConstraints(maxHeight: maxHeight), ...);
-  /// })
+  /// SizedBox(
+  ///   height: AppBreakpoints.getListHeight(context, itemCount: 3),
+  ///   child: ListView.builder(...),
+  /// )
   /// ```
+  static double getListHeight(
+    BuildContext context, {
+    required int itemCount,
+    double peekRatio = 0.25,
+    bool dense = true,
+  }) {
+    final itemHeight = getItemHeight(context, dense: dense);
+    return (itemCount + peekRatio) * itemHeight;
+  }
+
+  /// @Deprecated: Use [getListHeight] instead - no constraints param needed.
+  /// Kept for backward compatibility during migration.
   static double listHeightForItems(
     BuildContext context,
     BoxConstraints constraints, {
@@ -84,16 +116,14 @@ class AppBreakpoints {
     double peekRatio = 0.25,
     bool dense = true,
   }) {
-    // Read from theme: ListTile height based on text style
-    final textStyle = Theme.of(context).listTileTheme.titleTextStyle ??
-        Theme.of(context).textTheme.bodyMedium;
-    final fontSize = textStyle?.fontSize ?? 14.0;
-    // Dense ListTile ~2.8x font, regular ~3.5x
-    final itemHeight = dense ? fontSize * 2.8 : fontSize * 3.5;
+    final targetHeight = getListHeight(
+      context,
+      itemCount: itemCount,
+      peekRatio: peekRatio,
+      dense: dense,
+    );
 
-    final targetHeight = (itemCount + peekRatio) * itemHeight;
-
-    // Handle unbounded constraints (e.g., inside Column with MainAxisSize.min)
+    // Handle unbounded constraints
     if (!constraints.maxHeight.isFinite) {
       return targetHeight;
     }
