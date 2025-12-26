@@ -45,7 +45,19 @@ class EventDetailRobot extends BaseRobot {
 
   Finder get addParticipantButton => findKey('EventDetail_addButton');
 
+  /// Taps the add participant button.
+  ///
+  /// Waits for button to appear first, then ensures visible and taps.
+  /// This handles cases where the button may not be ready immediately
+  /// after navigation or page rebuilds.
   Future<void> tapAddParticipant() async {
+    // Wait for button to exist in widget tree
+    final found = await waitForKey('EventDetail_addButton',
+        timeout: const Duration(seconds: 5));
+    if (!found) {
+      throw StateError('EventDetail_addButton not found after waiting 5s');
+    }
+    await ensureVisible(addParticipantButton);
     await tap(addParticipantButton);
   }
 }

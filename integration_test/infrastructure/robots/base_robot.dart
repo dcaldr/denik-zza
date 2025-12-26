@@ -36,6 +36,15 @@ class BaseRobot {
     await pumpAndSettle();
   }
 
+  /// Scrolls to make a widget visible before interaction.
+  ///
+  /// Use this before tapping widgets that may be off-screen due to
+  /// responsive layout changes (e.g., restrictions list expanding).
+  Future<void> ensureVisible(Finder finder) async {
+    await tester.ensureVisible(finder);
+    await pump();
+  }
+
   /// Helper to find a widget by its Key String.
   Finder findKey(String key) => find.byKey(Key(key));
 

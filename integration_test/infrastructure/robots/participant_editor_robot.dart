@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 import 'base_robot.dart';
 
 // Import test data models for fillFromTestData
@@ -69,12 +70,18 @@ class ParticipantEditorRobot extends BaseRobot {
       findKey('ParticipantRegistrationForm_submit_button');
 
   // RestrictionsWidget fields (added Phase 1)
+  // NOTE: Keys match _logic.getText() - 'Léky' and 'Omezení a alergie'
   Finder get medicationInput => findKey('RestrictionsWidget_Léky_input');
   Finder get medicationAddButton =>
       findKey('RestrictionsWidget_Léky_add_button');
-  Finder get restrictionInput => findKey('RestrictionsWidget_Omezení_input');
+  Finder get restrictionInput =>
+      findKey('RestrictionsWidget_Omezení a alergie_input');
   Finder get restrictionAddButton =>
-      findKey('RestrictionsWidget_Omezení_add_button');
+      findKey('RestrictionsWidget_Omezení a alergie_add_button');
+
+  // Reset button in AppBar (clears form)
+  Finder get resetButton =>
+      findKey('ParticipantRegistrationPage_refresh_button');
 
   /// Verifies the page is shown with key form elements.
   Future<void> verifyPageShown() async {
@@ -112,10 +119,18 @@ class ParticipantEditorRobot extends BaseRobot {
   /// Enters gender value.
   ///
   /// Gender field is a TEXT input (not dropdown).
-  /// [pohlavi] should be 1 for male (M) or 2 for female (Ž).
-  Future<void> enterPohlavi(int pohlavi) async {
+  /// [pohlavi] should be 1 for male or 2 for female.
+  /// [useFullWord] if true uses 'muž'/'žena', if false uses 'M'/'Ž'.
+  /// Defaults to true to test full word input.
+  Future<void> enterPohlavi(int pohlavi, {bool useFullWord = true}) async {
     // Gender field accepts: "M", "Ž", "muž", "žena"
-    final text = pohlavi == 1 ? 'M' : 'Ž';
+    // Test coverage: use full words by default, can override to test abbreviations
+    String text;
+    if (useFullWord) {
+      text = pohlavi == 1 ? 'muž' : 'žena';
+    } else {
+      text = pohlavi == 1 ? 'M' : 'Ž';
+    }
     await enterText(pohlaviInput, text);
   }
 
@@ -165,21 +180,60 @@ class ParticipantEditorRobot extends BaseRobot {
       text = '$text (${parts.join(', ')})';
     }
 
+    // Ensure input visible (may have scrolled due to responsive layout)
+    await ensureVisible(medicationInput);
+
+    // Tap to focus the input field first (critical for Autocomplete sync)
+    await tap(medicationInput);
+    await pump(const Duration(milliseconds: 100));
+
+    // Enter text after focus is established
     await enterText(medicationInput, text);
-    await pump();
+
+    // Wait for Autocomplete internal controller to sync with entered text
+    await pump(const Duration(milliseconds: 300));
+
+    await ensureVisible(medicationAddButton);
     await tap(medicationAddButton);
-    await pump();
+
+    // Wait for add to complete and input to clear
+    await pump(const Duration(milliseconds: 300));
   }
 
   /// Adds a restriction via RestrictionsWidget.
   ///
   /// Requires widget keys added in Phase 1.
   /// Uses the restriction's popis (description) field.
+  ///
+  /// Note: Uses tap-to-focus before entering text to ensure Autocomplete's
+  /// internal controller syncs correctly with entered text.
   Future<void> addRestriction(TestRestriction restriction) async {
+    // DEBUG: Trace restriction adding
+    // ignore: avoid_print
+    print('📝 addRestriction: Adding "${restriction.popis}"');
+
+    // Ensure input visible (may have scrolled due to responsive layout)
+    await ensureVisible(restrictionInput);
+
+    // Tap to focus the input field first (critical for Autocomplete sync)
+    await tap(restrictionInput);
+    await pump(const Duration(milliseconds: 100));
+
+    // Enter text after focus is established
     await enterText(restrictionInput, restriction.popis);
-    await pump();
+
+    // Wait for Autocomplete internal controller to sync with entered text
+    await pump(const Duration(milliseconds: 300));
+
+    await ensureVisible(restrictionAddButton);
     await tap(restrictionAddButton);
-    await pump();
+
+    // Wait for add to complete and input to clear
+    await pump(const Duration(milliseconds: 300));
+
+    // DEBUG: Confirm add button was tapped
+    // ignore: avoid_print
+    print('📝 addRestriction: Tapped add button for "${restriction.popis}"');
   }
 
   /// Fills all basic participant form fields from TestParticipant data.
@@ -248,7 +302,32 @@ class ParticipantEditorRobot extends BaseRobot {
   }
 
   /// Taps the submit button.
+  ///
+  /// Uses ensureVisible to handle cases where button may be off-screen
+  /// due to responsive layout (restrictions section expansion).
   Future<void> tapSubmit() async {
+    await ensureVisible(submitButton);
     await tap(submitButton);
+  }
+
+  /// Taps the reset/refresh button in AppBar to clear the form.
+  ///
+  /// Use this to test form clearing without navigating away.
+  Future<void> tapReset() async {
+    await tap(resetButton);
+  }
+
+  // NOTE: ParticipantRegistrationPage uses drawer navigation, not back button.
+  // Use BaseRobot.navigateToEventDetail() or similar drawer-based navigation.
+
+  /// Waits for form to be ready for input after submit/reset.
+  ///
+  /// Uses waitForKey (safe for infinite animations) instead of pumpAndSettle.
+  Future<bool> waitForFormReady(
+      {Duration timeout = const Duration(seconds: 5)}) async {
+    return await waitForKey(
+      'ParticipantRegistrationForm_jmeno_input',
+      timeout: timeout,
+    );
   }
 }

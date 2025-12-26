@@ -250,25 +250,30 @@ void main() {
         await eventDetail.waitForKey('EventDetail_addButton');
 
         // CREATE ALL 15 PARTICIPANTS
+        // Navigate to form ONCE, add all participants consecutively
+        // Form clears after each submit (app design - no back navigation)
+        await eventDetail.tapAddParticipant();
+        await participantEditor.waitForFormReady();
+
         for (int i = 0; i < jurskyParkParticipants.length; i++) {
           final p = jurskyParkParticipants[i];
           AppLogger.l
               .i('Adding participant ${i + 1}/15: ${p.jmeno} ${p.prijmeni}');
 
-          await eventDetail.tapAddParticipant();
-          await participantEditor
-              .waitForKey('ParticipantRegistrationForm_jmeno_input');
+          // Fill form (jmeno field should be ready after previous submit cleared)
           await participantEditor.fillCompleteFromTestData(p);
           await participantEditor.tapSubmit();
-          await tester.pump(const Duration(milliseconds: 300));
-          await eventDetail.waitForKey('EventDetail_addButton');
 
-          // ✅ DB VERIFICATION
+          // Wait for form to reset (uses waitForKey - safe for infinite animations)
+          await participantEditor.waitForFormReady();
+
+          // ✅ DB VERIFICATION (verify while still on form)
           final verified = await dbHelpers.verifyCompleteParticipant(p);
           AppLogger.l.i(
               '✅ Participant ${i + 1}/15 verified: ${p.jmeno} ${p.prijmeni} (ID: ${verified.id})');
         }
 
+        // No need to navigate back - Phase 2 uses drawer navigation directly
         await dbHelpers.verifyParticipantCount(15);
         AppLogger.l.i('✅ PHASE 1 COMPLETE: All 15 participants created');
 

@@ -77,7 +77,18 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
   }
 
   void _addItem(String name) {
-    if (name.trim().isEmpty) return;
+    // DEBUG: Trace _addItem call
+    // ignore: avoid_print
+    print(
+        '🟢 RestrictionsWidget._addItem: Called with name="$name" (length=${name.length})');
+
+    if (name.trim().isEmpty) {
+      // DEBUG: Trace empty skip
+      // ignore: avoid_print
+      print(
+          '🟡 RestrictionsWidget._addItem: SKIPPED - name is empty after trim');
+      return;
+    }
     setState(() {
       _logic.addItem(name);
       _controller.clear();
@@ -432,16 +443,19 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
       color: Theme.of(context).primaryColor,
       tooltip: 'Přidat',
       onPressed: () {
-        // We need to access the text from the Autocomplete's controller
-        // But since we can't easily access it here without complex state management,
-        // we'll rely on the user pressing Enter or selecting from list for now,
-        // OR we can try to use the _controller if we bound it correctly.
-        // In the original code, _controller.value was set in fieldViewBuilder.
-        // Let's try to capture the text in fieldViewBuilder.
+        // Cancel any pending submit from Enter key (prevents double-add)
+        _pendingSubmitValue = null;
 
-        // Actually, the original code did: _controller.value = textEditingController.value;
-        // So _controller.text should be valid.
-        _addItem(_controller.text);
+        // Use autocomplete's controller directly to avoid sync race condition
+        // Falls back to _controller if autocomplete not yet built
+        final text = _autocompleteController?.text ?? _controller.text;
+
+        // DEBUG: Trace button press and text value
+        // ignore: avoid_print
+        print(
+            '🟢 RestrictionsWidget._buildAddButton.onPressed: text="$text" (autocomplete=${_autocompleteController?.text}, controller=${_controller.text})');
+
+        _addItem(text);
       },
     );
   }

@@ -25,7 +25,8 @@ class MemoryOmezeniLogic implements LogicInterface {
     }
 
     if (participantId != null && _items.isEmpty) {
-      List<MemoryOmezeni> participantOmezeni = await db.getOmezeniByParticipantID(participantId);
+      List<MemoryOmezeni> participantOmezeni =
+          await db.getOmezeniByParticipantID(participantId);
       _items.addAll(participantOmezeni.map((e) => e.omezeni));
     }
   }
@@ -36,6 +37,14 @@ class MemoryOmezeniLogic implements LogicInterface {
       _items.add(name);
       MemoryOmezeni newOmezeni = MemoryOmezeni(omezeni: name, idOsoby: pid);
       _newOmezeni.add(newOmezeni);
+      // DEBUG: Trace item added
+      // ignore: avoid_print
+      print(
+          '🔵 MemoryOmezeniLogic.addItem: Added "$name" (pid=$pid, _newOmezeni.length=${_newOmezeni.length})');
+    } else {
+      // DEBUG: Trace duplicate skipped
+      // ignore: avoid_print
+      print('🟡 MemoryOmezeniLogic.addItem: SKIPPED duplicate "$name"');
     }
   }
 
@@ -46,11 +55,29 @@ class MemoryOmezeniLogic implements LogicInterface {
 
   @override
   Future<void> update() async {
-    for (var omezeni in _newOmezeni) {
-      await db.addOmezeni(omezeni);
+    // DEBUG: Trace update start
+    // ignore: avoid_print
+    print(
+        '🔵 MemoryOmezeniLogic.update: START - _newOmezeni.length=${_newOmezeni.length}');
+
+    for (int i = 0; i < _newOmezeni.length; i++) {
+      final omezeni = _newOmezeni[i];
+      // DEBUG: Trace each save
+      // ignore: avoid_print
+      print(
+          '🔵 MemoryOmezeniLogic.update: Saving ${i + 1}/${_newOmezeni.length} - "${omezeni.omezeni}" (idOsoby=${omezeni.idOsoby})');
+
+      final result = await db.addOmezeni(omezeni);
+
+      // DEBUG: Trace result
+      // ignore: avoid_print
+      print(
+          '🔵 MemoryOmezeniLogic.update: Result for ${i + 1}/${_newOmezeni.length} = $result');
     }
     _newOmezeni.clear();
     await fetchData();
+    // ignore: avoid_print
+    print('🔵 MemoryOmezeniLogic.update: COMPLETE');
   }
 
   void reset() {
@@ -60,13 +87,17 @@ class MemoryOmezeniLogic implements LogicInterface {
 
   /// Update participant ID for all pending restrictions
   void updateParticipantId(int participantId) {
+    // DEBUG: Trace ID update
+    // ignore: avoid_print
+    print(
+        '🔵 MemoryOmezeniLogic.updateParticipantId: Setting pid=$participantId for ${_newOmezeni.length} pending restrictions');
+
     pid = participantId;
     for (var omezeni in _newOmezeni) {
       omezeni.idOsoby = participantId;
     }
   }
 }
-
 
 class MemoryLekLogic implements LogicInterface {
   final DatabaseInterface db = DatabaseWrapper.getDatabase();
@@ -89,7 +120,8 @@ class MemoryLekLogic implements LogicInterface {
     }
 
     if (participantId != null && _items.isEmpty) {
-      List<MemoryLek> participantLeky = await db.getLekyByParticipantID(participantId);
+      List<MemoryLek> participantLeky =
+          await db.getLekyByParticipantID(participantId);
       _items.addAll(participantLeky.map((e) => e.nazev));
     }
   }
@@ -98,7 +130,8 @@ class MemoryLekLogic implements LogicInterface {
   void addItem(String name) {
     if (!_items.contains(name)) {
       _items.add(name);
-      MemoryLek newLek = MemoryLek.fullNamed(nazev: name, idOsoby: pid ??-1, id: null);
+      MemoryLek newLek =
+          MemoryLek.fullNamed(nazev: name, idOsoby: pid ?? -1, id: null);
       _newLeky.add(newLek);
     }
   }
