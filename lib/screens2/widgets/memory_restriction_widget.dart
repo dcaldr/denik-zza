@@ -36,19 +36,12 @@ class MemoryOmezeniLogic implements LogicInterface {
 
   @override
   void addItem(String name) {
-    if (!_items.contains(name)) {
-      _items.add(name);
-      MemoryOmezeni newOmezeni = MemoryOmezeni(omezeni: name, idOsoby: pid);
-      _newOmezeni.add(newOmezeni);
-      // DEBUG: Trace item added
-      // ignore: avoid_print
-      print(
-          '🔵 MemoryOmezeniLogic.addItem: Added "$name" (pid=$pid, _newOmezeni.length=${_newOmezeni.length})');
-    } else {
-      // DEBUG: Trace duplicate skipped
-      // ignore: avoid_print
-      print('🟡 MemoryOmezeniLogic.addItem: SKIPPED duplicate "$name"');
+    if (_items.contains(name)) {
+      return;
     }
+    _items.add(name);
+    MemoryOmezeni newOmezeni = MemoryOmezeni(omezeni: name, idOsoby: pid);
+    _newOmezeni.add(newOmezeni);
   }
 
   @override
@@ -58,29 +51,12 @@ class MemoryOmezeniLogic implements LogicInterface {
 
   @override
   Future<void> update() async {
-    // DEBUG: Trace update start
-    // ignore: avoid_print
-    print(
-        '🔵 MemoryOmezeniLogic.update: START - _newOmezeni.length=${_newOmezeni.length}');
-
     for (int i = 0; i < _newOmezeni.length; i++) {
       final omezeni = _newOmezeni[i];
-      // DEBUG: Trace each save
-      // ignore: avoid_print
-      print(
-          '🔵 MemoryOmezeniLogic.update: Saving ${i + 1}/${_newOmezeni.length} - "${omezeni.omezeni}" (idOsoby=${omezeni.idOsoby})');
-
-      final result = await db.addOmezeni(omezeni);
-
-      // DEBUG: Trace result
-      // ignore: avoid_print
-      print(
-          '🔵 MemoryOmezeniLogic.update: Result for ${i + 1}/${_newOmezeni.length} = $result');
+      await db.addOmezeni(omezeni);
     }
     _newOmezeni.clear();
     await fetchData();
-    // ignore: avoid_print
-    print('🔵 MemoryOmezeniLogic.update: COMPLETE');
   }
 
   void reset() {
@@ -92,11 +68,6 @@ class MemoryOmezeniLogic implements LogicInterface {
 
   /// Update participant ID for all pending restrictions
   void updateParticipantId(int participantId) {
-    // DEBUG: Trace ID update
-    // ignore: avoid_print
-    print(
-        '🔵 MemoryOmezeniLogic.updateParticipantId: Setting pid=$participantId for ${_newOmezeni.length} pending restrictions');
-
     pid = participantId;
     for (var omezeni in _newOmezeni) {
       omezeni.idOsoby = participantId;

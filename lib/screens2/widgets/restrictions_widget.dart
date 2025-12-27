@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:denik_zza/design_system/tokens/app_breakpoints.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
-import 'package:denik_zza/design_system/tokens/app_colors.dart';
-import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:denik_zza/input/text_tools.dart';
 import 'package:denik_zza/screens2/widgets/zza_scrollable.dart';
 
@@ -61,16 +59,7 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
   }
 
   void _addItem(String name) {
-    // DEBUG: Trace _addItem call
-    // ignore: avoid_print
-    print(
-        '🟢 RestrictionsWidget._addItem: Called with name="$name" (length=${name.length})');
-
     if (name.trim().isEmpty) {
-      // DEBUG: Trace empty skip
-      // ignore: avoid_print
-      print(
-          '🟡 RestrictionsWidget._addItem: SKIPPED - name is empty after trim');
       return;
     }
     setState(() {
@@ -349,11 +338,6 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
         // Use autocomplete's controller directly to avoid sync race condition
         // Falls back to _controller if autocomplete not yet built
         final text = _autocompleteController?.text ?? _controller.text;
-
-        // DEBUG: Trace button press and text value
-        // ignore: avoid_print
-        print(
-            '🟢 RestrictionsWidget._buildAddButton.onPressed: text="$text" (autocomplete=${_autocompleteController?.text}, controller=${_controller.text})');
 
         _addItem(text);
       },
