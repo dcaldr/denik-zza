@@ -19,12 +19,15 @@ class MemoryOmezeniLogic implements LogicInterface {
   @override
   Future<void> fetchData([int? participantId]) async {
     pid = participantId;
-    if (_names.isEmpty) {
-      List<MemoryOmezeni> allOmezeni = await db.getAllOmezeni();
-      _names.addAll(allOmezeni.map((e) => e.omezeni));
-    }
 
-    if (participantId != null && _items.isEmpty) {
+    // ALWAYS refresh suggestions from DB for autocomplete
+    _names.clear();
+    List<MemoryOmezeni> allOmezeni = await db.getAllOmezeni();
+    _names.addAll(allOmezeni.map((e) => e.omezeni));
+
+    // Load participant's items for edit mode
+    if (participantId != null) {
+      _items.clear();
       List<MemoryOmezeni> participantOmezeni =
           await db.getOmezeniByParticipantID(participantId);
       _items.addAll(participantOmezeni.map((e) => e.omezeni));
@@ -83,6 +86,8 @@ class MemoryOmezeniLogic implements LogicInterface {
   void reset() {
     _items.clear();
     _newOmezeni.clear();
+    // Refresh suggestions for next participant
+    fetchData();
   }
 
   /// Update participant ID for all pending restrictions
@@ -114,12 +119,15 @@ class MemoryLekLogic implements LogicInterface {
   @override
   Future<void> fetchData([int? participantId]) async {
     pid = participantId;
-    if (_names.isEmpty) {
-      List<MemoryLek> allLeky = await db.getAllLeky();
-      _names.addAll(allLeky.map((e) => e.nazev));
-    }
 
-    if (participantId != null && _items.isEmpty) {
+    // ALWAYS refresh suggestions from DB for autocomplete
+    _names.clear();
+    List<MemoryLek> allLeky = await db.getAllLeky();
+    _names.addAll(allLeky.map((e) => e.nazev));
+
+    // Load participant's items for edit mode
+    if (participantId != null) {
+      _items.clear();
       List<MemoryLek> participantLeky =
           await db.getLekyByParticipantID(participantId);
       _items.addAll(participantLeky.map((e) => e.nazev));
@@ -153,6 +161,8 @@ class MemoryLekLogic implements LogicInterface {
   void reset() {
     _items.clear();
     _newLeky.clear();
+    // Refresh suggestions for next participant
+    fetchData();
   }
 
   /// Update participant ID for all pending medications

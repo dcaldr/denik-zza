@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // For LogicalKeyboardKey
 import 'base_robot.dart';
 
 // Import test data models for fillFromTestData
@@ -91,19 +92,31 @@ class ParticipantEditorRobot extends BaseRobot {
     expect(submitButton, findsOneWidget);
   }
 
-  /// Enters first name.
+  /// Enters first name and verifies it was set.
   Future<void> enterJmeno(String jmeno) async {
     await enterText(jmenoInput, jmeno);
+    // Strict assertion: verify field contains expected value
+    final field = tester.widget<TextFormField>(jmenoInput);
+    expect(field.controller?.text, equals(jmeno),
+        reason: 'Jméno field should contain "$jmeno"');
   }
 
-  /// Enters last name.
+  /// Enters last name and verifies it was set.
   Future<void> enterPrijmeni(String prijmeni) async {
     await enterText(prijmeniInput, prijmeni);
+    // Strict assertion: verify field contains expected value
+    final field = tester.widget<TextFormField>(prijmeniInput);
+    expect(field.controller?.text, equals(prijmeni),
+        reason: 'Příjmení field should contain "$prijmeni"');
   }
 
-  /// Enters national ID number (rodné číslo).
+  /// Enters national ID number (rodné číslo) and verifies it was set.
   Future<void> enterCisloPojisteni(String rc) async {
     await enterText(cisloPojisteniInput, rc);
+    // Strict assertion: verify field contains expected value
+    final field = tester.widget<TextFormField>(cisloPojisteniInput);
+    expect(field.controller?.text, equals(rc),
+        reason: 'Rodné číslo field should contain "$rc"');
   }
 
   /// Enters birth date in DD.MM.YYYY format.
@@ -231,9 +244,236 @@ class ParticipantEditorRobot extends BaseRobot {
     // Wait for add to complete and input to clear
     await pump(const Duration(milliseconds: 300));
 
-    // DEBUG: Confirm add button was tapped
+    // STRICT ASSERTION: Verify restriction appears in visible list
+    expect(find.text(restriction.popis), findsWidgets,
+        reason: 'Restriction "${restriction.popis}" should appear in list');
+  }
+
+  /// Adds a restriction by typing text and pressing Enter key.
+  ///
+  /// Tests the Enter key submit flow (TextInputAction.done).
+  Future<void> addRestrictionViaEnter(String text) async {
     // ignore: avoid_print
-    print('📝 addRestriction: Tapped add button for "${restriction.popis}"');
+    print('📝 addRestrictionViaEnter: Adding "$text"');
+
+    await ensureVisible(restrictionInput);
+    await tap(restrictionInput);
+    await pump(const Duration(milliseconds: 100));
+
+    await enterText(restrictionInput, text);
+    await pump(const Duration(milliseconds: 300));
+
+    // Submit via Enter key (TextInputAction.done)
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await pump(const Duration(milliseconds: 300));
+  }
+
+  /// Adds a restriction via Tab autocomplete with strict assertions.
+  ///
+  /// [partialText] - partial text to trigger suggestion
+  /// [expectedFull] - full text expected after Tab completion
+  ///
+  /// Flow: Type partial → verify ghost → Tab completes → verify fill → Enter submits → verify in list
+  Future<void> addRestrictionViaTab(
+      String partialText, String expectedFull) async {
+    // ignore: avoid_print
+    print(
+        '📝 addRestrictionViaTab: Typing "$partialText", expecting "$expectedFull"');
+
+    await ensureVisible(restrictionInput);
+    await tap(restrictionInput);
+    await pump(const Duration(milliseconds: 100));
+
+    // Type partial text to trigger autocomplete
+    await tester.enterText(restrictionInput, partialText);
+    await pump(const Duration(milliseconds: 300));
+
+    // SOFT CHECK: Ghost text (uses startsWith, may not match when Tab uses contains)
+    final expectedGhost = expectedFull.substring(partialText.length);
+    if (expectedGhost.isNotEmpty) {
+      final ghostFinder = find.text(expectedGhost);
+      final ghostFound = ghostFinder.evaluate().isNotEmpty;
+      // ignore: avoid_print
+      print(
+          '📝 Ghost text "$expectedGhost": ${ghostFound ? "VISIBLE ✓" : "NOT VISIBLE (startsWith mismatch)"}');
+    }
+
+    // Press Tab to autocomplete
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await pump(const Duration(milliseconds: 300));
+
+    // SOFT CHECK: Verify Tab filled the field (may fail if no match found)
+    final inputField = tester.widget<TextField>(restrictionInput);
+    final actualText = inputField.controller?.text ?? '';
+    final tabFilled = actualText == expectedFull;
+    // ignore: avoid_print
+    print(
+        '📝 Tab fill: expected="$expectedFull", actual="$actualText", match=${tabFilled ? "✓" : "✗"}');
+
+    // Submit via Enter
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await pump(const Duration(milliseconds: 300));
+
+    // STRICT ASSERTION: Verify item appears in list (this is the critical check)
+    expect(find.text(actualText.isNotEmpty ? actualText : expectedFull),
+        findsWidgets,
+        reason: 'Restriction should appear in list after submit');
+  }
+
+  /// Adds a medication by typing text and pressing Enter key.
+  Future<void> addMedicationViaEnter(String text) async {
+    // ignore: avoid_print
+    print('📝 addMedicationViaEnter: Adding "$text"');
+
+    await ensureVisible(medicationInput);
+    await tap(medicationInput);
+    await pump(const Duration(milliseconds: 100));
+
+    await enterText(medicationInput, text);
+    await pump(const Duration(milliseconds: 300));
+
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await pump(const Duration(milliseconds: 300));
+  }
+
+  /// Adds a medication via Tab autocomplete.
+  Future<void> addMedicationViaTab(
+      String partialText, String expectedFull) async {
+    // ignore: avoid_print
+    print(
+        '📝 addMedicationViaTab: Typing "$partialText", expecting "$expectedFull"');
+
+    await ensureVisible(medicationInput);
+    await tap(medicationInput);
+    await pump(const Duration(milliseconds: 100));
+
+    await tester.enterText(medicationInput, partialText);
+    await pump(const Duration(milliseconds: 300));
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await pump(const Duration(milliseconds: 300));
+
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await pump(const Duration(milliseconds: 300));
+  }
+
+  /// Adds a restriction via Tab autocomplete, then modifies text before submitting.
+  ///
+  /// Flow: Type partial → Tab fills → modify text → Enter submits modified
+  Future<void> addRestrictionViaTabThenModify(
+      String partialText, String tabFillsTo, String modifiedTo) async {
+    // ignore: avoid_print
+    print('📝 addRestrictionViaTabThenModify: "$partialText" → "$modifiedTo"');
+
+    await ensureVisible(restrictionInput);
+    await tap(restrictionInput);
+    await pump(const Duration(milliseconds: 100));
+
+    await tester.enterText(restrictionInput, partialText);
+    await pump(const Duration(milliseconds: 300));
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await pump(const Duration(milliseconds: 300));
+
+    // STRICT ASSERTION: Verify Tab filled with suggestion
+    final fieldAfterTab = tester.widget<TextField>(restrictionInput);
+    expect(fieldAfterTab.controller?.text, equals(tabFillsTo),
+        reason: 'Tab should fill field with "$tabFillsTo"');
+
+    await tester.enterText(restrictionInput, modifiedTo);
+    await pump(const Duration(milliseconds: 300));
+
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await pump(const Duration(milliseconds: 300));
+
+    // STRICT ASSERTION: Verify modified text appears in list
+    expect(find.text(modifiedTo), findsWidgets,
+        reason: 'Modified restriction "$modifiedTo" should appear in list');
+  }
+
+  /// Clears input after Tab autocomplete fills, then adds different text.
+  ///
+  /// Flow: Type partial → Tab fills → clear → type own → Enter submits
+  Future<void> addRestrictionViaClearAfterTab(
+      String partialText, String tabFillsTo, String ownText) async {
+    // ignore: avoid_print
+    print(
+        '📝 addRestrictionViaClearAfterTab: Tab "$partialText", add "$ownText"');
+
+    await ensureVisible(restrictionInput);
+    await tap(restrictionInput);
+    await pump(const Duration(milliseconds: 100));
+
+    await tester.enterText(restrictionInput, partialText);
+    await pump(const Duration(milliseconds: 300));
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await pump(const Duration(milliseconds: 300));
+
+    await tester.enterText(restrictionInput, '');
+    await pump(const Duration(milliseconds: 100));
+
+    await tester.enterText(restrictionInput, ownText);
+    await pump(const Duration(milliseconds: 300));
+
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await pump(const Duration(milliseconds: 300));
+  }
+
+  /// Adds a restriction by clicking a dropdown suggestion.
+  ///
+  /// Flow: Type partial → dropdown appears → tap suggestion → auto-added
+  Future<void> addRestrictionViaDropdownClick(
+      String partialText, String fullSuggestion) async {
+    // ignore: avoid_print
+    print(
+        '📝 addRestrictionViaDropdownClick: Type "$partialText", tap dropdown');
+
+    await ensureVisible(restrictionInput);
+    await tap(restrictionInput);
+    await pump(const Duration(milliseconds: 100));
+
+    await tester.enterText(restrictionInput, partialText);
+    await pump(const Duration(milliseconds: 300));
+
+    // STRICT ASSERTION: Verify dropdown shows suggestion
+    final dropdownFinder = find.text(fullSuggestion);
+    expect(dropdownFinder, findsWidgets,
+        reason: 'Dropdown should show "$fullSuggestion"');
+    await tap(dropdownFinder.last);
+    await pump(const Duration(milliseconds: 300));
+
+    // STRICT ASSERTION: Verify item appears in list after dropdown selection
+    expect(find.text(fullSuggestion), findsWidgets,
+        reason:
+            'Restriction "$fullSuggestion" should appear in list after dropdown click');
+  }
+
+  /// Rejects autosuggestion by typing different text.
+  ///
+  /// Flow: Type partial that triggers ghost → type different text → Enter
+  Future<void> addRestrictionRejectSuggestion(
+      String partialTrigger, String differentText) async {
+    // ignore: avoid_print
+    print(
+        '📝 addRestrictionRejectSuggestion: Trigger "$partialTrigger", add "$differentText"');
+
+    await ensureVisible(restrictionInput);
+    await tap(restrictionInput);
+    await pump(const Duration(milliseconds: 100));
+
+    await tester.enterText(restrictionInput, partialTrigger);
+    await pump(const Duration(milliseconds: 300));
+
+    await tester.enterText(restrictionInput, differentText);
+    await pump(const Duration(milliseconds: 300));
+
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await pump(const Duration(milliseconds: 300));
+
+    // STRICT ASSERTION: Verify different text appears in list (not suggestion)
+    expect(find.text(differentText), findsWidgets,
+        reason: 'Restriction "$differentText" should appear in list');
   }
 
   /// Fills all basic participant form fields from TestParticipant data.

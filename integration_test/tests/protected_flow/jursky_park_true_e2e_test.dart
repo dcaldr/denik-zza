@@ -219,9 +219,8 @@ void main() {
         // ============================================================
         // PHASE 1: PreEvent - Create Event & Participants
         // ============================================================
-        AppLogger.l.i('═══════════════════════════════════════════════');
-        AppLogger.l.i('PHASE 1: PreEvent - Create Event & Participants');
-        AppLogger.l.i('═══════════════════════════════════════════════');
+        AppLogger.l
+            .i('═══ PHASE 1: PreEvent - Create Event & Participants ═══');
 
         // CREATE EVENT
         AppLogger.l.i('Creating event: ${jurskyParkEvent.title}');
@@ -260,8 +259,109 @@ void main() {
           AppLogger.l
               .i('Adding participant ${i + 1}/15: ${p.jmeno} ${p.prijmeni}');
 
-          // Fill form (jmeno field should be ready after previous submit cleared)
-          await participantEditor.fillCompleteFromTestData(p);
+          // Fill basic form data (jmeno, prijmeni, etc.)
+          await participantEditor.fillFromTestData(p);
+
+          // ----------------------------------------------------------------
+          // MEDICATION INPUT TESTS
+          // Tests:
+          //   - Standard add (most medications)
+          //   - Enter key submit (P6 j=0)
+          //   - Tab autocomplete (P13 j=2) - uses P7's Ibalgin 400mg
+          // ----------------------------------------------------------------
+          for (int j = 0; j < p.leky.length; j++) {
+            final med = p.leky[j];
+            final medText =
+                '${med.nazev} (${med.davkovani ?? ''}, ${med.kdy ?? ''})';
+
+            if (i == 5 && j == 0) {
+              // SCENARIO: Medication Enter key submit
+              // Tests that Enter key (TextInputAction.done) correctly submits
+              await participantEditor.addMedicationViaEnter(medText);
+            } else if (i == 12 && j == 2) {
+              // SCENARIO: Medication Tab autocomplete
+              // Tests Tab autocomplete for medications:
+              //   - Type "Ibal" → Tab fills "Ibalgin 400mg (1 tableta, Při bolesti)"
+              //   - Uses P7's medication as suggestion source
+              //   - P13's data has matching Ibalgin 400mg so verification passes
+              await participantEditor.addMedicationViaTab(
+                  'Ibal', 'Ibalgin 400mg (1 tableta, Při bolesti)');
+            } else {
+              // Standard add via button tap
+              await participantEditor.addMedication(med);
+            }
+          }
+
+          // ----------------------------------------------------------------
+          // RESTRICTION AUTOSUGGESTION TESTS (7 scenarios)
+          // Tests all autocomplete behaviors to ensure:
+          //   1. Tab autocomplete works correctly
+          //   2. User modifications after Tab are preserved
+          //   3. User can reject suggestions and type own text
+          //   4. Dropdown selection works
+          //   5. Duplicates are allowed
+          // ----------------------------------------------------------------
+          for (int j = 0; j < p.omezeni.length; j++) {
+            final r = p.omezeni[j];
+
+            if (i == 2 && j == 0) {
+              // SCENARIO 1: Enter key submit
+              // Tests that Enter key (TextInputAction.done) correctly submits
+              // the restriction without using autocomplete.
+              await participantEditor.addRestrictionViaEnter(r.popis);
+            } else if (i == 6 && j == 0) {
+              // SCENARIO 2: Tab → Keep
+              // Tests Tab autocomplete fills field and user keeps the suggestion.
+              // Uses P5's "Alergie na malířské..." as suggestion source.
+              // Verifies: ghost text → Tab fills → Enter submits → item in list
+              await participantEditor.addRestrictionViaTab(
+                  'Alergie na m', 'Alergie na malířské látky (barvy, ředidla)');
+              // Also add P7's own restriction (not an autocomplete test)
+              await participantEditor.addRestriction(r);
+            } else if (i == 7 && j == 0) {
+              // SCENARIO 3: Tab → Modify (CRITICAL USER EXPECTATION)
+              // Tests that user can Tab-complete then EDIT the text.
+              // The MODIFIED text should be saved, NOT the original suggestion.
+              // This protects against autocomplete "reverting" user edits.
+              await participantEditor.addRestrictionViaTabThenModify(
+                  'Alergie na l',
+                  'Alergie na latex (používat nitrilové rukavice)',
+                  r.popis);
+            } else if (i == 8 && j == 0) {
+              // SCENARIO 4: Clear after Tab
+              // Tests that user can Tab-complete, clear field, type completely
+              // different text. Verifies autocomplete doesn't "stick".
+              await participantEditor.addRestrictionViaClearAfterTab(
+                  'Alergie na pr',
+                  'Alergie na prach (knihy, staré prostory)',
+                  r.popis);
+            } else if (i == 12 && j == 0) {
+              // SCENARIO 5: Dropdown click
+              // Tests clicking a dropdown suggestion correctly adds the item.
+              // Adds P8's restriction to P13 via dropdown selection.
+              await participantEditor.addRestrictionViaDropdownClick(
+                  'Alergie na pr', 'Alergie na prach (knihy, staré prostory)');
+              // Also add P13's own restriction (pyl) for verification
+              await participantEditor.addRestriction(r);
+            } else if (i == 12 && j == 1) {
+              // SCENARIO 6: Reject suggestion (CRITICAL USER EXPECTATION)
+              // Tests that typing partial text that triggers autosuggest,
+              // then continuing to type DIFFERENT text, saves USER's text.
+              // This protects against autosuggest "stealing" user input.
+              await participantEditor.addRestrictionRejectSuggestion(
+                  'Alergie na', r.popis);
+            } else if (i == 12 && j == 2) {
+              // SCENARIO 7: Keep exact duplicate
+              // Tests Tab-completing to an exact duplicate of earlier restriction.
+              // Verifies duplicates are allowed in the system.
+              await participantEditor.addRestrictionViaTab(
+                  'Alergie na pr', 'Alergie na prach (knihy, staré prostory)');
+            } else {
+              // Standard add via button tap
+              await participantEditor.addRestriction(r);
+            }
+          }
+
           await participantEditor.tapSubmit();
 
           // Wait for form to reset (uses waitForKey - safe for infinite animations)
@@ -280,9 +380,7 @@ void main() {
         // ============================================================
         // PHASE 2: Intake - Process Arrivals
         // ============================================================
-        AppLogger.l.i('═══════════════════════════════════════════════');
-        AppLogger.l.i('PHASE 2: Intake - Process Arrivals');
-        AppLogger.l.i('═══════════════════════════════════════════════');
+        AppLogger.l.i('═══ PHASE 2: Intake - Process Arrivals ═══');
 
         // Navigate to Intake Form via drawer
         AppLogger.l.i('Opening Intake Form via drawer');
@@ -315,9 +413,7 @@ void main() {
         // ============================================================
         // PHASE 3: Event - Medical Records & Print
         // ============================================================
-        AppLogger.l.i('═══════════════════════════════════════════════');
-        AppLogger.l.i('PHASE 3: Event - Medical Records & Print');
-        AppLogger.l.i('═══════════════════════════════════════════════');
+        AppLogger.l.i('═══ PHASE 3: Event - Medical Records & Print ═══');
 
         // Navigate to NewRecordPage via drawer
         AppLogger.l.i('Opening NewRecordPage via drawer');
@@ -360,9 +456,7 @@ void main() {
         // ============================================================
         // PHASE 4: Event Continued - Append Print
         // ============================================================
-        AppLogger.l.i('═══════════════════════════════════════════════');
-        AppLogger.l.i('PHASE 4: Event Continued - Append Print');
-        AppLogger.l.i('═══════════════════════════════════════════════');
+        AppLogger.l.i('═══ PHASE 4: Event Continued - Append Print ═══');
 
         // Navigate to NewRecordPage for append
         AppLogger.l.i('Opening NewRecordPage for additional record');
@@ -402,9 +496,7 @@ void main() {
         // ============================================================
         // FINAL SUMMARY
         // ============================================================
-        AppLogger.l.i('═══════════════════════════════════════════════');
-        AppLogger.l.i('✅✅✅ FULL E2E WORKFLOW COMPLETE ✅✅✅');
-        AppLogger.l.i('═══════════════════════════════════════════════');
+        AppLogger.l.i('═══ ✅✅✅ FULL E2E WORKFLOW COMPLETE ✅✅✅ ═══');
       });
     });
   });

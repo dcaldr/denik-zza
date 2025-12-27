@@ -450,10 +450,17 @@ const jurskyParkParticipants = [
           nazev: 'Hlasové pastilky',
           davkovani: 'Každé 3 hodiny',
           kdy: 'Dle potřeby'),
+      // Added for medication Tab autocomplete test
+      // Uses P7's Ibalgin 400mg - Tab will fill exactly this value
+      // nazev must match the format used by addMedication: 'nazev (davkovani, kdy)'
+      TestMedication(
+          nazev: 'Ibalgin 400mg', davkovani: '1 tableta', kdy: 'Při bolesti'),
     ],
     omezeni: [
       TestRestriction.alergie('Alergie na pyl (trávy, stromy)'),
       TestRestriction.omezeni('Hlasový klid nutný (laryngitida)'),
+      // Added for exact duplicate test (same as P8)
+      TestRestriction.alergie('Alergie na prach (knihy, staré prostory)'),
     ],
     zaznamy: [
       TestRecord(

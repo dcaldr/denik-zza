@@ -111,18 +111,19 @@ class DbVerificationHelpers {
   Future<void> verifyMedications({
     required int participantId,
     required List<TestMedication> expectedMedications,
+    String? participantName,
   }) async {
+    final name = participantName ?? 'ID:$participantId';
     final meds = await db.getLekyByParticipantID(participantId);
 
     expect(meds.length, equals(expectedMedications.length),
         reason:
-            'Medication count mismatch for participant $participantId - expected ${expectedMedications.length}, got ${meds.length}');
+            '$name: expected ${expectedMedications.length} medications, got ${meds.length}');
 
     for (final expected in expectedMedications) {
       final found = meds.any((m) => m.nazev.contains(expected.nazev));
       expect(found, isTrue,
-          reason:
-              'Medication "${expected.nazev}" not found for participant $participantId');
+          reason: '$name: medication "${expected.nazev}" not found');
     }
   }
 
@@ -134,20 +135,21 @@ class DbVerificationHelpers {
   Future<void> verifyRestrictions({
     required int participantId,
     required List<TestRestriction> expectedRestrictions,
+    String? participantName,
   }) async {
+    final name = participantName ?? 'ID:$participantId';
     final restrictions = await db.getOmezeniByParticipantID(participantId);
 
     expect(
         restrictions.length, greaterThanOrEqualTo(expectedRestrictions.length),
         reason:
-            'Restriction count mismatch for participant $participantId - expected at least ${expectedRestrictions.length}, got ${restrictions.length}');
+            '$name: expected ${expectedRestrictions.length} restrictions, got ${restrictions.length}');
 
     for (final expected in expectedRestrictions) {
-      // MemoryOmezeni uses 'omezeni' field, not 'text'
       final found = restrictions.any((r) => r.omezeni.contains(expected.popis));
       expect(found, isTrue,
           reason:
-              'Restriction "${expected.popis}" not found for participant $participantId');
+              '$name: restriction "${expected.popis.substring(0, expected.popis.length > 30 ? 30 : expected.popis.length)}..." not found');
     }
   }
 
@@ -191,6 +193,7 @@ class DbVerificationHelpers {
   /// Convenience method that verifies basic data + medications + restrictions.
   Future<MemoryOsoba> verifyCompleteParticipant(
       TestParticipant testData) async {
+    final name = '${testData.jmeno} ${testData.prijmeni}';
     final p = await verifyParticipantExists(
       jmeno: testData.jmeno,
       prijmeni: testData.prijmeni,
@@ -205,16 +208,18 @@ class DbVerificationHelpers {
     // Verify medications if present
     if (testData.leky.isNotEmpty) {
       await verifyMedications(
-        participantId: p.id, // MemoryOsoba.id is non-nullable (late int)
+        participantId: p.id,
         expectedMedications: testData.leky,
+        participantName: name,
       );
     }
 
     // Verify restrictions if present
     if (testData.omezeni.isNotEmpty) {
       await verifyRestrictions(
-        participantId: p.id, // MemoryOsoba.id is non-nullable (late int)
+        participantId: p.id,
         expectedRestrictions: testData.omezeni,
+        participantName: name,
       );
     }
 

@@ -168,9 +168,13 @@ class BaseRobot {
 
   /// Navigates to Intake Form via drawer.
   ///
-  /// Opens drawer and taps intake form button.
+  /// Opens drawer, expands the medical section, and taps intake form button.
+  /// IntakeForm is inside a collapsed ExpansionTile (ZDRAVOTNICKÝ FILTR).
   Future<void> navigateToIntakeForm() async {
     await openDrawer();
+    // Expand the medical section first (intake form is inside this ExpansionTile)
+    await tap(findKey('AppDrawer_filtr'));
+    await tester.pump(const Duration(milliseconds: 300));
     await tapDrawerIntakeForm();
   }
 
