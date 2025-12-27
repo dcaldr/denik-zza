@@ -285,6 +285,24 @@ class ZzaTheme {
       // DIVIDER THEME
       // ========================================
 
+      // ========================================
+      // SCROLLBAR THEME
+      // ========================================
+
+      /// Global Scrollbar Configuration
+      /// Part of the "Scroll Signaling System" (see docs/ui-system/scroll-signaling.md).
+      /// Enforces visible scrollbars on Desktop to fix "Illusion of Completeness".
+      scrollbarTheme: ScrollbarThemeData(
+        thumbVisibility: const WidgetStatePropertyAll(true),
+        thickness: const WidgetStatePropertyAll(8.0),
+        radius: const Radius.circular(AppRadii.small),
+        thumbColor: WidgetStatePropertyAll(AppColors.greyBorderDark),
+      ),
+
+      // ========================================
+      // DIVIDER THEME
+      // ========================================
+
       dividerTheme: DividerThemeData(
         color: AppColors.greyBorderDark,
         thickness: 1,

@@ -11,19 +11,25 @@ import '../input/text_tools.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/design_system/tokens/app_breakpoints.dart';
 import 'package:denik_zza/screens2/widgets/memory_restriction_widget.dart';
+import 'package:denik_zza/screens2/widgets/zza_scrollable.dart';
 
 class ParticipantRegistrationForm extends StatefulWidget {
+  final bool enableStickyFooter;
+  final bool bypassLayoutBuilder;
   final MemoryOsoba? osoba;
   final Function(bool Function())? onValidate;
   final Function(MemoryOsoba)? onOsobaEdited;
   final VoidCallback? onRefresh;
 
-  const ParticipantRegistrationForm(
-      {super.key,
-      this.osoba,
-      this.onValidate,
-      this.onOsobaEdited,
-      this.onRefresh});
+  const ParticipantRegistrationForm({
+    super.key,
+    this.osoba,
+    this.onValidate,
+    this.onOsobaEdited,
+    this.onRefresh,
+    this.enableStickyFooter = false,
+    this.bypassLayoutBuilder = false,
+  });
 
   @override
   State<ParticipantRegistrationForm> createState() =>
@@ -277,39 +283,60 @@ class _ParticipantRegistrationFormState
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      // Compact padding to give more space to list
-      padding: AppSpacing.containerPadding,
-      child: Form(
-        key: _formKey,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            // Use design system breakpoint for height decision
-            final useScrollLayout =
-                AppBreakpoints.isCompactHeight(constraints.maxHeight);
+    // Phase 7: Clean Split Architecture
+    // 1. Calculate layout variables ONCE at the top level
+    //    We need width to determine column count.
+    //    We check constraints if available (LayoutBuilder parent), else MediaQuery.
 
-            if (!useScrollLayout) {
-              // Bounded layout: Column fills space, restrictions get remaining
-              // Flexible(fit: loose) allows restrictions to shrink to 0 if needed
-              return Column(
-                mainAxisSize: MainAxisSize.max,
-                crossAxisAlignment: CrossAxisAlignment.stretch, // Fill width
-                children: [
-                  _buildGridView(),
-                  SizedBox(height: AppSpacing.s),
-                  _buildTextField('poznamka', 'Poznámka', null,
-                      minLines: 2, maxLines: 7),
-                  SizedBox(height: AppSpacing.s),
-                  _buildCheckboxSection(),
-                  SizedBox(height: AppSpacing.xs),
-                  // Calculate isNarrow and isBounded once at root level
-                  Expanded(
-                    // MUST fill remaining space, not Flexible(loose)
-                    child: _buildRestrictionsSection(
-                      isNarrow: AppBreakpoints.isMobile(constraints.maxWidth),
-                      isBounded: true, // Bounded: list fills remaining space
-                    ),
-                  ),
+    // Use LayoutBuilder at ROOT ONLY to get width for grid columns
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width;
+
+        // 2. Determine Column Count (Responsive Grid)
+        final columnCount = AppBreakpoints.getColumnCount(width);
+
+        // 3. Determine Layout Mode (Mobile vs Desktop)
+        //    We use width for this decision, consistent with AppBreakpoints
+        final isMobile = AppBreakpoints.isMobile(width);
+
+        // 4. Build Static Content
+        //    No SingleChildScrollView here - Parent provides scroll context (CustomScrollView)
+        return Padding(
+          padding: AppSpacing.containerPadding,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // Shrink wrap content
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildGridView(columnCount),
+                SizedBox(height: AppSpacing.s),
+                _buildTextField('poznamka', 'Poznámka', null,
+                    minLines: 2, maxLines: 7),
+                SizedBox(height: AppSpacing.s),
+                _buildCheckboxSection(),
+                SizedBox(height: AppSpacing.xs),
+
+                // RESTRICTIONS SECTION
+                // In clean architecture, we simply render them.
+                // The PARENT determines if this stretches (SliverFillRemaining) or flows.
+                // But RestrictionsWidget needs to know if it should be 'bounded' (Expanded) or 'unbounded'.
+                // If we are in "Footer Mode" (Desktop/SliverFillRemaining), the parent passes bounded constraints.
+                // If we are in "Mobile Mode" (SliverToBoxAdapter), the parent passes unbounded constraints.
+                // However, RestrictionsWidget logic relies on `isBounded` flag.
+                // We can infer this from constraints.hasBoundedHeight.
+                _buildRestrictionsSection(
+                  isNarrow: isMobile,
+                  isBounded: constraints.hasBoundedHeight,
+                ),
+
+                // STICKY FOOTER LOGIC
+                // The Button is handled by the Page via SliverFillRemaining.
+                // We ONLY render the button here if sticky footer is DISABLED (legacy/embedded mode).
+                if (!widget.enableStickyFooter) ...[
                   SizedBox(height: AppSpacing.xs),
                   Center(
                     child: FilledButton(
@@ -322,47 +349,17 @@ class _ParticipantRegistrationFormState
                     ),
                   ),
                 ],
-              );
-            } else {
-              // Scrollable layout: when height is compact, allow scrolling
-              return SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch, // Fill width
-                  children: [
-                    _buildGridView(),
-                    SizedBox(height: AppSpacing.s),
-                    _buildTextField('poznamka', 'Poznámka', null,
-                        minLines: 2, maxLines: 7),
-                    SizedBox(height: AppSpacing.s),
-                    _buildCheckboxSection(),
-                    SizedBox(height: AppSpacing.xs),
-                    _buildRestrictionsSection(
-                      isNarrow: AppBreakpoints.isMobile(constraints.maxWidth),
-                      isBounded: false, // Unbounded: list uses fixed height
-                    ),
-                    SizedBox(height: AppSpacing.xs),
-                    Center(
-                      child: FilledButton(
-                        key: const Key(
-                            'ParticipantRegistrationForm_submit_button'),
-                        onPressed: _submitForm,
-                        child: Text(widget.osoba == null
-                            ? 'Registrovat'
-                            : 'Uložit změny'),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-          },
-        ),
-      ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildGridView() {
+  // Deprecated _buildFormContent removed - logic moved to build()
+
+  Widget _buildGridView(int columnCount) {
     return Column(
       children: [
         // Row 1: Basic identification
@@ -370,7 +367,7 @@ class _ParticipantRegistrationFormState
           _buildTextField('jmeno', 'Jméno', 'Jméno je povinné pole'),
           _buildTextField('prijmeni', 'Příjmení', 'Příjmení je povinné pole'),
           _buildTextField('cisloPojisteni', 'Číslo Pojištěnce', null),
-        ]),
+        ], columnCount),
         const SizedBox(height: 4),
         // Row 2: Birth details and insurance
         _buildFormRow([
@@ -391,59 +388,53 @@ class _ParticipantRegistrationFormState
           ),
           _buildTextField('zdravotniPojistovna', 'Zdravotní Pojišťovna', null),
           _buildTextField('adresa', 'Adresa', null),
-        ]),
+        ], columnCount),
         const SizedBox(height: 4),
         // Row 3: Guardian contact info
         _buildFormRow([
           _buildTextField('jmenoRodice', 'Jméno rodiče', null),
           _buildTextField('emailRodice', 'Email rodiče', null),
           _buildTextField('telefonRodice', 'Telefon rodiče', null),
-        ]),
+        ], columnCount),
       ],
     );
   }
 
   /// Builds a responsive form row: 3 columns on desktop, 2 on tablet, 1 on mobile.
-  Widget _buildFormRow(List<Widget> fields) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = AppBreakpoints.getColumnCount(constraints.maxWidth);
+  Widget _buildFormRow(List<Widget> fields, int columns) {
+    if (columns == 1) {
+      // Mobile: Stack vertically with spacing
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: fields
+            .map((field) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: field,
+                ))
+            .toList(),
+      );
+    }
 
-        if (columns == 1) {
-          // Mobile: Stack vertically with spacing
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: fields
-                .map((field) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: field,
-                    ))
-                .toList(),
-          );
-        }
-
-        // Tablet/Desktop: Chunk into rows with column count
-        final rows = <Widget>[];
-        for (var i = 0; i < fields.length; i += columns) {
-          final chunk = fields.skip(i).take(columns).toList();
-          rows.add(Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: chunk
-                .map((field) => Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 2),
-                        child: field,
-                      ),
-                    ))
-                .toList(),
-          ));
-          if (i + columns < fields.length) {
-            rows.add(const SizedBox(height: 4));
-          }
-        }
-        return Column(children: rows);
-      },
-    );
+    // Tablet/Desktop: Chunk into rows with column count
+    final rows = <Widget>[];
+    for (var i = 0; i < fields.length; i += columns) {
+      final chunk = fields.skip(i).take(columns).toList();
+      rows.add(Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: chunk
+            .map((field) => Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: field,
+                  ),
+                ))
+            .toList(),
+      ));
+      if (i + columns < fields.length) {
+        rows.add(const SizedBox(height: 4));
+      }
+    }
+    return Column(children: rows);
   }
 
   Widget _buildTextField(String key, String labelText, String? validatorText,
@@ -588,6 +579,14 @@ class _ParticipantRegistrationPageState
     extends State<ParticipantRegistrationPage> {
   final GlobalKey<_ParticipantRegistrationFormState> _formKey =
       GlobalKey<_ParticipantRegistrationFormState>();
+  final ScrollController _scrollController =
+      ScrollController(); // Added for ZzaScrollable
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -607,7 +606,43 @@ class _ParticipantRegistrationPageState
         ],
       ),
       drawer: const AppDrawer(),
-      body: ParticipantRegistrationForm(key: _formKey),
+      // Phase 8: Scroll Signaling (ZzaScrollable Wrapper)
+      // Wraps the main CustomScrollView to provide "more content" hints
+      body: ZzaScrollable(
+        controller: _scrollController,
+        child: CustomScrollView(
+          controller: _scrollController,
+          slivers: [
+            // 1. The Form Content (Scrolls naturally)
+            SliverToBoxAdapter(
+              child: ParticipantRegistrationForm(
+                key: _formKey,
+                enableStickyFooter:
+                    true, // Signal to not render internal button
+                bypassLayoutBuilder:
+                    true, // Signal to rely on parent constraints
+              ),
+            ),
+
+            // 2. The Sticky Footer (Fills remaining space or sits at bottom)
+            SliverFillRemaining(
+              hasScrollBody: false, // It's just a button container, not a list
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: FilledButton(
+                    key: const Key('ParticipantRegistrationPage_submit_button'),
+                    // Call submit on the form state via GlobalKey
+                    onPressed: () => _formKey.currentState?._submitForm(),
+                    child: const Text('Registrovat'),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

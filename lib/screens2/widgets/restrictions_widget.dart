@@ -5,6 +5,7 @@ import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
 import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:denik_zza/input/text_tools.dart';
+import 'package:denik_zza/screens2/widgets/zza_scrollable.dart';
 
 class RestrictionsWidget extends StatefulWidget {
   final LogicInterface logic;
@@ -26,8 +27,6 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
   late final LogicInterface _logic;
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  bool _hasMoreBelow = false;
-  bool _hasMoreAbove = false;
   String _ghostSuffix = ''; // For inline gray suggestion
 
   // References to Autocomplete's internal objects
@@ -42,12 +41,11 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
     super.initState();
     _logic = widget.logic;
     _fetchData();
-    _scrollController.addListener(_updateScrollIndicator);
+    // ScrollController is passed to ZzaScrollable which handles the listeners
   }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_updateScrollIndicator);
     _scrollController.dispose();
     _controller.dispose();
     // Clean up Autocomplete listener if registered
@@ -55,20 +53,6 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
       _autocompleteController!.removeListener(_textListener!);
     }
     super.dispose();
-  }
-
-  void _updateScrollIndicator() {
-    if (!_scrollController.hasClients) return;
-    final hasMoreBelow = _scrollController.position.pixels <
-        _scrollController.position.maxScrollExtent - 10;
-    final hasMoreAbove = _scrollController.position.pixels > 10;
-
-    if (hasMoreBelow != _hasMoreBelow || hasMoreAbove != _hasMoreAbove) {
-      setState(() {
-        _hasMoreBelow = hasMoreBelow;
-        _hasMoreAbove = hasMoreAbove;
-      });
-    }
   }
 
   Future<void> _fetchData() async {
@@ -98,16 +82,11 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
     // Auto-scroll to bottom so newly added item is visible
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients && mounted) {
-        _scrollController
-            .animateTo(
+        _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOut,
-        )
-            .then((_) {
-          // Update scroll indicator after animation
-          if (mounted) _updateScrollIndicator();
-        });
+        );
       }
     });
   }
@@ -173,13 +152,19 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
   /// Builds fixed-height list for UNBOUNDED (scroll) mode only.
   /// In bounded mode, Expanded is used instead (see build method).
   Widget _buildBoundedList() {
-    // Check for scroll indicator after build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _updateScrollIndicator();
-    });
+    // UNBOUNDED: Use fixed height based on available screen height
+    // on 720p (Compact), show ~2 items + peek to ensure it fits without page scroll.
+    // on Tall screens, show ~3 items + peek for better visibility.
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    // We use a local threshold of 800px here to catch standard 720p laptops
+    // which fall outside the global 'compact' (600px) definition but still need space optimization.
+    final isBrief = screenHeight < 800;
 
-    // UNBOUNDED: Use fixed height based on 3 items
-    final listHeight = AppBreakpoints.getListHeight(context, itemCount: 3);
+    // 2.1 items for compact (ensure peek + fit 720p), 3.2 for tall
+    final targetItems = isBrief ? 2.1 : 3.2;
+
+    final listHeight =
+        AppBreakpoints.getListHeight(context, itemCount: 1) * targetItems;
 
     return SizedBox(
       height: listHeight,
@@ -187,112 +172,27 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
     );
   }
 
-  /// Builds the actual list content with scroll indicator
+  /// Builds the actual list content with standard scroll signaling
   Widget _buildListContent() {
-    return Stack(
-      children: [
-        ListView.builder(
-          controller: _scrollController,
-          shrinkWrap: false, // Let it fill available space
-          physics: const ClampingScrollPhysics(),
-          itemCount: _logic.items.length,
-          itemBuilder: (context, index) {
-            return ListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.check_circle_outline, size: 16),
-              title: Text(
-                _logic.items[index],
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            );
-          },
-        ),
-        // Gradient indicator when there's more content below
-        if (_hasMoreBelow)
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: IgnorePointer(
-              child: Container(
-                height: 30,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      AppColors.greyBackground.withValues(alpha: 0.0),
-                      AppColors.greyBackground.withValues(alpha: 0.9),
-                    ],
-                  ),
-                ),
-                child: Center(
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.blueBackground,
-                      borderRadius: AppRadii.containerRadius,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.keyboard_arrow_down,
-                            size: 12, color: AppColors.blueText),
-                        Text('více',
-                            style: TextStyle(
-                                fontSize: 10, color: AppColors.blueText)),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+    return ZzaScrollable(
+      controller: _scrollController,
+      child: ListView.builder(
+        controller: _scrollController,
+        shrinkWrap: false, // Let it fill available space
+        physics: const ClampingScrollPhysics(),
+        itemCount: _logic.items.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.check_circle_outline, size: 16),
+            title: Text(
+              _logic.items[index],
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
-          ),
-        // Top gradient indicator when there's more content above
-        if (_hasMoreAbove)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: IgnorePointer(
-              child: Container(
-                height: 30,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      AppColors.greyBackground.withValues(alpha: 0.0),
-                      AppColors.greyBackground.withValues(alpha: 0.9),
-                    ],
-                  ),
-                ),
-                child: Center(
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.blueBackground,
-                      borderRadius: AppRadii.containerRadius,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.keyboard_arrow_up,
-                            size: 12, color: AppColors.blueText),
-                        Text('více',
-                            style: TextStyle(
-                                fontSize: 10, color: AppColors.blueText)),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-      ],
+          );
+        },
+      ),
     );
   }
 

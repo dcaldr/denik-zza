@@ -32,27 +32,29 @@ class IntakeMainContent extends StatelessWidget {
           final isNarrow = AppBreakpoints.isMobile(constraints.maxWidth);
 
           if (isNarrow) {
-            // Mobile: Stack vertically with scrolling
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildLeftColumn(),
-                const SizedBox(height: 16),
-                _buildRightColumn(constraints),
-              ],
+            // Mobile: Stack vertically with scrolling (Global Scroll)
+            return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildLeftColumn(isNarrow),
+                  const SizedBox(height: 16),
+                  _buildRightColumn(constraints, isNarrow),
+                ],
+              ),
             );
           }
 
-          // Desktop/Tablet: Side by side
+          // Desktop/Tablet: Side by side (Fixed Panes)
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: _buildLeftColumn(),
+                child: _buildLeftColumn(isNarrow),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: _buildRightColumn(constraints),
+                child: _buildRightColumn(constraints, isNarrow),
               ),
             ],
           );
@@ -61,38 +63,44 @@ class IntakeMainContent extends StatelessWidget {
     );
   }
 
-  Widget _buildLeftColumn() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('First Column'),
-        participantRegistrationForm,
+  Widget _buildLeftColumn(bool isNarrow) {
+    if (isNarrow) {
+      // Mobile: Just return the form.
+      // The parent (build method) will wrap this in a ScrollView/Column.
+      return participantRegistrationForm;
+    }
+
+    // Desktop: We want the form to FILL the available height so restrictions expand.
+    // Clean Architecture: Use CustomScrollView + SliverFillRemaining
+    return CustomScrollView(
+      slivers: [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child:
+              participantRegistrationForm, // Form receives Bounded Height -> Expands Restrictions
+        ),
       ],
     );
   }
 
-  Widget _buildRightColumn(BoxConstraints parentConstraints) {
-    // Handle unbounded height (e.g., inside SingleChildScrollView)
-    // Use reasonable default when parent doesn't constrain height
-    final maxHeight = parentConstraints.hasBoundedHeight
-        ? parentConstraints.maxHeight * 0.6
-        : 400.0; // Fallback for unbounded scenarios
-
-    return Column(
+  Widget _buildRightColumn(BoxConstraints parentConstraints, bool isNarrow) {
+    final child = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Second Column'),
-        // Use parent constraints instead of MediaQuery ratio
-        ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: maxHeight,
-          ),
-          child: _buildFileViewer(),
-        ),
+        if (!isNarrow)
+          Expanded(child: _buildFileViewer())
+        else
+          ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 400),
+              child: _buildFileViewer()),
       ],
     );
+
+    // On Desktop (Not Narrow), we want Expanded behavior
+    // On Mobile (Narrow), we function as content
+    return child;
   }
 
   Widget _buildFileViewer() {

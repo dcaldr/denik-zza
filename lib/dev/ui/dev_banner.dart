@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 /// Orange banner widget that indicates development mode
-/// 
+///
 /// Shows a persistent banner at the top of the screen to make it immediately
 /// obvious that the app is running in development mode with test data.
-/// 
+///
 /// Usage:
 /// ```dart
 /// Scaffold(
@@ -19,7 +19,7 @@ import 'package:flutter/material.dart';
 class DevBanner extends StatelessWidget {
   /// The message to display in the banner (after "DEV MODE - ")
   final String message;
-  
+
   /// Optional icon to display before the text
   final IconData? icon;
 
@@ -57,10 +57,10 @@ class DevBanner extends StatelessWidget {
 }
 
 /// Wrapper widget that adds dev banner to any screen
-/// 
+///
 /// Simplifies adding the dev banner to a screen by handling the Column
 /// and Expanded layout automatically.
-/// 
+///
 /// Usage:
 /// ```dart
 /// home: DevBannerWrapper(
@@ -72,10 +72,10 @@ class DevBanner extends StatelessWidget {
 class DevBannerWrapper extends StatelessWidget {
   /// The screen to wrap with a dev banner
   final Widget child;
-  
+
   /// The message to display in the banner (after "DEV MODE - ")
   final String message;
-  
+
   /// Optional icon to display before the text
   final IconData? icon;
 
@@ -89,11 +89,21 @@ class DevBannerWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          DevBanner(message: message, icon: icon),
-          Expanded(child: child),
-        ],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // Guard against tight constraints (e.g. startup/resize transients)
+          // preventing RenderFlex overflow if height < banner height (~30px)
+          if (constraints.maxHeight < 50) {
+            return child;
+          }
+
+          return Column(
+            children: [
+              DevBanner(message: message, icon: icon),
+              Expanded(child: child),
+            ],
+          );
+        },
       ),
     );
   }

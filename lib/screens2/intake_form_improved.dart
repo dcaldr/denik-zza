@@ -75,6 +75,8 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
       onValidate: (validate) => _controller.setValidationFunction(validate),
       onOsobaEdited: (osoba) => _controller.updatePersonData(osoba),
       onRefresh: _refreshPage,
+      enableStickyFooter:
+          true, // Hide internal button (handled by IntakeBottomRow)
     );
   }
 
@@ -129,14 +131,13 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
                 availablePersons: _controller.availablePersons,
               ),
               // Always show the form since we always have a person (even if new)
+              // Always show the form since we always have a person (even if new)
               Expanded(
-                child: SingleChildScrollView(
-                  child: IntakeMainContent(
-                    selectedPerson: _controller.selectedPerson,
-                    onFileUploaded: _onFileUploaded,
-                    zpusobilostFolder: _controller.zpusobilostFolder,
-                    participantRegistrationForm: _participantRegistrationForm!,
-                  ),
+                child: IntakeMainContent(
+                  selectedPerson: _controller.selectedPerson,
+                  onFileUploaded: _onFileUploaded,
+                  zpusobilostFolder: _controller.zpusobilostFolder,
+                  participantRegistrationForm: _participantRegistrationForm!,
                 ),
               ),
               // Always show the bottom row since we always have a form
