@@ -79,7 +79,8 @@ const jurskyParkParticipants = [
     ],
   ),
 
-  // 3. Jan Hus - 14, Male, 5 records, SPF requirement
+    // 3. Jan Hus - 14, Male, 5 records, SPF requirement
+  // SCENARIO CHECK: ONLY Zpusobilost (zpusobilost=true, bezinfekcnost=false)
   TestParticipant(
     jmeno: 'Jan',
     prijmeni: 'Hus',
@@ -88,6 +89,8 @@ const jurskyParkParticipants = [
     rodneCislo: '110706/6792',
     adresa: 'Husova 15, Praha 1',
     pojistovna: 'VZP',
+    zpusobilost: true, // Specifically set for test coverage
+    bezinfekcnost: false,
     leky: [
       TestMedication(nazev: 'Panthenol', kdy: 'Po spálení'),
     ],
@@ -137,6 +140,7 @@ const jurskyParkParticipants = [
   ),
 
   // 5. Alfons Mucha - 13, Male, 0 records but has allergies
+  // SCENARIO CHECK: ONLY Bezinfekcnost (bezinfekcnost=true, zpusobilost=false)
   TestParticipant(
     jmeno: 'Alfons',
     prijmeni: 'Mucha',
@@ -145,6 +149,8 @@ const jurskyParkParticipants = [
     rodneCislo: '120724/0177',
     adresa: 'Ivančice 28, Brno',
     pojistovna: 'OZP',
+    bezinfekcnost: true, // Specifically set for test coverage
+    zpusobilost: false,
     omezeni: [
       TestRestriction.alergie('Alergie na malířské látky (barvy, ředidla)'),
       TestRestriction.omezeni('Vyhnout se výtvarným aktivitám s barvami'),

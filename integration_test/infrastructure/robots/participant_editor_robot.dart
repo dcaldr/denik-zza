@@ -7,6 +7,7 @@ import 'base_robot.dart';
 import '../data/models/test_participant.dart';
 import '../data/models/test_medication.dart';
 import '../data/models/test_restriction.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 
 /// Robot for interacting with [ParticipantRegistrationForm].
 ///
@@ -414,7 +415,7 @@ class ParticipantEditorRobot extends BaseRobot {
   Future<void> addRestrictionViaTabThenModify(
       String partialText, String tabFillsTo, String modifiedTo) async {
     // ignore: avoid_print
-    print('📝 addRestrictionViaTabThenModify: "$partialText" → "$modifiedTo"');
+    AppLogger.l.i('📝 addRestrictionViaTabThenModify: "$partialText" → "$modifiedTo"');
 
     await ensureVisible(restrictionInput);
     await tap(restrictionInput);
@@ -448,7 +449,7 @@ class ParticipantEditorRobot extends BaseRobot {
   Future<void> addRestrictionViaClearAfterTab(
       String partialText, String tabFillsTo, String ownText) async {
     // ignore: avoid_print
-    print(
+    AppLogger.l.i(
         '📝 addRestrictionViaClearAfterTab: Tab "$partialText", add "$ownText"');
 
     await ensureVisible(restrictionInput);
@@ -477,7 +478,7 @@ class ParticipantEditorRobot extends BaseRobot {
   Future<void> addRestrictionViaDropdownClick(
       String partialText, String fullSuggestion) async {
     // ignore: avoid_print
-    print(
+    AppLogger.l.i(
         '📝 addRestrictionViaDropdownClick: Type "$partialText", tap dropdown');
 
     await ensureVisible(restrictionInput);
@@ -506,7 +507,7 @@ class ParticipantEditorRobot extends BaseRobot {
   Future<void> addRestrictionRejectSuggestion(
       String partialTrigger, String differentText) async {
     // ignore: avoid_print
-    print(
+    AppLogger.l.i(
         '📝 addRestrictionRejectSuggestion: Trigger "$partialTrigger", add "$differentText"');
 
     await ensureVisible(restrictionInput);

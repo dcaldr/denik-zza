@@ -18,13 +18,32 @@ class AppLogger {
     dateTimeFormat: DateTimeFormat.none,
   );
 
-  static final Logger _logger = Logger(
+  static Logger _logger = Logger(
     filter: _AppLogFilter(),
     printer: _printer,
   );
 
   /// Access the shared Logger instance.
   static Logger get l => _logger;
+
+  /// Configure custom output (e.g., for capturing logs in tests).
+  static void configureOutput(LogOutput output) {
+    _logger = Logger(
+      filter: _AppLogFilter(),
+      printer: _printer,
+      output: output,
+    );
+  }
+
+  /// Reset logger to default configuration.
+  static void reset() {
+    _logger = Logger(
+      filter: _AppLogFilter(),
+      printer: _printer,
+    );
+  }
+
+
 
   /// Configure global minimum level for logs (useful in tests).
   static void setMinLevel(Level level) {

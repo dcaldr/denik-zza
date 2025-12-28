@@ -52,6 +52,8 @@ class DbVerificationHelpers {
     String? pojistovna,
     String? adresa,
     String? telefonRodice,
+    bool? bezinfekcnost,
+    bool? zpusobilost,
   }) async {
     // Use CORRECT method name: getParticipantsByCurrentEvent
     final participants = await db.getParticipantsByCurrentEvent();
@@ -98,6 +100,16 @@ class DbVerificationHelpers {
     if (telefonRodice != null) {
       expect(p.telefonRodice, equals(telefonRodice),
           reason: 'Telefon rodiče mismatch for $jmeno $prijmeni');
+    }
+
+    if (bezinfekcnost != null) {
+      expect(p.bezinfekcnost, equals(bezinfekcnost),
+          reason: 'Bezinfekčnost mismatch for $jmeno $prijmeni');
+    }
+
+    if (zpusobilost != null) {
+      expect(p.zpusobilost, equals(zpusobilost),
+          reason: 'Způsobilost mismatch for $jmeno $prijmeni');
     }
 
     return p;
@@ -203,6 +215,8 @@ class DbVerificationHelpers {
       pojistovna: testData.pojistovna,
       adresa: testData.adresa,
       telefonRodice: testData.telefonRodice,
+      bezinfekcnost: testData.bezinfekcnost,
+      zpusobilost: testData.zpusobilost,
     );
 
     // Verify medications if present
