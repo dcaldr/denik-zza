@@ -66,9 +66,9 @@ class ParticipantEditorRobot extends BaseRobot {
   Finder get poznamkaInput =>
       findKey('ParticipantRegistrationForm_poznamka_input');
 
-  // Submit
+  // Submit button (sticky footer in page mode)
   Finder get submitButton =>
-      findKey('ParticipantRegistrationForm_submit_button');
+      findKey('ParticipantRegistrationPage_submit_button');
 
   // RestrictionsWidget fields (added Phase 1)
   // NOTE: Keys match _logic.getText() - 'Léky' and 'Omezení a alergie'
@@ -79,6 +79,12 @@ class ParticipantEditorRobot extends BaseRobot {
       findKey('RestrictionsWidget_Omezení a alergie_input');
   Finder get restrictionAddButton =>
       findKey('RestrictionsWidget_Omezení a alergie_add_button');
+
+  // Checkboxes
+  Finder get bezinfekcnostCheckbox =>
+      findKey('ParticipantRegistrationForm_bezinfekcnost_checkbox');
+  Finder get zpusobilostCheckbox =>
+      findKey('ParticipantRegistrationForm_zpusobilost_checkbox');
 
   // Reset button in AppBar (clears form)
   Finder get resetButton =>
@@ -177,6 +183,44 @@ class ParticipantEditorRobot extends BaseRobot {
   /// Enters note/poznámka (optional multiline field).
   Future<void> enterPoznamka(String poznamka) async {
     await enterText(poznamkaInput, poznamka);
+  }
+
+  /// Sets the bezinfekčnost checkbox (infection-free certificate).
+  ///
+  /// Only taps if current value differs from desired value to avoid flipping twice.
+  Future<void> setBezinfekcnost(bool value) async {
+    final checkbox = tester.widget<CheckboxListTile>(bezinfekcnostCheckbox);
+    final currentValue = checkbox.value ?? false;
+
+    if (currentValue != value) {
+      await tap(bezinfekcnostCheckbox);
+      await pump(const Duration(milliseconds: 200));
+
+      // Strict assertion
+      final updatedCheckbox =
+          tester.widget<CheckboxListTile>(bezinfekcnostCheckbox);
+      expect(updatedCheckbox.value, equals(value),
+          reason: 'Bezinfekčnost checkbox should be $value');
+    }
+  }
+
+  /// Sets the způsobilost checkbox (fitness certificate).
+  ///
+  /// Only taps if current value differs from desired value to avoid flipping twice.
+  Future<void> setZpusobilost(bool value) async {
+    final checkbox = tester.widget<CheckboxListTile>(zpusobilostCheckbox);
+    final currentValue = checkbox.value ?? false;
+
+    if (currentValue != value) {
+      await tap(zpusobilostCheckbox);
+      await pump(const Duration(milliseconds: 200));
+
+      // Strict assertion
+      final updatedCheckbox =
+          tester.widget<CheckboxListTile>(zpusobilostCheckbox);
+      expect(updatedCheckbox.value, equals(value),
+          reason: 'Způsobilost checkbox should be $value');
+    }
   }
 
   /// Adds a medication via RestrictionsWidget.
@@ -480,7 +524,7 @@ class ParticipantEditorRobot extends BaseRobot {
   ///
   /// This fills: jmeno, prijmeni, rodneCislo, datumNarozeni, pohlavi,
   /// pojistovna, adresa, telefonRodice (if present), jmenoRodice (if present),
-  /// emailRodice (if present).
+  /// emailRodice (if present), and checkboxes (bezinfekcnost, zpusobilost).
   ///
   /// **Does NOT add medications/restrictions** - call [addMedication] and
   /// [addRestriction] separately after this method.
@@ -523,6 +567,10 @@ class ParticipantEditorRobot extends BaseRobot {
     if (participant.emailRodice != null) {
       await enterEmailRodice(participant.emailRodice!);
     }
+
+    // Set checkboxes
+    await setBezinfekcnost(participant.bezinfekcnost);
+    await setZpusobilost(participant.zpusobilost);
   }
 
   /// Fills complete participant data including medications and restrictions.
@@ -543,8 +591,7 @@ class ParticipantEditorRobot extends BaseRobot {
 
   /// Taps the submit button.
   ///
-  /// Uses ensureVisible to handle cases where button may be off-screen
-  /// due to responsive layout (restrictions section expansion).
+  /// Now uses correct sticky footer button key.
   Future<void> tapSubmit() async {
     await ensureVisible(submitButton);
     await tap(submitButton);

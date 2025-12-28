@@ -33,6 +33,8 @@ const jurskyParkParticipants = [
     adresa: 'Vinohrady 42, Praha',
     telefonRodice: '+420601234567',
     pojistovna: 'VZP',
+    bezinfekcnost: true,
+    zpusobilost: true,
     zaznamy: [
       TestRecord(
         nazev: 'Noční můry',
@@ -57,6 +59,8 @@ const jurskyParkParticipants = [
     adresa: 'Ratibořice 1, Červený Kostelec',
     telefonRodice: '+420602345678',
     pojistovna: 'VZP',
+    bezinfekcnost: true,
+    zpusobilost: true,
     omezeni: [
       TestRestriction.alergie(
           'Včelí štípnutí (epipen není nutný, ale opatrnost vyžadována)'),

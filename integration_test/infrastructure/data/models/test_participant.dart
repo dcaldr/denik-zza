@@ -68,6 +68,12 @@ class TestParticipant {
   /// Medical records
   final List<TestRecord> zaznamy;
 
+  /// Infection-free certificate (bezinfekčnost)
+  final bool bezinfekcnost;
+
+  /// Fitness certificate (způsobilost)
+  final bool zpusobilost;
+
   const TestParticipant({
     required this.jmeno,
     required this.prijmeni,
@@ -82,6 +88,8 @@ class TestParticipant {
     this.leky = const [],
     this.omezeni = const [],
     this.zaznamy = const [],
+    this.bezinfekcnost = false,
+    this.zpusobilost = false,
   });
 
   /// Parse birthdate string to DateTime
@@ -106,8 +114,8 @@ class TestParticipant {
       insuranceCompanyFK:
           insuranceId != null ? Value(insuranceId) : const Value(null),
       zzaActionFK: Value(eventId),
-      eligibleConfirmation: const Value(true),
-      nonInfectiousConfirmation: const Value(true),
+      eligibleConfirmation: Value(zpusobilost),
+      nonInfectiousConfirmation: Value(bezinfekcnost),
       arrivedConfirmation: const Value(true),
       wasPrinted: const Value(false),
     );
