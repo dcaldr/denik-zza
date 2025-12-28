@@ -9,7 +9,10 @@ import '../input/input_hold.dart';
 import '../input/rodne_cislo.dart';
 import '../input/text_tools.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
+import 'package:denik_zza/design_system/tokens/app_colors.dart';
+import 'package:denik_zza/design_system/tokens/app_typography.dart';
 import 'package:denik_zza/design_system/tokens/app_breakpoints.dart';
+import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:denik_zza/screens2/widgets/memory_restriction_widget.dart';
 import 'package:denik_zza/screens2/widgets/zza_scrollable.dart';
 
@@ -76,6 +79,8 @@ class _ParticipantRegistrationFormState
   final MemoryLekLogic _lekLogic = MemoryLekLogic();
   final ParticipantRegistrationService _participantService =
       ParticipantRegistrationService();
+
+  String? _lastAddedName;
 
   @override
   void initState() {
@@ -191,20 +196,21 @@ class _ParticipantRegistrationFormState
       );
 
       if (participantId != null) {
-        _showSnackBar(widget.osoba == null
-            ? 'Účastník úspěšně přidán'
-            : 'Účastník aktualizován');
-        // Update the osoba with the new ID if it was a new participant
-        if (osoba.id == -1) {
-          osoba.id = participantId;
-          widget.onOsobaEdited?.call(osoba);
-        }
-        // Clear form for next entry: ONLY for NEW participants on standalone page.
-        // IntakeForm is NOT affected - it uses controller-based saves, not this button.
-        // Edit mode (widget.osoba != null) does NOT clear to preserve context.
         if (widget.osoba == null) {
+          // Success for NEW participant -> Inline Message
+          final addedName = "${osoba.jmeno} ${osoba.prijmeni}";
+          // Update the osoba with the new ID if it was a new participant
+          if (osoba.id == -1) {
+            osoba.id = participantId;
+            widget.onOsobaEdited?.call(osoba);
+          }
           clearFields();
-          setState(() {}); // Refresh UI to show cleared form
+          setState(() {
+            _lastAddedName = addedName;
+          });
+        } else {
+          // Success for EDIT -> SnackBar (keep existing behavior for edits)
+          _showSnackBar('Účastník aktualizován');
         }
       } else {
         _showSnackBar('Chyba při ukládání účastníka');
@@ -313,6 +319,7 @@ class _ParticipantRegistrationFormState
                   : MainAxisSize.min, // Shrink wrap content if unbounded
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (_lastAddedName != null) _buildSuccessMessage(),
                 _buildGridView(columnCount),
                 const SizedBox(height: AppSpacing.s),
                 _buildTextField('poznamka', 'Poznámka', null,
@@ -363,6 +370,45 @@ class _ParticipantRegistrationFormState
           ),
         );
       },
+    );
+  }
+
+  Widget _buildSuccessMessage() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.m), // Corrected token
+      padding: const EdgeInsets.all(AppSpacing.s), // Corrected token
+      decoration: BoxDecoration(
+        color: AppColors.greenBackground,
+        borderRadius: BorderRadius.circular(AppRadii.small), // Corrected token
+        border: Border.all(
+            color: AppColors.greenIcon.withOpacity(0.3)), // Compatibility fix
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle, size: 20, color: AppColors.greenIcon),
+          const SizedBox(width: AppSpacing.s), // Corrected token
+          Expanded(
+            child: Semantics(
+              liveRegion: true,
+              child: Text(
+                '$_lastAddedName byl úspěšně přidán',
+                style: AppTypography.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.greenText,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.close, size: 18, color: AppColors.greenIcon),
+            onPressed: () => setState(() => _lastAddedName = null),
+            tooltip: 'Zavřít',
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            splashRadius: 20,
+          ),
+        ],
+      ),
     );
   }
 

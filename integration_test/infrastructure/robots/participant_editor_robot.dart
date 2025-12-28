@@ -67,8 +67,15 @@ class ParticipantEditorRobot extends BaseRobot {
       findKey('ParticipantRegistrationForm_poznamka_input');
 
   // Submit button (sticky footer in page mode)
-  Finder get submitButton =>
-      findKey('ParticipantRegistrationPage_submit_button');
+  // Submit button (sticky footer in page mode OR inline in form mode)
+  // Submit button (sticky footer in page mode OR inline in form mode)
+  Finder get submitButton {
+    return find.byWidgetPredicate((widget) {
+      if (widget.key == const Key('ParticipantRegistrationForm_submit_button')) return true;
+      if (widget.key == const Key('ParticipantRegistrationPage_submit_button')) return true;
+      return false;
+    });
+  }
 
   // RestrictionsWidget fields (added Phase 1)
   // NOTE: Keys match _logic.getText() - 'Léky' and 'Omezení a alergie'

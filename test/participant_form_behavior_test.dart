@@ -170,7 +170,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Účastník úspěšně přidán'), findsOneWidget);
+      expect(find.text('Marie Svobodová byl úspěšně přidán'), findsOneWidget);
     });
   });
 
@@ -197,8 +197,8 @@ void main() {
         find.byKey(const Key('ParticipantRegistrationForm_submit_button')),
       );
       await tester.pumpAndSettle();
-      // Wait for SnackBar to disappear so it doesn't block the button
-      await tester.pump(const Duration(seconds: 5));
+      // Verify inline success message (immediate, no occlusion)
+      expect(find.text('Petr Černý byl úspěšně přidán'), findsOneWidget);
       await tester.pumpAndSettle();
 
       var participants = await database.getAllParticipants();
