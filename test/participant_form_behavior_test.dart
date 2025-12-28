@@ -197,6 +197,9 @@ void main() {
         find.byKey(const Key('ParticipantRegistrationForm_submit_button')),
       );
       await tester.pumpAndSettle();
+      // Wait for SnackBar to disappear so it doesn't block the button
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
 
       var participants = await database.getAllParticipants();
       expect(participants.length, 1);

@@ -30,31 +30,43 @@ class IntakeMainContent extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isNarrow = AppBreakpoints.isMobile(constraints.maxWidth);
+          // Use compact height breakpoint to decide if we should force fill (fixed) or allow scrolling
+          final isCompact =
+              AppBreakpoints.isCompactHeight(constraints.maxHeight);
 
           if (isNarrow) {
             // Mobile: Stack vertically with scrolling (Global Scroll)
-            return SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildLeftColumn(isNarrow),
-                  const SizedBox(height: 16),
-                  _buildRightColumn(constraints, isNarrow),
-                ],
-              ),
+            return CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: _buildRightColumn(
+                      context, constraints, isNarrow), // Camera/Gallery
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 16.0),
+                    child: _buildLeftColumn(
+                        context, constraints, isNarrow), // Form (Unbounded)
+                  ),
+                ),
+              ],
             );
           }
 
-          // Desktop/Tablet: Side by side (Fixed Panes)
+          // Desktop/Tablet: Side-by-side
           return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Left Column: Form
               Expanded(
-                child: _buildLeftColumn(isNarrow),
+                flex: 4,
+                child: _buildLeftColumn(context, constraints, isNarrow),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 24),
+              // Right Column: Camera/Gallery (Always fills remaining vertical space)
               Expanded(
-                child: _buildRightColumn(constraints, isNarrow),
+                flex: 3,
+                child: _buildRightColumn(context, constraints, isNarrow),
               ),
             ],
           );
@@ -63,29 +75,44 @@ class IntakeMainContent extends StatelessWidget {
     );
   }
 
-  Widget _buildLeftColumn(bool isNarrow) {
+  Widget _buildLeftColumn(
+      BuildContext context, BoxConstraints constraints, bool isNarrow) {
     if (isNarrow) {
       // Mobile: Just return the form.
       // The parent (build method) will wrap this in a ScrollView/Column.
       return participantRegistrationForm;
     }
 
-    // Desktop: We want the form to FILL the available height so restrictions expand.
-    // Clean Architecture: Use CustomScrollView + SliverFillRemaining
+    // If we have limited vertical space, we shouldn't force the form to "fill" the remaining space,
+    // because it might be smaller than the form's minimum height (causing crash).
+    // Instead, we use SliverToBoxAdapter to let it flow naturally.
+    final isCompact = AppBreakpoints.isCompactHeight(constraints.maxHeight);
+
+    if (isCompact) {
+      return CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: participantRegistrationForm,
+          ),
+        ],
+      );
+    }
+
+    // Default Desktop: Fill remaining space to allow "Expanded" widgets in form to work.
     return CustomScrollView(
       slivers: [
         SliverFillRemaining(
           hasScrollBody: false,
-          child:
-              participantRegistrationForm, // Form receives Bounded Height -> Expands Restrictions
+          child: participantRegistrationForm,
         ),
       ],
     );
   }
 
-  Widget _buildRightColumn(BoxConstraints parentConstraints, bool isNarrow) {
+  Widget _buildRightColumn(
+      BuildContext context, BoxConstraints parentConstraints, bool isNarrow) {
     final child = Column(
-      mainAxisSize: MainAxisSize.min,
+      mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Second Column'),

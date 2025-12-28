@@ -302,23 +302,24 @@ class _ParticipantRegistrationFormState
         //    We use width for this decision, consistent with AppBreakpoints
         final isMobile = AppBreakpoints.isMobile(width);
 
-        // 4. Build Static Content
-        //    No SingleChildScrollView here - Parent provides scroll context (CustomScrollView)
+        // 4. Build Content
         return Padding(
           padding: AppSpacing.containerPadding,
           child: Form(
             key: _formKey,
             child: Column(
-              mainAxisSize: MainAxisSize.min, // Shrink wrap content
+              mainAxisSize: constraints.hasBoundedHeight
+                  ? MainAxisSize.max
+                  : MainAxisSize.min, // Shrink wrap content if unbounded
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildGridView(columnCount),
-                SizedBox(height: AppSpacing.s),
+                const SizedBox(height: AppSpacing.s),
                 _buildTextField('poznamka', 'Poznámka', null,
                     minLines: 2, maxLines: 7),
-                SizedBox(height: AppSpacing.s),
+                const SizedBox(height: AppSpacing.s),
                 _buildCheckboxSection(),
-                SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: AppSpacing.xs),
 
                 // RESTRICTIONS SECTION
                 // In clean architecture, we simply render them.
@@ -328,16 +329,24 @@ class _ParticipantRegistrationFormState
                 // If we are in "Mobile Mode" (SliverToBoxAdapter), the parent passes unbounded constraints.
                 // However, RestrictionsWidget logic relies on `isBounded` flag.
                 // We can infer this from constraints.hasBoundedHeight.
-                _buildRestrictionsSection(
-                  isNarrow: isMobile,
-                  isBounded: constraints.hasBoundedHeight,
-                ),
+                if (constraints.hasBoundedHeight)
+                  Expanded(
+                    child: _buildRestrictionsSection(
+                      isNarrow: isMobile,
+                      isBounded: true,
+                    ),
+                  )
+                else
+                  _buildRestrictionsSection(
+                    isNarrow: isMobile,
+                    isBounded: false,
+                  ),
 
                 // STICKY FOOTER LOGIC
                 // The Button is handled by the Page via SliverFillRemaining.
                 // We ONLY render the button here if sticky footer is DISABLED (legacy/embedded mode).
                 if (!widget.enableStickyFooter) ...[
-                  SizedBox(height: AppSpacing.xs),
+                  const SizedBox(height: AppSpacing.xs),
                   Center(
                     child: FilledButton(
                       key: const Key(

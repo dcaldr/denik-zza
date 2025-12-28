@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/utils/mode_coordinator.dart';
@@ -19,7 +20,7 @@ void main() {
         (tester) async {
       await tester.pumpWidget(
         const BaseTestWidget(
-          child: ParticipantRegistrationForm(),
+          child: SingleChildScrollView(child: ParticipantRegistrationForm()),
         ),
       );
       await tester.pumpAndSettle();
@@ -35,7 +36,7 @@ void main() {
     testWidgets('finds additional form fields', (tester) async {
       await tester.pumpWidget(
         const BaseTestWidget(
-          child: ParticipantRegistrationForm(),
+          child: SingleChildScrollView(child: ParticipantRegistrationForm()),
         ),
       );
       await tester.pumpAndSettle();
@@ -51,7 +52,7 @@ void main() {
     testWidgets('verifyPageShown method works', (tester) async {
       await tester.pumpWidget(
         const BaseTestWidget(
-          child: ParticipantRegistrationForm(),
+          child: SingleChildScrollView(child: ParticipantRegistrationForm()),
         ),
       );
       await tester.pumpAndSettle();
@@ -67,7 +68,7 @@ void main() {
         (tester) async {
       await tester.pumpWidget(
         const BaseTestWidget(
-          child: ParticipantRegistrationForm(),
+          child: SingleChildScrollView(child: ParticipantRegistrationForm()),
         ),
       );
       await tester.pumpAndSettle();
@@ -83,7 +84,7 @@ void main() {
     testWidgets('enterPohlavi method exists and callable', (tester) async {
       await tester.pumpWidget(
         const BaseTestWidget(
-          child: ParticipantRegistrationForm(),
+          child: SingleChildScrollView(child: ParticipantRegistrationForm()),
         ),
       );
       await tester.pumpAndSettle();
@@ -98,7 +99,7 @@ void main() {
     testWidgets('fillFromTestData method exists and callable', (tester) async {
       await tester.pumpWidget(
         const BaseTestWidget(
-          child: ParticipantRegistrationForm(),
+          child: SingleChildScrollView(child: ParticipantRegistrationForm()),
         ),
       );
       await tester.pumpAndSettle();
@@ -114,7 +115,7 @@ void main() {
         (tester) async {
       await tester.pumpWidget(
         const BaseTestWidget(
-          child: ParticipantRegistrationForm(),
+          child: SingleChildScrollView(child: ParticipantRegistrationForm()),
         ),
       );
       await tester.pumpAndSettle();
