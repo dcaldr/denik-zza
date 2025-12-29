@@ -34,9 +34,8 @@ class TestStepLogger extends LogOutput {
   /// Start a new major section/phase.
   void section(String title) {
     _currentPhase = title;
-    debugPrint('\n════════════════════════════════════════════════════════════');
-    debugPrint('🔷 SECTION: $title');
-    debugPrint('════════════════════════════════════════════════════════════\n');
+    // Simple, clean header without massive banners
+    debugPrint('\n🔹 [SECTION] $title');
   }
 
   /// Execute a specific test step with buffering.

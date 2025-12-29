@@ -548,16 +548,24 @@ class ParticipantEditorRobot extends BaseRobot {
   /// }
   /// await robot.tapSubmit();
   /// ```
-  Future<void> fillFromTestData(TestParticipant participant) async {
+  Future<void> fillFromTestData(TestParticipant participant, {
+    bool skipDatumNarozeni = false,
+    bool skipPohlavi = false,
+  }) async {
     await enterJmeno(participant.jmeno);
     await enterPrijmeni(participant.prijmeni);
     await enterCisloPojisteni(participant.rodneCislo);
 
-    // Parse date from ISO string and enter
-    final birthDate = DateTime.parse(participant.datumNarozeni);
-    await enterDatumNarozeni(birthDate);
+    if (!skipDatumNarozeni) {
+      // Parse date from ISO string and enter
+      final birthDate = DateTime.parse(participant.datumNarozeni);
+      await enterDatumNarozeni(birthDate);
+    }
 
-    await enterPohlavi(participant.pohlavi);
+    if (!skipPohlavi) {
+      await enterPohlavi(participant.pohlavi);
+    }
+
     await enterZdravotniPojistovna(participant.pojistovna);
 
     if (participant.adresa != null) {
@@ -614,6 +622,24 @@ class ParticipantEditorRobot extends BaseRobot {
 
   // NOTE: ParticipantRegistrationPage uses drawer navigation, not back button.
   // Use BaseRobot.navigateToEventDetail() or similar drawer-based navigation.
+
+  /// Verifies that the form is in a clean execution state.
+  ///
+  /// Checks:
+  /// - Name field is empty
+  /// - Checkboxes (Bezinfekčnost, Způsobilost) are UNCHECKED
+  Future<void> assertFormClean() async {
+    // Check name field is empty
+    final nameField = tester.widget<TextFormField>(jmenoInput);
+    expect(nameField.controller?.text, isEmpty, reason: 'Form Name field should be empty');
+
+    // Check checkboxes are unchecked
+    final bezinfekcnost = tester.widget<CheckboxListTile>(bezinfekcnostCheckbox);
+    expect(bezinfekcnost.value, isFalse, reason: 'Bezinfekcnost should be unchecked on clean form');
+
+    final zpusobilost = tester.widget<CheckboxListTile>(zpusobilostCheckbox);
+    expect(zpusobilost.value, isFalse, reason: 'Zpusobilost should be unchecked on clean form');
+  }
 
   /// Waits for form to be ready for input after submit/reset.
   ///

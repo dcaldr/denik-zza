@@ -225,4 +225,80 @@ void main() {
           participants.map((p) => p.firstName), containsAll(['Petr', 'Eva']));
     });
   });
+
+  group('Autocomplete Logic', () {
+    testWidgets('safety guard: existing gender selection is NOT overridden by RC',
+        (tester) async {
+      await tester.binding.setSurfaceSize(testSurfaceSize);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        const BaseTestWidget(child: ParticipantRegistrationForm()),
+      );
+      await tester.pumpAndSettle();
+
+      // 1. Manually select "Muž" (Male)
+      // Note: "Muž" behaves as default in logic sometimes, so explicitly setting it is safer
+      // Only set if field is empty, but here we want to force it.
+      await tester.enterText(
+        find.byKey(const Key('ParticipantRegistrationForm_pohlavi_input')),
+        'Muž',
+      );
+      await tester.pumpAndSettle();
+
+      // 2. Enter Female RC (855512/0006 -> Female)
+      // Intrinsic Gender: Female
+      await tester.enterText(
+        find.byKey(const Key('ParticipantRegistrationForm_cisloPojisteni_input')),
+        '855512/0006',
+      );
+      await tester.pumpAndSettle();
+
+      // 3. Assert Gender is STILL "Muž" (Not overridden)
+      final pohlaviField = tester.widget<TextFormField>(
+        find.byKey(const Key('ParticipantRegistrationForm_pohlavi_input')),
+      );
+      expect(pohlaviField.controller?.text, 'Muž',
+          reason: 'Existing gender selection should be protected from autofill');
+    });
+
+    testWidgets('preservation: manual change after autofill is preserved',
+        (tester) async {
+      await tester.binding.setSurfaceSize(testSurfaceSize);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        const BaseTestWidget(child: ParticipantRegistrationForm()),
+      );
+      await tester.pumpAndSettle();
+
+      // 1. Enter Female RC (855512/0006) into EMPTY form
+      await tester.enterText(
+        find.byKey(const Key('ParticipantRegistrationForm_cisloPojisteni_input')),
+        '855512/0006',
+      );
+      await tester.pumpAndSettle();
+
+      // 2. Assert Autofill Happened (Gender = Žena)
+      var pohlaviField = tester.widget<TextFormField>(
+        find.byKey(const Key('ParticipantRegistrationForm_pohlavi_input')),
+      );
+      expect(pohlaviField.controller?.text, 'Žena',
+          reason: 'Should autofill Female for this RC');
+
+      // 3. Manually Override to "Muž"
+      await tester.enterText(
+        find.byKey(const Key('ParticipantRegistrationForm_pohlavi_input')),
+        'Muž',
+      );
+      await tester.pumpAndSettle();
+
+      // 4. Assert Manual Change Persists
+      pohlaviField = tester.widget<TextFormField>(
+        find.byKey(const Key('ParticipantRegistrationForm_pohlavi_input')),
+      );
+      expect(pohlaviField.controller?.text, 'Muž',
+          reason: 'Manual override should persist');
+    });
+  });
 }

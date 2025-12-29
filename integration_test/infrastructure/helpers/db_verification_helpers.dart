@@ -293,4 +293,11 @@ class DbVerificationHelpers {
     expect(arrivedCount, equals(expectedCount),
         reason: 'Expected $expectedCount arrived, got $arrivedCount');
   }
+
+  /// Verifies that the database is clean (no participants).
+  Future<void> verifyDatabaseEmpty() async {
+    // We check current event (which might be null/empty) or just empty list returned
+    final participants = await db.getParticipantsByCurrentEvent();
+    expect(participants, isEmpty, reason: 'Database polluted! Expected 0 participants, found ${participants.length}');
+  }
 }

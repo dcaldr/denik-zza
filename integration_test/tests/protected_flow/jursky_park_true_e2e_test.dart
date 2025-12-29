@@ -14,6 +14,7 @@ import '../../infrastructure/robots/new_record_robot.dart';
 import '../../infrastructure/helpers/db_verification_helpers.dart';
 import '../../infrastructure/data/models/test_record.dart';
 import '../../infrastructure/helpers/test_step_logger.dart';
+import '../../../test/setup_templates/hardcoded_setup.dart';
 
 /// TRUE E2E TEST: Jurský Park Full Workflow
 ///
@@ -58,6 +59,80 @@ void main() {
       await DatabaseWrapper.dispose();
       // Restore default logger behavior
       TestStepLogger.dispose();
+    });
+
+
+
+    // ========================================
+    // GROUP -1: Isolated Verifications (DB Persistence)
+    // ========================================
+    group('Isolated Verifications', () {
+      setUp(() async {
+        await ModeCoordinator.setIntegrationTestMode(
+          testName: 'jursky_park_isolated',
+        );
+        TestStepLogger.initialize();
+      });
+
+      tearDown(() async {
+        await DatabaseWrapper.dispose();
+        TestStepLogger.dispose();
+      });
+
+      testWidgets('DB Verification: Autocomplete Persistence', (tester) async {
+        await logger.step('Setup: Seed DB with Event & Medic', () async {
+          // Use HardcodedSetup to seed "Test Test Test" event and "Test Paramedic"
+          final db = DatabaseWrapper.getDatabase();
+          // We need to cast or access the underlying app database if possible, 
+          // but HardcodedTestSetup.setupTestData() usually creates a new DB and injects it.
+          // Let's call it directly.
+          await HardcodedTestSetup.setupTestData(); 
+        });
+
+        await logger.step('Launch App & Navigate', () async {
+          app.main();
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 500));
+          
+          final dashboard = DashboardRobot(tester);
+          final eventDetail = EventDetailRobot(tester); 
+          final participantEditor = ParticipantEditorRobot(tester);
+          final dbHelpers = DbVerificationHelpers(DatabaseWrapper.getDatabase());
+
+          // HardcodedSetup selects the event "Test Test Test" in cache, 
+          // so dashboard might show it or we might need to select it.
+          // Usually valid assumption: Dashboard shows list.
+          await dashboard.waitForText('Test Test Test'); 
+          await dashboard.tapEvent('Test Test Test');
+          
+          await eventDetail.waitForKey('EventDetail_addButton');
+          await eventDetail.tapAddParticipant();
+          await participantEditor.waitForFormReady();
+
+          // 1. Ensure clean slate
+          await participantEditor.assertFormClean();
+
+          // 2. Fill Name/Surname
+          await participantEditor.enterJmeno('Auto');
+          await participantEditor.enterPrijmeni('Test');
+
+          // 3. Enter Valid RC (855512/0006 -> Female, 1985)
+          // SKIP DOB/Gender to test Autocomplete
+          await participantEditor.enterCisloPojisteni('855512/0006');
+
+          // 4. Submit
+          await participantEditor.tapSubmit();
+
+          // 5. Verify DB Persistence
+          await dbHelpers.verifyParticipantExists(
+            jmeno: 'Auto',
+            prijmeni: 'Test',
+            rodneCislo: '855512/0006',
+            pohlavi: 2, // Female
+            datumNarozeni: DateTime(1985, 5, 12),
+          );
+        });
+      });
     });
 
     // ========================================
@@ -191,6 +266,10 @@ void main() {
           await tester.pump(const Duration(milliseconds: 500));
         });
 
+        await logger.step('Verify Clean DB State', () async {
+          await dbHelpers.verifyDatabaseEmpty();
+        });
+
         await logger.step('Create Event: ${jurskyParkEvent.title}', () async {
           await dashboard.tapCreateNewEvent();
           await dashboard.waitForKey('EventRegistrationForm_nadpis_input');
@@ -219,13 +298,27 @@ void main() {
           await participantEditor.waitForFormReady();
         });
 
+
+
         // CREATE ALL 15 PARTICIPANTS
         for (int i = 0; i < jurskyParkParticipants.length; i++) {
           final p = jurskyParkParticipants[i];
           
           await logger.step('Add Participant ${i + 1}/15: ${p.jmeno} ${p.prijmeni}', () async {
+            // Ensure form is clean (checkboxes reset) before starting
+            // This catches bugs where previous participant's flags persist
+            await participantEditor.assertFormClean();
+
             // Fill basic form data
-            await participantEditor.fillFromTestData(p);
+            // STRATEGY: Skip manual DOB/Gender entry for most to verify Autocomplete
+            // EXCEPTION: Explicitly enter for P3 and P7 to verify manual override works
+            final bool manualEntry = (i == 2 || i == 6); // P3 (Jan Hus), P7 (Karel IV)
+            
+            await participantEditor.fillFromTestData(
+              p, 
+              skipDatumNarozeni: !manualEntry,
+              skipPohlavi: !manualEntry,
+            );
 
             // SPECIAL CHECKS FOR P3 and P5 (New Data Coverage)
             if (i == 2) { // P3 Jan Hus (Only Zpusobilost)
