@@ -87,7 +87,7 @@ class _PersonAutocompleteState extends State<PersonAutocomplete> {
               FocusNode focusNode,
               VoidCallback onFieldSubmitted) {
             return TextField(
-              key: widget.textFieldKey,
+              key: widget.textFieldKey ?? const Key('IntakeForm_personSearch_input'),
               controller: textEditingController,
               focusNode: focusNode,
               decoration: InputDecoration(

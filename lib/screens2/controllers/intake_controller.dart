@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../database/in_memory_structures_tmp/memory_osoba.dart';
 import '../../database/database_wrapper.dart';
 import '../../input/file_manager.dart';
+import '../../utils/app_logger.dart';
 import '../widgets/memory_restriction_widget.dart';
 
 /// Controller for handling intake form business logic
@@ -22,7 +23,15 @@ class IntakeController extends ChangeNotifier {
   bool Function()? _validateParticipantForm;
     /// Initialize the controller
   Future<void> initialize() async {
-    zpusobilostFolder = await FileManager().getZpusobilostFolder();
+    // Try to get zpusobilost folder, but don't fail if unavailable
+    // (may be null in test environments or when no event is selected)
+    try {
+      zpusobilostFolder = await FileManager().getZpusobilostFolder();
+    } catch (e) {
+      // Event directory not configured - zpusobilost folder unavailable
+      // This is expected in some test scenarios
+      zpusobilostFolder = null;
+    }
     
     // Fetch available persons for autocomplete
     await _fetchAvailablePersons();
@@ -72,8 +81,12 @@ class IntakeController extends ChangeNotifier {
   }
     /// Handle save operation
   Future<bool> saveData(bool markAsArrived) async {
-    if (_validateParticipantForm?.call() ?? false) {
-      if (selectedPerson != null) {
+    final validationResult = _validateParticipantForm?.call() ?? false;
+    if (!validationResult) {
+      AppLogger.l.d('IntakeController: Form validation failed (markAsArrived=$markAsArrived)');
+      return false;
+    }
+    if (selectedPerson != null) {
         await _omezeniLogic.update();
         await _lekLogic.update();
 
@@ -104,27 +117,27 @@ class IntakeController extends ChangeNotifier {
         }
         
         return success;
-      }
     }
     return false;
   }
-    /// Reset controller state
-  void reset() {
+
+  /// Reset controller state
+  Future<void> reset() async {
     // Create a new empty person for the form
     selectedPerson = MemoryOsoba.basic('', '');
     selectedPerson!.id = -1; // -1 indicates this is a new person
-    
+
     _omezeniLogic.reset();
     _lekLogic.reset();
-    
-    // Refresh available persons after reset (async but don't await to avoid blocking)
-    _fetchAvailablePersons().then((_) {
-      // Notify listeners after data is refreshed
-      notifyListeners();
-    }).catchError((e) {
-      // Even if fetch fails, still notify for UI update
-      notifyListeners();
-    });
+
+    // Refresh available persons after reset (await to prevent race conditions)
+    try {
+      await _fetchAvailablePersons();
+    } catch (e) {
+      // Fetch failed, but continue - availablePersons will be stale but usable
+    }
+
+    notifyListeners();
   }
     // Getters for accessing logic instances and data
   MemoryOmezeniLogic get omezeniLogic => _omezeniLogic;

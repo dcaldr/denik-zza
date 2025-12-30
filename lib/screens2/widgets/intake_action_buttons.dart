@@ -3,12 +3,18 @@ import '../../database/in_memory_structures_tmp/memory_osoba.dart';
 import '../participant_registration_form.dart';
 import '../shared/intake_types.dart';
 
+/// Action buttons for the Intake Form.
+///
+/// ⚠️ PROTECTED STYLING - DO NOT MODIFY BUTTON COLORS ⚠️
+/// The green/blue/red colors are intentional design choices that must remain
+/// exactly as they are. Do not replace with design system tokens.
 class IntakeActionButtons extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final MemoryOsoba? selectedPerson;
   final FileUploadedCallback onFileUploaded;
   final SaveCallback handleSave;
   final ParticipantRegistrationForm participantRegistrationForm;
+  final VoidCallback? onCancel;
 
   const IntakeActionButtons({
     super.key,
@@ -17,6 +23,7 @@ class IntakeActionButtons extends StatelessWidget {
     required this.onFileUploaded,
     required this.handleSave,
     required this.participantRegistrationForm,
+    this.onCancel,
   });
   @override
   Widget build(BuildContext context) {
@@ -63,9 +70,7 @@ class IntakeActionButtons extends StatelessWidget {
           message: 'neukládat',
           child: ElevatedButton.icon(
             key: const Key('IntakeForm_cancel_button'),
-            onPressed: () {
-              // Add your onPressed code here!
-            },
+            onPressed: onCancel,
             icon: const Icon(Icons.cancel, color: Colors.white),
             label: const Text('neukládat'),
             style: ElevatedButton.styleFrom(

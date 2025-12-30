@@ -96,19 +96,22 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
   }
 
   Future<void> _handleSave(BuildContext context, bool markAsArrived) async {
+    // Capture messenger before async gap to satisfy use_build_context_synchronously
+    final messenger = ScaffoldMessenger.of(context);
+    
     final success = await _controller.saveData(markAsArrived);
 
-    if (mounted) {
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(markAsArrived ? 'uložit a přišel' : 'uložit')),
-        );
-        // No need to call _refreshPage() - controller automatically resets state
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('něco nedopadlo')),
-        );
-      }
+    if (!mounted) return;
+    
+    if (success) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(markAsArrived ? 'uložit a přišel' : 'uložit')),
+      );
+      // No need to call _refreshPage() - controller automatically resets state
+    } else {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('něco nedopadlo')),
+      );
     }
   }
 
@@ -147,6 +150,7 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
                 onFileUploaded: _onFileUploaded,
                 handleSave: _handleSave,
                 participantRegistrationForm: _participantRegistrationForm!,
+                onCancel: _refreshPage,
               ),
             ],
           ),

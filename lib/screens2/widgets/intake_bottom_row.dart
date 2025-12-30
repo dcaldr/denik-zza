@@ -10,6 +10,7 @@ class IntakeBottomRow extends StatelessWidget {
   final FileUploadedCallback onFileUploaded;
   final SaveCallback handleSave;
   final ParticipantRegistrationForm participantRegistrationForm;
+  final VoidCallback? onCancel;
 
   const IntakeBottomRow({
     super.key,
@@ -18,7 +19,10 @@ class IntakeBottomRow extends StatelessWidget {
     required this.onFileUploaded,
     required this.handleSave,
     required this.participantRegistrationForm,
-  });  @override
+    this.onCancel,
+  });
+
+  @override
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.bottomRight,
@@ -27,14 +31,13 @@ class IntakeBottomRow extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            const Text('Second Row'),
-            const SizedBox(width: 20),
             IntakeActionButtons(
               formKey: formKey,
               selectedPerson: selectedPerson,
               onFileUploaded: onFileUploaded,
               handleSave: handleSave,
               participantRegistrationForm: participantRegistrationForm,
+              onCancel: onCancel,
             ),
           ],
         ),
@@ -42,3 +45,4 @@ class IntakeBottomRow extends StatelessWidget {
     );
   }
 }
+

@@ -294,6 +294,26 @@ class DbVerificationHelpers {
         reason: 'Expected $expectedCount arrived, got $arrivedCount');
   }
 
+  /// Verifies participant note (poznamka) field.
+  ///
+  /// Used after intake to verify note was modified correctly.
+  Future<void> verifyNote({
+    required String jmeno,
+    required String prijmeni,
+    required String expectedNote,
+  }) async {
+    final participants = await db.getParticipantsByCurrentEvent();
+    final found = participants.where(
+      (p) => p.jmeno == jmeno && p.prijmeni == prijmeni,
+    );
+    expect(found.length, equals(1),
+        reason: 'Participant $jmeno $prijmeni not found');
+
+    final p = found.first;
+    expect(p.poznamka, contains(expectedNote),
+        reason: '$jmeno $prijmeni: note should contain "$expectedNote"');
+  }
+
   /// Verifies that the database is clean (no participants).
   Future<void> verifyDatabaseEmpty() async {
     // We check current event (which might be null/empty) or just empty list returned

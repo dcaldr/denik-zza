@@ -13,6 +13,7 @@ import '../../infrastructure/robots/intake_robot.dart';
 import '../../infrastructure/robots/new_record_robot.dart';
 import '../../infrastructure/helpers/db_verification_helpers.dart';
 import '../../infrastructure/data/models/test_record.dart';
+import '../../infrastructure/data/models/test_restriction.dart';
 import '../../infrastructure/helpers/test_step_logger.dart';
 import '../../../test/setup_templates/hardcoded_setup.dart';
 
@@ -263,7 +264,7 @@ void main() {
         await logger.step('Launch App', () async {
           app.main();
           await tester.pump();
-          await tester.pump(const Duration(milliseconds: 500));
+          await tester.pumpAndSettle();
         });
 
         await logger.step('Verify Clean DB State', () async {
@@ -388,7 +389,7 @@ void main() {
         });
 
         // ============================================================
-        // PHASE 2: Intake - Process Arrivals
+        // PHASE 2: Intake - Process Arrivals (All 15 Participants)
         // ============================================================
         logger.section('PHASE 2: Intake - Process Arrivals');
 
@@ -397,18 +398,59 @@ void main() {
           await intake.waitForKey('IntakeForm_saveAndArrived_button');
         });
 
-        for (int i = 0; i < 5; i++) {
+        // Process all 15 participants with various scenarios
+        for (int i = 0; i < jurskyParkParticipants.length; i++) {
           final p = jurskyParkParticipants[i];
-          await logger.step('Process Intake ${i + 1}/5: ${p.jmeno}', () async {
-            await intake.tapSaveAndArrived();
-            await tester.pump(const Duration(milliseconds: 300));
-            await intake.waitForKey('IntakeForm_saveAndArrived_button');
-            await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: true);
+          
+          await logger.step('Intake ${i + 1}/15: ${p.jmeno} ${p.prijmeni}', () async {
+            // Always select participant first
+            await intake.selectParticipant('${p.jmeno} ${p.prijmeni}');
+            
+            // Different scenarios based on participant index
+            switch (i) {
+              case 1: // P2 Božena - Modify Note
+                await intake.modifyNote('Intake note: Arrived on time');
+                await intake.tapSaveAndArrived();
+                await intake.waitForKey('IntakeForm_saveAndArrived_button');
+                await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: true);
+                await dbHelpers.verifyNote(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedNote: 'Intake note');
+                break;
+                
+              case 2: // P3 Jan Hus - Add Restriction during intake
+                await participantEditor.addRestriction(
+                  TestRestriction.omezeni('Kontrola slunečního krému provedena'),
+                );
+                await intake.tapSaveAndArrived();
+                await intake.waitForKey('IntakeForm_saveAndArrived_button');
+                await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: true);
+                break;
+                
+              case 3: // P4 Tomáš - Save only (NOT marked arrived)
+                await intake.tapSave();
+                await intake.waitForKey('IntakeForm_saveAndArrived_button');
+                await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: false);
+                break;
+                
+              case 6: // P7 Milada - Cancel then retry
+                await intake.tapCancel();
+                await intake.waitForKey('IntakeForm_saveAndArrived_button');
+                await intake.selectParticipant('${p.jmeno} ${p.prijmeni}');
+                await intake.tapSaveAndArrived();
+                await intake.waitForKey('IntakeForm_saveAndArrived_button');
+                await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: true);
+                break;
+                
+              default: // Basic flow
+                await intake.tapSaveAndArrived();
+                await intake.waitForKey('IntakeForm_saveAndArrived_button');
+                await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: true);
+            }
           });
         }
 
         await logger.step('Verify Arrived Count', () async {
-          await dbHelpers.verifyArrivedCount(5);
+          // 14 arrived (P4 Tomáš used save-only)
+          await dbHelpers.verifyArrivedCount(14);
         });
 
         // ============================================================
@@ -427,7 +469,7 @@ void main() {
            await logger.step('Add Records for Karel Čapek', () async {
              for (final record in karel.zaznamy) {
                 await newRecord.createRecordFromTestData('${karel.jmeno} ${karel.prijmeni}', record);
-                await tester.pump(const Duration(milliseconds: 200));
+                await newRecord.waitForKey('NewRecordPage_save_button');
              }
              final karelId = await dbHelpers.getParticipantId(karel.jmeno, karel.prijmeni);
              if (karelId != null) {
@@ -438,7 +480,7 @@ void main() {
 
         await logger.step('Navigate to Print Center', () async {
           await dashboard.navigateToPrintCenter();
-          await tester.pump(const Duration(milliseconds: 500));
+          await dashboard.pumpAndSettle();
         });
 
         // ============================================================
@@ -458,7 +500,7 @@ void main() {
           );
 
           await newRecord.createRecordFromTestData('${milada.jmeno} ${milada.prijmeni}', appendRecord);
-          await tester.pump(const Duration(milliseconds: 300));
+          await newRecord.waitForKey('NewRecordPage_save_button');
 
            final miladaId = await dbHelpers.getParticipantId(milada.jmeno, milada.prijmeni);
            if (miladaId != null) {
