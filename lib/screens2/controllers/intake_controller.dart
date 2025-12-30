@@ -13,6 +13,7 @@ class IntakeController extends ChangeNotifier {
   // Business logic instances
   final MemoryOmezeniLogic _omezeniLogic = MemoryOmezeniLogic();
   final MemoryLekLogic _lekLogic = MemoryLekLogic();
+  final _logger = AppLogger.l;
   
   // Current state
   MemoryOsoba? selectedPerson;
@@ -49,7 +50,9 @@ class IntakeController extends ChangeNotifier {
   Future<void> _fetchAvailablePersons() async {
     try {
       _availablePersons = await DatabaseWrapper.getDatabase().getParticipantsByCurrentEvent();
+      _logger.i('_fetchAvailablePersons: Loaded ${_availablePersons.length} persons');
     } catch (e) {
+      _logger.e('_fetchAvailablePersons failed: $e');
       _availablePersons = [];
     }
   }

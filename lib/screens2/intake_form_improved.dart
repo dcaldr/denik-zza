@@ -28,6 +28,9 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
   // Key for PersonAutocomplete to force rebuild
   Key _personAutocompleteKey = UniqueKey();
 
+  // Loading state - prevents interaction before data is ready
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
@@ -63,6 +66,10 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
 
   Future<void> _initializeController() async {
     await _controller.initialize();
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   void _initializeWidgets() {
@@ -122,7 +129,12 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
         title: const Text('Intake Form (Improved)'),
       ),
       drawer: const AppDrawer(),
-      body: Center(
+      body: _isLoading
+          ? const Center(
+              key: Key('IntakeForm_loading'),
+              child: CircularProgressIndicator(),
+            )
+          : Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1600),
           child: Column(

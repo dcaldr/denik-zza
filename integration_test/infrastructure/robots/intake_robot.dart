@@ -53,7 +53,13 @@ class IntakeRobot extends BaseRobot {
   /// then taps the full name suggestion.
   /// [fullName] should be in format "Jméno Příjmení" (e.g., "Karel Čapek")
   Future<void> selectParticipant(String fullName) async {
-    // Wait for controller to load data
+    // Wait for loading to complete (spinner disappears)
+    // Use pump() not pumpAndSettle() because CircularProgressIndicator is infinite animation
+    final loadingKey = findKey('IntakeForm_loading');
+    for (int i = 0; i < 50; i++) {
+      await pump(const Duration(milliseconds: 100));
+      if (loadingKey.evaluate().isEmpty) break;
+    }
     await pumpAndSettle();
 
     // Extract first name + first char of surname for unique matching
