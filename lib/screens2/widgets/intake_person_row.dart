@@ -18,6 +18,7 @@ class IntakePersonRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('🔍 IntakePersonRow: availablePersons.length = ${availablePersons.length}');
     return Padding(
       padding: AppSpacing.containerPadding,
       child: Row(

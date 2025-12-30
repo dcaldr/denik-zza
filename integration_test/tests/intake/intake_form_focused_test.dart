@@ -86,14 +86,14 @@ void main() {
         ),
       );
 
-      // 3. Wait and debug
+      // 3. Wait longer for controller to initialize
       for (int i = 0; i < 100; i++) {
         await tester.pump(const Duration(milliseconds: 50));
         
         final loading = find.byKey(const Key('IntakeForm_loading'));
         final autocomplete = find.widgetWithText(TextField, 'Vyhledat osobu');
         
-        if (i % 10 == 0) {
+        if (i % 20 == 0) {
           debugPrint('[${i * 50}ms] loading: ${loading.evaluate().isNotEmpty}, autocomplete: ${autocomplete.evaluate().isNotEmpty}');
         }
         
@@ -103,7 +103,10 @@ void main() {
         }
       }
 
-      // 4. Try typing in autocomplete
+      // 4. Wait a bit more for controller to fully initialize
+      await tester.pumpAndSettle();
+      
+      // 5. Try typing in autocomplete
       final autocomplete = find.widgetWithText(TextField, 'Vyhledat osobu');
       expect(autocomplete, findsOneWidget, reason: 'Autocomplete should be visible');
       
@@ -111,16 +114,26 @@ void main() {
       await tester.pump();
       
       await tester.enterText(autocomplete, 'Jan');
-      await tester.pump(const Duration(milliseconds: 200));
       
-      // Debug: Check if dropdown appeared
-      final dropdown = find.text('Jan Novák');
-      debugPrint('Dropdown "Jan Novák" found: ${dropdown.evaluate().length} widgets');
-      
-      // More pumps to trigger autocomplete
-      for (int i = 0; i < 5; i++) {
+      // Pump several times to allow dropdown to appear
+      for (int i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 100));
-        debugPrint('After pump ${i + 1}: "Jan Novák" = ${find.text('Jan Novák').evaluate().length}');
+        final dropdown = find.text('Jan Novák');
+        if (dropdown.evaluate().isNotEmpty) {
+          debugPrint('✅ Dropdown appeared after ${(i + 1) * 100}ms');
+          break;
+        }
+        if (i == 19) {
+          debugPrint('❌ Dropdown still not visible after 2000ms');
+        }
+      }
+      
+      // Debug: Check what widgets are visible
+      debugPrint('=== All Text widgets containing "Jan" ===');
+      final allJanTexts = find.textContaining('Jan');
+      for (var element in allJanTexts.evaluate()) {
+        final widget = element.widget as Text;
+        debugPrint('  Found: "${widget.data}"');
       }
     });
   });

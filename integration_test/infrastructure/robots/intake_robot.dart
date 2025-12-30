@@ -53,14 +53,31 @@ class IntakeRobot extends BaseRobot {
   /// then taps the full name suggestion.
   /// [fullName] should be in format "Jméno Příjmení" (e.g., "Karel Čapek")
   Future<void> selectParticipant(String fullName) async {
+    // CRITICAL: First allow async controller.initialize() to START
+    // The loading spinner won't appear until the first setState runs after async work begins
+    await pump(const Duration(milliseconds: 100));  // Allow initState async to start
+    
     // Wait for loading to complete (spinner disappears)
     // Use pump() not pumpAndSettle() because CircularProgressIndicator is infinite animation
     final loadingKey = findKey('IntakeForm_loading');
+    bool spinnerWasShown = false;
     for (int i = 0; i < 50; i++) {
       await pump(const Duration(milliseconds: 100));
-      if (loadingKey.evaluate().isEmpty) break;
+      final hasSpinner = loadingKey.evaluate().isNotEmpty;
+      if (hasSpinner) {
+        spinnerWasShown = true;
+      }
+      if (spinnerWasShown && !hasSpinner) {
+        print('🔍 IntakeRobot: Loading complete after ${(i + 1) * 100}ms (spinner shown)');
+        break;
+      }
+      // If spinner never appeared after reasonable time, assume data is ready
+      if (i > 30 && !spinnerWasShown) {
+        print('🔍 IntakeRobot: Spinner never appeared after ${(i + 1) * 100}ms - assuming ready');
+        break;
+      }
     }
-    await pumpAndSettle();
+    await pumpAndSettle();;
 
     // Extract first name + first char of surname for unique matching
     // (avoids collision when multiple people share first name, e.g., "Jan Hus" vs "Jan Neruda")
@@ -70,22 +87,46 @@ class IntakeRobot extends BaseRobot {
         ? '$firstName ${parts[1][0]}'  // e.g., "Jan H" 
         : firstName;
     
+    print('🔍 IntakeRobot: Searching for "$searchQuery" (full: "$fullName")');
+    
     // Find and tap the search field (by hint text)
-    await tap(personSearchInput);
+    final searchField = personSearchInput;
+    final searchFieldCount = searchField.evaluate().length;
+    print('🔍 IntakeRobot: Search field found: $searchFieldCount');
+    
+    if (searchFieldCount == 0) {
+      throw StateError('IntakeRobot: Search field not found');
+    }
+    
+    await tap(searchField);
+    await pump();
     
     // Type search query to trigger suggestions (more unique than just first name)
-    await tester.enterText(personSearchInput, searchQuery);
+    await tester.enterText(searchField, searchQuery);
+    print('🔍 IntakeRobot: Entered text "$searchQuery"');
     
     // Wait for dropdown to appear with retries (increased for slow machines)
     Finder suggestion = find.text(fullName);
-    for (int attempt = 0; attempt < 20; attempt++) {
-      await pumpAndSettle();
-      if (suggestion.evaluate().length > 1) {
+    int foundCount = 0;
+    for (int attempt = 0; attempt < 30; attempt++) {
+      await pump(const Duration(milliseconds: 100));
+      foundCount = suggestion.evaluate().length;
+      if (foundCount > 1) {
         // Found at least 2 (input + dropdown), break
+        print('🔍 IntakeRobot: Dropdown appeared at attempt $attempt (found $foundCount)');
         break;
       }
-      // Pump more frames to allow async to complete
-      await pump();
+      if (attempt % 10 == 9) {
+        print('🔍 IntakeRobot: Attempt $attempt, found $foundCount texts');
+      }
+    }
+    
+    if (foundCount < 1) {
+      // Debug: check what text widgets ARE visible
+      print('🔍 IntakeRobot: No "$fullName" found. Checking visible text widgets...');
+      final allTexts = find.byType(Text);
+      print('🔍 IntakeRobot: Total Text widgets: ${allTexts.evaluate().length}');
+      throw StateError('IntakeRobot: No dropdown suggestion found for "$fullName"');
     }
     
     // Tap the suggestion (use .last to get dropdown, not input)

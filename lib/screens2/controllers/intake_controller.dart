@@ -50,9 +50,12 @@ class IntakeController extends ChangeNotifier {
   Future<void> _fetchAvailablePersons() async {
     try {
       _availablePersons = await DatabaseWrapper.getDatabase().getParticipantsByCurrentEvent();
-      _logger.i('_fetchAvailablePersons: Loaded ${_availablePersons.length} persons');
+      print('🔍 IntakeController: Loaded ${_availablePersons.length} persons');
+      if (_availablePersons.isNotEmpty) {
+        print('🔍 IntakeController: First person: ${_availablePersons.first.jmeno} ${_availablePersons.first.prijmeni}');
+      }
     } catch (e) {
-      _logger.e('_fetchAvailablePersons failed: $e');
+      print('🔍 IntakeController: _fetchAvailablePersons failed: $e');
       _availablePersons = [];
     }
   }

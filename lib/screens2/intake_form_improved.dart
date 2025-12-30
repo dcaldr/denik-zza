@@ -139,11 +139,16 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
           constraints: const BoxConstraints(maxWidth: 1600),
           child: Column(
             children: [
-              IntakePersonRow(
-                key: _personAutocompleteKey,
-                onPersonSelected: _onPersonSelected,
-                onRefresh: _refreshPage,
-                availablePersons: _controller.availablePersons,
+              ListenableBuilder(
+                listenable: _controller,
+                builder: (context, child) {
+                  return IntakePersonRow(
+                    key: _personAutocompleteKey,
+                    onPersonSelected: _onPersonSelected,
+                    onRefresh: _refreshPage,
+                    availablePersons: _controller.availablePersons,
+                  );
+                },
               ),
               // Always show the form since we always have a person (even if new)
               // Always show the form since we always have a person (even if new)
