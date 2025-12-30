@@ -149,8 +149,8 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
     // which fall outside the global 'compact' (600px) definition but still need space optimization.
     final isBrief = screenHeight < 800;
 
-    // 2.1 items for compact (ensure peek + fit 720p), 3.2 for tall
-    final targetItems = isBrief ? 2.1 : 3.2;
+    // 2.3 items for compact (ensure peek + fit 720p), 3.3 for tall
+    final targetItems = isBrief ? 2.3 : 3.3;
 
     final listHeight =
         AppBreakpoints.getListHeight(context, itemCount: 1) * targetItems;
