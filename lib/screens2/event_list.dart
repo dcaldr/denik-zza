@@ -80,19 +80,18 @@ class _EventListState extends State<EventList> {
     );
   }
 
-  void _handlePinnedChanged(MemoryAction event) {
-    setState(() {
-      if (event.idAkce == _currentEventID) {
-        database.updateCurrentEvent(null);
-      } else {
-        database.updateCurrentEvent(event.idAkce);
-      }
+  Future<void> _handlePinnedChanged(MemoryAction event) async {
+    if (event.idAkce == _currentEventID) {
+      await database.updateCurrentEvent(null);
+    } else {
+      await database.updateCurrentEvent(event.idAkce);
+    }
 
-      _fetchCurrentEventID();
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text(EventListConstants.pinChangedMessage),
-      ));
-    });
+    _fetchCurrentEventID();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text(EventListConstants.pinChangedMessage),
+    ));
   }
 
   Widget _buildActionItem(BuildContext context, MemoryAction action) {

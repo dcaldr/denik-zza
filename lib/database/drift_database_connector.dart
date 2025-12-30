@@ -236,10 +236,12 @@ class DriftDatabaseConnector implements DatabaseInterface {
   }
 
   @override
-  void updateCurrentEvent(int? currentEventID) async {
-    FileManager().changeEvent();
-    _driftDatabase.updateCache(CacheCompanion(
+  Future<void> updateCurrentEvent(int? currentEventID) async {
+    // FIRST: Update cache so getCurrentActionID() returns correct value
+    await _driftDatabase.updateCache(CacheCompanion(
         id: const Value(1), currentActionID: Value(currentEventID)));
+    // THEN: Sync FileManager.eventDir from the updated cache
+    await FileManager().changeEvent();
   }
 
   @override

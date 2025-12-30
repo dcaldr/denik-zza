@@ -79,11 +79,12 @@ abstract class DatabaseInterface {
   @Deprecated("Remove when possible")
   void updatePinnedEvent(int? pinnedEventID);
 
-  /// Updates the "settings" cache with a new [currentEventID].
+  /// Updates the "settings" cache with a new [currentEventID] and syncs FileManager.
   ///
   /// This method takes an [currentEventID] as a parameter, which represents the ID of an action that is to be pinned.
-  /// It updates the cache with this new [currentEventID].
-  void updateCurrentEvent(int? currentEventID);
+  /// It updates the cache with this new [currentEventID] and then syncs FileManager.eventDir.
+  /// Returns a Future that completes when both operations are done.
+  Future<void> updateCurrentEvent(int? currentEventID);
 
   /// This method gets the pinned event ID
   ///

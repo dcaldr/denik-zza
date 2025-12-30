@@ -85,12 +85,13 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
                   _controllers['odkdy']!.text &&
               DateFormat('dd.MM.yyyy').format(lastAction.dokdy) ==
                   _controllers['dokdy']!.text) {
-            DatabaseWrapper.getDatabase()
+            await DatabaseWrapper.getDatabase()
                 .updateCurrentEvent(lastAction.idAkce!);
           } else {
             _logger.e(
                 'Sanity check failed: Last action details do not match the form input.');
           }
+          if (!mounted) return;
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (context) => EventList()));
         }
