@@ -36,10 +36,12 @@ class ParticipantRegistrationForm extends StatefulWidget {
 
   @override
   State<ParticipantRegistrationForm> createState() =>
-      _ParticipantRegistrationFormState();
+      ParticipantRegistrationFormState();
 }
 
-class _ParticipantRegistrationFormState
+/// State class made public to allow GlobalKey access from parent widgets.
+/// This enables syncing form data before external save operations.
+class ParticipantRegistrationFormState
     extends State<ParticipantRegistrationForm> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _controllers = {
@@ -632,8 +634,8 @@ class ParticipantRegistrationPage extends StatefulWidget {
 
 class _ParticipantRegistrationPageState
     extends State<ParticipantRegistrationPage> {
-  final GlobalKey<_ParticipantRegistrationFormState> _formKey =
-      GlobalKey<_ParticipantRegistrationFormState>();
+  final GlobalKey<ParticipantRegistrationFormState> _formKey =
+      GlobalKey<ParticipantRegistrationFormState>();
   final ScrollController _scrollController =
       ScrollController(); // Added for ZzaScrollable
 

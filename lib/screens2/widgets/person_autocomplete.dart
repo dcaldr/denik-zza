@@ -71,13 +71,25 @@ class _PersonAutocompleteState extends State<PersonAutocomplete> {
               return const Iterable<MemoryOsoba>.empty();
             }
 
-            return widget.availablePersons.where((MemoryOsoba person) {
-              final lowerQuery = textEditingValue.text.toLowerCase();
-              return person.jmeno.toLowerCase().contains(lowerQuery) ||
-                  person.prijmeni.toLowerCase().contains(lowerQuery) ||
-                  (person.cisloPojisteni?.toLowerCase().contains(lowerQuery) ??
-                      false);
-            });
+            // Order-independent matching: split query into parts, 
+            // each part must match either firstName or lastName
+            // "Jan K" matches "Jan Komenský", "Ámos Jan" matches "Jan Ámos"
+            final queryParts = textEditingValue.text.toLowerCase().split(' ')
+                .where((p) => p.isNotEmpty).toList();
+            
+            final results = widget.availablePersons.where((MemoryOsoba person) {
+              final lowerFirstName = person.jmeno.toLowerCase();
+              final lowerLastName = person.prijmeni.toLowerCase();
+              final lowerInsurance = person.cisloPojisteni?.toLowerCase() ?? '';
+              
+              // Each query part must match somewhere
+              return queryParts.every((queryPart) =>
+                  lowerFirstName.contains(queryPart) ||
+                  lowerLastName.contains(queryPart) ||
+                  lowerInsurance.contains(queryPart));
+            }).toList();
+            
+            return results;
           },
           onSelected: (MemoryOsoba person) {
             widget.onPersonSelected(person);

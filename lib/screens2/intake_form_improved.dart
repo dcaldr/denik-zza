@@ -22,6 +22,10 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
   // Controller for business logic
   late final IntakeController _controller;
 
+  // Key for accessing form state to sync data before save
+  final GlobalKey<ParticipantRegistrationFormState> _participantFormKey =
+      GlobalKey<ParticipantRegistrationFormState>();
+
   // Widget instances
   ParticipantRegistrationForm? _participantRegistrationForm;
 
@@ -78,6 +82,7 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
 
   ParticipantRegistrationForm _createParticipantForm() {
     return ParticipantRegistrationForm(
+      key: _participantFormKey,
       osoba: _controller.selectedPerson,
       onValidate: (validate) => _controller.setValidationFunction(validate),
       onOsobaEdited: (osoba) => _controller.updatePersonData(osoba),
@@ -105,6 +110,13 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
   Future<void> _handleSave(BuildContext context, bool markAsArrived) async {
     // Capture messenger before async gap to satisfy use_build_context_synchronously
     final messenger = ScaffoldMessenger.of(context);
+    
+    // CRITICAL: Sync form data to controller before save
+    // Form edits are stored in form's controllers, not in selectedPerson
+    final formData = _participantFormKey.currentState?.createMemoryOsoba();
+    if (formData != null) {
+      _controller.updatePersonData(formData);
+    }
     
     final success = await _controller.saveData(markAsArrived);
 
