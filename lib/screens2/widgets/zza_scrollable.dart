@@ -111,9 +111,20 @@ class _ZzaScrollableState extends State<ZzaScrollable> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      fadeColor.withValues(alpha: 0.9),
+                      fadeColor.withValues(alpha: 0.8), // Reduced opacity
                       fadeColor.withValues(alpha: 0.0),
                     ],
+                  ),
+                ),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 2.0),
+                    child: Icon(
+                      Icons.keyboard_arrow_up,
+                      size: 16,
+                      color: AppColors.greyText.withValues(alpha: 0.5),
+                    ),
                   ),
                 ),
               ),
@@ -135,13 +146,11 @@ class _ZzaScrollableState extends State<ZzaScrollable> {
                     end: Alignment.topCenter,
                     colors: [
                       fadeColor.withValues(
-                          alpha: 0.95), // Stronger fade at bottom
+                          alpha: 0.8), // Reduced opacity from 0.95 to 0.8
                       fadeColor.withValues(alpha: 0.0),
                     ],
                   ),
                 ),
-                // Optional: visual "more" hint (chevron) could be added here
-                // but a strong gradient is often enough and cleaner.
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(

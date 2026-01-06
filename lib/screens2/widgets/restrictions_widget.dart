@@ -149,8 +149,9 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
     // which fall outside the global 'compact' (600px) definition but still need space optimization.
     final isBrief = screenHeight < 800;
 
-    // 2.3 items for compact (ensure peek + fit 720p), 3.3 for tall
-    final targetItems = isBrief ? 2.3 : 3.3;
+    // 2.7 items for compact (ensure peek + fit 720p), 3.7 for tall
+    // Increased from 2.3/3.3 to guarantee "next item" peek is visible behind the 32px gradient
+    final targetItems = isBrief ? 2.7 : 3.7;
 
     final listHeight =
         AppBreakpoints.getListHeight(context, itemCount: 1) * targetItems;
@@ -163,24 +164,31 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
 
   /// Builds the actual list content with standard scroll signaling
   Widget _buildListContent() {
-    return ZzaScrollable(
+    // Wrap ZzaScrollable with Scrollbar so the thumb renders ON TOP of the gradients
+    // This requires ZzaScrollable to bubble scroll events or share controller.
+    // ZzaScrollable uses the SAME controller, so Scrollbar here works perfectly.
+    return Scrollbar(
       controller: _scrollController,
-      child: ListView.builder(
+      thumbVisibility: true, // Always visible hint
+      child: ZzaScrollable(
         controller: _scrollController,
-        shrinkWrap: false, // Let it fill available space
-        physics: const ClampingScrollPhysics(),
-        itemCount: _logic.items.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.check_circle_outline, size: 16),
-            title: Text(
-              _logic.items[index],
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          );
-        },
+        child: ListView.builder(
+          controller: _scrollController,
+          shrinkWrap: false, // Let it fill available space
+          physics: const ClampingScrollPhysics(),
+          itemCount: _logic.items.length,
+          itemBuilder: (context, index) {
+            return ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.check_circle_outline, size: 16),
+              title: Text(
+                _logic.items[index],
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            );
+          },
+        ),
       ),
     );
   }
