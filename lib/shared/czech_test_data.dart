@@ -199,7 +199,7 @@ class CzechTestData {
       final companion = RecordsCompanion(
         title: Value(record['title'] as String),
         description: Value(record['description'] as String),
-        note: const Value('Záznam s českým kulturním odkazem'),
+        note: const Value('Poznámka: použita nadsázka '),
         participantFK: Value(participantIds[record['participantIndex'] as int]),
         paramedicFK: Value(paramedicId),
         dateAndTime: Value(DateTime.now().subtract(Duration(hours: i * 2))),
