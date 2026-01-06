@@ -1,8 +1,8 @@
 # Responsive Intake Form Refactor - Master Planning Document
 
 > **Created:** 2026-01-06  
-> **Last Updated:** 2026-01-06 v3  
-> **Status:** 🔄 Active Planning  
+> **Last Updated:** 2026-01-06 v4  
+> **Status:** 🔄 Active Planning - Gap Analysis Complete  
 > **Priority:** High - Core workflow screen
 
 ---
@@ -22,7 +22,7 @@ This document tracks our efforts to properly implement responsive/adaptive desig
 
 | Situation | Action |
 |-----------|--------|
-| **Starting work on intake form layout** | Read Sections 2, 5, & 8 to avoid repeating past mistakes |
+| **Starting work on intake form layout** | Read Sections 2, 5, & 11 to avoid repeating past mistakes |
 | **Hit a constraint error** | Check Section 2 for similar patterns |
 | **Planning a new approach** | Add to Section 4 (Thinking Process) |
 | **Making implementation decisions** | Document in Section 3 |
@@ -94,27 +94,27 @@ This document tracks our efforts to properly implement responsive/adaptive desig
 ### Decision: Keep 1600px and add to Design System
 **Date:** 2026-01-06 v3  
 **Context:** `ConstrainedBox(maxWidth: 1600)` is used in intake form but isn't in design system  
-**Options Considered:**
-1. Replace with `contentMaxWidth` (1200px) - narrower, more consistent
-2. Add `wideContentMaxWidth: 1600.0` to design system - explicit, documented
-3. Remove constraint entirely - might look bad on ultra-wide monitors  
-**Chosen:** Option 2 - Add to design system  
-**Rationale:** User confirmed 1600px should be kept and made part of design system  
-**Dependencies:** Requires update to `app_breakpoints.dart`
+**Chosen:** Add `wideContentMaxWidth: 1600.0` to design system  
+**Status:** ✅ Approved
 
 ### Decision: Defer micro-spacing tokenization
 **Date:** 2026-01-06 v3  
 **Context:** Scattered 2px, 4px spacing values in forms  
 **Chosen:** Defer until solution is implemented  
-**Rationale:** Decide what's "right" based on final implementation needs  
-**Dependencies:** None
+**Status:** ✅ Approved
 
 ### Decision: Large screens - prefer scaling, but not mandatory
 **Date:** 2026-01-06 v3  
 **Context:** How should content behave on >1920px screens?  
-**Chosen:** Prefer scaling content up, but acceptable if solution caps and centers  
-**Rationale:** Nice-to-have, not a hard requirement  
-**Dependencies:** Will influence approach selection
+**Chosen:** Prefer scaling content up, acceptable if solution caps and centers  
+**Status:** ✅ Approved
+
+### Decision: Use adaptive input density
+**Date:** 2026-01-06 v4  
+**Context:** Form inputs look too large/spacious for PC mouse+keyboard use  
+**Chosen:** Implement smart density system - compact on PC, standard on touch devices  
+**Constraints:** Must prevent extremes (e.g., font size 5px)  
+**Status:** 🔶 Needs deeper analysis during implementation
 
 ---
 
@@ -122,9 +122,7 @@ This document tracks our efforts to properly implement responsive/adaptive desig
 
 > Use this section to document reasoning and prevent circular logic.
 
-### Current Understanding of the Problem Space
-
-#### Target Screen Sizes (Finalized 2026-01-06 v3)
+### Target Screen Sizes (Finalized)
 
 | Size | Dimensions | Notes | Priority |
 |------|------------|-------|----------|
@@ -133,254 +131,249 @@ This document tracks our efforts to properly implement responsive/adaptive desig
 | **Full HD** | 1920 x 1080 | Should look optimal | Primary |
 | **QHD+** | 2560 x 1440+ | Should scale up (preferred) or center | Nice-to-have |
 
-#### Column Strategy (Finalized 2026-01-06 v3)
+### Column Strategy (Finalized)
 
-Within the **ParticipantRegistrationForm** (the left portion of IntakeMainContent):
-- **Desktop (≥900px):** 3 columns of form fields per row
-- **Tablet (600-899px):** 2 columns
-- **Mobile (<600px):** 1 column
+**IntakeMainContent Structure:**
+- Left column: **ParticipantRegistrationForm** (all form fields)
+- Right column: **FileViewer** ("Second Column" area)
 
-**Current implementation is CORRECT** - `_buildFormRow()` already adapts. The problem is constraint propagation.
-
-### Key Components We Must Understand
-
-#### 1. IntakeMainContent Structure
-```
-IntakeMainContent
-└── LayoutBuilder
-    ├── if (isNarrow): CustomScrollView [Right, Left] (stacked)  
-    └── else: Row [Left(flex:4), Gap(24), Right(flex:3)]
-                ├── Left: ParticipantRegistrationForm (in CustomScrollView)
-                └── Right: FileViewer/Camera
-```
-
-**Current Issue:** The Row layout gives 4+3 = 7 flex units. Left gets 4/7 (~57%), Right gets 3/7 (~43%).  
-On very wide screens, the file viewer grows too large while form might not need that much space.
-
-#### 2. RestrictionsWidget Sizing Behavior (Analyzed 2026-01-06 v3)
-
-**Key insight: RestrictionsWidget has TWO modes:**
-
-| Mode | Trigger | Behavior |
-|------|---------|----------|
-| **Bounded** | `isBounded: true` | `Column(MainAxisSize.max)` with `Expanded(child: list)` - fills available space |
-| **Unbounded** | `isBounded: false` (default) | `Column(MainAxisSize.min)` with `SizedBox(height: listHeight)` - fixed height based on screen |
-
-**The widget already adapts!** It just needs the correct `isBounded` flag from its parent.
-
-**In unbounded mode (lines 143-163):**
-```dart
-final screenHeight = MediaQuery.sizeOf(context).height;
-final isBrief = screenHeight < 800;  // ⚠️ Another magic number!
-final targetItems = isBrief ? 2.7 : 3.7;
-final listHeight = AppBreakpoints.getListHeight(context, itemCount: 1) * targetItems;
-```
-
-This uses a **local threshold of 800px** (not the global 600px compactHeight). This is intentional for 720p optimization.
-
-#### 3. ParticipantRegistrationForm Constraint Handling
-
-**Already implemented correctly (lines 318-352):**
-```dart
-mainAxisSize: constraints.hasBoundedHeight ? MainAxisSize.max : MainAxisSize.min,
-// ...
-if (constraints.hasBoundedHeight)
-  Expanded(child: _buildRestrictionsSection(isBounded: true))
-else
-  _buildRestrictionsSection(isBounded: false)
-```
-
-**The form passes `isBounded` to RestrictionsWidget based on whether IT received bounded constraints.**
-
-### Constraint Flow Analysis
-
-```
-Scaffold (full screen height: bounded)
-└── Column
-    ├── IntakePersonRow (intrinsic height)
-    ├── Expanded ← BOUNDED constraint to IntakeMainContent
-    │   └── IntakeMainContent
-    │       └── LayoutBuilder (receives bounded constraints)
-    │           └── Row [Left, Right]
-    │               └── Left: CustomScrollView
-    │                   └── SliverFillRemaining(hasScrollBody: false)
-    │                       └── ParticipantRegistrationForm
-    │                           └── (receives bounded? DEPENDS on Sliver)
-    └── IntakeBottomRow (intrinsic height)
-```
-
-**KEY QUESTION:** Does `SliverFillRemaining(hasScrollBody: false)` pass bounded constraints to its child?
-
-According to Flutter docs: `SliverFillRemaining` with `hasScrollBody: false` will:
-- Give child a **bounded** height = remaining viewport space
-- Child can be smaller than viewport (will bottom-align)
-
-So yes, `ParticipantRegistrationForm` SHOULD receive bounded constraints. But we need to verify this is working correctly.
+**Within ParticipantRegistrationForm:**
+- Desktop (≥900px): 3 fields per row
+- Tablet (600-899px): 2 fields per row
+- Mobile (<600px): 1 field per row
 
 ---
 
-## 5. Anti-Patterns & Bad Practices Analysis
+## 5. Visual Problem Analysis (2026-01-06 v4)
 
-> **Purpose:** Identify problematic patterns in current code that need fixing.  
-> **Rule:** Changes to design system values require explicit approval.
+> **CRITICAL: Screenshots provided by user showing actual bugs**
 
-### ⚠️ `ConstrainedBox(maxWidth: 1600)` in `intake_form_improved.dart`
+### Screenshot 1: Fullscreen - FORM COMPLETELY DISAPPEARS
 
-**Location:** Line 153 `intake_form_improved.dart`  
-**Status:** ✅ APPROVED - Add to design system as `wideContentMaxWidth: 1600.0`
+![Fullscreen bug - form disappears](uploaded_image_0_1767724052494.png)
 
----
+**Observations:**
+- ❌ **LEFT COLUMN (form) is completely invisible** - only "Second Column" header and file upload button remain
+- The entire ParticipantRegistrationForm content vanishes on fullscreen
+- This is a **CRITICAL BUG** - the primary content is not rendering
 
-### ⚠️ Hardcoded `SizedBox(width: 24)` in `intake_main_content.dart`
-
-**Location:** Line 65 `intake_main_content.dart`  
-**Status:** 🔶 Easy Fix - use `AppSpacing.xxl` (when implementing)
-
----
-
-### ⚠️ Hardcoded `BoxConstraints(maxHeight: 400)` in `intake_main_content.dart`
-
-**Location:** Lines 122-123 `intake_main_content.dart`  
-**Analysis:** This constrains the file viewer to 400px max on mobile. On larger screens it uses Expanded.  
-**Question:** Is 400px appropriate? Should this be responsive?  
-**Status:** 🔶 Needs Discussion
+**Root Cause Hypothesis:**
+- Constraint propagation failure at fullscreen widths
+- Possibly related to flex values (4+3) causing the left column to get 0 width?
+- Or the form's internal sizing is collapsing
 
 ---
 
-### ⚠️ Hardcoded `screenHeight < 800` in `restrictions_widget.dart`
+### Screenshot 2: Default Window Size - Form Visible
 
-**Location:** Line 150 `restrictions_widget.dart`  
-**Current Code:**
-```dart
-final isBrief = screenHeight < 800;
-```
-**Analysis:** This is DIFFERENT from `AppBreakpoints.compactHeight` (600px). Used specifically for 720p laptop optimization.  
-**Question:** Should this be a design system constant? Or is local override acceptable?  
-**Status:** 🔶 Tolerable - local optimization for specific use case
+![Default size - form visible](uploaded_image_1_1767724052494.png)
 
----
+**Observations:**
+- ✅ Form IS visible with form fields showing
+- ⚠️ Only **2 columns** of fields visible (Jméno | Příjmení, not 3)
+- ⚠️ Window appears wide enough for 3 columns, but getting 2
+- The form fills left side, "Second Column" fills right
 
-### ⚠️ Mixed micro-spacing in `participant_registration_form.dart`
-
-**Locations:** Lines 428, 449, 468, 484, 491, 531  
-**Examples:** `SizedBox(height: 4)`, `EdgeInsets.symmetric(vertical: 4)`  
-**Status:** 🔶 Deferred - decide based on implementation needs
+**Spacing Issues Noted:**
+- Large vertical gap between search widget and first form row
+- Input fields appear tall/spacious (touch-optimized, not PC-optimized)
 
 ---
 
-## 6. Questions Requiring Answers
+### Screenshot 3: Scrolled View - Bottom of Form
 
-### Answered ✅
+![Scrolled view - bottom of form](uploaded_image_2_1767724052494.png)
+
+**Observations:**
+- ⚠️ "Potvrzení" section visible, but cramped at bottom
+- ⚠️ "Omezení a alergie" and "Léky" labels visible but input area cut off
+- Still only 2 columns (Jméno rodiče | Email rodiče)
+- Excessive space between search bar and form content visible
+
+---
+
+### Summary of Visual Issues
+
+| Issue | Severity | Location |
+|-------|----------|----------|
+| Form disappears on fullscreen | 🔴 Critical | IntakeMainContent |
+| Only 2 columns instead of 3 on desktop | 🟠 Medium | ParticipantRegistrationForm |
+| Excessive vertical spacing below search | 🟡 Low | IntakePersonRow / gap |
+| Input fields too tall for PC | 🟡 Low | Form field styling |
+| Restrictions section cramped | 🟠 Medium | _buildRestrictionsSection |
+
+---
+
+## 6. Anti-Patterns & Bad Practices Analysis
+
+### ✅ Approved Changes
+
+| Item | Location | Change | Status |
+|------|----------|--------|--------|
+| `ConstrainedBox(maxWidth: 1600)` | intake_form_improved.dart:153 | Add to design system | ✅ Approved |
+| `SizedBox(width: 24)` | intake_main_content.dart:65 | Use `AppSpacing.xxl` | ✅ Approved |
+
+### 🔶 Pending Discussion
+
+| Item | Location | Issue | Status |
+|------|----------|-------|--------|
+| `BoxConstraints(maxHeight: 400)` | intake_main_content.dart:122 | Magic number for mobile file viewer | 🔶 Discuss |
+| `screenHeight < 800` | restrictions_widget.dart:150 | Local threshold vs design system | 🔶 Tolerable |
+| Micro-spacing (4px, 2px) | Various | Not tokenized | 🔶 Deferred |
+
+---
+
+## 7. Questions - All Answered ✅
 
 | # | Question | Answer | Date |
 |---|----------|--------|------|
-| 1 | Target screen sizes? | 800x600 (min/test), 1920x1080 (primary), scale up for larger | 2026-01-06 v3 |
-| 2 | Column strategy? | 3 form fields per row on desktop, 2 tablet, 1 mobile | 2026-01-06 v3 |
-| 3 | 1600px constraint? | Keep and add to design system | 2026-01-06 v3 |
-| 4 | Micro-spacing? | Defer until implementation | 2026-01-06 v3 |
-| 5 | Large screens? | Prefer scale, acceptable to cap | 2026-01-06 v3 |
-
-### Remaining Gaps 🔶
-
-| # | Question | Why It Matters |
-|---|----------|----------------|
-| 6 | **What exactly is "disappearing column" problem?** | User mentioned rightmost column disappears on fullscreen - need to reproduce |
-| 7 | **Are form fields too large on PC?** | User says inputs are too large for mouse/keyboard - is this sizing or density? |
-| 8 | **What is the desired 3-column layout for intake page specifically?** | Is it Form \| Restrictions \| FileViewer? Or all form content in 2 columns + FileViewer? |
-| 9 | **Should input density change based on screen size?** | PC could use `VisualDensity.compact` vs tablet `VisualDensity.standard` |
-| 10 | **What is "vertical space around search widget"?** | User mentioned inefficient space - need specific example |
-
----
-
-## 7. Implementation Phases (To Be Planned)
-
-> This section will be populated after all questions are answered
-
-### Phase 0: Deep Analysis (Current)
-- [x] Document minimum viable screen size (800x600)
-- [x] Clarify column strategy (form fields, not screen sections)
-- [x] Get approval on 1600px design system addition
-- [x] Analyze RestrictionsWidget sizing behavior
-- [x] Analyze ParticipantRegistrationForm constraint handling
-- [ ] **Clarify remaining gaps (questions 6-10)**
-- [ ] Create visual mockup of desired layout at different breakpoints
-
-### Phase 1: Foundation
-- [ ] Add `wideContentMaxWidth: 1600.0` to `app_breakpoints.dart`
-- [ ] (More steps TBD after Phase 0 complete)
-
-### Phase 2: Form Layout
-- [ ] (TBD)
-
-### Phase 3: Responsive Adaptation
-- [ ] (TBD)
-
-### Phase 4: Polish
-- [ ] (TBD)
+| 1 | Target screen sizes? | 800x600 (test), 1920x1080 (primary), scale for larger | v3 |
+| 2 | Column strategy? | 3 form fields per row on desktop | v3 |
+| 3 | 1600px constraint? | Keep, add to design system | v3 |
+| 4 | Micro-spacing? | Defer until implementation | v3 |
+| 5 | Large screens? | Prefer scale, acceptable to cap | v3 |
+| 6 | Disappearing column? | **Form content completely vanishes on fullscreen** (see screenshot) | v4 |
+| 7 | Form fields too large? | Yes, height and "feel" - need adaptive density | v4 |
+| 8 | 3-column layout? | Yes, within the form itself (left side of intake page) | v4 |
+| 9 | Vertical space waste? | Yes, gap between search bar and form start is excessive | v4 |
+| 10 | Input density adaptation? | Yes, needs smart system with min/max limits | v4 |
 
 ---
 
 ## 8. Design System Change Requests
 
-> **Rule:** Any changes to files in `lib/design_system/` require explicit user approval.
-
-| File | Proposed Change | Status | Approved By |
-|------|-----------------|--------|-------------|
-| `app_breakpoints.dart` | Add `wideContentMaxWidth: 1600.0` | ✅ Approved | User (2026-01-06 v3) |
-| `app_spacing.dart` | Add micro-spacing tokens? | 🔶 Deferred | - |
-| `app_breakpoints.dart` | Add `restrictionsCompactHeight: 800.0`? | 🔶 Optional | - |
+| File | Proposed Change | Status |
+|------|-----------------|--------|
+| `app_breakpoints.dart` | Add `wideContentMaxWidth: 1600.0` | ✅ Approved |
+| `app_spacing.dart` | Add micro-spacing tokens? | 🔶 Deferred |
+| Theme/Typography | Add adaptive `VisualDensity` based on platform | 🔶 Needs Analysis |
 
 ---
 
-## 9. Resources & References
+## 9. Root Cause Hypotheses for Critical Bugs
 
-### Project Files
+### Bug 1: Form Disappears on Fullscreen
 
-| File | Purpose | Lines |
-|------|---------|-------|
-| `lib/screens2/intake_form_improved.dart` | Main intake screen | 191 |
-| `lib/screens2/participant_registration_form.dart` | Form widget | 706 |
-| `lib/screens2/widgets/intake_main_content.dart` | Layout for form + file viewer | 147 |
-| `lib/screens2/widgets/restrictions_widget.dart` | Restrictions list (has bounded/unbounded modes) | 364 |
-| `lib/design_system/tokens/app_breakpoints.dart` | Breakpoint definitions | 137 |
-| `lib/design_system/tokens/app_spacing.dart` | Spacing tokens | 45 |
+**Hypothesis A: Flex Ratio Issue**
+```dart
+// intake_main_content.dart
+Expanded(flex: 4, child: _buildLeftColumn(...)),  // Form
+Expanded(flex: 3, child: _buildRightColumn(...)), // FileViewer
+```
+At very wide widths, maybe the form's _buildLeftColumn is returning something that collapses?
 
-### Design System Current Values
+**Hypothesis B: CustomScrollView + SliverFillRemaining Failure**
+```dart
+// intake_main_content.dart _buildLeftColumn
+CustomScrollView(
+  slivers: [
+    SliverFillRemaining(
+      hasScrollBody: false,
+      child: participantRegistrationForm,
+    ),
+  ],
+)
+```
+Maybe `SliverFillRemaining` with specific constraint combinations returns zero height?
 
-**AppBreakpoints:**
-- `mobile`: 600px (< 600 = mobile mode)
-- `tablet`: 900px (600-899 = tablet, ≥900 = desktop)  
-- `desktop`: 1200px (for extended desktop features)
-- `compactHeight`: 600px
-- `contentMaxWidth`: 1200px ← used for general content
-- `formMaxWidth`: 800px ← used for standalone forms
-- **TO ADD: `wideContentMaxWidth`: 1600px** ← for intake form
+**Hypothesis C: The `isCompact` Check**
+```dart
+if (isCompact) {
+  return CustomScrollView(slivers: [SliverToBoxAdapter(...)]);
+}
+```
+Maybe at fullscreen the `isCompact` condition is triggering incorrectly?
 
-**AppSpacing:**
-- `xs`: 4px, `s`: 8px, `m`: 12px, `l`: 16px, `xl`: 20px, `xxl`: 24px
+**Investigation Needed:**
+- Add debug prints in `_buildLeftColumn` to see what branch executes
+- Check if `constraints.maxHeight` is valid at fullscreen
+- Verify `SliverFillRemaining` behavior with very large viewports
 
 ---
 
-## 10. Notes & Observations
+### Bug 2: Only 2 Columns Instead of 3
 
-### 2026-01-06 v1
-1. IntakeMainContent already uses AppBreakpoints - foundation exists
-2. SliverFillRemaining is used for desktop - good pattern
-3. ParticipantRegistrationForm has its own LayoutBuilder - potential conflicts?
-4. ConstrainedBox(maxWidth: 1600) - flagged, now approved for design system
+**Current breakpoint logic:**
+```dart
+// app_breakpoints.dart
+static int getColumnCount(double width) {
+  if (width >= tablet) return 3;  // tablet = 900
+  if (width >= mobile) return 2;  // mobile = 600
+  return 1;
+}
+```
 
-### 2026-01-06 v2
-5. Flutter test default is 800x600 - falls into "tablet" breakpoint
-6. Registration form already has correct column logic
-7. The problem is constraint propagation, not responsive logic
-8. ParticipantRegistrationForm uses `constraints.hasBoundedHeight` - adaptive
+**Hypothesis:** The form is receiving constrained width < 900px even on wide screens because:
+- Parent Row splits space (4:3 ratio)
+- At 1920px screen → form gets ~1097px
+- That SHOULD trigger 3 columns (1097 > 900)
 
-### 2026-01-06 v3
-9. RestrictionsWidget has two modes: bounded (Expanded) and unbounded (SizedBox)
-10. The widget ALREADY adapts based on `isBounded` prop passed from parent
-11. Current constraint flow SHOULD work: Scaffold → Column → Expanded → IntakeMainContent → Row → CustomScrollView → SliverFillRemaining → Form (bounded)
-12. Need to verify actual behavior matches expected behavior
-13. User mentions specific issues (disappearing column, large inputs, wasted space) - need specifics
+**But screenshot shows 2 columns!** So either:
+- The width reaching the form is actually < 900px
+- Or there's another issue in `_buildFormRow`
+
+**Investigation Needed:**
+- Add debug print of `columnCount` and actual width in `build()`
+- Verify the actual constraints being passed to form
+
+---
+
+## 10. Implementation Phases
+
+### Phase 0: Deep Analysis ✅ COMPLETE
+- [x] Document minimum viable screen size
+- [x] Clarify column strategy
+- [x] Get screenshots of actual bugs
+- [x] Identify root cause hypotheses
+
+### Phase 1: Debug & Investigate (NEXT)
+- [ ] Add debug logging to identify constraint flow
+- [ ] Reproduce the fullscreen disappearance
+- [ ] Identify exact point of failure
+- [ ] Test hypotheses A, B, C
+
+### Phase 2: Foundation Fixes
+- [ ] Add `wideContentMaxWidth: 1600.0` to design system
+- [ ] Fix critical fullscreen bug
+- [ ] Fix 2-column vs 3-column issue
+
+### Phase 3: Layout Improvements
+- [ ] Reduce vertical spacing around search
+- [ ] Implement adaptive input density
+- [ ] Optimize for PC usage
+
+### Phase 4: Polish & Test
+- [ ] Test at all target screen sizes
+- [ ] Ensure Flutter test (800x600) still works
+- [ ] Visual review
+
+---
+
+## 11. Notes & Observations
+
+### 2026-01-06 v1-v3
+1-8. (Previous observations - see earlier versions)
+
+### 2026-01-06 v4 - Visual Analysis Complete
+9. **Critical Bug Discovered:** Form content COMPLETELY DISAPPEARS at fullscreen widths
+10. **Column count bug:** 2 columns showing instead of 3, even at wide widths
+11. **Spacing issues:** Excessive gap between search bar and form content clearly visible
+12. **Density issue:** Input fields look large and spacious - not optimized for PC+mouse
+13. All questions are now answered - ready for Phase 1 investigation
+
+---
+
+## 12. Attached Screenshots
+
+> Reference images for the bugs analyzed in Section 5
+
+````carousel
+![Fullscreen Bug - Form Disappears](uploaded_image_0_1767724052494.png)
+<!-- slide -->
+![Default Size - Form Visible (2 columns)](uploaded_image_1_1767724052494.png)
+<!-- slide -->
+![Scrolled View - Bottom of Form](uploaded_image_2_1767724052494.png)
+````
 
 ---
 
@@ -388,7 +381,8 @@ final isBrief = screenHeight < 800;
 
 | Date | Version | Author | Change |
 |------|---------|--------|--------|
-| 2026-01-06 | v1 | AI | Document created with initial structure |
-| 2026-01-06 | v2 | AI | Added version tracking, anti-patterns, user answers |
-| 2026-01-06 | v3 | AI | Added decisions log, deep constraint analysis, remaining gaps to clarify |
+| 2026-01-06 | v1 | AI | Document created |
+| 2026-01-06 | v2 | AI | Added version tracking, anti-patterns |
+| 2026-01-06 | v3 | AI | Added decisions, constraint analysis |
+| 2026-01-06 | v4 | AI | **Added visual analysis with screenshots, root cause hypotheses, all questions answered** |
 
