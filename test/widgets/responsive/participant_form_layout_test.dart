@@ -69,9 +69,10 @@ void main() {
       expect(buttonFinder, findsOneWidget);
     });
 
-    // NEW TEST: Verify default window size (1280x720) fits WITHOUT SCROLLING (Fit-to-Screen)
+    // UPDATED TEST: Verify default window size (1280x720) fits WITH SCROLLING
+    // because 720px < 800px Safety Limit -> Compact Mode
     testWidgets(
-        'Default Windows Size (1280x720): Fits entirely without scrollbar',
+        'Default Windows Size (1280x720): Uses Compact Mode (Scrollable)',
         (WidgetTester tester) async {
       // 1. Set Default Windows Size
       tester.view.physicalSize = const Size(1280, 720);
@@ -82,14 +83,43 @@ void main() {
       await tester.pumpAndSettle();
 
       // 2. Find the ScrollView
-      // Ideally, there IS NO ScrollView at this size.
+      // At 720px, we expect Compact Mode -> SingleChildScrollView (Safety First)
+      expect(find.byType(SingleChildScrollView), findsOneWidget);
+    });
+
+    // NEW TEST: Verify Tall Window (1280x900) fits WITHOUT SCROLLING
+    testWidgets(
+        'Tall Windows Size (1280x900): Uses Standard Mode (No Scroll)',
+        (WidgetTester tester) async {
+      // 1. Set Tall Windows Size
+      tester.view.physicalSize = const Size(1280, 900);
+      tester.view.devicePixelRatio = 1.0;
+
+      await tester
+          .pumpWidget(const MaterialApp(home: ParticipantRegistrationPage()));
+      await tester.pumpAndSettle();
+
+      // 2. Expect No ScrollView (Fit to Screen)
       expect(find.byType(SingleChildScrollView), findsNothing);
       expect(find.byType(CustomScrollView), findsNothing);
+    });
+    
+    // NEW TEST: Verify Standard Laptop (1366x768) uses SCROLLABLE layout logic
+    // 768px - 56px (AppBar) = 712px < 800px Threshold -> Scrollable Mode
+    testWidgets(
+        'Laptop Size (1366x768): Uses Scrollable Layout (Safety)',
+        (WidgetTester tester) async {
+      // 1. Set Laptop Size
+      tester.view.physicalSize = const Size(1366, 768);
+      tester.view.devicePixelRatio = 1.0;
 
-      // 3. Verify no Scrollable widget is active/scrollable in the main body
-      // (Note: TextFields might have internal scrollables, ignore them)
-      // We check if the main layout is a Column
-      expect(find.byType(Column), findsWidgets);
+      await tester
+          .pumpWidget(const MaterialApp(home: ParticipantRegistrationPage()));
+      await tester.pumpAndSettle();
+
+      // 2. Expect ScrollView (Compact Layout) because 712 < 800 (Safety Threshold)
+      // This allows the BIG standard fields to fit via scrolling.
+      expect(find.byType(SingleChildScrollView), findsOneWidget);
     });
   });
 }

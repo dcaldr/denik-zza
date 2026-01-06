@@ -27,7 +27,7 @@ class AppBreakpoints {
   static const double desktop = 1200.0;
 
   // Height breakpoint for compact vertical layouts
-  static const double compactHeight = 600.0;
+  static const double compactHeight = 800.0;
 
   // Content width constraints
   static const double contentMaxWidth = 1200.0;
@@ -74,9 +74,9 @@ class AppBreakpoints {
   /// Mobile: 12px, Tablet: 16px, Desktop: 24px.
   static double getGap(BuildContext context) {
     final screenWidth = MediaQuery.sizeOf(context).width;
-    if (screenWidth < mobile) return 12.0;
-    if (screenWidth < tablet) return 16.0;
-    return 24.0;
+    if (screenWidth < mobile) return 4.0; // Compact Mobile
+    if (screenWidth < desktop) return 8.0; // Tablet & Laptop (Compact)
+    return 16.0; // Big Desktop (Breathing Room)
   }
 
   /// Grid columns based on screen width.

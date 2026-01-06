@@ -304,7 +304,10 @@ class ParticipantRegistrationFormState
             : MediaQuery.sizeOf(context).width;
 
         // 2. Determine Column Count (Responsive Grid)
-        final columnCount = AppBreakpoints.getColumnCount(width);
+        // Use SCREEN WIDTH to determine capability (device class).
+        // Even if form is in a split view (60% width), a Desktop (1920 wide)
+        // has enough resolution/DPI to handle 3 columns of data.
+        final columnCount = AppBreakpoints.getColumnCount(MediaQuery.sizeOf(context).width);
 
         // 3. Determine Layout Mode (Mobile vs Desktop)
         //    We use width for this decision, consistent with AppBreakpoints
@@ -313,21 +316,9 @@ class ParticipantRegistrationFormState
         // 4. Build Content
         return Padding(
           padding: AppSpacing.containerPadding,
-          child: Theme(
-            data: Theme.of(context).copyWith(
-              visualDensity: VisualDensity.compact,
-              inputDecorationTheme:
-                  Theme.of(context).inputDecorationTheme.copyWith(
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                      ),
-            ),
-            child: Form(
-              key: _formKey,
-              child: Column(
+          child: Form(
+            key: _formKey,
+            child: Column(
                 mainAxisSize: constraints.hasBoundedHeight
                     ? MainAxisSize.max
                     : MainAxisSize.min, // Shrink wrap content if unbounded
@@ -335,10 +326,10 @@ class ParticipantRegistrationFormState
                 children: [
                   if (_lastAddedName != null) _buildSuccessMessage(),
                   _buildGridView(columnCount),
-                  const SizedBox(height: AppSpacing.s),
+                  const SizedBox(height: 2),
                   _buildTextField('poznamka', 'Poznámka', null,
                       minLines: 2, maxLines: 7),
-                  const SizedBox(height: AppSpacing.s),
+                  const SizedBox(height: 2),
                   _buildCheckboxSection(),
                   const SizedBox(height: AppSpacing.xs),
 
@@ -382,8 +373,7 @@ class ParticipantRegistrationFormState
                 ],
               ),
             ),
-          ),
-        );
+          );
       },
     );
   }
@@ -438,7 +428,7 @@ class ParticipantRegistrationFormState
           _buildTextField('prijmeni', 'Příjmení', 'Příjmení je povinné pole'),
           _buildTextField('cisloPojisteni', 'Číslo Pojištěnce', null),
         ], columnCount),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         // Row 2: Birth details and insurance
         _buildFormRow([
           Row(
@@ -459,7 +449,7 @@ class ParticipantRegistrationFormState
           _buildTextField('zdravotniPojistovna', 'Zdravotní Pojišťovna', null),
           _buildTextField('adresa', 'Adresa', null),
         ], columnCount),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         // Row 3: Guardian contact info
         _buildFormRow([
           _buildTextField('jmenoRodice', 'Jméno rodiče', null),
@@ -471,14 +461,20 @@ class ParticipantRegistrationFormState
   }
 
   /// Builds a responsive form row: 3 columns on desktop, 2 on tablet, 1 on mobile.
-  Widget _buildFormRow(List<Widget> fields, int columns) {
+  Widget _buildFormRow(
+    List<Widget> fields,
+    int columns,
+  ) {
+    // Minimal spacing for maximum compactness inside form
+    const double gap = 2.0;
+
     if (columns == 1) {
       // Mobile: Stack vertically with spacing
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: fields
             .map((field) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  padding: EdgeInsets.symmetric(vertical: gap),
                   child: field,
                 ))
             .toList(),
@@ -494,14 +490,14 @@ class ParticipantRegistrationFormState
         children: chunk
             .map((field) => Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    padding: EdgeInsets.symmetric(horizontal: gap / 2),
                     child: field,
                   ),
                 ))
             .toList(),
       ));
       if (i + columns < fields.length) {
-        rows.add(const SizedBox(height: 4));
+        rows.add(SizedBox(height: gap));
       }
     }
     return Column(children: rows);
@@ -678,11 +674,48 @@ class _ParticipantRegistrationPageState
       drawer: const AppDrawer(),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final isCompact =
-              AppBreakpoints.isCompactHeight(constraints.maxHeight);
+          final width = constraints.maxWidth;
+          final height = constraints.maxHeight;
 
-          if (isCompact) {
-            // Mobile / Short Screen: Scrollable
+          // --- Bell Curve Density (Using SCREEN dimensions) ---
+          // Mobile (<600): Standard (Touch)
+          // Tablet/Laptop (600-1399 OR short): Compact (Dense)
+          // Desktop (Width>=1400 AND Height>=900): Standard (Breathing room)
+          final screenWidth = MediaQuery.sizeOf(context).width;
+          final screenHeight = MediaQuery.sizeOf(context).height;
+          final isMobile = screenWidth < 600;
+          final isDesktop = screenWidth >= 1400 && screenHeight >= 900;
+          final useStandardDensity = isMobile || isDesktop;
+
+          // Layout: Scrollable if short height
+          final useScrollableLayout = AppBreakpoints.isCompactHeight(height);
+
+          // Theme for density
+          final themeData = Theme.of(context).copyWith(
+            visualDensity: useStandardDensity
+                ? VisualDensity.standard
+                : VisualDensity.compact,
+            inputDecorationTheme:
+                Theme.of(context).inputDecorationTheme.copyWith(
+                      isDense: !useStandardDensity,
+                      contentPadding: useStandardDensity
+                          ? null
+                          : const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 8),
+                    ),
+          );
+
+          // Form widget with theme applied
+          final formWidget = Theme(
+            data: themeData,
+            child: ParticipantRegistrationForm(
+              key: _formKey,
+              enableStickyFooter: !useScrollableLayout,
+            ),
+          );
+
+          if (useScrollableLayout) {
+            // Scrollable layout (mobile/laptop)
             return ZzaScrollable(
               controller: _scrollController,
               child: SingleChildScrollView(
@@ -691,12 +724,7 @@ class _ParticipantRegistrationPageState
                   padding: AppSpacing.screenPadding,
                   child: Column(
                     children: [
-                      ParticipantRegistrationForm(
-                        key: _formKey,
-                        enableStickyFooter: true,
-                        // Allow internal LayoutBuilder to detect unbounded height
-                        bypassLayoutBuilder: false,
-                      ),
+                      formWidget,
                       const SizedBox(height: 16),
                       FilledButton(
                         key: const Key(
@@ -711,19 +739,13 @@ class _ParticipantRegistrationPageState
             );
           }
 
-          // Desktop / Tall Screen: Fit to Screen
+          // Fixed layout (desktop with sticky footer)
           return Padding(
             padding: AppSpacing.screenPadding,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: ParticipantRegistrationForm(
-                    key: _formKey,
-                    enableStickyFooter: true,
-                    bypassLayoutBuilder: false,
-                  ),
-                ),
+                Expanded(child: formWidget),
                 const SizedBox(height: 16),
                 Align(
                   alignment: Alignment.bottomCenter,

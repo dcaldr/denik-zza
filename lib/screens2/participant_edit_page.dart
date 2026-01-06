@@ -3,6 +3,7 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/design_system/tokens/app_breakpoints.dart';
 
 class ParticipantEditPage extends StatefulWidget {
   final MemoryOsoba participant;
@@ -88,39 +89,64 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
           ),
         ],
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
-          child: Padding(
-            padding: AppSpacing.screenPadding,
-            child: Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Form(
-                      key: _formKey,
-                      child: _participantRegistrationForm ?? const SizedBox(),
-                    ),
-                  ),
-                ),
-                AppSpacing.mediumGap,
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact =
+              AppBreakpoints.isCompactHeight(constraints.maxHeight);
+
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 800),
+              child: Padding(
+                padding: AppSpacing.screenPadding,
+                child: Column(
                   children: [
-                    OutlinedButton(
-                      onPressed: () => Navigator.of(context).pop(false),
-                      child: const Text('Zrušit'),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Theme(
+                          data: isCompact
+                              ? Theme.of(context).copyWith(
+                                  visualDensity: VisualDensity.compact,
+                                  inputDecorationTheme: Theme.of(context)
+                                      .inputDecorationTheme
+                                      .copyWith(
+                                        isDense: true,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 8,
+                                        ),
+                                      ),
+                                )
+                              : Theme.of(context),
+                          child: Form(
+                            key: _formKey,
+                            child: _participantRegistrationForm ??
+                                const SizedBox(),
+                          ),
+                        ),
+                      ),
                     ),
-                    FilledButton(
-                      onPressed: _handleSave,
-                      child: const Text('Uložit změny'),
+                    AppSpacing.mediumGap,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Zrušit'),
+                        ),
+                        FilledButton(
+                          onPressed: _handleSave,
+                          child: const Text('Uložit změny'),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

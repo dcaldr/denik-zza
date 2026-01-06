@@ -430,20 +430,27 @@ Legend:
 - Screen 900px → Form ~540px → 1 column ❌ (this is the bug!)
 - Screen 1500px → Form ~900px → 3 columns ✅
 
-### 13.5 Density Scaling
+### 13.5 Density Scaling ("Bell Curve" Pattern)
 
-| Platform/Width | VisualDensity | Input Heights | Rationale |
-|----------------|---------------|---------------|-----------|
-| Android/iOS | `.standard` | ~56px | Touch-friendly tap targets |
-| Windows/Linux/macOS | `.compact` | ~40px | Mouse precision, more info on screen |
-| Web on mobile | `.standard` | ~56px | Detect via MediaQuery |
-| Web on desktop | `.compact` | ~40px | Mouse-optimized |
+> **User Requirement (Explicit):** "Mobile big due to touchscreen, tablet/small notebook compact, big screens again bigger because of empty space."
 
-**Implementation:** Use `VisualDensity.adaptivePlatformDensity` in theme, or detect via screen width:
+| Screen Type | Dimension Check | VisualDensity | Input Heights | Rationale |
+|-------------|-----------------|---------------|---------------|-----------|
+| **Mobile** | Width < 600 | `.standard` | ~56px | Touch-friendly tap targets |
+| **Tablet/Laptop** | Width >= 600 AND Height < 800 | `.compact` | ~40px | Max density, min scroll |
+| **Desktop** | Height >= 800 | `.standard` | ~56px | Breathing room on big screens |
+
+**Implementation:**
 ```dart
-final density = MediaQuery.sizeOf(context).width >= 900 
-    ? VisualDensity.compact 
-    : VisualDensity.standard;
+final screenWidth = MediaQuery.sizeOf(context).width;
+final screenHeight = MediaQuery.sizeOf(context).height;
+final isMobile = screenWidth < 600;
+final isDesktop = screenWidth >= 1400 && screenHeight >= 800;
+final useStandardDensity = isMobile || isDesktop;
+
+final density = useStandardDensity 
+    ? VisualDensity.standard 
+    : VisualDensity.compact;
 ```
 
 ---
@@ -2279,3 +2286,70 @@ Only change needed: Remove the nested `CustomScrollView` wrapper in `_buildLeftC
 | 2026-01-06 | v8 | AI | Final decision: Compact-first + scroll fallback |
 | 2026-01-06 | v9 | AI | **Container behavior verification: All 6 assumptions confirmed via web search** |
 
+### 21. Dynamic Sizing Proposal (Phase 6)
+**User Feedback:** "Dynamic compactness should be possible - standard size on full screen, compact on small."
+
+**Analysis:**
+- **Current State:** Compact theme hardcoded in `ParticipantRegistrationForm`.
+- **Proposed Change:** Decouple Theme density from the form widget.
+- **Solution:**
+    1. Remove `Theme` wrapper from `ParticipantRegistrationForm`.
+    2. Move `Theme` logic to parent widgets (`IntakeMainContent`, `ParticipantRegistrationPage`).
+    3. Conditionally apply `visualDensity: compact` ONLY when `isCompact` (height < 600px) is true.
+    4. Otherwise, use standard density (larger touch targets, more readability).
+
+**Benefit:** optimizes detailed data entry on desktops while preserving the "fit-to-screen" fix for smaller laptops.
+
+
+### 22. Deep Dive Analysis: Dynamic Sizing Strategies (2026-01-06)
+
+**Goal:** Optimize form readability on large screens (Standard Sizing) while ensuring it fits without scrolling on small screens (Compact Sizing).
+
+**Critical Risk Analysis:** "The In-Between Zone"
+If we switch to Standard Sizing too early (e.g., at 600px height), but the Standard Form actually requires 750px, we trigger overflow/scrolling on screens between 600px and 750px. This violates the "Fit to Screen" objective and causes the dreaded "enlarging UI when space is not there."
+
+#### Idea Loop Analysis (7 Strategies)
+
+**1. The Naive Threshold (Status Quo)**
+- **Concept:** `height < 600 ? Compact : Standard`.
+- **Failure Mode:** On a 650px screen, it switches to Standard. Standard requires ~780px. Result: **OVERFLOW**.
+- **Verdict:** ❌ **FAIL**. Unsafe.
+
+**2. The "Scientific" Threshold (Safe Harbor)**
+- **Concept:** Measure the *actual* height required by Standard Sizing (estimated ~800px) and use THAT as the safety threshold.
+- **Logic:** `height < 800 ? Compact : Standard`.
+- **Scenario:** 13" Laptop (768px) -> `< 800` -> **Compact** -> Fits perfectly (~570px).
+- **Scenario:** 24" Monitor (1080px) -> `> 800` -> **Standard** -> Fits perfectly (~780px).
+- **Verdict:** ✅ **STRONG CANDIDATE**. Safe, predictable.
+
+**3. Three-Tier System**
+- **Concept:** Ultra Compact (<600), Hybrid (600-900), Spacious (>900).
+- **Critique:** Adds significant maintenance complexity.
+- **Verdict:** ⚠️ **Valid but Complex**.
+
+**4. Gradual Scaling**
+- **Concept:** Scale text/padding linearly based on height.
+- **Critique:** Non-integer pixel snapping leads to blurry text and "wiggle". Breaks Material Grid.
+- **Verdict:** ❌ **FAIL**.
+
+**5. Scroll-Aware Feedback**
+- **Concept:** Render Standard -> Check Overflow -> Retry Compact.
+- **Critique:** Infinite layout loop risk (Compact fits -> Standard -> Overflow -> Compact...).
+- **Verdict:** ❌ **FAIL**. Unstable.
+
+**6. User Toggle ("Comfort Mode")**
+- **Concept:** Manual button for user to choose density.
+- **Critique:** Good fallback, but puts burden on user.
+- **Verdict:** ⚠️ **Fallback Choice**.
+
+**7. Aspect-Ratio Driven**
+- **Concept:** Use 16:9 vs 4:3 ratios.
+- **Critique:** A 13" laptop and 32" monitor have same ratio (16:9) but vastly different heights.
+- **Verdict:** ❌ **FAIL**. Misleading signal.
+
+#### Final Recommendation: Idea 2 (Scientific Threshold)
+We must treat "Standard Sizing" as a **luxury** for tall screens, not the default for "Desktop".
+**Revised Plan:**
+1.  **Safety Buffer:** Determine that Standard Form needs approx 800px.
+2.  **Threshold:** Set `isCompact = height < 800` (NOT 600).
+3.  **Result:** Eliminates the "In-Between Zone" risk entirely. Standard is only used when we are 100% sure it fits.

@@ -89,6 +89,11 @@ class _ZzaScrollableState extends State<ZzaScrollable> {
 
   @override
   Widget build(BuildContext context) {
+    // Re-check on every build (resize triggers rebuild)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _updateScrollIndicator();
+    });
+
     final fadeColor =
         widget.fadeColor ?? Theme.of(context).scaffoldBackgroundColor;
 

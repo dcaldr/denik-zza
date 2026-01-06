@@ -107,26 +107,54 @@ class _IntakeMainContentState extends State<IntakeMainContent> {
       return widget.participantRegistrationForm;
     }
 
-    // If we have limited vertical space, we shouldn't force the form to "fill" the remaining space,
-    // because it might be smaller than the form's minimum height (causing crash).
-    final isCompact = AppBreakpoints.isCompactHeight(constraints.maxHeight);
+    // --- Bell Curve Density (Using SCREEN dimensions) ---
+    // Mobile (<600): Standard (Touch)
+    // Tablet/Laptop (600-1399 OR short): Compact (Dense)
+    // Desktop (Width>=1400 AND Height>=900): Standard (Breathing room)
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final isMobile = screenWidth < 600;
+    final isDesktop = screenWidth >= 1400 && screenHeight >= 900;
+    final bool useStandardDensity = isMobile || isDesktop;
 
-    if (isCompact) {
-      // < 600px: Wrap in ScrollView to handle overflow gracefully
-      // Enhanced with ZzaScrollable for better visibility of scroll
+    // 2. Layout (Scroll): Depends on HEIGHT.
+    // If we don't have enough vertical space for the Fixed Layout, use Scrollable.
+    // Laptops (768px) usually fall into 'isCompactHeight' (< 800), so they get scrolling.
+    final bool useScrollableLayout =
+        AppBreakpoints.isCompactHeight(constraints.maxHeight);
+
+    // Create the appropriate Theme (Density + Padding)
+    final themeData = Theme.of(context).copyWith(
+      visualDensity: useStandardDensity
+          ? VisualDensity.standard
+          : VisualDensity.compact,
+      inputDecorationTheme: Theme.of(context).inputDecorationTheme.copyWith(
+            isDense: !useStandardDensity,
+            // Use default Material padding for Standard, dense for Compact
+            contentPadding: useStandardDensity
+                ? null 
+                : const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          ),
+    );
+
+    final themedForm = Theme(
+      data: themeData,
+      child: widget.participantRegistrationForm,
+    );
+
+    if (useScrollableLayout) {
+      // < 800px Height: Wrap in ScrollView to handle overflow gracefully
       return ZzaScrollable(
         controller: _formScrollController,
         child: SingleChildScrollView(
           controller: _formScrollController,
-          child: widget.participantRegistrationForm,
+          child: themedForm,
         ),
       );
     }
 
-    // Default Desktop (> 600px): Return validation form directly.
-    // This allows it to receive bounded height constraints from the Row -> Expanded chain,
-    // enabling "Expanded" usage inside the form (e.g. for RestrictionsWidget).
-    return widget.participantRegistrationForm;
+    // Default Desktop (> 800px Height): Return validation form directly (Fixed Layout).
+    return themedForm;
   }
 
   Widget _buildRightColumn(
