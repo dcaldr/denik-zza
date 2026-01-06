@@ -6,8 +6,9 @@ import 'file_viewer_logic.dart';
 import 'file_viewer_screen_widget.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/design_system/tokens/app_breakpoints.dart';
+import 'package:denik_zza/screens2/widgets/zza_scrollable.dart';
 
-class IntakeMainContent extends StatelessWidget {
+class IntakeMainContent extends StatefulWidget {
   final MemoryOsoba? selectedPerson;
   final Function(String) onFileUploaded;
   final Directory? zpusobilostFolder;
@@ -22,6 +23,19 @@ class IntakeMainContent extends StatelessWidget {
   });
 
   @override
+  State<IntakeMainContent> createState() => _IntakeMainContentState();
+}
+
+class _IntakeMainContentState extends State<IntakeMainContent> {
+  final ScrollController _formScrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _formScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: AppSpacing.screenPadding,
@@ -30,18 +44,13 @@ class IntakeMainContent extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isNarrow = AppBreakpoints.isMobile(constraints.maxWidth);
-          // Use compact height breakpoint to decide if we should force fill (fixed) or allow scrolling
-          final isCompact =
-              AppBreakpoints.isCompactHeight(constraints.maxHeight);
+
 
           if (isNarrow) {
             // Mobile: Stack vertically with scrolling (Global Scroll)
             return CustomScrollView(
               slivers: [
-                SliverToBoxAdapter(
-                  child: _buildRightColumn(
-                      context, constraints, isNarrow), // Camera/Gallery
-                ),
+                // SWAPPED: Form First (Requested via User Feedback)
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 16.0),
@@ -49,26 +58,41 @@ class IntakeMainContent extends StatelessWidget {
                         context, constraints, isNarrow), // Form (Unbounded)
                   ),
                 ),
+                // Camera/Gallery Second
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 16.0),
+                    child: _buildRightColumn(
+                        context, constraints, isNarrow), // Camera/Gallery
+                  ),
+                ),
               ],
             );
           }
 
           // Desktop/Tablet: Side-by-side
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Left Column: Form
-              Expanded(
-                flex: 4,
-                child: _buildLeftColumn(context, constraints, isNarrow),
+          // Use wideContentMaxWidth for the row
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                  maxWidth: AppBreakpoints.wideContentMaxWidth),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Left Column: Form
+                  Expanded(
+                    flex: 4,
+                    child: _buildLeftColumn(context, constraints, isNarrow),
+                  ),
+                  const SizedBox(width: AppSpacing.xxl),
+                  // Right Column: Camera/Gallery (Always fills remaining vertical space)
+                  Expanded(
+                    flex: 3,
+                    child: _buildRightColumn(context, constraints, isNarrow),
+                  ),
+                ],
               ),
-              const SizedBox(width: 24),
-              // Right Column: Camera/Gallery (Always fills remaining vertical space)
-              Expanded(
-                flex: 3,
-                child: _buildRightColumn(context, constraints, isNarrow),
-              ),
-            ],
+            ),
           );
         },
       ),
@@ -80,33 +104,29 @@ class IntakeMainContent extends StatelessWidget {
     if (isNarrow) {
       // Mobile: Just return the form.
       // The parent (build method) will wrap this in a ScrollView/Column.
-      return participantRegistrationForm;
+      return widget.participantRegistrationForm;
     }
 
     // If we have limited vertical space, we shouldn't force the form to "fill" the remaining space,
     // because it might be smaller than the form's minimum height (causing crash).
-    // Instead, we use SliverToBoxAdapter to let it flow naturally.
     final isCompact = AppBreakpoints.isCompactHeight(constraints.maxHeight);
 
     if (isCompact) {
-      return CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: participantRegistrationForm,
-          ),
-        ],
+      // < 600px: Wrap in ScrollView to handle overflow gracefully
+      // Enhanced with ZzaScrollable for better visibility of scroll
+      return ZzaScrollable(
+        controller: _formScrollController,
+        child: SingleChildScrollView(
+          controller: _formScrollController,
+          child: widget.participantRegistrationForm,
+        ),
       );
     }
 
-    // Default Desktop: Fill remaining space to allow "Expanded" widgets in form to work.
-    return CustomScrollView(
-      slivers: [
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: participantRegistrationForm,
-        ),
-      ],
-    );
+    // Default Desktop (> 600px): Return validation form directly.
+    // This allows it to receive bounded height constraints from the Row -> Expanded chain,
+    // enabling "Expanded" usage inside the form (e.g. for RestrictionsWidget).
+    return widget.participantRegistrationForm;
   }
 
   Widget _buildRightColumn(
@@ -115,7 +135,6 @@ class IntakeMainContent extends StatelessWidget {
       mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Second Column'),
         if (!isNarrow)
           Expanded(child: _buildFileViewer())
         else
@@ -131,16 +150,16 @@ class IntakeMainContent extends StatelessWidget {
   }
 
   Widget _buildFileViewer() {
-    final hasFile = zpusobilostFolder != null &&
-        selectedPerson?.potvrzeniPath != null &&
-        selectedPerson!.potvrzeniPath!.isNotEmpty;
+    final hasFile = widget.zpusobilostFolder != null &&
+        widget.selectedPerson?.potvrzeniPath != null &&
+        widget.selectedPerson!.potvrzeniPath!.isNotEmpty;
 
     if (hasFile) {
       return FileViewerScreen(
           initialFilePath:
-              '${zpusobilostFolder!.path}/${selectedPerson!.potvrzeniPath}');
+              '${widget.zpusobilostFolder!.path}/${widget.selectedPerson!.potvrzeniPath}');
     } else {
-      return FileViewerLogic(onFileUploaded: onFileUploaded);
+      return FileViewerLogic(onFileUploaded: widget.onFileUploaded);
     }
   }
 }

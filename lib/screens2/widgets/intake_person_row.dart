@@ -25,7 +25,7 @@ class IntakePersonRow extends StatelessWidget {
           const Text('Select Person: '),
           Expanded(
             child: Container(
-              padding: EdgeInsets.all(AppSpacing.s),
+              padding: EdgeInsets.all(AppSpacing.xs),
               child: PersonAutocomplete(
                 onPersonSelected: onPersonSelected,
                 onRefresh: onRefresh,

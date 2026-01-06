@@ -313,61 +313,74 @@ class ParticipantRegistrationFormState
         // 4. Build Content
         return Padding(
           padding: AppSpacing.containerPadding,
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: constraints.hasBoundedHeight
-                  ? MainAxisSize.max
-                  : MainAxisSize.min, // Shrink wrap content if unbounded
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (_lastAddedName != null) _buildSuccessMessage(),
-                _buildGridView(columnCount),
-                const SizedBox(height: AppSpacing.s),
-                _buildTextField('poznamka', 'Poznámka', null,
-                    minLines: 2, maxLines: 7),
-                const SizedBox(height: AppSpacing.s),
-                _buildCheckboxSection(),
-                const SizedBox(height: AppSpacing.xs),
-
-                // RESTRICTIONS SECTION
-                // In clean architecture, we simply render them.
-                // The PARENT determines if this stretches (SliverFillRemaining) or flows.
-                // But RestrictionsWidget needs to know if it should be 'bounded' (Expanded) or 'unbounded'.
-                // If we are in "Footer Mode" (Desktop/SliverFillRemaining), the parent passes bounded constraints.
-                // If we are in "Mobile Mode" (SliverToBoxAdapter), the parent passes unbounded constraints.
-                // However, RestrictionsWidget logic relies on `isBounded` flag.
-                // We can infer this from constraints.hasBoundedHeight.
-                if (constraints.hasBoundedHeight)
-                  Expanded(
-                    child: _buildRestrictionsSection(
-                      isNarrow: isMobile,
-                      isBounded: true,
-                    ),
-                  )
-                else
-                  _buildRestrictionsSection(
-                    isNarrow: isMobile,
-                    isBounded: false,
-                  ),
-
-                // STICKY FOOTER LOGIC
-                // The Button is handled by the Page via SliverFillRemaining.
-                // We ONLY render the button here if sticky footer is DISABLED (legacy/embedded mode).
-                if (!widget.enableStickyFooter) ...[
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              visualDensity: VisualDensity.compact,
+              inputDecorationTheme:
+                  Theme.of(context).inputDecorationTheme.copyWith(
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+            ),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: constraints.hasBoundedHeight
+                    ? MainAxisSize.max
+                    : MainAxisSize.min, // Shrink wrap content if unbounded
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (_lastAddedName != null) _buildSuccessMessage(),
+                  _buildGridView(columnCount),
+                  const SizedBox(height: AppSpacing.s),
+                  _buildTextField('poznamka', 'Poznámka', null,
+                      minLines: 2, maxLines: 7),
+                  const SizedBox(height: AppSpacing.s),
+                  _buildCheckboxSection(),
                   const SizedBox(height: AppSpacing.xs),
-                  Center(
-                    child: FilledButton(
-                      key: const Key(
-                          'ParticipantRegistrationForm_submit_button'),
-                      onPressed: _submitForm,
-                      child: Text(widget.osoba == null
-                          ? 'Registrovat'
-                          : 'Uložit změny'),
+
+                  // RESTRICTIONS SECTION
+                  // In clean architecture, we simply render them.
+                  // The PARENT determines if this stretches (SliverFillRemaining) or flows.
+                  // But RestrictionsWidget needs to know if it should be 'bounded' (Expanded) or 'unbounded'.
+                  // If we are in "Footer Mode" (Desktop/SliverFillRemaining), the parent passes bounded constraints.
+                  // If we are in "Mobile Mode" (SliverToBoxAdapter), the parent passes unbounded constraints.
+                  // However, RestrictionsWidget logic relies on `isBounded` flag.
+                  // We can infer this from constraints.hasBoundedHeight.
+                  if (constraints.hasBoundedHeight)
+                    Expanded(
+                      child: _buildRestrictionsSection(
+                        isNarrow: isMobile,
+                        isBounded: true,
+                      ),
+                    )
+                  else
+                    _buildRestrictionsSection(
+                      isNarrow: isMobile,
+                      isBounded: false,
                     ),
-                  ),
+
+                  // STICKY FOOTER LOGIC
+                  // The Button is handled by the Page via SliverFillRemaining.
+                  // We ONLY render the button here if sticky footer is DISABLED (legacy/embedded mode).
+                  if (!widget.enableStickyFooter) ...[
+                    const SizedBox(height: AppSpacing.xs),
+                    Center(
+                      child: FilledButton(
+                        key: const Key(
+                            'ParticipantRegistrationForm_submit_button'),
+                        onPressed: _submitForm,
+                        child: Text(widget.osoba == null
+                            ? 'Registrovat'
+                            : 'Uložit změny'),
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         );
@@ -383,7 +396,7 @@ class ParticipantRegistrationFormState
         color: AppColors.greenBackground,
         borderRadius: BorderRadius.circular(AppRadii.small), // Corrected token
         border: Border.all(
-            color: AppColors.greenIcon.withOpacity(0.3)), // Compatibility fix
+            color: AppColors.greenIcon.withValues(alpha: 0.3)), // Compatibility fix
       ),
       child: Row(
         children: [
@@ -663,42 +676,67 @@ class _ParticipantRegistrationPageState
         ],
       ),
       drawer: const AppDrawer(),
-      // Phase 8: Scroll Signaling (ZzaScrollable Wrapper)
-      // Wraps the main CustomScrollView to provide "more content" hints
-      body: ZzaScrollable(
-        controller: _scrollController,
-        child: CustomScrollView(
-          controller: _scrollController,
-          slivers: [
-            // 1. The Form Content (Scrolls naturally)
-            SliverToBoxAdapter(
-              child: ParticipantRegistrationForm(
-                key: _formKey,
-                enableStickyFooter:
-                    true, // Signal to not render internal button
-                bypassLayoutBuilder:
-                    true, // Signal to rely on parent constraints
-              ),
-            ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact =
+              AppBreakpoints.isCompactHeight(constraints.maxHeight);
 
-            // 2. The Sticky Footer (Fills remaining space or sits at bottom)
-            SliverFillRemaining(
-              hasScrollBody: false, // It's just a button container, not a list
-              child: Align(
-                alignment: Alignment.bottomCenter,
+          if (isCompact) {
+            // Mobile / Short Screen: Scrollable
+            return ZzaScrollable(
+              controller: _scrollController,
+              child: SingleChildScrollView(
+                controller: _scrollController,
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: AppSpacing.screenPadding,
+                  child: Column(
+                    children: [
+                      ParticipantRegistrationForm(
+                        key: _formKey,
+                        enableStickyFooter: true,
+                        // Allow internal LayoutBuilder to detect unbounded height
+                        bypassLayoutBuilder: false,
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton(
+                        key: const Key(
+                            'ParticipantRegistrationPage_submit_button'),
+                        onPressed: () => _formKey.currentState?._submitForm(),
+                        child: const Text('Registrovat'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+
+          // Desktop / Tall Screen: Fit to Screen
+          return Padding(
+            padding: AppSpacing.screenPadding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: ParticipantRegistrationForm(
+                    key: _formKey,
+                    enableStickyFooter: true,
+                    bypassLayoutBuilder: false,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.bottomCenter,
                   child: FilledButton(
                     key: const Key('ParticipantRegistrationPage_submit_button'),
-                    // Call submit on the form state via GlobalKey
                     onPressed: () => _formKey.currentState?._submitForm(),
                     child: const Text('Registrovat'),
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

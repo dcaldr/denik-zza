@@ -103,7 +103,7 @@ class _ZzaScrollableState extends State<ZzaScrollable> {
             top: 0,
             left: 0,
             right: 0,
-            height: 24,
+            height: 48, // Taller fade (was 24)
             child: IgnorePointer(
               child: Container(
                 decoration: BoxDecoration(
@@ -111,7 +111,7 @@ class _ZzaScrollableState extends State<ZzaScrollable> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      fadeColor.withValues(alpha: 0.8), // Reduced opacity
+                      fadeColor.withValues(alpha: 0.95), // Stronger opacity
                       fadeColor.withValues(alpha: 0.0),
                     ],
                   ),
@@ -119,11 +119,18 @@ class _ZzaScrollableState extends State<ZzaScrollable> {
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 2.0),
+                    padding: const EdgeInsets.only(top: 4.0),
                     child: Icon(
                       Icons.keyboard_arrow_up,
-                      size: 16,
-                      color: AppColors.greyText.withValues(alpha: 0.5),
+                      size: 24, // Larger arrow (was 16)
+                      color: AppColors.greyText.withValues(alpha: 0.8),
+                      shadows: [
+                        Shadow(
+                          blurRadius: 2,
+                          color: Colors.white.withValues(alpha: 0.5),
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -137,7 +144,7 @@ class _ZzaScrollableState extends State<ZzaScrollable> {
             bottom: 0,
             left: 0,
             right: 0,
-            height: 32,
+            height: 64, // Much taller fade (was 32)
             child: IgnorePointer(
               child: Container(
                 decoration: BoxDecoration(
@@ -145,8 +152,7 @@ class _ZzaScrollableState extends State<ZzaScrollable> {
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                     colors: [
-                      fadeColor.withValues(
-                          alpha: 0.8), // Reduced opacity from 0.95 to 0.8
+                      fadeColor.withValues(alpha: 0.95), // Stronger opacity
                       fadeColor.withValues(alpha: 0.0),
                     ],
                   ),
@@ -154,11 +160,19 @@ class _ZzaScrollableState extends State<ZzaScrollable> {
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(
-                    padding: const EdgeInsets.only(bottom: 2.0),
+                    padding: const EdgeInsets.only(bottom: 4.0),
                     child: Icon(
                       Icons.keyboard_arrow_down,
-                      size: 16,
-                      color: AppColors.greyText.withValues(alpha: 0.5),
+                      size: 24, // Larger arrow (was 16)
+                      color: AppColors.greyText.withValues(alpha: 0.8),
+                      // Add subtle text shadow to make it pop against any background
+                      shadows: [
+                        Shadow(
+                          blurRadius: 2,
+                          color: Colors.white.withValues(alpha: 0.5),
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
                     ),
                   ),
                 ),

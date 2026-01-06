@@ -103,6 +103,11 @@ class _PersonAutocompleteState extends State<PersonAutocomplete> {
               controller: textEditingController,
               focusNode: focusNode,
               decoration: InputDecoration(
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 prefixIcon: const Icon(Icons.search),
                 hintText: 'Vyhledat osobu',
                 border: OutlineInputBorder(

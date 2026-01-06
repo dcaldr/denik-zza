@@ -31,6 +31,7 @@ class AppBreakpoints {
 
   // Content width constraints
   static const double contentMaxWidth = 1200.0;
+  static const double wideContentMaxWidth = 1600.0;
   static const double formMaxWidth = 800.0;
 
   // --- Helper Methods ---
