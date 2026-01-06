@@ -1451,14 +1451,46 @@ if (isCompact) {
 
 **This gives form UNBOUNDED height** (SliverToBoxAdapter).
 
-If we DON'T change this branch, compact mode still has issues:
-- Form gets unbounded height → `hasBoundedHeight = false`
-- Form uses `MainAxisSize.min` and non-Expanded restrictions
-- This might cause issues?
+If we DON'T change this branch,---
 
-**Actually:** For compact screens, we WANT the page to scroll, and form to shrink-wrap. This is correct.
+### 22.1 Vector 1: Focus vs. GlobalKey Scope
 
-**But:** The form might be TALLER than the compact screen, causing scroll. The existing behavior handles this.
+**Problem:** We assume `GlobalKey<FormState>` saves the focus of input fields.
+**Sequence:**
+1.  **Search:** Confirmed. Focus is attached to the *Element*. When `GlobalKey` reparents the Element, the `FocusNode` (if owned by that Element/State) stays attached.
+2.  **Risk:** If `FocusNode`s were owned by an *ancestor* of the Form that gets destroyed, focus would be lost.
+3.  **Check:** Our `FocusNode`s are inside `ParticipantRegistrationFormState`. They travel WITH the form.
+4.  **Verdict:** **SAFE**.
+
+### 22.2 Vector 2: Keyboard Snap Jitter
+
+**Problem:** When keyboard opens, height shrinks. If it crosses 500px, layout "snaps" to scroll view. Does this look glitchy?
+**Sequence:**
+1.  **Behavior:** Android resizes view. `LayoutBuilder` sees new height.
+2.  **Transition:** 700px -> 400px. Snap occurs.
+3.  **Visual:** The user sees the form instantly switch to scrollable.
+4.  **Verdict:** **ACCEPTABLE**. This is the intended behavior. Better to snap than to overflow.
+
+### 22.3 Vector 4: RestrictionsWidget Expansion Logic
+
+**Problem:** Does switching `hasBoundedHeight` actually work for `Expanded`?
+**Sequence:**
+1.  **Code Check:** `ParticipantRegistrationForm` uses `if (constraints.hasBoundedHeight) Expanded... else ...`.
+2.  **Verification:**
+    - **Desktop:** Height is bounded (pass-through from Row). `hasBoundedHeight` = true. Uses Expanded. ✅
+    - **Mobile/Scroll:** Height is unbounded (`SingleChildScrollView`). `hasBoundedHeight` = false. Uses `SizedBox(height: calculated)`. ✅
+3.  **Verdict:** **SAFE**. Logic is robust.
+
+### 22.4 Vector 7: Nested Scrolling (ZzaScrollable)
+
+**Problem:** `RestrictionsWidget` has a list. `Mobile Mode` wraps the whole form in a ScrollView.
+**Sequence:**
+1.  **Conflict:** Scrollable inside Scrollable.
+2.  **Mitigation:** `RestrictionsWidget` list uses `ShrinkWrap` or fixed height?
+    - **Current Code:** In unbounded mode, it uses a fixed `SizedBox` height.
+    - **Result:** It is a small scrollable window inside the main scrollable page.
+    - **Behavior:** User scrolls page to get to restrictions, then scrolls restrictions list. (Standard Flutter behavior).
+3.  **Verdict:** **SAFE**. No unbounded height crash.
 
 ---
 
@@ -1527,7 +1559,713 @@ Widget _buildLeftColumn(...) {
 
 ---
 
-## Changelog
+## 17. Second Round Critique (2026-01-06 v7)
+
+> **Focus:** 5 new areas not covered in first critique.  
+> **User preference:** Solutions that actively fit content to screen to avoid scroll wiggle.
+
+---
+
+### 17.1 Area 1: Test Compatibility (800x600)
+
+**Context:** Flutter widget tests run at default 800x600 logical pixels.
+
+**Current test files referencing intake form:**
+- `test/robots/intake_robot_test.dart` - Uses IntakeRobot
+- `test/first_use/first_use_test.dart` - Tests first use scenarios
+- `test/intake_duplicate_prevention_test.dart` - Logic tests (no UI)
+
+**Will our changes break tests at 800x600?**
+
+At 800x600:
+- IntakeMainContent's LayoutBuilder receives ~760x500 (after padding/appbar)
+- `isNarrow = AppBreakpoints.isMobile(760)` → 760 > 600 → **FALSE** (not mobile)
+- Goes to Row layout, NOT mobile CustomScrollView
+- Form gets 4/7 * 760 = ~434px width
+- `getColumnCount(434)` → 434 < 600 → **1 column**
+
+**After our change:**
+- Form receives bounded constraints from Row → Expanded
+- Form's LayoutBuilder sees 434px width (finite)
+- Column count = 1 ✅
+- hasBoundedHeight = true → Expanded restrictions ✅
+
+**Risk assessment:**
+- ✅ Should work correctly at 800x600
+- ⚠️ BUT: RestrictionsWidget in bounded mode uses `Expanded` → needs space
+- ⚠️ At 500px height, form + footer + restrictions might not fit
+
+**Test at 800x600 minimum height calculation:**
+```
+Available height: 600 - 56 (appbar) - 60 (IntakePersonRow) - 60 (IntakeBottomRow) = 424px for IntakeMainContent
+Form padding: 20px top/bottom = 384px for form content
+Form fields (9 rows @ ~48px): 432px ❌ OVERFLOW
+```
+
+**CRITICAL ISSUE:** At 800x600, form content (~432px) exceeds available height (~384px)!
+
+**Current solution:** SliverFillRemaining allows scroll inside form area.
+**After our change:** Direct placement → OVERFLOW crash.
+
+**Risk Level:** 🔴 **CRITICAL** - Tests will fail with layout overflow!
+
+**Mitigation needed:** Either:
+1. Keep scroll wrapper for `isCompact` (height < 600)
+2. OR use LayoutBuilder to detect when content exceeds height and add scroll
+
+---
+
+### 17.2 Area 2: RestrictionsWidget Internal Sizing
+
+**Current behavior in bounded mode:**
+```dart
+// restrictions_widget.dart
+if (widget.isBounded)
+  Expanded(child: _buildListContent()) // Take remaining space
+else
+  _buildBoundedList() // Fixed height based on screen
+```
+
+**`_buildBoundedList()` logic:**
+```dart
+final screenHeight = MediaQuery.sizeOf(context).height;
+final isBrief = screenHeight < 800;  // Local threshold!
+final targetItems = isBrief ? 2.7 : 3.7;
+final listHeight = getListHeight(context, itemCount: 1) * targetItems;
+```
+
+**Problem:** In unbounded mode, RestrictionsWidget uses `MediaQuery.sizeOf(context).height` (SCREEN height), not available container height.
+
+**After our change:**
+- Desktop: isBounded = true → Expanded → fills remaining space ✅
+- BUT if remaining space is tiny (user adds many form fields or small screen), restrictions list is cramped
+
+**Interaction with ZzaScrollable:**
+```dart
+// restrictions_widget.dart _buildListContent()
+return Scrollbar(
+  controller: _scrollController,
+  child: ZzaScrollable(
+    controller: _scrollController,
+    child: ListView.builder(...)
+  ),
+);
+```
+
+**ZzaScrollable** adds gradient overlays for scroll indication. If list is very short (< 3 items), gradients might look odd.
+
+**Risk Level:** 🟡 Medium - Visual polish issue, not functional failure.
+
+**Observation for "fit to screen" goal:**
+- RestrictionsWidget in bounded mode WILL fill remaining space
+- This helps avoid page-level scroll
+- List scrolling is internal (with scroll indicators) ✅
+
+---
+
+### 17.3 Area 3: VisualDensity / Input Density
+
+**User complaint:** Form inputs look too large/spacious for PC.
+
+**Current state:** No adaptive density implemented.
+
+**Our proposal doesn't address this.** We should note it as a separate issue.
+
+**Recommended approach (from web search):**
+```dart
+// In theme or form
+visualDensity: VisualDensity.adaptivePlatformDensity
+// OR explicitly:
+visualDensity: MediaQuery.sizeOf(context).width >= 900 
+    ? VisualDensity.compact 
+    : VisualDensity.standard
+```
+
+**This reduces input height by ~8-16px, making form more PC-friendly.**
+
+**Risk Level:** 🟡 Separate issue - Not blocking for current refactor.
+
+**Recommendation:** Add as Phase 3 task in implementation plan.
+
+---
+
+### 17.4 Area 4: Root Cause of Disappearing Bug (Unconfirmed)
+
+**Important:** We proposed a fix based on hypothesis, but haven't CONFIRMED the root cause.
+
+**Our hypothesis:**
+- SliverFillRemaining passes infinite cross-axis width
+- Form falls back to MediaQuery, gets wrong column count
+- At certain combinations, form might render with zero visible content
+
+**But we don't know WHY the form COMPLETELY DISAPPEARS at fullscreen.**
+
+**Screenshot analysis:**
+- "Second Column" header IS visible
+- File uploader IS visible  
+- Form (left column) is GONE
+
+**This suggests the LEFT side of the Row is the issue, not the form itself.**
+
+**Alternative hypotheses not yet explored:**
+
+**Hypothesis D: `_buildLeftColumn` returns something that collapses**
+```dart
+Widget _buildLeftColumn(...) {
+  if (isNarrow) { return participantRegistrationForm; }
+  if (isCompact) { return CustomScrollView(...); }
+  // Default Desktop:
+  return CustomScrollView(
+    slivers: [
+      SliverFillRemaining(hasScrollBody: false, child: form)
+    ],
+  );
+}
+```
+
+At fullscreen:
+- isNarrow = false (width > 600) ✅
+- isCompact = false (height > 600) ✅
+- Goes to default path → CustomScrollView with SliverFillRemaining
+
+**What if SliverFillRemaining with `hasScrollBody: false` and very large viewport behaves unexpectedly?**
+
+**Hypothesis E: CustomScrollView gets zero scroll extent**---
+
+### 21.5 Strategy 4: Reparenting via "KeyedSubtree"
+
+**Concept:**
+Wrap the form in `KeyedSubtree` with a unique key, instead of passing key to the widget itself.
+
+**Cycle Analysis:**
+1.  **Mechanism:** Similar to GlobalKey, but usually used with local keys to keep state *if* the widget stays in the same subtree.
+2.  **Limitation:** If we move the widget to a completely new parent (Row vs ScrollView), local keys often fail unless the framework sees them as the "same" element in a compatible location.
+3.  **Verdict:**
+    - **Status:** **Riskier than GlobalKey**. `GlobalKey` guarantees matching anywhere.
+
+---
+
+### 21.6 Strategy 5: The "Offstage Stack" (KeepAlive)
+
+**Concept:**
+Use `Stack` with two children: `Offstage(child: ScrollableForm)` and `Offstage(child: FixedForm)`. Toggle visibility.
+
+**Cycle Analysis:**
+1.  **State:** Both widgets are alive. State is preserved.
+2.  **Focus:** When Toggling, you must manually transfer focus from "Fixed Form field A" to "Scrollable Form field A".
+3.  **Fatal Flaw:** The User doesn't want to lose what they typed. Syncing text between two separate form instances is a nightmare.
+4.  **Verdict:**
+    - **Status:** **REJECTED**. Syncing state between two active widgets is harder than moving one widget.
+
+---
+
+### 21.7 Strategy 6: SliverLayoutBuilder Switching
+
+**Concept:**
+Stay purely in a `CustomScrollView`. Use `SliverLayoutBuilder`.
+- If tall: `SliverToBoxAdapter` (constrained height).
+- If short: `SliverToBoxAdapter` (unconstrained height) + Scroll Physics?
+
+**Cycle Analysis:**
+1.  **Complexity:** Slivers are powerful but "Fill Remaining" logic is hard to toggle conditionally without breaking `Expanded` children.
+2.  **Verdict:**
+    - **Status:** **REJECTED**. Valid in theory, but complexity is 10x higher than GlobalKey.
+
+---
+
+### 21.8 Final Implementation Verdict
+
+**Winner:** **Strategy 1: GlobalKey**.
+
+**Why?**
+- **Simplicity:** Least amount of code.
+- **Robustness:** Guarantees state preservation during the critical "Keyboard Up" event.
+- **Safety:** We verified cleanup (automatic) and uniqueness (local instantiation).
+
+**Refined Plan Actions:**
+1.  Instantiate `final GlobalKey<FormState> _formKey = GlobalKey<FormState>();` in `_IntakeMainContentState`.
+2.  Pass this key to `ParticipantRegistrationForm`.
+3.  Use `LayoutBuilder` to switch parents based on 500px threshold.
+
+---
+| Form fields section | Intrinsic height | None |
+| RestrictionsWidget | Expanded, fills remaining | Internal list only |
+| Right column (file viewer) | Fills 3/7 of Row via Expanded | None |
+
+**Result:** ✅ Page-level scroll is AVOIDED in desktop mode.
+
+**But:** This only works if form content fits within available height.
+
+**Edge case:** If form content (fields + checkboxes + restrictions header + input) exceeds available height, we have OVERFLOW.
+
+**Minimum content height estimate:**
+- Form fields (9 text fields @ ~56px dense or ~48px compact): ~450-500px
+- Checkboxes section: ~60px
+- Poznámka textarea: ~80px
+- Restrictions headers (2 sections): ~80px
+- Restrictions inputs (2 rows): ~100px
+- **Minimum form height: ~770-820px**
+
+**Available at 1080p:**
+- 1080 - 56 (appbar) - 60 (person row) - 60 (bottom row) - 40 (padding) = **864px**
+
+864px > 770px ✅ **Fits at Full HD!**
+
+**Available at 768p (720p laptop):**
+- 768 - 56 - 60 - 60 - 40 = **552px**
+
+552px < 770px ❌ **Doesn't fit! Need scroll.**
+
+**Conclusion:**
+- At 1080p+: Form fits, no scroll needed ✅
+- At 720p: Form doesn't fit, MUST have scroll fallback ⚠️
+- At 600px (test): Form won't fit at all, definitely needs scroll ⚠️
+
+---
+
+### 17.7 Second Round Summary
+
+| Area | Finding | Risk | Action |
+|------|---------|------|--------|
+| 1. Test compatibility | 800x600 height insufficient for form | 🔴 Critical | Keep scroll for small heights |
+| 2. RestrictionsWidget | Works correctly in bounded mode | 🟢 OK | None |
+| 3. VisualDensity | Not addressed, separate issue | 🟡 Medium | Add to Phase 3 |
+| 4. Root cause | Not confirmed, hypotheses only | 🟠 Medium | Add debug step |
+| 5. ZzaScrollable | No conflicts | 🟢 OK | None |
+
+---
+
+### 17.8 Revised Solution (v3)
+
+Based on both critiques, the solution needs adjustment:
+
+**Original v1:** Remove CustomScrollView, pass width parameter.  
+**Revised v2:** Remove CustomScrollView, don't pass width (use LayoutBuilder).  
+**Revised v3:** Keep conditional scroll based on **actual content vs available height**.
+
+**Proposed implementation:**
+
+```dart
+Widget _buildLeftColumn(...) {
+  // For narrow screens (mobile), use CustomScrollView (existing path)
+  if (isNarrow) {
+    return participantRegistrationForm;
+  }
+
+  // For desktop: Check if content will fit
+  // Use LayoutBuilder approach - if height is bounded AND sufficient, no scroll needed
+  // If height is bounded but insufficient, need scroll fallback
+  
+  // Simple approach: Just remove nested CustomScrollView, trust form's adaptation
+  // Form already handles hasBoundedHeight correctly
+  
+  return participantRegistrationForm;
+}
+```
+
+**But this still causes overflow at small heights!**
+
+**Better approach:**
+
+```dart
+Widget _buildLeftColumn(...) {
+  if (isNarrow) {
+    return participantRegistrationForm;
+  }
+  
+  // Desktop/Tablet: Form directly receives bounded constraints
+  // Form's internal logic handles MainAxisSize and Expanded
+  // BUT: If height is too small, form WILL overflow
+  
+  // Solution: Wrap in SingleChildScrollView only when needed
+  // We can't easily know "needed" without measuring, so...
+  
+  // Pragmatic approach: Trust the form's design
+  // Form was designed to work with bounded height (Expanded restrictions)
+  // At small heights, user must resize window or accept cramped restrictions
+  
+  return participantRegistrationForm;
+}
+```
+
+**Risk acceptance:**
+- At 1080p+: Works perfectly (fits to screen) ✅
+- At 720p: RestrictionsWidget gets ~80px (small but usable) ⚠️
+- At 600px (test): RestrictionsWidget gets ~30px (very cramped, might overflow) ⚠️
+
+**If 600px test height is critical, we need different strategy.**
+
+---
+
+## 18. Final Decision: Compact-First + Scroll Fallback (2026-01-06 v8)
+
+> **User Decision:** "Try to cramp it more but also the scroll might be needed"
+
+### 18.1 Approach
+
+**Primary goal:** Make form as compact as possible to fit on screen.  
+**Fallback:** Keep scroll for cases where it still doesn't fit.
+
+### 18.2 Compact Strategies
+
+| Strategy | Reduction | Implementation |
+|----------|-----------|----------------|
+| **VisualDensity.compact** | ~8-16px per input | Theme or InputDecoration |
+| **Reduce SizedBox gaps** | ~20-40px total | Use AppSpacing.xs instead of s |
+| **isDense: true on inputs** | Additional ~4px per input | InputDecoration.isDense |
+| **Compact checkboxes** | ~10-20px | Use smaller checkbox variant |
+
+**Estimated total height reduction:** ~80-120px
+
+**Revised minimum height:** ~650-700px (down from ~770px)
+
+### 18.3 Height Thresholds
+
+| Available Height | Mode | Form Behavior |
+|-----------------|------|---------------|
+| ≥700px | **Fit to screen** | No page scroll, RestrictionsWidget fills remaining |
+| 500-699px | **Compact scroll** | Light scroll, cramped restrictions |
+| <500px | **Full scroll** | SliverToBoxAdapter, form determines own height |
+
+### 18.4 Refined Solution (v4)
+
+```dart
+Widget _buildLeftColumn(BuildContext context, BoxConstraints constraints, bool isNarrow) {
+  if (isNarrow) {
+    // Mobile: Just return form, parent handles scroll
+    return participantRegistrationForm;
+  }
+
+  // Desktop/Tablet: Check available height
+  final availableHeight = constraints.maxHeight;
+  
+  if (availableHeight >= 700) {
+    // Tall enough: Form fits directly, RestrictionsWidget fills remaining
+    return participantRegistrationForm;
+  } else if (availableHeight >= 500) {
+    // Medium: Try to fit, but form might scroll internally
+    // Form still gets bounded constraints, but may not fit all content
+    return participantRegistrationForm;
+  } else {
+    // Very short: Use scroll wrapper
+    return SingleChildScrollView(
+      child: participantRegistrationForm,
+    );
+  }
+}
+```
+
+**Wait - this still has the problem:** At < 500px, `SingleChildScrollView` gives unbounded height, form's `Expanded(RestrictionsWidget)` will crash.
+
+**Better approach:**
+
+```dart
+Widget _buildLeftColumn(...) {
+  if (isNarrow) {
+    return participantRegistrationForm;
+  }
+  
+  // Desktop/Tablet: Always pass form directly
+  // Form handles MainAxisSize adaptation via hasBoundedHeight
+  // 1. If bounded & tall: Expanded restrictions, fits on screen
+  // 2. If bounded & short: Expanded restrictions, cramped but works
+  // 3. If unbounded: MainAxisSize.min, fixed-height restrictions
+  
+  // For very short heights where overflow is likely, wrap in scroll
+  // But scroll = unbounded = form adapts to MainAxisSize.min
+  
+  if (constraints.maxHeight < 500) {
+    return SingleChildScrollView(
+      child: participantRegistrationForm,
+    );
+  }
+  
+  // For ≥500px: Direct placement, form gets bounded constraints
+  return participantRegistrationForm;
+}
+```
+
+**This works because:**
+- At ≥500px: Form receives bounded height, uses `Expanded` restrictions
+- At <500px: Form receives unbounded height, uses fixed-height restrictions (shrink-wrap)
+
+### 18.5 Compact Form Changes (Phase 3)
+
+To reduce form height, implement in Phase 3:
+
+```dart
+// In participant_registration_form.dart or theme
+
+// Option 1: Apply at form level
+return Theme(
+  data: Theme.of(context).copyWith(
+    visualDensity: VisualDensity.compact,
+    inputDecorationTheme: InputDecorationTheme(
+      isDense: true,
+      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    ),
+  ),
+  child: existingFormContent,
+);
+
+// Option 2: Apply globally in zza_theme.dart
+// This would affect all forms in the app
+```
+
+### 18.6 Implementation Phases (Final)
+
+#### Phase 1: Fix Critical Layout Issue
+- [ ] Debug to confirm root cause of disappearing form
+- [ ] Remove nested CustomScrollView in `_buildLeftColumn`
+- [ ] Add height threshold check for scroll fallback
+- [ ] Test at multiple screen sizes
+
+#### Phase 2: Breakpoint Consistency  
+- [ ] Add `wideContentMaxWidth: 1600.0` to design system
+- [ ] Replace hardcoded gap with `AppSpacing.xxl`
+- [ ] Verify column calculation works correctly
+
+#### Phase 3: Compact Form
+- [ ] Implement `VisualDensity.compact` for PC
+- [ ] Reduce spacing between form elements
+- [ ] Add `isDense: true` to inputs
+- [ ] Test height reduction
+
+#### Phase 4: Polish
+- [ ] Test at all target screen sizes
+- [ ] Ensure 800x600 tests pass
+- [ ] Visual review
+
+### 18.7 Files to Modify
+
+| File | Changes | Phase |
+|------|---------|-------|
+| `intake_main_content.dart` | Remove CustomScrollView wrapper, add height check | 1 |
+| `app_breakpoints.dart` | Add wideContentMaxWidth constant | 2 |
+| `intake_main_content.dart` | Use AppSpacing.xxl for gap | 2 |
+| `participant_registration_form.dart` or `zza_theme.dart` | Compact density | 3 |
+
+---
+
+## 19. Container Behavior Verification (2026-01-06 v9)
+
+> **Purpose:** Verify all assumptions about widget behavior via web search. This prevents implementation failures due to incorrect assumptions.
+
+### 19.1 Verified Container Behaviors
+
+#### ✅ VERIFIED: Row + CrossAxisAlignment.stretch + Expanded
+
+**Assumption:** Row passes bounded height to Expanded children when CrossAxisAlignment.stretch is used.
+
+**Web Search Result:** ✅ CONFIRMED
+- `CrossAxisAlignment.stretch` propagates **tight vertical constraints** to children
+- Children are forced to match the maximum height provided to the Row
+- **CRITICAL REQUIREMENT:** Row itself MUST have bounded height from its parent
+- If Row has unbounded height → "BoxConstraints forces an infinite height" error
+
+**Impact on our solution:**
+- ✅ Our structure works: Scaffold → Column → Expanded → IntakeMainContent gives Row bounded height
+- ✅ Row's Expanded children (form, file viewer) will receive bounded height
+
+---
+
+#### ✅ VERIFIED: SingleChildScrollView passes UNBOUNDED height
+
+**Assumption:** SingleChildScrollView gives unbounded height constraints to its child.
+
+**Web Search Result:** ✅ CONFIRMED
+- SingleChildScrollView provides **unbounded height** to its child
+- Child can be infinitely tall (that's the point - it scrolls)
+- **Expanded inside will CRASH** - cannot expand into infinite space
+- Using Expanded/Flexible directly inside SingleChildScrollView causes errors
+
+**Impact on our solution:**
+- ⚠️ At <500px height, we wrap form in SingleChildScrollView
+- ⚠️ Form receives unbounded height → `hasBoundedHeight = false`
+- ✅ Form already handles this: uses `MainAxisSize.min` and non-Expanded restrictions
+- ✅ This is CORRECT behavior for scroll mode
+
+---
+
+#### ✅ VERIFIED: Column + Expanded constraint behavior
+
+**Assumption:** Expanded in Column receives tight constraints for remaining space.
+
+**Web Search Result:** ✅ CONFIRMED
+- Column first lays out non-flexible children
+- Calculates remaining space after non-flexible children
+- Expanded receives **tight constraints** for that remaining space
+- Child of Expanded is forced to fill exactly that space
+- Multiple Expanded widgets split space by flex ratio
+
+**Impact on our solution:**
+- ✅ Form's `Expanded(RestrictionsWidget)` will fill remaining space correctly
+- ✅ RestrictionsWidget internal list will take available space
+
+---
+
+#### ✅ VERIFIED: LayoutBuilder reports parent constraints
+
+**Assumption:** LayoutBuilder accurately reports constraints from its parent.
+
+**Web Search Result:** ✅ CONFIRMED
+- LayoutBuilder doesn't create constraints, it **reports** them
+- It receives constraints from immediate parent
+- `constraints.maxWidth/maxHeight` reflect what parent allows
+- Can be infinity if parent provides unbounded constraints
+
+**Impact on our solution:**
+- ✅ Form's LayoutBuilder will report FINITE width from Row → Expanded
+- ✅ No need to pass width explicitly - just remove the sliver wrapper
+- ✅ Column calculation will use correct constrained width
+
+---
+
+#### ✅ VERIFIED: MainAxisSize.max vs MainAxisSize.min
+
+**Assumption:** MainAxisSize.min shrink-wraps children and is safe with unbounded constraints.
+
+**Web Search Result:** ✅ CONFIRMED
+- `MainAxisSize.max`: Column fills all available space (fails with Expanded + unbounded)
+- `MainAxisSize.min`: Column shrink-wraps to children's size (safe with unbounded)
+- **Expanded inside MainAxisSize.min + unbounded = ERROR** (still crashes)
+- Solution: Don't use Expanded when receiving unbounded constraints
+
+**Impact on our solution:**
+- ✅ Form's logic is correct:
+  ```dart
+  mainAxisSize: constraints.hasBoundedHeight ? MainAxisSize.max : MainAxisSize.min
+  if (constraints.hasBoundedHeight)
+    Expanded(RestrictionsWidget)  // Only if bounded
+  else
+    RestrictionsWidget  // No Expanded if unbounded
+  ```
+- ✅ This handles both bounded and unbounded correctly
+
+---
+
+#### ✅ VERIFIED: constraints.hasBoundedHeight behavior
+
+**Assumption:** hasBoundedHeight correctly indicates if maxHeight is finite.
+
+**Web Search Result:** ✅ CONFIRMED
+- `hasBoundedHeight = true`: maxHeight has finite value
+- `hasBoundedHeight = false`: maxHeight is `double.infinity`
+- Widgets should check this before using Expanded
+- Common errors when ignoring this check
+
+**Impact on our solution:**
+- ✅ Form already checks `constraints.hasBoundedHeight`
+- ✅ Correctly adapts layout based on constraint type
+
+---
+
+### 19.2 Container Combinations in Our Solution
+
+#### Combination A: Bounded Path (Desktop ≥500px height)
+
+```
+Scaffold (screen height)
+└── Column (receives screen height)
+    ├── IntakePersonRow (~60px)
+    ├── Expanded → IntakeMainContent (remaining height)
+    │   └── LayoutBuilder (bounded width × bounded height)
+    │       └── Row (CrossAxisAlignment.stretch)
+    │           ├── Expanded(flex:4) → Form
+    │           │   └── form gets: width=4/7 of Row, height=Row height (BOUNDED)
+    │           │   └── hasBoundedHeight=TRUE
+    │           │   └── MainAxisSize.max, Expanded(RestrictionsWidget)
+    │           └── Expanded(flex:3) → FileViewer
+    └── IntakeBottomRow (~60px)
+```
+
+**Verification:** ✅ All assumptions confirmed by web search
+
+---
+
+#### Combination B: Unbounded Path (Compact <500px height)
+
+```
+Scaffold (screen height)
+└── Column
+    ├── IntakePersonRow
+    ├── Expanded → IntakeMainContent
+    │   └── LayoutBuilder
+    │       └── Row
+    │           ├── Expanded(flex:4) → SingleChildScrollView
+    │           │   └── Form
+    │           │       └── form gets: width=BOUNDED, height=UNBOUNDED
+    │           │       └── hasBoundedHeight=FALSE
+    │           │       └── MainAxisSize.min, RestrictionsWidget (no Expanded)
+    │           └── Expanded(flex:3) → FileViewer
+    └── IntakeBottomRow
+```
+
+**Verification:** ✅ All assumptions confirmed
+
+---
+
+#### Combination C: Mobile Path (width <600px)
+
+```
+IntakeMainContent
+└── LayoutBuilder (bounded)
+    └── CustomScrollView (existing mobile path)
+        └── SliverToBoxAdapter (form) - UNBOUNDED height
+        └── SliverToBoxAdapter (file viewer)
+```
+
+**Status:** 🟡 Not changing mobile path - assumed working
+
+---
+
+### 19.3 Assumption Critique Summary
+
+| Assumption | Source | Status | Notes |
+|------------|--------|--------|-------|
+| Row+stretch passes bounded height | web search | ✅ Confirmed | Requires Row to have bounded height |
+| SingleChildScrollView = unbounded | web search | ✅ Confirmed | Expanded crashes inside |
+| Column+Expanded = tight constraints | web search | ✅ Confirmed | Fills remaining space |
+| LayoutBuilder reports parent constraints | web search | ✅ Confirmed | Just reports, doesn't create |
+| MainAxisSize.min shrink-wraps | web search | ✅ Confirmed | Safe with unbounded |
+| hasBoundedHeight checks infinity | web search | ✅ Confirmed | Correct behavior |
+| Form adapts via hasBoundedHeight | code review | ✅ Confirmed | Already implemented correctly |
+
+---
+
+### 19.4 Critical Finding
+
+**All container behavior assumptions are CORRECT.**
+
+The proposed solution should work because:
+1. Desktop path: Form receives bounded constraints → uses Expanded → fits to screen ✅
+2. Compact path: Form receives unbounded constraints → shrink-wraps → scrolls ✅
+3. Form's existing `hasBoundedHeight` check handles both cases ✅
+
+**No changes needed to the form's internal constraint handling logic.**
+
+Only change needed: Remove the nested `CustomScrollView` wrapper in `_buildLeftColumn` so form receives proper bounded constraints from Row→Expanded.
+
+---
+
+## 20. Strict Solution Design Loop (2026-01-06 v10)
+
+> **Methodology:** Deep rigour. 
+> Loop: Problem → Search → Idea → Alt Search → Container Analysis → Impact Analysis → Refine → Code Quality → Finish.
+> **Goal:** 7 Fully vetted ideas.
+
+---
+
+### 20.1 Problem Definition (Refined)
+**"The Scroll Wiggle & Layout Paradox"**
+- **Goal:** Form should "fit to screen" (no scroll) on large devices to avoid wiggle and varying layout processing.
+- **Constraint:** Must scroll on small devices/content overflow.
+- **Context:** Form is inside `IntakeMainContent` → `Row` (on desktop) OR `CustomScrollView` (on mobile).
+- **Current Bug:** `SliverFillRemaining` passes infinite constraints logic, causing LayoutBuilder anomalies (disappearing form, wrong column count).
+- **Core Challenge:** Detecting *when* to scroll without causing layout oscillations or "unbounded height" crashes in `Expanded` children.
+
+---
+
 
 | Date | Version | Author | Change |
 |------|---------|--------|--------|
@@ -1536,5 +2274,8 @@ Widget _buildLeftColumn(...) {
 | 2026-01-06 | v3 | AI | Added decisions, constraint analysis |
 | 2026-01-06 | v4 | AI | Added visual analysis with screenshots, root cause hypotheses |
 | 2026-01-06 | v5 | AI | Added target spec, 9 idea evaluations, recommended solution |
-| 2026-01-06 | v6 | AI | **Added critical analysis: 6 weak spots, container interaction problems, revised recommendation** |
+| 2026-01-06 | v6 | AI | First critique: 6 weak spots, container interaction problems |
+| 2026-01-06 | v7 | AI | Second critique: test compatibility, height calculations |
+| 2026-01-06 | v8 | AI | Final decision: Compact-first + scroll fallback |
+| 2026-01-06 | v9 | AI | **Container behavior verification: All 6 assumptions confirmed via web search** |
 
