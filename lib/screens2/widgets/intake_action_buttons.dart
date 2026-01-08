@@ -27,6 +27,13 @@ class IntakeActionButtons extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+    final buttonPadding = isMobile
+        ? const EdgeInsets.symmetric(horizontal: 10, vertical: 8)
+        : const EdgeInsets.symmetric(horizontal: 16, vertical: 12);
+    final spacing = isMobile ? 6.0 : 10.0;
+    final iconSize = isMobile ? 18.0 : 24.0;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -35,48 +42,48 @@ class IntakeActionButtons extends StatelessWidget {
           child: ElevatedButton.icon(
             key: const Key('IntakeForm_saveAndArrived_button'),
             onPressed: () => handleSave(context, true),
-            icon: const Icon(Icons.check_circle, color: Colors.white),
-            label: const Text('uložit a přišel'),
+            icon: Icon(Icons.check_circle, color: Colors.white, size: iconSize),
+            label: isMobile ? const SizedBox.shrink() : const Text('uložit a přišel'),
             style: ElevatedButton.styleFrom(
               foregroundColor: Colors.white,
               backgroundColor: Colors.green,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: buttonPadding,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
           ),
         ),
-        const SizedBox(width: 10),
+        SizedBox(width: spacing),
         Tooltip(
           message: 'uložit',
           child: ElevatedButton.icon(
             key: const Key('IntakeForm_save_button'),
             onPressed: () => handleSave(context, false),
-            icon: const Icon(Icons.save, color: Colors.white),
-            label: const Text('uložit'),
+            icon: Icon(Icons.save, color: Colors.white, size: iconSize),
+            label: isMobile ? const SizedBox.shrink() : const Text('uložit'),
             style: ElevatedButton.styleFrom(
               foregroundColor: Colors.white,
               backgroundColor: Colors.blue,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: buttonPadding,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
           ),
         ),
-        const SizedBox(width: 10),
+        SizedBox(width: spacing),
         Tooltip(
           message: 'neukládat',
           child: ElevatedButton.icon(
             key: const Key('IntakeForm_cancel_button'),
             onPressed: onCancel,
-            icon: const Icon(Icons.cancel, color: Colors.white),
-            label: const Text('neukládat'),
+            icon: Icon(Icons.cancel, color: Colors.white, size: iconSize),
+            label: isMobile ? const SizedBox.shrink() : const Text('neukládat'),
             style: ElevatedButton.styleFrom(
               foregroundColor: Colors.white,
               backgroundColor: Colors.red,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: buttonPadding,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),

@@ -1,8 +1,8 @@
 # Responsive Intake Form Refactor - Master Planning Document
 
 > **Created:** 2026-01-06  
-> **Last Updated:** 2026-01-06 v4  
-> **Status:** 🔄 Active Planning - Gap Analysis Complete  
+> **Last Updated:** 2026-01-08 v5  
+> **Status:** ✅ Mobile PageView Layout Implemented  
 > **Priority:** High - Core workflow screen
 
 ---
@@ -85,6 +85,23 @@ This document tracks our efforts to properly implement responsive/adaptive desig
 **Why It Failed:** Parent had unbounded height (was inside a Column without fixed height) → RenderFlex children have non-zero flex but incoming height constraints are unbounded  
 **Lesson Learned:** `Expanded` only works when parent HAS a finite size to expand INTO
 
+#### Horizontal PageView for Mobile Layout
+**Date:** 2026-01-08 v5  
+**Files Modified:** `intake_main_content.dart`  
+**Problem Addressed:** Mobile layout cramped - Form and FileViewer stacked vertically with FileViewer capped at 400px  
+**What We Tried:** Replace `CustomScrollView` with horizontal `PageView` on mobile:
+- Page 1: Form (scrolls vertically internally via `SingleChildScrollView`)
+- Page 2: FileViewer (full height via `Expanded`)
+- Added status bar showing file status + swipe hint
+- Added page dots indicator at bottom  
+**Result:** ✅ Success  
+**Why It Worked:** 
+- Each section gets full screen height ("its own proper space")
+- Horizontal swipe avoids gesture conflict with vertical scroll/zoom
+- Form and FileViewer no longer compete for limited vertical space
+- Status bar signals file presence and swipe navigation  
+**Lesson Learned:** PageView provides clean snap behavior between distinct content sections
+
 ---
 
 ## 3. Decisions Log
@@ -114,7 +131,19 @@ This document tracks our efforts to properly implement responsive/adaptive desig
 **Context:** Form inputs look too large/spacious for PC mouse+keyboard use  
 **Chosen:** Implement smart density system - compact on PC, standard on touch devices  
 **Constraints:** Must prevent extremes (e.g., font size 5px)  
-**Status:** 🔶 Needs deeper analysis during implementation
+**Status:** ✅ Implemented
+
+### Decision: Mobile layout uses horizontal PageView
+**Date:** 2026-01-08 v5  
+**Context:** Mobile layout was cramped with stacked Form + FileViewer scrolling together  
+**Problem:** User couldn't see enough of PDF/image preview; FileViewer was capped at 400px  
+**Chosen:** Replace CustomScrollView with horizontal PageView on mobile:
+- Page 1: Form (scrolls vertically internally)
+- Page 2: FileViewer (full height)
+- Status bar shows file status + swipe hint
+- Page dots indicator at bottom  
+**Result:** Each section gets full screen height ("its own proper space")  
+**Status:** ✅ Implemented
 
 ---
 

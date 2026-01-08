@@ -7,6 +7,7 @@ import 'file_viewer_screen_widget.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/design_system/tokens/app_breakpoints.dart';
 import 'package:denik_zza/screens2/widgets/zza_scrollable.dart';
+import 'package:denik_zza/design_system/tokens/app_colors.dart';
 
 class IntakeMainContent extends StatefulWidget {
   final MemoryOsoba? selectedPerson;
@@ -28,10 +29,19 @@ class IntakeMainContent extends StatefulWidget {
 
 class _IntakeMainContentState extends State<IntakeMainContent> {
   final ScrollController _formScrollController = ScrollController();
+  final PageController _pageController = PageController();
+
+  /// Checks if a file has been uploaded for the selected person
+  bool get _hasUploadedFile {
+    return widget.zpusobilostFolder != null &&
+        widget.selectedPerson?.potvrzeniPath != null &&
+        widget.selectedPerson!.potvrzeniPath!.isNotEmpty;
+  }
 
   @override
   void dispose() {
     _formScrollController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -47,23 +57,41 @@ class _IntakeMainContentState extends State<IntakeMainContent> {
 
 
           if (isNarrow) {
-            // Mobile: Stack vertically with scrolling (Global Scroll)
-            return CustomScrollView(
-              slivers: [
-                // SWAPPED: Form First (Requested via User Feedback)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 16.0),
-                    child: _buildLeftColumn(
-                        context, constraints, isNarrow), // Form (Unbounded)
-                  ),
-                ),
-                // Camera/Gallery Second
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 16.0),
-                    child: _buildRightColumn(
-                        context, constraints, isNarrow), // Camera/Gallery
+            // Mobile: Horizontal PageView with status bar and page dots
+            return Column(
+              children: [
+                // Status Bar showing file status + swipe hint
+                _buildFileStatusBar(),
+                // PageView with form and file viewer
+                Expanded(
+                  child: Stack(
+                    children: [
+                      PageView(
+                        controller: _pageController,
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          // Page 1: Form (scrolls vertically)
+                          SingleChildScrollView(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: _buildLeftColumn(context, constraints, isNarrow),
+                          ),
+                          // Page 2: FileViewer (full height)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: _buildRightColumn(
+                                context, constraints, isNarrow,
+                                isPageView: true),
+                          ),
+                        ],
+                      ),
+                      // Page indicator dots at bottom
+                      Positioned(
+                        bottom: 12,
+                        left: 0,
+                        right: 0,
+                        child: Center(child: _buildPageDots()),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -158,13 +186,16 @@ class _IntakeMainContentState extends State<IntakeMainContent> {
   }
 
   Widget _buildRightColumn(
-      BuildContext context, BoxConstraints parentConstraints, bool isNarrow) {
+      BuildContext context, BoxConstraints parentConstraints, bool isNarrow,
+      {bool isPageView = false}) {
     final child = Column(
       mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (!isNarrow)
           Expanded(child: _buildFileViewer())
+        else if (isPageView)
+          Expanded(child: _buildFileViewer())  // Full height in PageView
         else
           ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 400),
@@ -189,5 +220,64 @@ class _IntakeMainContentState extends State<IntakeMainContent> {
     } else {
       return FileViewerLogic(onFileUploaded: widget.onFileUploaded);
     }
+  }
+
+  /// Status bar showing file status and swipe hint
+  Widget _buildFileStatusBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      color: _hasUploadedFile ? Colors.green.shade50 : Colors.grey.shade100,
+      child: Row(
+        children: [
+          Icon(
+            _hasUploadedFile ? Icons.insert_drive_file : Icons.add_photo_alternate,
+            size: 16,
+            color: _hasUploadedFile ? Colors.green : Colors.grey,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            _hasUploadedFile ? 'Soubor nahrán' : 'Žádný soubor',
+            style: TextStyle(
+              fontSize: 12,
+              color: _hasUploadedFile ? Colors.green.shade700 : Colors.grey,
+            ),
+          ),
+          const Spacer(),
+          const Icon(Icons.swipe, size: 14, color: Colors.grey),
+          const Text(' ←→', style: TextStyle(fontSize: 11, color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+
+  /// Page indicator dots for PageView
+  Widget _buildPageDots() {
+    return ListenableBuilder(
+      listenable: _pageController,
+      builder: (context, child) {
+        final page = _pageController.hasClients
+            ? (_pageController.page?.round() ?? 0)
+            : 0;
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _dot(active: page == 0),
+            const SizedBox(width: 8),
+            _dot(active: page == 1),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _dot({required bool active}) {
+    return Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: active ? AppColors.blueText : Colors.grey.shade300,
+      ),
+    );
   }
 }

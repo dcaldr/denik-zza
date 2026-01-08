@@ -18,14 +18,18 @@ class IntakePersonRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+    
     return Padding(
-      padding: AppSpacing.containerPadding,
+      padding: isMobile
+          ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
+          : AppSpacing.containerPadding,
       child: Row(
         children: [
-          const Text('Select Person: '),
+          if (!isMobile) const Text('Select Person: '),
           Expanded(
             child: Container(
-              padding: EdgeInsets.all(AppSpacing.xs),
+              padding: EdgeInsets.all(isMobile ? 2 : AppSpacing.xs),
               child: PersonAutocomplete(
                 onPersonSelected: onPersonSelected,
                 onRefresh: onRefresh,
