@@ -6,12 +6,37 @@ import 'package:logger/logger.dart';
 import 'package:path/path.dart' as path;
 import 'package:printing/printing.dart';
 
+/// Function type for reading file bytes.
+/// Used for dependency injection in tests.
+typedef FileReader = Future<Uint8List?> Function(String filePath);
+
+/// Default file reader implementation using dart:io File.
+/// Returns null if file doesn't exist, throws on read errors.
+Future<Uint8List?> defaultFileReader(String filePath) async {
+  final file = File(filePath);
+  if (!await file.exists()) {
+    return null;
+  }
+  return await file.readAsBytes();
+}
+
 /// Widget for viewing PDF and image files with async loading,
 /// error handling, and progressive image display.
+///
+/// Supports dependency injection of [fileReader] for testability.
 class FileViewerScreen extends StatefulWidget {
   final String initialFilePath;
 
-  const FileViewerScreen({super.key, required this.initialFilePath});
+  /// Optional file reader for dependency injection.
+  /// Defaults to [defaultFileReader] which uses dart:io File.
+  /// In tests, inject a mock that returns test bytes directly.
+  final FileReader? fileReader;
+
+  const FileViewerScreen({
+    super.key,
+    required this.initialFilePath,
+    this.fileReader,
+  });
 
   @override
   State<FileViewerScreen> createState() => _FileViewerScreenState();
@@ -28,6 +53,9 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
 
   // Race condition prevention - tracks current load operation
   int _loadId = 0;
+
+  /// Gets the file reader to use (injected or default)
+  FileReader get _fileReader => widget.fileReader ?? defaultFileReader;
 
   @override
   void initState() {
@@ -69,23 +97,19 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
       _errorMessage = null;
     });
 
-    final file = File(filePath);
+    try {
+      final bytes = await _fileReader(filePath);
 
-    // Check file exists
-    if (!await file.exists()) {
-      if (mounted && _loadId == currentLoadId) {
+      if (!mounted || _loadId != currentLoadId) return;
+
+      if (bytes == null) {
+        // File doesn't exist
         setState(() {
           _isLoading = false;
           _errorMessage = 'Soubor nenalezen: ${path.basename(filePath)}';
         });
-      }
-      return;
-    }
-
-    // Read file bytes
-    try {
-      final bytes = await file.readAsBytes();
-      if (mounted && _loadId == currentLoadId) {
+      } else {
+        // Success
         setState(() {
           _fileBytes = bytes;
           _isLoading = false;
