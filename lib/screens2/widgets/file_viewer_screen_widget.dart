@@ -1,10 +1,13 @@
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as path;
 import 'package:printing/printing.dart';
-import 'dart:io';
 
+/// Widget for viewing PDF and image files with async loading,
+/// error handling, and progressive image display.
 class FileViewerScreen extends StatefulWidget {
   final String initialFilePath;
 
@@ -18,28 +21,125 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
   late String filePath;
   final Logger _logger = AppLogger.l;
 
+  // Async loading state
+  bool _isLoading = true;
+  String? _errorMessage;
+  Uint8List? _fileBytes;
+
+  // Race condition prevention - tracks current load operation
+  int _loadId = 0;
+
   @override
   void initState() {
     super.initState();
     filePath = widget.initialFilePath;
-    _logger.i('filePath in init: $filePath');
+    _logger.i('FileViewerScreen initialized: $filePath');
+    _loadFileAsync();
   }
 
-  void updateFilePath(String newFilePath) {
+  @override
+  void didUpdateWidget(FileViewerScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialFilePath != widget.initialFilePath) {
+      // Validate new path
+      if (widget.initialFilePath.isEmpty) {
+        setState(() {
+          filePath = widget.initialFilePath;
+          _fileBytes = null;
+          _errorMessage = 'Není vybrán žádný soubor';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      filePath = widget.initialFilePath;
+      _fileBytes = null; // Clear old bytes
+      _errorMessage = null;
+      _logger.i('FileViewerScreen path updated: $filePath');
+      _loadFileAsync();
+    }
+  }
+
+  /// Loads file bytes asynchronously with race condition protection.
+  Future<void> _loadFileAsync() async {
+    final currentLoadId = ++_loadId; // Capture current load ID
+
     setState(() {
-      filePath = newFilePath;
-      _logger.i('filePath in update: $filePath');
+      _isLoading = true;
+      _errorMessage = null;
     });
+
+    final file = File(filePath);
+
+    // Check file exists
+    if (!await file.exists()) {
+      if (mounted && _loadId == currentLoadId) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Soubor nenalezen: ${path.basename(filePath)}';
+        });
+      }
+      return;
+    }
+
+    // Read file bytes
+    try {
+      final bytes = await file.readAsBytes();
+      if (mounted && _loadId == currentLoadId) {
+        setState(() {
+          _fileBytes = bytes;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      _logger.e('Failed to read file: $e');
+      if (mounted && _loadId == currentLoadId) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Nepodařilo se načíst soubor';
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final String extension = path.extension(filePath).toLowerCase();
-    _logger.i('extension: $extension');
+    // Loading state
+    if (_isLoading) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 8),
+            Text('Načítám soubor...'),
+          ],
+        ),
+      );
+    }
 
-    return Scaffold(
-      body: _buildView(extension),
-    );
+    // Error state
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 8),
+            Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadFileAsync,
+              child: const Text('Zkusit znovu'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Success - show content based on extension
+    final String extension = path.extension(filePath).toLowerCase();
+    return _buildView(extension);
   }
 
   Widget _buildView(String extension) {
@@ -50,24 +150,18 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
         extension == '.png') {
       return _buildImageView();
     } else {
-      return const Center(child: Text('Unsupported file type'));
+      return const Center(child: Text('Nepodporovaný formát souboru'));
     }
   }
 
   Widget _buildPDFView() {
-    // Use LayoutBuilder for parent-relative sizing.
-    // MediaQuery.of(context).size gives global screen size, not available space.
+    // LayoutBuilder needed for maxPageWidth calculation
+    // No Container with 80%/90% constraints - PdfPreview fills available space
     return LayoutBuilder(
       builder: (context, constraints) {
-        return Container(
-          constraints: BoxConstraints(
-            maxHeight: constraints.maxHeight * 0.8,
-            maxWidth: constraints.maxWidth * 0.9,
-          ),
-          child: PdfPreview(
-            build: (format) => File(filePath).readAsBytesSync(),
-            maxPageWidth: constraints.maxWidth * 2,
-          ),
+        return PdfPreview(
+          build: (format) => _fileBytes!,
+          maxPageWidth: constraints.maxWidth * 2,
         );
       },
     );
@@ -79,14 +173,30 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
         return InteractiveViewer(
           minScale: 0.2,
           maxScale: 10,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: constraints.maxHeight,
-              maxWidth: constraints.maxWidth,
-            ),
-            child: Image.file(
-              File(filePath),
+          child: Center(
+            child: Image.memory(
+              _fileBytes!,
               fit: BoxFit.contain,
+              // Handle sync vs async loading - show spinner until decoded
+              frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                if (wasSynchronouslyLoaded || frame != null) {
+                  return child;
+                }
+                return const Center(child: CircularProgressIndicator());
+              },
+              // Handle decode errors (corrupted images)
+              errorBuilder: (context, error, stackTrace) {
+                return const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                      SizedBox(height: 8),
+                      Text('Obrázek nelze zobrazit'),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         );

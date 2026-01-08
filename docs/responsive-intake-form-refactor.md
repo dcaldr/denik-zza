@@ -85,6 +85,25 @@ This document tracks our efforts to properly implement responsive/adaptive desig
 **Why It Failed:** Parent had unbounded height (was inside a Column without fixed height) → RenderFlex children have non-zero flex but incoming height constraints are unbounded  
 **Lesson Learned:** `Expanded` only works when parent HAS a finite size to expand INTO
 
+#### FileViewerScreen Async Loading Refactor  
+**Date:** 2026-01-08 v6  
+**Files Modified:** `file_viewer_screen_widget.dart`  
+**Problem Addressed:** PDF viewer capped at 80% height (gap below), sync file read, no error handling, nested Scaffold, logger spam  
+**What We Tried:** Complete refactor with:
+- Removed 80%/90% Container constraints (caused gap)
+- Removed nested Scaffold wrapper (unnecessary)
+- Moved logger from build() to initState() (prevents spam)
+- Added async file loading with `_loadId` race condition protection
+- Added loading spinner and error states with retry button
+- Added Image.memory `errorBuilder` and `frameBuilder`  
+**Result:** ✅ Success  
+**Issues Found During Analysis:**
+1. Race condition on rapid file changes → fixed with `_loadId` tracking
+2. Image decode errors unhandled → fixed with `errorBuilder`
+3. Empty path validation missing → fixed in `didUpdateWidget`
+4. Dead code (`updateFilePath` method) → removed  
+**Lesson Learned:** Deep self-healing analysis caught 4 issues before implementation
+
 #### Horizontal PageView for Mobile Layout
 **Date:** 2026-01-08 v5  
 **Files Modified:** `intake_main_content.dart`  
