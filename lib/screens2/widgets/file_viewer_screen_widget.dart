@@ -24,6 +24,10 @@ Future<Uint8List?> defaultFileReader(String filePath) async {
 /// error handling, and progressive image display.
 ///
 /// Supports dependency injection of [fileReader] for testability.
+/// 
+/// For state preservation across layout changes:
+/// - Pass [cachedBytes] to skip loading (uses pre-loaded bytes)
+/// - Use [onBytesLoaded] callback to cache bytes in parent
 class FileViewerScreen extends StatefulWidget {
   final String initialFilePath;
 
@@ -32,10 +36,21 @@ class FileViewerScreen extends StatefulWidget {
   /// In tests, inject a mock that returns test bytes directly.
   final FileReader? fileReader;
 
+  /// Pre-loaded bytes to use instead of loading from disk.
+  /// When provided, skips file loading entirely.
+  /// Used for state preservation across layout changes.
+  final Uint8List? cachedBytes;
+
+  /// Callback when bytes are successfully loaded from disk.
+  /// Parent can cache these bytes and pass back via [cachedBytes].
+  final void Function(Uint8List bytes, String forPath)? onBytesLoaded;
+
   const FileViewerScreen({
     super.key,
     required this.initialFilePath,
     this.fileReader,
+    this.cachedBytes,
+    this.onBytesLoaded,
   });
 
   @override
@@ -62,7 +77,15 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
     super.initState();
     filePath = widget.initialFilePath;
     _logger.i('FileViewerScreen initialized: $filePath');
-    _loadFileAsync();
+    
+    // Use cached bytes if provided
+    if (widget.cachedBytes != null) {
+      _fileBytes = widget.cachedBytes;
+      _isLoading = false;
+      _logger.i('Using cached bytes for: $filePath');
+    } else {
+      _loadFileAsync();
+    }
   }
 
   @override
@@ -109,7 +132,8 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
           _errorMessage = 'Soubor nenalezen: ${path.basename(filePath)}';
         });
       } else {
-        // Success
+        // Success - notify parent for caching
+        widget.onBytesLoaded?.call(bytes, filePath);
         setState(() {
           _fileBytes = bytes;
           _isLoading = false;

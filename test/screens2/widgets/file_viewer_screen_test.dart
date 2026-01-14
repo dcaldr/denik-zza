@@ -548,6 +548,111 @@ void main() {
       expect(find.byType(Scaffold), findsOneWidget);
     }, timeout: Timeout(Duration(seconds: 10)));
   });
+
+  // ============================================================
+  // GROUP 9: State Preservation Tests
+  // ============================================================
+  group('State Preservation (cachedBytes)', () {
+    testWidgets('uses cachedBytes instead of loading from disk', (tester) async {
+      // Given: Pre-loaded cached bytes
+      final cachedBytes = createMinimalPng();
+      var fileReaderCalled = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 400,
+              height: 600,
+              child: FileViewerScreen(
+                initialFilePath: 'cached.png',
+                cachedBytes: cachedBytes,
+                fileReader: (path) async {
+                  fileReaderCalled = true;
+                  return cachedBytes;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Let the widget build
+      await tester.pump();
+
+      // Then: Should NOT have called fileReader since we have cachedBytes
+      expect(fileReaderCalled, false);
+    }, timeout: Timeout(Duration(seconds: 10)));
+
+    testWidgets('calls onBytesLoaded when bytes loaded from disk', (tester) async {
+      // Given: No cached bytes, track callback
+      Uint8List? loadedBytes;
+      String? loadedPath;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 400,
+              height: 600,
+              child: FileViewerScreen(
+                initialFilePath: 'new_file.png',
+                cachedBytes: null,
+                onBytesLoaded: (bytes, path) {
+                  loadedBytes = bytes;
+                  loadedPath = path;
+                },
+                fileReader: (path) async => createMinimalPng(),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Wait for load to complete
+      await tester.pump();
+      await tester.pump();
+      await tester.pump();
+
+      // Then: Callback should have been called with bytes and path
+      expect(loadedBytes, isNotNull);
+      expect(loadedPath, 'new_file.png');
+      expect(loadedBytes!.length, greaterThan(0));
+    }, timeout: Timeout(Duration(seconds: 10)));
+
+    testWidgets('does NOT call onBytesLoaded when using cachedBytes', (tester) async {
+      // Given: Using cached bytes
+      var callbackCalled = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 400,
+              height: 600,
+              child: FileViewerScreen(
+                initialFilePath: 'cached.png',
+                cachedBytes: createMinimalPng(),
+                onBytesLoaded: (bytes, path) {
+                  callbackCalled = true;
+                },
+                fileReader: (path) async => createMinimalPng(),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump();
+      await tester.pump();
+
+      // Then: Callback should NOT have been called (no disk load)
+      expect(callbackCalled, false);
+      // And: Image should display
+      expect(find.byType(InteractiveViewer), findsOneWidget);
+    }, timeout: Timeout(Duration(seconds: 10)));
+  });
 }
 
 // ============================================================

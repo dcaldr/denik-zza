@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../../database/in_memory_structures_tmp/memory_osoba.dart';
 import '../participant_registration_form.dart';
@@ -8,6 +10,16 @@ import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/design_system/tokens/app_breakpoints.dart';
 import 'package:denik_zza/screens2/widgets/zza_scrollable.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
+
+/// Custom ScrollBehavior that enables mouse drag for PageView on desktop.
+class _MouseDragScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    ...super.dragDevices,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+  };
+}
 
 class IntakeMainContent extends StatefulWidget {
   final MemoryOsoba? selectedPerson;
@@ -31,6 +43,10 @@ class _IntakeMainContentState extends State<IntakeMainContent> {
   final ScrollController _formScrollController = ScrollController();
   final PageController _pageController = PageController();
 
+  // File cache for state preservation across layout changes
+  String? _cachedFilePath;
+  Uint8List? _cachedFileBytes;
+
   /// Checks if a file has been uploaded for the selected person
   bool get _hasUploadedFile {
     return widget.zpusobilostFolder != null &&
@@ -38,11 +54,67 @@ class _IntakeMainContentState extends State<IntakeMainContent> {
         widget.selectedPerson!.potvrzeniPath!.isNotEmpty;
   }
 
+  /// Gets the full file path for the current person's file
+  String? _buildFullFilePath() {
+    if (!_hasUploadedFile) return null;
+    return '${widget.zpusobilostFolder!.path}/${widget.selectedPerson!.potvrzeniPath}';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Clear focus when page changes for accessibility
+    _pageController.addListener(_onPageChanged);
+  }
+
+  void _onPageChanged() {
+    // Unfocus any text fields when switching pages
+    FocusScope.of(context).unfocus();
+  }
+
   @override
   void dispose() {
+    _pageController.removeListener(_onPageChanged);
     _formScrollController.dispose();
     _pageController.dispose();
     super.dispose();
+  }
+
+  /// Stable callback for file bytes loaded (avoids closure allocation per build)
+  void _handleBytesLoaded(Uint8List bytes, String forPath) {
+    // Only cache if still same file (person hasn't changed)
+    final currentPath = _buildFullFilePath();
+    if (forPath == currentPath) {
+      setState(() {
+        _cachedFilePath = forPath;
+        _cachedFileBytes = bytes;
+      });
+    }
+  }
+
+  /// Navigate to previous page
+  void _goToPreviousPage() {
+    _pageController.previousPage(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  /// Navigate to next page
+  void _goToNextPage() {
+    _pageController.nextPage(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  /// Navigate to specific page (for clickable dots)
+  void _goToPage(int page) {
+    _pageController.animateToPage(
+      page,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
@@ -66,30 +138,77 @@ class _IntakeMainContentState extends State<IntakeMainContent> {
                 Expanded(
                   child: Stack(
                     children: [
-                      PageView(
-                        controller: _pageController,
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          // Page 1: Form (scrolls vertically)
-                          SingleChildScrollView(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: _buildLeftColumn(context, constraints, isNarrow),
-                          ),
-                          // Page 2: FileViewer (full height)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: _buildRightColumn(
-                                context, constraints, isNarrow,
-                                isPageView: true),
-                          ),
-                        ],
+                      // Wrap PageView in ScrollConfiguration for mouse drag on PC
+                      ScrollConfiguration(
+                        behavior: _MouseDragScrollBehavior(),
+                        child: PageView(
+                          controller: _pageController,
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            // Page 1: Form (scrolls vertically)
+                            SingleChildScrollView(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: _buildLeftColumn(context, constraints, isNarrow),
+                            ),
+                            // Page 2: FileViewer (full height with save hint)
+                            Column(
+                              children: [
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: _buildRightColumn(
+                                        context, constraints, isNarrow,
+                                        isPageView: true),
+                                  ),
+                                ),
+                                // Hint for save button location
+                                Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  child: Text(
+                                    'Přejeďte zpět pro uložení',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                      // Page indicator dots at bottom
+                      // Left arrow button
+                      Positioned(
+                        left: 4,
+                        top: 0,
+                        bottom: 40, // Leave room for dots
+                        child: Center(
+                          child: _buildArrowButton(
+                            icon: Icons.chevron_left,
+                            onPressed: _goToPreviousPage,
+                            tooltip: 'Předchozí stránka',
+                          ),
+                        ),
+                      ),
+                      // Right arrow button
+                      Positioned(
+                        right: 4,
+                        top: 0,
+                        bottom: 40,
+                        child: Center(
+                          child: _buildArrowButton(
+                            icon: Icons.chevron_right,
+                            onPressed: _goToNextPage,
+                            tooltip: 'Další stránka',
+                          ),
+                        ),
+                      ),
+                      // Clickable page indicator dots at bottom
                       Positioned(
                         bottom: 12,
                         left: 0,
                         right: 0,
-                        child: Center(child: _buildPageDots()),
+                        child: Center(child: _buildClickablePageDots()),
                       ),
                     ],
                   ),
@@ -209,14 +328,24 @@ class _IntakeMainContentState extends State<IntakeMainContent> {
   }
 
   Widget _buildFileViewer() {
-    final hasFile = widget.zpusobilostFolder != null &&
-        widget.selectedPerson?.potvrzeniPath != null &&
-        widget.selectedPerson!.potvrzeniPath!.isNotEmpty;
+    final currentPath = _buildFullFilePath();
 
-    if (hasFile) {
+    if (currentPath != null) {
+      // Clear cache if path changed (different person selected)
+      Uint8List? bytesToUse;
+      if (_cachedFilePath == currentPath) {
+        bytesToUse = _cachedFileBytes;
+      } else {
+        // Path changed, clear old cache
+        _cachedFilePath = null;
+        _cachedFileBytes = null;
+      }
+
       return FileViewerScreen(
-          initialFilePath:
-              '${widget.zpusobilostFolder!.path}/${widget.selectedPerson!.potvrzeniPath}');
+        initialFilePath: currentPath,
+        cachedBytes: bytesToUse,
+        onBytesLoaded: _handleBytesLoaded,
+      );
     } else {
       return FileViewerLogic(onFileUploaded: widget.onFileUploaded);
     }
@@ -250,8 +379,8 @@ class _IntakeMainContentState extends State<IntakeMainContent> {
     );
   }
 
-  /// Page indicator dots for PageView
-  Widget _buildPageDots() {
+  /// Clickable page indicator dots with larger touch targets
+  Widget _buildClickablePageDots() {
     return ListenableBuilder(
       listenable: _pageController,
       builder: (context, child) {
@@ -261,22 +390,48 @@ class _IntakeMainContentState extends State<IntakeMainContent> {
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _dot(active: page == 0),
-            const SizedBox(width: 8),
-            _dot(active: page == 1),
+            _clickableDot(active: page == 0, targetPage: 0),
+            const SizedBox(width: 12),
+            _clickableDot(active: page == 1, targetPage: 1),
           ],
         );
       },
     );
   }
 
-  Widget _dot({required bool active}) {
-    return Container(
-      width: 8,
-      height: 8,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: active ? AppColors.blueText : Colors.grey.shade300,
+  /// Clickable page indicator dot with larger touch target (24x24)
+  Widget _clickableDot({required bool active, required int targetPage}) {
+    return GestureDetector(
+      onTap: () => _goToPage(targetPage),
+      child: Container(
+        width: 24,
+        height: 24,
+        alignment: Alignment.center,
+        child: Container(
+          width: active ? 10 : 8,
+          height: active ? 10 : 8,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: active ? AppColors.blueText : Colors.grey.shade400,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Arrow button for PageView navigation with accessibility support
+  Widget _buildArrowButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    required String tooltip,
+  }) {
+    return IconButton(
+      icon: Icon(icon, size: 28, color: Colors.grey.shade600),
+      onPressed: onPressed,
+      tooltip: tooltip,
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.white.withValues(alpha: 0.7),
+        shape: const CircleBorder(),
       ),
     );
   }
