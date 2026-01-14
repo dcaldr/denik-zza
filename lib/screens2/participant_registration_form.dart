@@ -304,10 +304,10 @@ class ParticipantRegistrationFormState
             : MediaQuery.sizeOf(context).width;
 
         // 2. Determine Column Count (Responsive Grid)
-        // Use SCREEN WIDTH to determine capability (device class).
-        // Even if form is in a split view (60% width), a Desktop (1920 wide)
-        // has enough resolution/DPI to handle 3 columns of data.
-        final columnCount = AppBreakpoints.getColumnCount(MediaQuery.sizeOf(context).width);
+        // Use CONSTRAINTS width for proper split-screen support.
+        // This ensures the form adapts to its actual available space,
+        // not the full screen width.
+        final columnCount = AppBreakpoints.getColumnCount(width);
 
         // 3. Determine Layout Mode (Mobile vs Desktop)
         //    We use width for this decision, consistent with AppBreakpoints
@@ -674,34 +674,30 @@ class _ParticipantRegistrationPageState
       drawer: const AppDrawer(),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final width = constraints.maxWidth;
+          final _ = constraints.maxWidth; // Reserved for future responsive use
           final height = constraints.maxHeight;
 
-          // --- Bell Curve Density (Using SCREEN dimensions) ---
-          // Mobile (<600): Standard (Touch)
-          // Tablet/Laptop (600-1399 OR short): Compact (Dense)
-          // Desktop (Width>=1400 AND Height>=900): Standard (Breathing room)
-          final screenWidth = MediaQuery.sizeOf(context).width;
+          // --- Density Logic (Medical-first: Standard by default) ---
+          // Standard density for most cases (larger touch targets, better readability)
+          // Compact only for very constrained vertical space (<500px)
           final screenHeight = MediaQuery.sizeOf(context).height;
-          final isMobile = screenWidth < 600;
-          final isDesktop = screenWidth >= 1400 && screenHeight >= 900;
-          final useStandardDensity = isMobile || isDesktop;
+          final useCompactDensity = screenHeight < 500;
 
           // Layout: Scrollable if short height
           final useScrollableLayout = AppBreakpoints.isCompactHeight(height);
 
           // Theme for density
           final themeData = Theme.of(context).copyWith(
-            visualDensity: useStandardDensity
-                ? VisualDensity.standard
-                : VisualDensity.compact,
+            visualDensity: useCompactDensity
+                ? VisualDensity.compact
+                : VisualDensity.standard,
             inputDecorationTheme:
                 Theme.of(context).inputDecorationTheme.copyWith(
-                      isDense: !useStandardDensity,
-                      contentPadding: useStandardDensity
-                          ? null
-                          : const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 8),
+                      isDense: useCompactDensity,
+                      contentPadding: useCompactDensity
+                          ? const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 8)
+                          : null,
                     ),
           );
 
@@ -716,24 +712,14 @@ class _ParticipantRegistrationPageState
 
           if (useScrollableLayout) {
             // Scrollable layout (mobile/laptop)
+            // Form handles its own button (with correct 'Registrovat'/'Uložit změny' text)
             return ZzaScrollable(
               controller: _scrollController,
               child: SingleChildScrollView(
                 controller: _scrollController,
                 child: Padding(
                   padding: AppSpacing.screenPadding,
-                  child: Column(
-                    children: [
-                      formWidget,
-                      const SizedBox(height: 16),
-                      FilledButton(
-                        key: const Key(
-                            'ParticipantRegistrationPage_submit_button'),
-                        onPressed: () => _formKey.currentState?._submitForm(),
-                        child: const Text('Registrovat'),
-                      ),
-                    ],
-                  ),
+                  child: formWidget,
                 ),
               ),
             );
