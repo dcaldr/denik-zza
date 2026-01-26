@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:denik_zza/design_system/widgets/center_toast.dart';
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/widgets/intake_bottom_row.dart';
 import 'package:denik_zza/screens2/widgets/intake_main_content.dart';
@@ -108,9 +109,6 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
   }
 
   Future<void> _handleSave(BuildContext context, bool markAsArrived) async {
-    // Capture messenger before async gap to satisfy use_build_context_synchronously
-    final messenger = ScaffoldMessenger.of(context);
-    
     // CRITICAL: Sync form data to controller before save
     // Form edits are stored in form's controllers, not in selectedPerson
     final formData = _participantFormKey.currentState?.createMemoryOsoba();
@@ -118,18 +116,41 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
       _controller.updatePersonData(formData);
     }
     
+    // Capture participant name before save (for toast message)
+    final participantName = _controller.selectedPerson != null
+        ? '${_controller.selectedPerson!.jmeno} ${_controller.selectedPerson!.prijmeni}'.trim()
+        : 'Účastník';
+    
     final success = await _controller.saveData(markAsArrived);
 
     if (!mounted) return;
     
     if (success) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(markAsArrived ? 'uložit a přišel' : 'uložit')),
-      );
+      if (markAsArrived) {
+        // Green for "přišel" (arrived)
+        CenterToast.show(
+          context,
+          '$participantName přišel',
+          icon: Icons.check_circle,
+          iconColor: Colors.green.shade600,
+        );
+      } else {
+        // Blue for "uložen" (saved only)
+        CenterToast.show(
+          context,
+          '$participantName uložen',
+          icon: Icons.save,
+          iconColor: Colors.blue.shade600,
+        );
+      }
       // No need to call _refreshPage() - controller automatically resets state
     } else {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('něco nedopadlo')),
+      // Red for error
+      CenterToast.show(
+        context,
+        '$participantName neuložen',
+        icon: Icons.error_outline,
+        iconColor: Colors.red.shade600,
       );
     }
   }
