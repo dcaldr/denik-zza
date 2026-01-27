@@ -697,7 +697,7 @@ class _ParticipantRegistrationPageState
                       isDense: useCompactDensity,
                       contentPadding: useCompactDensity
                           ? const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 8)
+                              horizontal: 8, vertical: 10)  // 10px for breathing room
                           : null,
                     ),
           );

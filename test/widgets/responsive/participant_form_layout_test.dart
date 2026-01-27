@@ -55,9 +55,10 @@ void main() {
       // Should be wrapped in SingleChildScrollView now
       expect(find.byType(SingleChildScrollView), findsOneWidget);
 
-      // Button might be off-screen initially, but should be findable
+      // In scrollable mode, the FORM renders its own button (not Page)
+      // Key: ParticipantRegistrationForm_submit_button (not Page)
       final buttonFinder =
-          find.byKey(const Key('ParticipantRegistrationPage_submit_button'));
+          find.byKey(const Key('ParticipantRegistrationForm_submit_button'));
 
       // Attempt to scroll to it
       await tester.scrollUntilVisible(

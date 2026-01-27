@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 
 /// Centralized breakpoint constants and responsive helpers.
@@ -51,20 +50,33 @@ class AppBreakpoints {
 
   /// True if device should use touch-friendly UI (larger targets, spacing).
   ///
-  /// Detection logic:
-  /// - Android/iOS: Always touch mode (mobile platforms)
-  /// - Desktop (Win/Linux/Mac): Width < 600 = touch mode
-  /// - Web: Width-based heuristic
+  /// Uses `shortestSide` per Flutter/Material 3 best practices:
+  /// - shortestSide < 600: Touch-friendly (phones, narrow windows)
+  /// - shortestSide >= 600: Desktop-compact (tablets, desktops)
+  ///
+  /// This approach correctly handles:
+  /// - Phones in landscape (shortestSide still < 600)
+  /// - Tablets (shortestSide >= 600, so desktop mode)
+  /// - Split-screen/multi-window scenarios
+  ///
+  /// NOTE: We intentionally don't check Platform.isAndroid/iOS because:
+  /// - Device type != available space (Flutter antipattern)
+  /// - Tablets have enough screen for compact mode
+  /// - Multi-window on mobile breaks platform assumptions
   static bool useTouchMode(BuildContext context) {
-    // Check platform first (more reliable than width)
-    if (!kIsWeb) {
-      if (defaultTargetPlatform == TargetPlatform.android ||
-          defaultTargetPlatform == TargetPlatform.iOS) {
-        return true; // Mobile platforms always use touch mode
-      }
-    }
-    // Desktop/web: use width heuristic
-    final width = MediaQuery.maybeOf(context)?.size.width ?? 1280;
+    final size = MediaQuery.maybeOf(context)?.size ?? const Size(1280, 720);
+    return size.shortestSide < mobile; // < 600px
+  }
+
+  /// Width-based touch mode check (use when you have constraints width).
+  ///
+  /// This allows forms to use the SAME width source for:
+  /// - Column count (getColumnCount)
+  /// - Touch mode (useTouchModeForWidth)
+  ///
+  /// Note: For forms, we use width (not shortestSide) because
+  /// the form's available width determines column layout.
+  static bool useTouchModeForWidth(double width) {
     return width < mobile; // < 600px
   }
 
