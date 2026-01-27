@@ -199,16 +199,29 @@ class NewRecordPageState extends State<NewRecordPage> {
   }
 
   /// Builds health info row with responsive collapse logic
-  Widget _buildHealthInfoRow() {
+  /// Shows compact badges on mobile/compact, full chips on desktop
+  Widget _buildHealthInfoRow({required bool isCompact}) {
     // Filter omezeni by type: 1=omezeni, 2=alergie
     final alergieList = _omezeniList.where((o) => o.typOmezeni == 2).toList();
     final omezeniList = _omezeniList.where((o) => o.typOmezeni == 1).toList();
 
     if (alergieList.isEmpty && omezeniList.isEmpty && _lekyList.isEmpty) {
-      return const SizedBox.shrink(); // No health info to show
+      // All clear indicator
+      return _buildHealthAllClearIndicator();
     }
 
-    // Build all health chip widgets
+    // Use compact badges on mobile or compact height mode
+    final screenWidth = MediaQuery.of(context).size.width;
+    final useCompactBadges = isCompact || screenWidth < 600;
+
+    if (useCompactBadges) {
+      return _buildCompactHealthBadges(
+        criticalCount: alergieList.length + omezeniList.length,
+        medCount: _lekyList.length,
+      );
+    }
+
+    // Build all health chip widgets (desktop view)
     final allHealthChips = <Widget>[
       // Alergie
       for (var alergie in alergieList)
@@ -240,9 +253,7 @@ class NewRecordPageState extends State<NewRecordPage> {
     ];
 
     // Responsive collapse: adapt threshold to screen size
-    final screenWidth = MediaQuery.of(context).size.width;
-    final maxCollapsedItems =
-        screenWidth < 600 ? 4 : (screenWidth < 900 ? 6 : 8);
+    final maxCollapsedItems = screenWidth < 900 ? 6 : 8;
     final totalItems = allHealthChips.length;
     final shouldShowCollapseButton = totalItems > maxCollapsedItems;
     final visibleChips = (_healthInfoExpanded || !shouldShowCollapseButton)
@@ -254,11 +265,250 @@ class NewRecordPageState extends State<NewRecordPage> {
       runSpacing: 4,
       children: [
         ...visibleChips,
-        // Compact collapse button (only if more than 6 items)
+        // Compact collapse button (only if more than threshold items)
         if (shouldShowCollapseButton)
           _buildCompactCollapseButton(
             hiddenCount: totalItems - maxCollapsedItems,
           ),
+      ],
+    );
+  }
+
+  /// Green checkmark indicator when participant has no health restrictions
+  Widget _buildHealthAllClearIndicator() {
+    return Container(
+      key: const Key('NewRecordPage_health_all_clear'),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.greenBackground,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppColors.greenBorder, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_circle, size: 14, color: AppColors.greenIcon),
+          const SizedBox(width: 4),
+          Text(
+            'Bez omezení',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: AppColors.greenText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Compact dual-zone badges for mobile view
+  Widget _buildCompactHealthBadges({
+    required int criticalCount,
+    required int medCount,
+  }) {
+    return GestureDetector(
+      key: const Key('NewRecordPage_health_badges'),
+      onTap: () => _showHealthDetailsBottomSheet(),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Critical items badge (allergies + restrictions)
+          if (criticalCount > 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.errorContainer,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.warning_amber,
+                    size: 12,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    '$criticalCount',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (criticalCount > 0 && medCount > 0) const SizedBox(width: 4),
+          // Medications badge
+          if (medCount > 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.medication,
+                    size: 12,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    '$medCount',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(width: 4),
+          // Chevron to indicate tappable
+          Icon(
+            Icons.chevron_right,
+            size: 16,
+            color: AppColors.greyText,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Shows full health details in a bottom sheet (mobile-friendly)
+  void _showHealthDetailsBottomSheet() {
+    final alergieList = _omezeniList.where((o) => o.typOmezeni == 2).toList();
+    final omezeniList = _omezeniList.where((o) => o.typOmezeni == 1).toList();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text(
+                'Zdravotní údaje',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.greyIcon,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Allergies section
+              if (alergieList.isNotEmpty) ...[
+                _buildHealthSectionHeader(
+                  icon: Icons.warning_amber,
+                  iconColor: Theme.of(context).colorScheme.error,
+                  label: 'Alergie',
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: alergieList.map((a) => _buildHealthChip(
+                    icon: Icons.warning_amber,
+                    iconColor: Theme.of(context).colorScheme.error,
+                    backgroundColor: Theme.of(context).colorScheme.errorContainer,
+                    text: a.omezeni,
+                    maxChars: 50,
+                  )).toList(),
+                ),
+                const SizedBox(height: 12),
+              ],
+              // Restrictions section
+              if (omezeniList.isNotEmpty) ...[
+                _buildHealthSectionHeader(
+                  icon: Icons.block,
+                  iconColor: Theme.of(context).colorScheme.secondary,
+                  label: 'Omezení',
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: omezeniList.map((o) => _buildHealthChip(
+                    icon: Icons.block,
+                    iconColor: Theme.of(context).colorScheme.secondary,
+                    backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                    text: o.omezeni,
+                    maxChars: 50,
+                  )).toList(),
+                ),
+                const SizedBox(height: 12),
+              ],
+              // Medications section
+              if (_lekyList.isNotEmpty) ...[
+                _buildHealthSectionHeader(
+                  icon: Icons.medication,
+                  iconColor: Theme.of(context).colorScheme.primary,
+                  label: 'Léky',
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: _lekyList.map((l) => _buildHealthChip(
+                    icon: Icons.medication,
+                    iconColor: Theme.of(context).colorScheme.primary,
+                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                    text: l.nazev,
+                    maxChars: 50,
+                  )).toList(),
+                ),
+              ],
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Section header for BottomSheet health categories
+  Widget _buildHealthSectionHeader({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: iconColor),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.greyIcon,
+          ),
+        ),
       ],
     );
   }
@@ -900,10 +1150,10 @@ class NewRecordPageState extends State<NewRecordPage> {
                                 ],
                               ],
                             ),
-                            // Health info (alergie, omezení, léky) - shows first 6 items by default, expandable
+                            // Health info (alergie, omezení, léky) - adaptive display
                             if (_selectedParticipant != null) ...[
                               const SizedBox(height: 4),
-                              _buildHealthInfoRow(),
+                              _buildHealthInfoRow(isCompact: isCompact),
                             ],
                           ],
                         ),
@@ -1080,20 +1330,10 @@ class NewRecordPageState extends State<NewRecordPage> {
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
-                                      // Blue box wraps ONLY the datetime section (tight fit)
+                                      // Compact datetime chip - saves ~60px vertical space
                                       Flexible(
-                                        child: Container(
-                                          padding: AppSpacing.containerPadding,
-                                          decoration: BoxDecoration(
-                                            color: AppColors.blueBackground
-                                                .withValues(alpha: 0.3),
-                                            borderRadius:
-                                                AppRadii.containerRadius,
-                                            border: Border.all(
-                                                color: AppColors.blueBorder
-                                                    .withValues(alpha: 0.5),
-                                                width: 1),
-                                          ),
+                                        child: Tooltip(
+                                          message: 'Čas záznamu',
                                           child: InkWell(
                                             key: const Key(
                                                 'datetime_change_button'),
@@ -1101,149 +1341,117 @@ class NewRecordPageState extends State<NewRecordPage> {
                                                 ? _selectDateTime
                                                 : null,
                                             borderRadius:
-                                                BorderRadius.circular(8),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Container(
-                                                  padding:
-                                                      const EdgeInsets.all(8),
-                                                  decoration: BoxDecoration(
-                                                    color: AppColors
-                                                        .blueIconBackground,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            6),
+                                                AppRadii.containerRadius,
+                                            child: Container(
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: isCompact ? 10 : 12,
+                                                vertical: isCompact ? 8 : 10,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.blueBackground
+                                                    .withValues(alpha: 0.3),
+                                                borderRadius:
+                                                    AppRadii.containerRadius,
+                                                border: Border.all(
+                                                    color: AppColors.blueBorder
+                                                        .withValues(alpha: 0.5),
+                                                    width: 1),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.all(4),
+                                                    decoration: BoxDecoration(
+                                                      color: AppColors
+                                                          .blueIconBackground,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              4),
+                                                    ),
+                                                    child: Icon(
+                                                      Icons.schedule,
+                                                      color: AppColors.blueDark,
+                                                      size: isCompact ? 14 : 16,
+                                                    ),
                                                   ),
-                                                  child: Icon(
-                                                    Icons.schedule,
-                                                    color: AppColors.blueDark,
-                                                    size: isCompact ? 16 : 18,
-                                                  ),
-                                                ),
-                                                SizedBox(width: AppSpacing.m),
-                                                Flexible(
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        'Čas záznamu',
-                                                        style: TextStyle(
-                                                          fontSize: isCompact
-                                                              ? 12
-                                                              : 13,
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                          color: Colors
-                                                              .blue.shade700,
-                                                        ),
-                                                      ),
-                                                      const SizedBox(height: 4),
-                                                      Row(
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .center,
-                                                        children: [
-                                                          Flexible(
-                                                            child: Text(
-                                                              _formatSelectedDateTime(),
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                              style: TextStyle(
-                                                                fontSize:
-                                                                    isCompact
-                                                                        ? 14
-                                                                        : 15,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w400,
-                                                                height:
-                                                                    1.2, // Prevent text clipping
-                                                                color: _selectedParticipant !=
-                                                                        null
-                                                                    ? Colors
-                                                                        .black87
-                                                                    : Colors
-                                                                        .grey
-                                                                        .shade400,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                              width: 4),
-                                                          Icon(
-                                                            Icons.edit_outlined,
-                                                            size: 16,
-                                                            color: _selectedParticipant !=
+                                                  SizedBox(
+                                                      width: isCompact ? 6 : 8),
+                                                  Flexible(
+                                                    child: Text(
+                                                      _formatSelectedDateTime(),
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: TextStyle(
+                                                        fontSize:
+                                                            isCompact ? 13 : 14,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                        color:
+                                                            _selectedParticipant !=
                                                                     null
-                                                                ? Colors.blue
-                                                                    .shade700
+                                                                ? Colors.black87
                                                                 : Colors.grey
                                                                     .shade400,
-                                                          ),
-                                                          // Only show reset button if datetime was modified
-                                                          if (_selectedDate !=
-                                                                  null ||
-                                                              _selectedTime !=
-                                                                  null) ...[
-                                                            const SizedBox(
-                                                                width: 6),
-                                                            InkWell(
-                                                              key: const Key(
-                                                                  'datetime_reset_button'),
-                                                              onTap:
-                                                                  _selectedParticipant !=
-                                                                          null
-                                                                      ? () {
-                                                                          setState(
-                                                                              () {
-                                                                            _selectedDate =
-                                                                                null;
-                                                                            _selectedTime =
-                                                                                null;
-                                                                          });
-                                                                        }
-                                                                      : null,
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          4),
-                                                              child: Tooltip(
-                                                                message:
-                                                                    'Reset na aktuální čas',
-                                                                child: Padding(
-                                                                  padding:
-                                                                      const EdgeInsets
-                                                                          .all(
-                                                                          2),
-                                                                  child: Icon(
-                                                                    Icons
-                                                                        .refresh,
-                                                                    size: 16,
-                                                                    color: _selectedParticipant !=
-                                                                            null
-                                                                        ? Colors
-                                                                            .blue
-                                                                            .shade700
-                                                                        : Colors
-                                                                            .grey
-                                                                            .shade400,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ],
                                                       ),
-                                                    ],
+                                                    ),
                                                   ),
-                                                ),
-                                              ],
+                                                  const SizedBox(width: 4),
+                                                  Icon(
+                                                    Icons.edit_outlined,
+                                                    size: isCompact ? 14 : 16,
+                                                    color:
+                                                        _selectedParticipant !=
+                                                                null
+                                                            ? AppColors.blueDark
+                                                            : Colors
+                                                                .grey.shade400,
+                                                  ),
+                                                  // Compact reset button when datetime modified
+                                                  if (_selectedDate != null ||
+                                                      _selectedTime !=
+                                                          null) ...[
+                                                    const SizedBox(width: 4),
+                                                    InkWell(
+                                                      key: const Key(
+                                                          'datetime_reset_button'),
+                                                      onTap:
+                                                          _selectedParticipant !=
+                                                                  null
+                                                              ? () {
+                                                                  setState(() {
+                                                                    _selectedDate =
+                                                                        null;
+                                                                    _selectedTime =
+                                                                        null;
+                                                                  });
+                                                                }
+                                                              : null,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              4),
+                                                      child: Tooltip(
+                                                        message:
+                                                            'Reset na aktuální čas',
+                                                        child: Icon(
+                                                          Icons.refresh,
+                                                          size: isCompact
+                                                              ? 14
+                                                              : 16,
+                                                          color:
+                                                              _selectedParticipant !=
+                                                                      null
+                                                                  ? AppColors
+                                                                      .blueDark
+                                                                  : Colors.grey
+                                                                      .shade400,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
                                             ),
                                           ),
                                         ),

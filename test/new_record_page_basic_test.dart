@@ -94,8 +94,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Should have datetime section
-      expect(find.text('Čas záznamu'), findsOneWidget);
+      // Should have datetime section (label is now tooltip)
+      final tooltipFinder = find.byWidgetPredicate(
+        (widget) => widget is Tooltip && widget.message == 'Čas záznamu',
+      );
+      expect(tooltipFinder, findsOneWidget);
       expect(find.byKey(const Key('datetime_change_button')), findsOneWidget);
     });
 

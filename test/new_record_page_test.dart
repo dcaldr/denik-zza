@@ -60,8 +60,13 @@ void main() {
           find.byKey(const Key('NewRecordPage_title_input')), findsOneWidget);
       expect(find.byKey(const Key('NewRecordPage_description_input')),
           findsOneWidget);
-      // Datetime and actions
-      expect(find.text('Čas záznamu'), findsOneWidget);
+      // Datetime and actions (label is now tooltip)
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is Tooltip && widget.message == 'Čas záznamu',
+        ),
+        findsOneWidget,
+      );
       expect(find.byKey(const Key('datetime_change_button')), findsOneWidget);
       expect(
           find.byKey(const Key('NewRecordPage_save_button')), findsOneWidget);
@@ -117,8 +122,11 @@ void main() {
       await tester.pumpWidget(createTestableWidget());
       await tester.pumpAndSettle();
 
-      // Assert - Should display timestamp information (label present)
-      expect(find.text('Čas záznamu'), findsOneWidget);
+      // Assert - Should display timestamp information (label is now tooltip)
+      final tooltipFinder = find.byWidgetPredicate(
+        (widget) => widget is Tooltip && widget.message == 'Čas záznamu',
+      );
+      expect(tooltipFinder, findsOneWidget);
       expect(find.byKey(const Key('datetime_change_button')), findsOneWidget);
     });
 
