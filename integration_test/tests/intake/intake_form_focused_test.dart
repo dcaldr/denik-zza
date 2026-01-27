@@ -40,11 +40,11 @@ void main() {
       await waitForLoading(tester);
 
       // Select participant
-      await intake.selectParticipant('Václav Havlík');
+      await intake.selectParticipant('Václav Havel');
 
       // Verify participant loaded
       expect(find.text('Václav'), findsWidgets);
-      expect(find.text('Havlík'), findsWidgets);
+      expect(find.text('Havel'), findsWidgets);
 
       // Save and mark as arrived
       await intake.tapSaveAndArrived();
@@ -60,7 +60,7 @@ void main() {
       final intake = IntakeRobot(tester);
       await waitForLoading(tester);
 
-      await intake.selectParticipant('Karel Čapková');
+      await intake.selectParticipant('Karel Čapek');
       expect(find.text('Karel'), findsWidgets);
 
       // Save only (not arrived)
@@ -257,7 +257,7 @@ void main() {
       
       // No dropdown suggestions should appear (only input field)
       // Specific participant names should not be visible as dropdown items
-      expect(find.text('Václav Havlík'), findsNothing);
+      expect(find.text('Václav Havel'), findsNothing);
     });
 
     testWidgets('Non-matching search shows no results', (tester) async {
@@ -273,8 +273,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       
       // No participant names should match
-      expect(find.text('Václav Havlík'), findsNothing);
-      expect(find.text('Karel Čapková'), findsNothing);
+      expect(find.text('Václav Havel'), findsNothing);
+      expect(find.text('Karel Čapek'), findsNothing);
     });
 
     // ========== STATE PROBLEMS ==========
@@ -286,7 +286,7 @@ void main() {
       await waitForLoading(tester);
 
       // Select and save first participant
-      await intake.selectParticipant('Václav Havlík');
+      await intake.selectParticipant('Václav Havel');
       expect(find.text('Václav'), findsWidgets);
       await intake.tapSaveAndArrived();
       await tester.pumpAndSettle();
@@ -407,13 +407,13 @@ void main() {
       await waitForLoading(tester);
 
       // Rapidly select multiple participants
-      await intake.selectParticipant('Václav Havlík');
+      await intake.selectParticipant('Václav Havel');
       await tester.pump(const Duration(milliseconds: 100));
       
       await intake.tapCancel();
       await tester.pump(const Duration(milliseconds: 100));
       
-      await intake.selectParticipant('Karel Čapková');
+      await intake.selectParticipant('Karel Čapek');
       await tester.pump(const Duration(milliseconds: 100));
       
       await intake.tapCancel();

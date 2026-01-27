@@ -44,12 +44,12 @@ void main() {
 
       // Check for some Czech cultural figures
       final vaclavHavlik = participants
-          .firstWhere((p) => p.firstName == 'Václav' && p.lastName == 'Havlík');
+          .firstWhere((p) => p.firstName == 'Václav' && p.lastName == 'Havel');
       expect(vaclavHavlik.note, contains('divadlo'));
 
-      final karelCapkova = participants
-          .firstWhere((p) => p.firstName == 'Karel' && p.lastName == 'Čapková');
-      expect(karelCapkova.note, contains('roboty'));
+      final karelCapek = participants
+          .firstWhere((p) => p.firstName == 'Karel' && p.lastName == 'Čapek');
+      expect(karelCapek.note, contains('roboty'));
 
       final bedrichSmetana = participants.firstWhere(
           (p) => p.firstName == 'Bedřich' && p.lastName == 'Smetana');
@@ -60,7 +60,7 @@ void main() {
         () async {
       final participants = await database.select(database.participants).get();
 
-      // Get records for first participant (Václav Havlík)
+      // Get records for first participant (Václav Havel)
       final firstParticipant = participants.first;
       final records = await (database.select(database.records)
             ..where((tbl) => tbl.participantFK.equals(firstParticipant.id)))

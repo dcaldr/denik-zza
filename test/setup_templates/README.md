@@ -29,8 +29,8 @@ Test data setup utility that creates realistic test data.
 2. **Insurance Companies**: VZP and OZKP
 3. **Paramedic**: Dr. František Zdravotník
 4. **10 Czech Participants** with cultural references:
-   - Václav Havlík (reference to Václav Havel)
-   - Karel Čapková (reference to Karel Čapek)
+   - Václav Havel (reference to Václav Havel)
+   - Karel Čapek (reference to Karel Čapek)
    - Bedřich Smetana (the composer)
    - Antonín Dvořák (the composer)
    - Milan Kundera (the writer)

@@ -19,8 +19,8 @@ Created comprehensive widget tests for the ParticipantListScreen feature, includ
 - ✅ Search filters participants by first name
 - ✅ Search filters participants by last name  
 - ✅ **CHALLENGING:** Search is case-insensitive (KAFKA → Kafka)
-- ✅ **CHALLENGING:** Partial match finds multiple participants ("ová" → Čapková, Destinnová)
-- ✅ **CHALLENGING:** Search handles Czech diacritics correctly (Čapková vs Capkova)
+- ✅ **CHALLENGING:** Partial match finds multiple participants ("ová" → Destinnová)
+- ✅ **CHALLENGING:** Search handles Czech diacritics correctly (Čapek vs Capek)
 - ✅ **CHALLENGING:** Search with special characters (Baťa)
 
 **Rapid Input (1 test):**
@@ -54,7 +54,7 @@ Created comprehensive widget tests for the ParticipantListScreen feature, includ
 
 **Actual Problem:** ListView viewport + alphabetical sorting!
 - Participants are sorted by **firstName** in database query (`orderBy firstName, lastName`)
-- Test data has names like "Václav Havlík" which is alphabetically LAST (#10)
+- Test data has names like "Václav Havel" which is alphabetically LAST (#10)
 - ListView only renders visible items initially (lazy loading)
 - Tests expected "Václav" to be visible, but it was at the bottom of the list!
 
@@ -107,14 +107,14 @@ find.descendant(
 ### Challenging Scenarios Implemented
 
 1. **Czech Diacritics** ✅
-   - Tests that "Čapková" is NOT found by "Capkova" (exact matching)
+   - Tests that "Čapek" is NOT found by "Capek" (exact matching)
    - Tests special characters like "ť" in "Baťa"
 
 2. **Case Insensitivity** ✅
    - "KAFKA", "kafka", "KaFkA" all find "Franz Kafka"
 
 3. **Partial Matching** ✅
-   - "ová" finds both "Čapková" and "Destinnová"
+   - "ová" finds "Destinnová" (and potentially others if added)
    - "an" finds "Jan", "Franz", etc.
 
 4. **Rapid Typing Simulation** ✅

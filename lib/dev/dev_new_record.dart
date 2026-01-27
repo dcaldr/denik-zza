@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 /// - Test event "Test Test Test" created and selected
 /// - 10 Czech participants with cultural references
 /// - 10 medical records with easter eggs
-/// - First participant (Václav Havlík) pre-selected
+/// - First participant (Václav Havel) pre-selected
 /// 
 /// 🎯 **Perfect for:**
 /// - Testing NewRecordPage UI and functionality

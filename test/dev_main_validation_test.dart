@@ -28,15 +28,15 @@ void main() {
       // Verify we have our Czech cultural references
       final participantNames =
           participants.map((p) => '${p.firstName} ${p.lastName}').toList();
-      expect(participantNames, contains('Václav Havlík'));
-      expect(participantNames, contains('Karel Čapková'));
+      expect(participantNames, contains('Václav Havel'));
+      expect(participantNames, contains('Karel Čapek'));
       expect(participantNames, contains('Franz Kafka'));
 
       // Verify medical records exist
       final allRecords = await database.select(database.records).get();
       expect(allRecords.length, equals(10)); // One record per participant
 
-      // Verify the easter egg is present (should be in Václav Havlík's record)
+      // Verify the easter egg is present (should be in Václav Havel's record)
       final easterEggRecord = allRecords.firstWhere(
           (record) => record.description.contains('velrybí stoličku'));
       expect(easterEggRecord.title, equals('Kontrola zdraví'));

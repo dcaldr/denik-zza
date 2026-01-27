@@ -13,7 +13,7 @@ class CzechTestData {
   static const List<Map<String, dynamic>> participants = [
     {
       'firstName': 'Václav',
-      'lastName': 'Havlík', // Reference to Václav Havel
+      'lastName': 'Havel', // Reference to Václav Havel
       'birthDate': '2010-10-05',
       'address': 'Hradčanské náměstí 1, Praha',
       'note': 'Rád hraje divadlo a píše básně',
@@ -21,7 +21,7 @@ class CzechTestData {
     },
     {
       'firstName': 'Karel',
-      'lastName': 'Čapková', // Reference to Karel Čapek
+      'lastName': 'Čapek', // Reference to Karel Čapek
       'birthDate': '2009-01-09',
       'address': 'Vinohrady 42, Praha',
       'note': 'Miluje roboty a sci-fi příběhy',
@@ -98,12 +98,12 @@ class CzechTestData {
     {
       'title': 'Kontrola zdraví',
       'description': 'má velrybí stoličku a hodně ho bolí', // Easter egg
-      'participantIndex': 0, // Václav Havlík
+      'participantIndex': 0, // Václav Havel
     },
     {
       'title': 'Preventivní prohlídka',
       'description': 'stěžuje si na roboty v břiše, možná sci-fi alergie',
-      'participantIndex': 1, // Karel Čapková
+      'participantIndex': 1, // Karel Čapek
     },
     {
       'title': 'Hudební terapie',
