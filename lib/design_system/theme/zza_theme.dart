@@ -6,23 +6,37 @@ import '../tokens/app_radii.dart';
 
 /// Complete theme for Deník ZZA app.
 ///
-/// IMPORTANT: This theme is based on ACTUAL patterns extracted from:
-/// - CSV import flow (you like this)
-/// - NewRecord page (you like this)
+/// Provides two variants:
+/// - touchTheme: Spacious for mobile (larger targets, 16px padding)
+/// - desktopTheme: Compact for desktop (tighter spacing, 12px padding)
 ///
-/// NOT based on generic Material 3 defaults.
+/// Use with MaterialApp.builder for responsive switching.
 class ZzaTheme {
   ZzaTheme._();
 
-  static ThemeData get lightTheme {
+  /// Touch-friendly theme for mobile devices (Android/iOS)
+  static ThemeData get touchTheme => _createTheme(isTouch: true);
+
+  /// Compact theme for desktop (Windows/Linux/Mac)
+  static ThemeData get desktopTheme => _createTheme(isTouch: false);
+
+  /// @Deprecated: Use touchTheme or desktopTheme.
+  /// Kept for backward compatibility - maps to desktopTheme.
+  static ThemeData get lightTheme => desktopTheme;
+
+  static ThemeData _createTheme({required bool isTouch}) {
+    final textTheme = isTouch 
+        ? AppTypography.touchTextTheme 
+        : AppTypography.desktopTextTheme;
+    
     return ThemeData(
       useMaterial3: true,
 
       // Color scheme
       colorScheme: AppColors.lightColorScheme,
 
-      // Typography (actual font sizes from your code!)
-      textTheme: AppTypography.textTheme,
+      // Typography (responsive based on mode)
+      textTheme: textTheme,
       fontFamily: AppTypography.fontFamily,
 
       // Visual density
@@ -173,26 +187,31 @@ class ZzaTheme {
           ),
         ),
 
-        // Padding (from NewRecord: 12-16)
-        contentPadding: const EdgeInsets.all(AppSpacing.l), // 16px
+        // Padding (responsive: touch=16px, desktop=12px)
+        contentPadding: isTouch
+            ? const EdgeInsets.all(AppSpacing.l)  // 16px (touch-friendly)
+            : const EdgeInsets.symmetric(
+                vertical: AppSpacing.m,    // 12px (desktop compact)
+                horizontal: AppSpacing.l,  // 16px
+              ),
 
         // Fill (minimalistic - no background fill)
         filled: true,
         fillColor: Colors.white,
 
-        // Text styles
-        labelStyle: AppTypography.textTheme.bodyMedium?.copyWith(
+        // Text styles (use responsive textTheme)
+        labelStyle: textTheme.bodyMedium?.copyWith(
           color: AppColors.blueDark,
           fontWeight: FontWeight.w500,
         ),
 
-        hintStyle: AppTypography.textTheme.bodyMedium?.copyWith(
+        hintStyle: textTheme.bodyMedium?.copyWith(
           color: AppColors.greyTextLight,
           fontStyle: FontStyle.italic,
         ),
 
-        helperStyle: AppTypography.textTheme.bodySmall,
-        errorStyle: AppTypography.textTheme.bodySmall?.copyWith(
+        helperStyle: textTheme.bodySmall,
+        errorStyle: textTheme.bodySmall?.copyWith(
           fontSize: 11,
           height: 0.8,
         ),

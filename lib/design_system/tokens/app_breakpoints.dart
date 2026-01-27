@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 
 /// Centralized breakpoint constants and responsive helpers.
@@ -47,6 +48,25 @@ class AppBreakpoints {
 
   /// True if height indicates a compact vertical layout.
   static bool isCompactHeight(double height) => height <= compactHeight;
+
+  /// True if device should use touch-friendly UI (larger targets, spacing).
+  ///
+  /// Detection logic:
+  /// - Android/iOS: Always touch mode (mobile platforms)
+  /// - Desktop (Win/Linux/Mac): Width < 600 = touch mode
+  /// - Web: Width-based heuristic
+  static bool useTouchMode(BuildContext context) {
+    // Check platform first (more reliable than width)
+    if (!kIsWeb) {
+      if (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS) {
+        return true; // Mobile platforms always use touch mode
+      }
+    }
+    // Desktop/web: use width heuristic
+    final width = MediaQuery.maybeOf(context)?.size.width ?? 1280;
+    return width < mobile; // < 600px
+  }
 
   /// Returns optimal column count for responsive form layouts.
   /// - Desktop (≥900px): 3 columns

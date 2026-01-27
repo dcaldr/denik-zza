@@ -678,10 +678,11 @@ class _ParticipantRegistrationPageState
           final height = constraints.maxHeight;
 
           // --- Density Logic (Medical-first: Standard by default) ---
-          // Standard density for most cases (larger touch targets, better readability)
-          // Compact only for very constrained vertical space (<500px)
+          // Standard density for touch devices (larger touch targets)
+          // Compact density for desktop with reasonable height (<750px)
           final screenHeight = MediaQuery.sizeOf(context).height;
-          final useCompactDensity = screenHeight < 500;
+          final isTouch = AppBreakpoints.useTouchMode(context);
+          final useCompactDensity = !isTouch && screenHeight < 750;
 
           // Layout: Scrollable if short height
           final useScrollableLayout = AppBreakpoints.isCompactHeight(height);

@@ -22,8 +22,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: ZzaAppConfig.appTitle,
       theme: ZzaAppConfig.theme,
-      // home: const EventRegistrationForm(),
-      //home: const ParticipantRegistrationForm(),
+      builder: ZzaAppConfig.responsiveBuilder,
       home: EventList(),
       locale: ZzaAppConfig.supportedLocales.first,
       supportedLocales: ZzaAppConfig.supportedLocales,

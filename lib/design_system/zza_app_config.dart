@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'theme/zza_theme.dart';
+import 'tokens/app_breakpoints.dart';
 
 /// Centralized configuration for the Zza App.
 ///
@@ -16,7 +17,11 @@ class ZzaAppConfig {
 
   static const String appTitle = 'Event Registration';
 
-  static ThemeData get theme => ZzaTheme.lightTheme;
+  /// Default theme (desktop compact)
+  static ThemeData get theme => ZzaTheme.desktopTheme;
+
+  /// Touch-friendly theme (mobile/narrow screens)
+  static ThemeData get touchTheme => ZzaTheme.touchTheme;
 
   static const List<Locale> supportedLocales = [
     Locale('cs', 'CZ'),
@@ -27,6 +32,28 @@ class ZzaAppConfig {
     GlobalWidgetsLocalizations.delegate,
     GlobalCupertinoLocalizations.delegate,
   ];
+
+  /// MaterialApp builder for responsive theme switching.
+  ///
+  /// Use in MaterialApp:
+  /// ```dart
+  /// MaterialApp(
+  ///   theme: ZzaAppConfig.theme,
+  ///   builder: ZzaAppConfig.responsiveBuilder,
+  ///   ...
+  /// )
+  /// ```
+  static Widget Function(BuildContext, Widget?) get responsiveBuilder {
+    return (context, child) {
+      if (AppBreakpoints.useTouchMode(context)) {
+        return Theme(
+          data: touchTheme,
+          child: child!,
+        );
+      }
+      return child!;
+    };
+  }
 
   /// Initialize low-level formatting libraries (intl).
   /// Safe to call multiple times (idempotent).
