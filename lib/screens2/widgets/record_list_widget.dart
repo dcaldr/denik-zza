@@ -83,6 +83,17 @@ class _RecordListWidgetState extends State<RecordListWidget> {
   Widget build(BuildContext context) {
     Widget content = _buildRecordsList();
 
+    if (!widget.showRefreshButton) {
+      if (widget.height != null) {
+        return SizedBox(
+          height: widget.height,
+          width: double.infinity,
+          child: content,
+        );
+      }
+      return content;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch, // Full width
       mainAxisSize: MainAxisSize.min,

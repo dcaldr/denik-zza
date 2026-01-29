@@ -1149,6 +1149,21 @@ class NewRecordPageState extends State<NewRecordPage> {
         // Removed disabled edit button and placeholder info button for cleaner interface
       ),
       drawer: const AppDrawer(),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.only(
+            left: AppSpacing.xl,
+            right: AppSpacing.xl,
+            bottom: AppSpacing.xl,
+          ),
+          child: _buildActionButtons(
+            isCompact: AppBreakpoints.isCompactHeight(
+              MediaQuery.sizeOf(context).height,
+            ),
+          ),
+        ),
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           WidgetsBinding.instance
@@ -1184,7 +1199,12 @@ class NewRecordPageState extends State<NewRecordPage> {
           );
           final fullHistoryHeight = historyHeaderHeight + fullListHeight;
 
-          final maxItemsWhenScroll = 5;
+            final maxItemsWhenScroll = constraints.maxHeight <=
+                AppBreakpoints.compactHeight * 0.6
+              ? 2
+              : constraints.maxHeight <= AppBreakpoints.compactHeight * 0.8
+                ? 3
+                : 5;
           final maxListHeightWhenScroll = AppBreakpoints.getListHeight(
             context,
             itemCount: maxItemsWhenScroll,
@@ -1222,320 +1242,22 @@ class NewRecordPageState extends State<NewRecordPage> {
             final historyMaxHeight =
               math.max(minHistoryHeight, cappedMaxHeight);
 
-          return Padding(
-            padding: AppSpacing.screenPadding, // 20px for better breathing room
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Compact horizontal participant selection with inline search
-                Container(
-                  key: _headerKey,
-                  padding: AppSpacing.containerPadding, // 16px padding
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [
-                        Theme.of(context).colorScheme.primaryContainer,
-                        Theme.of(context)
-                            .colorScheme
-                            .primaryContainer
-                            .withValues(alpha: 0.5),
-                      ],
-                    ),
-                    borderRadius: AppRadii.containerRadius, // 12px rounded
-                    border: Border.all(
-                        color: Theme.of(context).colorScheme.primary, width: 1),
-                  ),
-                  child: Row(
-                    children: [
-                      // Participant icon
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Icon(
-                          _selectedParticipant != null
-                              ? Icons.person
-                              : Icons.person_search,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: isCompact ? 18 : 20,
-                        ),
-                      ),
+              final requiredMinHeight = (_headerHeight ?? 0) +
+                (_formHeight ?? 0) +
+                minHistoryHeight +
+                (spacing * 2);
 
-                      SizedBox(width: AppSpacing.m),
+              final shouldUsePageScroll = hasMeasuredHeights &&
+                requiredMinHeight > constraints.maxHeight;
 
-                      // Participant info (takes most space)
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    'Účastník',
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: isCompact ? 12 : 13,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.blueText,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
+              final historyHeightForScroll = math.max(
+              minHistoryHeight,
+              math.min(fullHistoryHeight, maxHistoryHeightWhenScroll),
+              );
 
-                                const SizedBox(width: 8),
-                                // Unsaved changes warning badge
-                                if (_hasUnsavedChanges)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 4, vertical: 1),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.orangeBackground,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                          color: AppColors.orangeBorder,
-                                          width: 1),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.warning_amber,
-                                          size: 10,
-                                          color: AppColors.orangeText,
-                                        ),
-                                        const SizedBox(width: 2),
-                                        Text(
-                                          'Neuloženo',
-                                          style: TextStyle(
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w500,
-                                            color: AppColors.orangeText,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    _selectedParticipant != null
-                                        ? '${_selectedParticipant!.jmeno} ${_selectedParticipant!.prijmeni}${_formatAge()}'
-                                        : 'Vyberte účastníka...',
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: isCompact
-                                          ? 14
-                                          : 15, // Reduced from 15-16 for compactness
-                                      fontWeight: FontWeight.bold,
-                                      color: _selectedParticipant != null
-                                          ? AppColors.greyIcon
-                                          : AppColors.greyText,
-                                    ),
-                                  ),
-                                ),
-                                // Info icon to show full birthdate on tap
-                                if (_selectedParticipant?.datumNarozeni !=
-                                    null) ...[
-                                  const SizedBox(width: 4),
-                                  InkWell(
-                                    key: const Key(
-                                        'NewRecordPage_birthdate_info_icon'),
-                                    onTap: _showBirthdateInfo,
-                                    borderRadius: AppRadii.containerRadius,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(2),
-                                      child: Icon(
-                                        Icons.info_outline,
-                                        size: 14,
-                                        color: AppColors.blueText,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                            // Health info (alergie, omezení, léky) - adaptive display
-                            if (_selectedParticipant != null) ...[
-                              const SizedBox(height: 4),
-                              _buildHealthInfoRow(isCompact: isCompact),
-                            ],
-                          ],
-                        ),
-                      ),
-
-                      SizedBox(width: AppSpacing.m),
-
-                      // Inline search (compact on the right)
-                      Expanded(
-                        flex: 1,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Redundant label/icon removed based on feedback
-                            // Row(children: [Icon(Icons.search...), Text('Vyhledat osobu'...)]) removed
-                            const SizedBox(height: 0), // Placeholder to keep column structure valid if needed
-                            // Note: PersonAutocomplete has its own internal styling
-
-                            SizedBox(height: isCompact ? 2 : 4),
-                            PersonAutocomplete(
-                              key: const Key(
-                                  'NewRecordPage_participantAutocomplete'),
-                              onPersonSelected: _onParticipantSelected,
-                              onRefresh: _onRefresh,
-                              availablePersons: _availableParticipants,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: spacing),
-
-                // Display existing records (compact)
-                Flexible(
-                  fit: FlexFit.loose,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: minHistoryHeight,
-                      maxHeight: historyMaxHeight,
-                    ),
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: AppColors.greyBackground,
-                        borderRadius: BorderRadius.circular(8.0),
-                        border: Border.all(
-                            color: AppColors.greyBorderDark, width: 1),
-                      ),
-                      child: Column(
-                        children: [
-                          // Header for records list (responsive on mobile)
-                          // Header for records list (responsive on mobile)
-                          // Simplified to look more integrated (removed distinct background/border)
-                          Container(
-                            key: _historyHeaderKey,
-                            padding: EdgeInsets.symmetric(
-                                horizontal: isCompact ? 8.0 : 12.0,
-                                vertical: isCompact ? 6.0 : 8.0),
-                            // Decoration removed to blend with list
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.history,
-                                  color: AppColors.greyText,
-                                  size: isCompact ? 12 : 14,
-                                ),
-                                SizedBox(width: isCompact ? 4 : 6),
-                                Text(
-                                  'Historie úrazů',
-                                  style: TextStyle(
-                                    fontSize: isCompact ? 10 : 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.greyIcon,
-                                  ),
-                                ),
-                                // Count badge - shows number of records
-                                if (_recordCount > 0) ...[
-                                  const SizedBox(width: 6),
-                                  CountBadge(
-                                    count: _recordCount,
-                                    isCompact: isCompact,
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          // Records list content
-                          Expanded(
-                            child: _selectedParticipant != null
-                                ? RecordListWidget(
-                                    key: ValueKey(_refreshCounter),
-                                    participant: _selectedParticipant!,
-                                    onRecordsLoaded: (count) {
-                                      if (mounted && _recordCount != count) {
-                                        setState(() => _recordCount = count);
-                                      }
-                                    },
-                                  )
-                                : Container(
-                                    alignment: Alignment.center,
-                                    child: SingleChildScrollView(
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.person_search,
-                                            size:
-                                                24, // Reduced for test compatibility
-                                            color: AppColors.greyTextLight,
-                                          ),
-                                          const SizedBox(
-                                              height:
-                                                  4), // Reduced for test compatibility
-                                          Text(
-                                            'Nejprve vyberte účastníka',
-                                            style: TextStyle(
-                                              fontSize:
-                                                  12, // Reduced for test compatibility
-                                              color: AppColors.greyText,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                          const SizedBox(
-                                              height:
-                                                  2), // Reduced for test compatibility
-                                          Text(
-                                            'Po výběru účastníka se zde zobrazí\njejí historie úrazů',
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontSize:
-                                                  10, // Reduced for test compatibility
-                                              color: AppColors.greyText,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: spacing),
-
-                // Form for new record (main focus)
-                // Intrinsic layout: Form takes only what it needs
-                SizedBox(
-                  key: _formContainerKey,
-                  child: Opacity(
-                    opacity: _selectedParticipant != null ? 1.0 : 0.4,
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        mainAxisSize: MainAxisSize.min, // Shrink to fit content
-                        children: [
-                          // Make form fields scrollable but keep action buttons pinned
-                          SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
+          Widget formFields = Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
                                 // Title field with DateTime and action buttons - responsive layout
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -1993,104 +1715,317 @@ class NewRecordPageState extends State<NewRecordPage> {
                                       ],
                                     ),
                                   ),
-                              ],
-                            ),
-                          ),
+            ],
+          );
 
-                          // Action buttons (enhanced professional styling) pinned at bottom
-                          Container(
-                            padding:
-                                AppSpacing.containerPadding, // 16px padding
-                            decoration: BoxDecoration(
-                              color: AppColors.greyBackground,
-                              borderRadius:
-                                  AppRadii.containerRadius, // 12px rounded
-                              border: Border.all(
-                                  color: AppColors.greyBorder, width: 1),
-                            ),
-                            child: Row(
-                              children: [
-                                // Save button (primary action)
-                                Expanded(
-                                  flex: 3,
-                                  child: FilledButton.icon(
-                                    key: const Key('NewRecordPage_save_button'),
-                                    onPressed: _isSaving ? null : _saveRecord,
-                                    // Removed styleFrom to use theme styling
-                                    icon: _isSaving
-                                        ? const SizedBox(
-                                            width: 16,
-                                            height: 16,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              valueColor:
-                                                  AlwaysStoppedAnimation<Color>(
-                                                      Colors.white),
-                                            ),
-                                          )
-                                        : const Icon(Icons.save, size: 18),
-                                    label: Text(
-                                      _isSaving
-                                          ? 'Ukládání...'
-                                          : 'Uložit do deníku',
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ),
+          Widget formContent = shouldUsePageScroll
+              ? formFields
+              : SingleChildScrollView(child: formFields);
 
-                                const SizedBox(width: 16), // Increased spacing
-
-                                // Cancel button (secondary action)
-                                Expanded(
-                                  flex: 2,
-                                  child: OutlinedButton.icon(
-                                    key: const Key(
-                                        'NewRecordPage_cancel_button'),
-                                    onPressed:
-                                        _isSaving ? null : _cancelAndReturn,
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: AppColors.greyIcon,
-                                      side: BorderSide(
-                                          color: AppColors.greyTextLight,
-                                          width: 1.5),
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: isCompact
-                                            ? 12
-                                            : 14, // Match save button height
-                                        horizontal: isCompact ? 12 : 16,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(8.0),
-                                      ),
-                                    ),
-                                    icon: Icon(
-                                      Icons.close,
-                                      size: isCompact ? 16 : 18,
-                                    ),
-                                    label: Text(
-                                      'Zavřít',
-                                      style: TextStyle(
-                                        fontSize: isCompact ? 13 : 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+          Widget headerSection = Container(
+            key: _headerKey,
+            padding: AppSpacing.containerPadding, // 16px padding
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Theme.of(context).colorScheme.primaryContainer,
+                  Theme.of(context)
+                      .colorScheme
+                      .primaryContainer
+                      .withValues(alpha: 0.5),
                 ],
               ),
-            );
+              borderRadius: AppRadii.containerRadius, // 12px rounded
+              border: Border.all(
+                  color: Theme.of(context).colorScheme.primary, width: 1),
+            ),
+            child: Row(
+              children: [
+                // Participant icon
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(
+                    _selectedParticipant != null
+                        ? Icons.person
+                        : Icons.person_search,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: isCompact ? 18 : 20,
+                  ),
+                ),
+
+                SizedBox(width: AppSpacing.m),
+
+                // Participant info (takes most space)
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              'Účastník',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: isCompact ? 12 : 13,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.blueText,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+
+                          const SizedBox(width: 8),
+                          // Unsaved changes warning badge
+                          if (_hasUnsavedChanges)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: AppColors.orangeBackground,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                    color: AppColors.orangeBorder, width: 1),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.warning_amber,
+                                    size: 10,
+                                    color: AppColors.orangeText,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    'Neuloženo',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.orangeText,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              _selectedParticipant != null
+                                  ? '${_selectedParticipant!.jmeno} ${_selectedParticipant!.prijmeni}${_formatAge()}'
+                                  : 'Vyberte účastníka...',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: isCompact ? 14 : 15,
+                                fontWeight: FontWeight.bold,
+                                color: _selectedParticipant != null
+                                    ? AppColors.greyIcon
+                                    : AppColors.greyText,
+                              ),
+                            ),
+                          ),
+                          // Info icon to show full birthdate on tap
+                          if (_selectedParticipant?.datumNarozeni != null) ...[
+                            const SizedBox(width: 4),
+                            InkWell(
+                              key: const Key(
+                                  'NewRecordPage_birthdate_info_icon'),
+                              onTap: _showBirthdateInfo,
+                              borderRadius: AppRadii.containerRadius,
+                              child: Padding(
+                                padding: const EdgeInsets.all(2),
+                                child: Icon(
+                                  Icons.info_outline,
+                                  size: 14,
+                                  color: AppColors.blueText,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      // Health info (alergie, omezení, léky) - adaptive display
+                      if (_selectedParticipant != null) ...[
+                        const SizedBox(height: 4),
+                        _buildHealthInfoRow(isCompact: isCompact),
+                      ],
+                    ],
+                  ),
+                ),
+
+                SizedBox(width: AppSpacing.m),
+
+                // Inline search (compact on the right)
+                Expanded(
+                  flex: 1,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 0),
+                      SizedBox(height: isCompact ? 2 : 4),
+                      PersonAutocomplete(
+                        key: const Key(
+                            'NewRecordPage_participantAutocomplete'),
+                        onPersonSelected: _onParticipantSelected,
+                        onRefresh: _onRefresh,
+                        availablePersons: _availableParticipants,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+
+          Widget historySection = Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.greyBackground,
+              borderRadius: BorderRadius.circular(8.0),
+              border: Border.all(color: AppColors.greyBorderDark, width: 1),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  key: _historyHeaderKey,
+                  padding: EdgeInsets.symmetric(
+                      horizontal: isCompact ? 8.0 : 12.0,
+                      vertical: isCompact ? 6.0 : 8.0),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.history,
+                        color: AppColors.greyText,
+                        size: isCompact ? 12 : 14,
+                      ),
+                      SizedBox(width: isCompact ? 4 : 6),
+                      Text(
+                        'Historie úrazů',
+                        style: TextStyle(
+                          fontSize: isCompact ? 10 : 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.greyIcon,
+                        ),
+                      ),
+                      if (_recordCount > 0) ...[
+                        const SizedBox(width: 6),
+                        CountBadge(
+                          count: _recordCount,
+                          isCompact: isCompact,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: _selectedParticipant != null
+                      ? RecordListWidget(
+                          key: ValueKey(_refreshCounter),
+                          participant: _selectedParticipant!,
+                          onRecordsLoaded: (count) {
+                            if (mounted && _recordCount != count) {
+                              setState(() => _recordCount = count);
+                            }
+                          },
+                        )
+                      : Container(
+                          alignment: Alignment.center,
+                          child: SingleChildScrollView(
+                            physics: const NeverScrollableScrollPhysics(),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.person_search,
+                                  size: 24,
+                                  color: AppColors.greyTextLight,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Nejprve vyberte účastníka',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.greyText,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Po výběru účastníka se zde zobrazí\njejí historie úrazů',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: AppColors.greyText,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                ),
+              ],
+            ),
+          );
+
+          Widget historyBlock = shouldUsePageScroll
+              ? SizedBox(
+                  height: historyHeightForScroll,
+                  child: historySection,
+                )
+              : Flexible(
+                  fit: FlexFit.loose,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: minHistoryHeight,
+                      maxHeight: historyMaxHeight,
+                    ),
+                    child: historySection,
+                  ),
+                );
+
+          Widget formSection = SizedBox(
+            key: _formContainerKey,
+            child: Opacity(
+              opacity: _selectedParticipant != null ? 1.0 : 0.4,
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    formContent,
+                  ],
+                ),
+              ),
+            ),
+          );
+
+          Widget bodyContent = Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              headerSection,
+              SizedBox(height: spacing),
+              historyBlock,
+              SizedBox(height: spacing),
+              formSection,
+            ],
+          );
+
+          return Padding(
+            padding: AppSpacing.screenPadding,
+            child: shouldUsePageScroll
+                ? SingleChildScrollView(child: bodyContent)
+                : bodyContent,
+          );
         },
       ), // Close LayoutBuilder
     ); // Close Scaffold
@@ -2160,6 +2095,81 @@ class NewRecordPageState extends State<NewRecordPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons({required bool isCompact}) {
+    return Container(
+      padding: AppSpacing.containerPadding, // 16px padding
+      decoration: BoxDecoration(
+        color: AppColors.greyBackground,
+        borderRadius: AppRadii.containerRadius, // 12px rounded
+        border: Border.all(color: AppColors.greyBorder, width: 1),
+      ),
+      child: Row(
+        children: [
+          // Save button (primary action)
+          Expanded(
+            flex: 3,
+            child: FilledButton.icon(
+              key: const Key('NewRecordPage_save_button'),
+              onPressed: _isSaving ? null : _saveRecord,
+              // Removed styleFrom to use theme styling
+              icon: _isSaving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.save, size: 18),
+              label: Text(
+                _isSaving ? 'Ukládání...' : 'Uložit do deníku',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 16), // Increased spacing
+
+          // Cancel button (secondary action)
+          Expanded(
+            flex: 2,
+            child: OutlinedButton.icon(
+              key: const Key('NewRecordPage_cancel_button'),
+              onPressed: _isSaving ? null : _cancelAndReturn,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.greyIcon,
+                side: BorderSide(color: AppColors.greyTextLight, width: 1.5),
+                padding: EdgeInsets.symmetric(
+                  vertical: isCompact ? 12 : 14, // Match save button height
+                  horizontal: isCompact ? 12 : 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+              ),
+              icon: Icon(
+                Icons.close,
+                size: isCompact ? 16 : 18,
+              ),
+              label: Text(
+                'Zavřít',
+                style: TextStyle(
+                  fontSize: isCompact ? 13 : 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
