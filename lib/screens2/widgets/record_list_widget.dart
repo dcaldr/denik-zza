@@ -13,6 +13,7 @@ class RecordListWidget extends StatefulWidget {
   final double? height; // Optional height constraint
   final bool showRefreshButton; // Whether to show refresh button
   final VoidCallback? onRecordAdded; // Callback when a record is added
+  final void Function(int count)? onRecordsLoaded; // Callback with record count
 
   const RecordListWidget({
     super.key,
@@ -20,6 +21,7 @@ class RecordListWidget extends StatefulWidget {
     this.height,
     this.showRefreshButton = false,
     this.onRecordAdded,
+    this.onRecordsLoaded,
   });
 
   @override
@@ -56,6 +58,8 @@ class _RecordListWidgetState extends State<RecordListWidget> {
         _records = records;
         _isLoading = false;
       });
+      // Notify parent of record count for header badge
+      widget.onRecordsLoaded?.call(_records.length);
     } catch (error) {
       setState(() {
         _isLoading = false;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
+
 import 'package:provider/provider.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
@@ -7,8 +7,10 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart'
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_lek.dart';
 import 'package:denik_zza/screens2/services/record_service.dart';
 import 'package:denik_zza/screens2/widgets/record_list_widget.dart';
+import 'package:denik_zza/design_system/tokens/app_layout.dart';
+import 'package:denik_zza/design_system/widgets/count_badge.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
-import 'package:denik_zza/screens2/widgets/dev_mock_data_badge.dart';
+
 import 'package:denik_zza/screens2/widgets/file_viewer_screen_widget.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/print_ops2/print_center.dart';
@@ -75,6 +77,7 @@ class NewRecordPageState extends State<NewRecordPage> {
   List<MemoryOmezeni> _omezeniList = [];
   List<MemoryLek> _lekyList = [];
   bool _healthInfoExpanded = false; // Controls whether to show all health items
+  int _recordCount = 0; // Count of participant's records for header badge
 
   @override
   void initState() {
@@ -213,7 +216,7 @@ class NewRecordPageState extends State<NewRecordPage> {
 
     // Use compact badges on mobile or compact height mode
     final screenWidth = MediaQuery.of(context).size.width;
-    final useCompactBadges = isCompact || screenWidth < 600;
+    final useCompactBadges = isCompact || AppBreakpoints.isMobile(screenWidth);
 
     if (useCompactBadges) {
       return _buildCompactHealthBadges(
@@ -1189,8 +1192,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                // Dev warning: Mock data badge (only in debug builds)
-                                if (kDebugMode) const DevMockDataBadge(),
+
                                 const SizedBox(width: 8),
                                 // Unsaved changes warning badge
                                 if (_hasUnsavedChanges)
@@ -1306,8 +1308,8 @@ class NewRecordPageState extends State<NewRecordPage> {
 
                 // Display existing records (compact)
                 Expanded(
-                  flex:
-                      isCompact ? 1 : 2, // Reduced to take less vertical space
+                  // History takes all remaining space (after Form takes what it needs)
+                  flex: 1,
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -1342,6 +1344,14 @@ class NewRecordPageState extends State<NewRecordPage> {
                                   color: AppColors.greyIcon,
                                 ),
                               ),
+                              // Count badge - shows number of records
+                              if (_recordCount > 0) ...[
+                                const SizedBox(width: 6),
+                                CountBadge(
+                                  count: _recordCount,
+                                  isCompact: isCompact,
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -1351,6 +1361,11 @@ class NewRecordPageState extends State<NewRecordPage> {
                               ? RecordListWidget(
                                   key: ValueKey(_refreshCounter),
                                   participant: _selectedParticipant!,
+                                  onRecordsLoaded: (count) {
+                                    if (mounted && _recordCount != count) {
+                                      setState(() => _recordCount = count);
+                                    }
+                                  },
                                 )
                               : Container(
                                   alignment: Alignment.center,
@@ -1404,271 +1419,156 @@ class NewRecordPageState extends State<NewRecordPage> {
                 SizedBox(height: spacing),
 
                 // Form for new record (main focus)
-                Expanded(
-                  flex: isCompact ? 5 : 7, // More space for form (main focus)
-                  child: Opacity(
-                    opacity: _selectedParticipant != null ? 1.0 : 0.4,
-                    child: Form(
+                // Intrinsic layout: Form takes only what it needs
+                Opacity(
+                  opacity: _selectedParticipant != null ? 1.0 : 0.4,
+                  child: Form(
                       key: _formKey,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min, // Shrink to fit content
                         children: [
                           // Make form fields scrollable but keep action buttons pinned
-                          Expanded(
-                            child: SingleChildScrollView(
-                              child: Column(
+                          SingleChildScrollView(
+                            child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  // Date/time section with action buttons - datetime in blue box, buttons at far right
+                                  // Title field with DateTime and action buttons - responsive layout
                                   Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
                                     children: [
-                                      // Compact datetime chip - saves ~60px vertical space
-                                      Flexible(
-                                        child: Tooltip(
-                                          message: 'Čas záznamu',
-                                          child: InkWell(
-                                            key: const Key(
-                                                'datetime_change_button'),
-                                            onTap: _selectedParticipant != null
-                                                ? _selectDateTime
-                                                : null,
-                                            borderRadius:
-                                                AppRadii.containerRadius,
-                                            child: Container(
-                                              padding: EdgeInsets.symmetric(
-                                                horizontal: isCompact ? 10 : 12,
-                                                vertical: isCompact ? 8 : 10,
-                                              ),
+
+
+                                      // Title field takes remaining space using AppLayout flex
+                                      Expanded(
+                                        flex: AppLayout.inputFlex,
+                                        child: TextFormField(
+                                          key: const Key('NewRecordPage_title_input'),
+                                          controller: _titleController,
+                                          enabled: _selectedParticipant != null,
+                                          maxLines: 1,
+                                          maxLength: 200,
+                                          style: TextStyle(
+                                            fontSize: isCompact ? 14 : 15,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.black87,
+                                          ),
+                                          decoration: InputDecoration(
+                                            labelText: 'Nadpis * (povinné)',
+                                            labelStyle: TextStyle(
+                                              color: AppColors.blueDark,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            hintText: _selectedParticipant != null
+                                                ? 'Povinné - typ úrazu nebo stížnosti (např. "Odřenina kolena", "Bolest hlavy")'
+                                                : 'Vyberte účastníka pro pokračování',
+                                            hintStyle: TextStyle(
+                                              color: AppColors.greyText,
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                            filled: true,
+                                            fillColor: Colors.white,
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8.0),
+                                              borderSide: BorderSide(
+                                                  color: AppColors.blueBorder),
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8.0),
+                                              borderSide: BorderSide(
+                                                  color: AppColors.blueBorder),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8.0),
+                                              borderSide: BorderSide(
+                                                  color: AppColors.blueText,
+                                                  width: 2),
+                                            ),
+                                            errorBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8.0),
+                                              borderSide: const BorderSide(
+                                                  color: Colors.red, width: 2),
+                                            ),
+                                            contentPadding: EdgeInsets.symmetric(
+                                                horizontal: isCompact ? 12 : 16,
+                                                vertical: isCompact ? 8 : 12),
+                                            prefixIcon: Container(
+                                              margin: const EdgeInsets.all(8.0),
+                                              padding: const EdgeInsets.all(6.0),
                                               decoration: BoxDecoration(
-                                                color: AppColors.blueBackground
-                                                    .withValues(alpha: 0.3),
+                                                color: AppColors.blueBackground,
                                                 borderRadius:
-                                                    AppRadii.containerRadius,
-                                                border: Border.all(
-                                                    color: AppColors.blueBorder
-                                                        .withValues(alpha: 0.5),
-                                                    width: 1),
+                                                    BorderRadius.circular(4),
                                               ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Container(
-                                                    padding:
-                                                        const EdgeInsets.all(4),
-                                                    decoration: BoxDecoration(
-                                                      color: AppColors
-                                                          .blueIconBackground,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              4),
-                                                    ),
-                                                    child: Icon(
-                                                      Icons.schedule,
-                                                      color: AppColors.blueDark,
-                                                      size: isCompact ? 14 : 16,
-                                                    ),
-                                                  ),
-                                                  SizedBox(
-                                                      width: isCompact ? 6 : 8),
-                                                  Flexible(
-                                                    child: Text(
-                                                      _formatSelectedDateTime(),
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: TextStyle(
-                                                        fontSize:
-                                                            isCompact ? 13 : 14,
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                        color:
-                                                            _selectedParticipant !=
-                                                                    null
-                                                                ? Colors.black87
-                                                                : Colors.grey
-                                                                    .shade400,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  Icon(
-                                                    Icons.edit_outlined,
-                                                    size: isCompact ? 14 : 16,
-                                                    color:
-                                                        _selectedParticipant !=
-                                                                null
-                                                            ? AppColors.blueDark
-                                                            : Colors
-                                                                .grey.shade400,
-                                                  ),
-                                                  // Compact reset button when datetime modified
-                                                  if (_selectedDate != null ||
-                                                      _selectedTime !=
-                                                          null) ...[
-                                                    const SizedBox(width: 4),
-                                                    InkWell(
-                                                      key: const Key(
-                                                          'datetime_reset_button'),
-                                                      onTap:
-                                                          _selectedParticipant !=
-                                                                  null
-                                                              ? () {
-                                                                  setState(() {
-                                                                    _selectedDate =
-                                                                        null;
-                                                                    _selectedTime =
-                                                                        null;
-                                                                  });
-                                                                }
-                                                              : null,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              4),
-                                                      child: Tooltip(
-                                                        message:
-                                                            'Reset na aktuální čas',
-                                                        child: Icon(
-                                                          Icons.refresh,
-                                                          size: isCompact
-                                                              ? 14
-                                                              : 16,
-                                                          color:
-                                                              _selectedParticipant !=
-                                                                      null
-                                                                  ? AppColors
-                                                                      .blueDark
-                                                                  : Colors.grey
-                                                                      .shade400,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ],
+                                              child: Icon(
+                                                Icons.title,
+                                                color: AppColors.blueDark,
+                                                size: isCompact ? 16 : 18,
                                               ),
                                             ),
+                                            errorMaxLines: 1,
+                                            errorStyle: const TextStyle(
+                                                fontSize: 11, height: 0.8),
                                           ),
+                                          validator: (value) {
+                                            if (value == null ||
+                                                value.trim().isEmpty) {
+                                              return 'Prosím zadejte nadpis';
+                                            }
+                                            if (value.length > 200) {
+                                              return 'Nadpis nesmí být delší než 200 znaků';
+                                            }
+                                            return null;
+                                          },
                                         ),
                                       ),
-                                      // Group all action buttons together on the right
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          _buildPrintIconButton(
-                                            key: const Key(
-                                                'NewRecordPage_print_full_button'),
-                                            icon: Icons.print,
-                                            tooltip: 'Tisknout záznam',
-                                            onPressed: _canPrint()
-                                                ? _printFullRecord
-                                                : null,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          _buildPrintIconButton(
-                                            key: const Key(
-                                                'NewRecordPage_print_append_button'),
-                                            icon: Icons.add_to_photos,
-                                            tooltip:
-                                                'Přitisknout k existujícímu',
-                                            onPressed: _canPrint()
-                                                ? _printAppendRecord
-                                                : null,
-                                          ),
-                                          // Způsobilost document button (far right)
-                                          if (_selectedParticipant != null) ...[
-                                            const SizedBox(width: 4),
-                                            _buildZpusobilostButton(),
-                                          ],
-                                        ],
+                                      SizedBox(width: AppSpacing.s),
+                                      // DateTime Chip (merged into title row, after title)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 2),
+                                        child: _buildDateTimeChip(
+                                            isCompact: isCompact),
                                       ),
-                                    ],
-                                  ),
-                                  SizedBox(height: titleSpacing),
-
-                                  // Title field
-                                  TextFormField(
-                                    key: const Key('NewRecordPage_title_input'),
-                                    controller: _titleController,
-                                    enabled: _selectedParticipant != null,
-                                    maxLines: 1,
-                                    maxLength: 200,
-                                    style: TextStyle(
-                                      fontSize: isCompact ? 14 : 15,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black87,
+                                      SizedBox(width: AppSpacing.s),
+                                      // Action buttons - wrap when narrow (~33% width)
+                                      // Action buttons - min width to let title expand
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 8),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                          children: [
+                                              _buildPrintIconButton(
+                                                key: const Key(
+                                                    'NewRecordPage_print_full_button'),
+                                                icon: Icons.print,
+                                                tooltip: 'Tisknout záznam',
+                                                onPressed: _canPrint()
+                                                    ? _printFullRecord
+                                                    : null,
+                                              ),
+                                              _buildPrintIconButton(
+                                                key: const Key(
+                                                    'NewRecordPage_print_append_button'),
+                                                icon: Icons.add_to_photos,
+                                                tooltip:
+                                                    'Přitisknout k existujícímu',
+                                                onPressed: _canPrint()
+                                                    ? _printAppendRecord
+                                                    : null,
+                                              ),
+                                              // Způsobilost document button
+                                              if (_selectedParticipant != null)
+                                                _buildZpusobilostButton(),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    decoration: InputDecoration(
-                                      labelText: 'Nadpis * (povinné)',
-                                      labelStyle: TextStyle(
-                                        color: AppColors.blueDark,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      hintText: _selectedParticipant != null
-                                          ? 'Povinné - typ úrazu nebo stížnosti (např. "Odřenina kolena", "Bolest hlavy")'
-                                          : 'Vyberte účastníka pro pokračování',
-                                      hintStyle: TextStyle(
-                                        color: AppColors.greyText,
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                      filled: true,
-                                      fillColor: Colors.white,
-                                      border: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(8.0),
-                                        borderSide: BorderSide(
-                                            color: AppColors.blueBorder),
-                                      ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(8.0),
-                                        borderSide: BorderSide(
-                                            color: AppColors.blueBorder),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(8.0),
-                                        borderSide: BorderSide(
-                                            color: AppColors.blueText,
-                                            width: 2),
-                                      ),
-                                      errorBorder: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(8.0),
-                                        borderSide: const BorderSide(
-                                            color: Colors.red, width: 2),
-                                      ),
-                                      contentPadding: EdgeInsets.symmetric(
-                                          horizontal: isCompact ? 12 : 16,
-                                          vertical: isCompact ? 8 : 12),
-                                      prefixIcon: Container(
-                                        margin: const EdgeInsets.all(8.0),
-                                        padding: const EdgeInsets.all(6.0),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.blueBackground,
-                                          borderRadius:
-                                              BorderRadius.circular(4),
-                                        ),
-                                        child: Icon(
-                                          Icons.title,
-                                          color: AppColors.blueDark,
-                                          size: isCompact ? 16 : 18,
-                                        ),
-                                      ),
-                                      errorMaxLines: 1,
-                                      errorStyle: const TextStyle(
-                                          fontSize: 11, height: 0.8),
-                                    ),
-                                    validator: (value) {
-                                      if (value == null ||
-                                          value.trim().isEmpty) {
-                                        return 'Prosím zadejte nadpis';
-                                      }
-                                      if (value.length > 200) {
-                                        return 'Nadpis nesmí být delší než 200 znaků';
-                                      }
-                                      return null;
-                                    },
-                                  ),
                                   SizedBox(height: titleSpacing),
 
                                   // Description and Note - responsive layout
@@ -1995,7 +1895,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                 ],
                               ),
                             ),
-                          ),
+
 
                           // Action buttons (enhanced professional styling) pinned at bottom
                           Container(
@@ -2083,16 +1983,83 @@ class NewRecordPageState extends State<NewRecordPage> {
                               ],
                             ),
                           ),
-                        ], // Close Column (Form child)
-                      ), // Close Form Column widget
-                    ), // Close Form widget
-                  ), // Close Opacity widget
-                ), // Close Expanded widget (form section)
-              ],
-            ), // Close outer Column
-          ); // Close Padding and return
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
         },
       ), // Close LayoutBuilder
     ); // Close Scaffold
+  }
+
+  Widget _buildDateTimeChip({required bool isCompact}) {
+    return Tooltip(
+      message: 'Čas záznamu',
+      child: InkWell(
+        key: const Key('datetime_change_button'),
+        onTap: _selectedParticipant != null ? _selectDateTime : null,
+        borderRadius: AppRadii.containerRadius,
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: isCompact ? 8 : 10,
+            vertical: isCompact ? 6 : 8,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.blueBackground.withValues(alpha: 0.3),
+            borderRadius: AppRadii.containerRadius,
+            border: Border.all(
+              color: AppColors.blueBorder.withValues(alpha: 0.5),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.schedule,
+                color: AppColors.blueDark,
+                size: isCompact ? 16 : 18,
+              ),
+              SizedBox(width: isCompact ? 4 : 6),
+              Flexible(
+                child: Text(
+                  _formatSelectedDateTime(),
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: isCompact ? 13 : 14,
+                    fontWeight: FontWeight.w500,
+                    color: _selectedParticipant != null
+                        ? Colors.black87
+                        : Colors.grey.shade400,
+                  ),
+                ),
+              ),
+              if (_selectedDate != null || _selectedTime != null) ...[
+                const SizedBox(width: 4),
+                InkWell(
+                  key: const Key('datetime_reset_button'),
+                  onTap: _selectedParticipant != null
+                      ? () {
+                          setState(() {
+                            _selectedDate = null;
+                            _selectedTime = null;
+                          });
+                        }
+                      : null,
+                  child: Icon(
+                    Icons.refresh,
+                    size: isCompact ? 14 : 16,
+                    color: AppColors.blueDark,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
