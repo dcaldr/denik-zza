@@ -1,7 +1,4 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import 'package:denik_zza/database/database_wrapper.dart';
@@ -11,17 +8,18 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/design_system/tokens/app_breakpoints.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
+import 'package:denik_zza/design_system/tokens/app_new_record_layout.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/print_ops2/print_center.dart';
 import 'package:denik_zza/print_ops2/print_center_controller.dart';
 import 'package:denik_zza/print_ops2/print_center_service.dart';
 import 'package:denik_zza/screens2/new_record/widgets/new_record_action_buttons.dart';
-import 'package:denik_zza/screens2/new_record/widgets/new_record_form_fields.dart';
-import 'package:denik_zza/screens2/new_record/widgets/new_record_header_section.dart';
-import 'package:denik_zza/screens2/new_record/widgets/new_record_history_section.dart';
+import 'package:denik_zza/screens2/new_record/widgets/new_record_body_layout.dart';
+import 'package:denik_zza/screens2/new_record/new_record_scroll_strategy.dart';
 import 'package:denik_zza/screens2/services/record_service.dart';
 import 'package:denik_zza/screens2/widgets/app_drawer.dart';
-import 'package:denik_zza/screens2/widgets/file_viewer_screen_widget.dart';
+import 'package:denik_zza/screens2/new_record/new_record_date_time.dart';
+import 'package:denik_zza/screens2/new_record/new_record_page_dialogs.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 
 /// Enhanced new record page that matches the old system functionality
@@ -82,7 +80,6 @@ class NewRecordPageState extends State<NewRecordPage> {
   // Health info loaded separately
   List<MemoryOmezeni> _omezeniList = [];
   List<MemoryLek> _lekyList = [];
-  bool _healthInfoExpanded = false; // Controls whether to show all health items
   int _recordCount = 0; // Count of participant's records for header badge
 
   @override
@@ -121,6 +118,7 @@ class NewRecordPageState extends State<NewRecordPage> {
       final database = DatabaseWrapper.getDatabase();
       final participants =
           await database.watchParticipantsByCurrentEvent().first;
+      if (!mounted) return;
       setState(() {
         _availableParticipants = participants;
       });
@@ -133,7 +131,8 @@ class NewRecordPageState extends State<NewRecordPage> {
   void _onParticipantSelected(MemoryOsoba participant) async {
     // Guard against accidental data override
     if (_selectedParticipant != null && _hasUnsavedChanges) {
-      final confirmed = await _confirmParticipantChange();
+      final confirmed =
+          await NewRecordPageDialogs.confirmParticipantChange(context);
       if (confirmed != true) return; // User cancelled the change
     }
 
@@ -204,13 +203,16 @@ class NewRecordPageState extends State<NewRecordPage> {
       final database = DatabaseWrapper.getDatabase();
       final omezeni = await database.getOmezeniByParticipantID(participantId);
       final leky = await database.getLekyByParticipantID(participantId);
+      if (!mounted) return;
 
       setState(() {
         _omezeniList = omezeni;
         _lekyList = leky;
       });
     } catch (e) {
-      // Silent fail - health info is optional
+      AppLogger.l.w(
+        'Failed to load health data for participant $participantId: $e',
+      );
     }
   }
 
@@ -231,611 +233,6 @@ class NewRecordPageState extends State<NewRecordPage> {
     return ', $age let';
   }
 
-  /// Builds health info row with responsive collapse logic
-  /// Shows compact badges on mobile/compact, full chips on desktop
-  Widget _buildHealthInfoRow({required bool isCompact}) {
-    // Filter omezeni by type: 1=omezeni, 2=alergie
-    final alergieList = _omezeniList.where((o) => o.typOmezeni == 2).toList();
-    final omezeniList = _omezeniList.where((o) => o.typOmezeni == 1).toList();
-
-    if (alergieList.isEmpty && omezeniList.isEmpty && _lekyList.isEmpty) {
-      // All clear indicator
-      return _buildHealthAllClearIndicator();
-    }
-
-    // Use compact badges on mobile or compact height mode
-    final screenWidth = MediaQuery.of(context).size.width;
-    final useCompactBadges = isCompact || AppBreakpoints.isMobile(screenWidth);
-
-    if (useCompactBadges) {
-      return _buildCompactHealthBadges(
-        criticalCount: alergieList.length + omezeniList.length,
-        medCount: _lekyList.length,
-      );
-    }
-
-    // Build all health chip widgets (desktop view)
-    final allHealthChips = <Widget>[
-      // Alergie
-      for (var alergie in alergieList)
-        _buildHealthChip(
-          icon: Icons.warning_amber,
-          iconColor: Theme.of(context).colorScheme.error,
-          backgroundColor: Theme.of(context).colorScheme.errorContainer,
-          text: alergie.omezeni,
-          maxChars: 30,
-        ),
-      // Omezení
-      for (var omezeni in omezeniList)
-        _buildHealthChip(
-          icon: Icons.block,
-          iconColor: Theme.of(context).colorScheme.secondary,
-          backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-          text: omezeni.omezeni,
-          maxChars: 30,
-        ),
-      // Léky
-      for (var lek in _lekyList)
-        _buildHealthChip(
-          icon: Icons.medication,
-          iconColor: Theme.of(context).colorScheme.primary,
-          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-          text: lek.nazev,
-          maxChars: 30,
-        ),
-    ];
-
-    // Responsive collapse: adapt threshold to screen size
-    final maxCollapsedItems = screenWidth < 900 ? 6 : 8;
-    final totalItems = allHealthChips.length;
-    final shouldShowCollapseButton = totalItems > maxCollapsedItems;
-    final visibleChips = (_healthInfoExpanded || !shouldShowCollapseButton)
-        ? allHealthChips
-        : allHealthChips.take(maxCollapsedItems).toList();
-
-    return Wrap(
-      spacing: 6,
-      runSpacing: 4,
-      children: [
-        ...visibleChips,
-        // Compact collapse button (only if more than threshold items)
-        if (shouldShowCollapseButton)
-          _buildCompactCollapseButton(
-            hiddenCount: totalItems - maxCollapsedItems,
-          ),
-      ],
-    );
-  }
-
-  /// Green checkmark indicator when participant has no health restrictions
-  Widget _buildHealthAllClearIndicator() {
-    return Container(
-      key: const Key('NewRecordPage_health_all_clear'),
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-      decoration: BoxDecoration(
-        color: AppColors.greenBackground,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.greenBorder, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.check_circle, size: 14, color: AppColors.greenIcon),
-          const SizedBox(width: 4),
-          Text(
-            'Bez omezení',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: AppColors.greenText,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Compact dual-zone badges for mobile view
-  Widget _buildCompactHealthBadges({
-    required int criticalCount,
-    required int medCount,
-  }) {
-    return GestureDetector(
-      key: const Key('NewRecordPage_health_badges'),
-      onTap: () => _showHealthDetailsBottomSheet(),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Critical items badge (allergies + restrictions)
-          if (criticalCount > 0)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.errorContainer,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.warning_amber,
-                    size: 12,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                  const SizedBox(width: 3),
-                  Text(
-                    '$criticalCount',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          if (criticalCount > 0 && medCount > 0) const SizedBox(width: 4),
-          // Medications badge
-          if (medCount > 0)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.medication,
-                    size: 12,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 3),
-                  Text(
-                    '$medCount',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          const SizedBox(width: 4),
-          // Chevron to indicate tappable
-          Icon(
-            Icons.chevron_right,
-            size: 16,
-            color: AppColors.greyText,
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Shows full health details in a bottom sheet (mobile-friendly)
-  void _showHealthDetailsBottomSheet() {
-    final alergieList = _omezeniList.where((o) => o.typOmezeni == 2).toList();
-    final omezeniList = _omezeniList.where((o) => o.typOmezeni == 1).toList();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              Text(
-                'Zdravotní údaje',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.greyIcon,
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Allergies section
-              if (alergieList.isNotEmpty) ...[
-                _buildHealthSectionHeader(
-                  icon: Icons.warning_amber,
-                  iconColor: Theme.of(context).colorScheme.error,
-                  label: 'Alergie',
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: alergieList.map((a) => _buildHealthChip(
-                    icon: Icons.warning_amber,
-                    iconColor: Theme.of(context).colorScheme.error,
-                    backgroundColor: Theme.of(context).colorScheme.errorContainer,
-                    text: a.omezeni,
-                    maxChars: 50,
-                  )).toList(),
-                ),
-                const SizedBox(height: 12),
-              ],
-              // Restrictions section
-              if (omezeniList.isNotEmpty) ...[
-                _buildHealthSectionHeader(
-                  icon: Icons.block,
-                  iconColor: Theme.of(context).colorScheme.secondary,
-                  label: 'Omezení',
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: omezeniList.map((o) => _buildHealthChip(
-                    icon: Icons.block,
-                    iconColor: Theme.of(context).colorScheme.secondary,
-                    backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-                    text: o.omezeni,
-                    maxChars: 50,
-                  )).toList(),
-                ),
-                const SizedBox(height: 12),
-              ],
-              // Medications section
-              if (_lekyList.isNotEmpty) ...[
-                _buildHealthSectionHeader(
-                  icon: Icons.medication,
-                  iconColor: Theme.of(context).colorScheme.primary,
-                  label: 'Léky',
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: _lekyList.map((l) => _buildHealthChip(
-                    icon: Icons.medication,
-                    iconColor: Theme.of(context).colorScheme.primary,
-                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                    text: l.nazev,
-                    maxChars: 50,
-                  )).toList(),
-                ),
-              ],
-              const SizedBox(height: 16),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Section header for BottomSheet health categories
-  Widget _buildHealthSectionHeader({
-    required IconData icon,
-    required Color iconColor,
-    required String label,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: iconColor),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.greyIcon,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Shows poznámka (note) editing bottom sheet for mobile layout
-  void _showPoznamkaBottomSheet() {
-    // Create a temporary controller to allow cancel functionality
-    final tempController = TextEditingController(text: _poznamkaController.text);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.yellow.shade50,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 12,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: Colors.amber.shade200,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            // Title with sticky note style
-            Row(
-              children: [
-                Icon(Icons.sticky_note_2, size: 20, color: Colors.amber.shade700),
-                const SizedBox(width: 8),
-                Text(
-                  'Poznámka',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.amber.shade800,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Interní poznámka - netiskne se na výstup',
-              style: TextStyle(
-                fontSize: 11,
-                fontStyle: FontStyle.italic,
-                color: Colors.amber.shade600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Text input
-            TextField(
-              key: const Key('NewRecordPage_poznamka_bottomsheet_input'),
-              controller: tempController,
-              autofocus: true,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: 'Alergie, léky, interní poznámky...',
-                hintStyle: TextStyle(
-                  color: Colors.amber.shade400,
-                  fontStyle: FontStyle.italic,
-                ),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.amber.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.amber.shade600, width: 2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Action buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'Zrušit',
-                    style: TextStyle(color: Colors.amber.shade700),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                FilledButton(
-                  onPressed: () {
-                    _poznamkaController.text = tempController.text;
-                    Navigator.pop(context);
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.amber.shade600,
-                  ),
-                  child: const Text('Uložit'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    ).then((_) => tempController.dispose());
-  }
-
-  /// Builds compact collapse/expand button for health info
-  Widget _buildCompactCollapseButton({required int hiddenCount}) {
-    return InkWell(
-      key: const Key('NewRecordPage_health_info_toggle'),
-      onTap: () {
-        setState(() {
-          _healthInfoExpanded = !_healthInfoExpanded;
-        });
-      },
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        decoration: BoxDecoration(
-          color: AppColors.greyBackgroundMedium,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: Theme.of(context).dividerColor),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              _healthInfoExpanded ? Icons.expand_less : Icons.more_horiz,
-              size: 14,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-            if (!_healthInfoExpanded) ...[
-              const SizedBox(width: 2),
-              Text(
-                '+$hiddenCount',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Builds a health info chip with truncation
-  Widget _buildHealthChip({
-    required IconData icon,
-    required Color iconColor,
-    required Color backgroundColor,
-    required String text,
-    required int maxChars,
-  }) {
-    final truncated = text.length > maxChars;
-    final displayText = truncated ? '${text.substring(0, maxChars)}...' : text;
-
-    return InkWell(
-      onTap: truncated
-          ? () => _showHealthDetailOverlay(text, icon, iconColor)
-          : null,
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: Theme.of(context).dividerColor, width: 1),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: iconColor),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                displayText,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w500,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Shows overlay with full health info text
-  void _showHealthDetailOverlay(
-      String fullText, IconData icon, Color iconColor) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        content: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: iconColor, size: 20),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                fullText,
-                style: const TextStyle(fontSize: 13),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Zavřít'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Shows full birthdate information in a dialog
-  void _showBirthdateInfo() {
-    if (_selectedParticipant?.datumNarozeni == null) return;
-
-    final birthDate = _selectedParticipant!.datumNarozeni!;
-    final formatted = DateFormat('d. MMMM yyyy', 'cs_CZ').format(birthDate);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Datum narození'),
-        content: Text(
-          formatted,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-        ),
-        actions: [
-          TextButton(
-            key: const Key('NewRecordPage_birthdate_dialog_close'),
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Zavřít'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Opens file viewer for způsobilost document
-  void _showZpusobilostDocument() {
-    if (_selectedParticipant?.potvrzeniPath == null ||
-        _selectedParticipant!.potvrzeniPath!.isEmpty) {
-      // Show error if no document path
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Chybí dokument'),
-          content: const Text(
-              'Pro tohoto účastníka není k dispozici dokument způsobilosti.'),
-          actions: [
-            TextButton(
-              key: const Key('NewRecordPage_zpusobilost_missing_close'),
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Zavřít'),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-
-    // Navigate to file viewer
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => FileViewerScreen(
-          initialFilePath: _selectedParticipant!.potvrzeniPath!,
-        ),
-      ),
-    );
-  }
 
   /// Check if způsobilost document is available
   bool _hasZpusobilostDocument() {
@@ -856,7 +253,12 @@ class NewRecordPageState extends State<NewRecordPage> {
         key: const Key('NewRecordPage_zpusobilost_button'),
         icon: const Icon(Icons.description_outlined),
         iconSize: 20,
-        onPressed: hasDocument ? _showZpusobilostDocument : null,
+        onPressed: hasDocument
+            ? () => NewRecordPageDialogs.showZpusobilostDocument(
+                  context: context,
+                  filePath: _selectedParticipant?.potvrzeniPath,
+                )
+            : null,
         color: hasDocument
             ? Theme.of(context).colorScheme.secondary
             : Theme.of(context).disabledColor,
@@ -872,28 +274,15 @@ class NewRecordPageState extends State<NewRecordPage> {
 
   /// Print full record (navigate to PrintCenter with full mode)
   Future<void> _printFullRecord() async {
-    if (_selectedParticipant == null || !mounted) return;
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ChangeNotifierProvider(
-          create: (_) {
-            final ctrl = PrintCenterController(PrintCenterService());
-            ctrl.init();
-            return ctrl;
-          },
-          child: PersonAndModeFlowPage(
-            initialParticipant: _selectedParticipant,
-            initialMode: PrintMode.full,
-          ),
-        ),
-      ),
-    );
+    _openPrintFlow(PrintMode.full);
   }
 
   /// Print append mode (navigate to PrintCenter with append mode)
   Future<void> _printAppendRecord() async {
+    _openPrintFlow(PrintMode.append);
+  }
+
+  void _openPrintFlow(PrintMode mode) {
     if (_selectedParticipant == null || !mounted) return;
 
     Navigator.push(
@@ -907,7 +296,7 @@ class NewRecordPageState extends State<NewRecordPage> {
           },
           child: PersonAndModeFlowPage(
             initialParticipant: _selectedParticipant,
-            initialMode: PrintMode.append,
+            initialMode: mode,
           ),
         ),
       ),
@@ -916,39 +305,18 @@ class NewRecordPageState extends State<NewRecordPage> {
 
   /// Combined date and time picker (better UX than separate pickers)
   Future<void> _selectDateTime() async {
-    // First, show TIME picker (more important for injury records)
-    TimeOfDay? pickedTime = await showTimePicker(
+    final selection = await NewRecordDateTimeHelper.pickDateTime(
       context: context,
-      initialTime: _selectedTime ?? TimeOfDay.now(),
+      initialDate: _selectedDate,
+      initialTime: _selectedTime,
     );
 
-    if (pickedTime != null) {
-      // Guard against async gap before second picker
-      if (!mounted) return;
+    if (!mounted || selection == null) return;
 
-      // If time was selected, then show date picker
-      DateTime? pickedDate = await showDatePicker(
-        context: context,
-        initialDate: _selectedDate ?? DateTime.now(),
-        firstDate: DateTime(2000),
-        lastDate: DateTime(2101),
-      );
-
-      if (!mounted) return; // Guard against async gap
-      if (pickedDate != null) {
-        // Both time and date selected
-        setState(() {
-          _selectedTime = pickedTime;
-          _selectedDate = pickedDate;
-        });
-      } else {
-        // Only time selected, use current date
-        setState(() {
-          _selectedTime = pickedTime;
-          _selectedDate = null; // Will use current date when saving
-        });
-      }
-    }
+    setState(() {
+      _selectedTime = selection.time;
+      _selectedDate = selection.date;
+    });
   }
 
   /// Test-friendly method for setting date and time directly
@@ -962,39 +330,6 @@ class NewRecordPageState extends State<NewRecordPage> {
     }
   }
 
-  /// Get the final DateTime for the record
-  DateTime _getFinalDateTime() {
-    if (_selectedDate != null && _selectedTime != null) {
-      return DateTime(
-        _selectedDate!.year,
-        _selectedDate!.month,
-        _selectedDate!.day,
-        _selectedTime!.hour,
-        _selectedTime!.minute,
-      );
-    } else if (_selectedDate != null) {
-      return _selectedDate!;
-    } else {
-      return DateTime.now();
-    }
-  }
-
-  /// Format selected date and time for display in combined picker
-  String _formatSelectedDateTime() {
-    if (_selectedDate == null && _selectedTime == null) {
-      return 'Datum a čas (aktuální)';
-    }
-
-    String datePart = _selectedDate == null
-        ? 'Dnes'
-        : '${_selectedDate!.day.toString().padLeft(2, '0')}.${_selectedDate!.month.toString().padLeft(2, '0')}.${_selectedDate!.year}';
-
-    String timePart = _selectedTime == null
-        ? 'aktuální čas'
-        : '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}';
-
-    return '$datePart, $timePart';
-  }
 
   Future<void> _saveRecord() async {
     if (_selectedParticipant == null) {
@@ -1033,7 +368,10 @@ class NewRecordPageState extends State<NewRecordPage> {
         popis: _descriptionController.text.trim(),
         idPacient: _selectedParticipant!.id,
         idZaznamu: -1, // DB will assign ID
-        casZaznamu: _getFinalDateTime(),
+        casZaznamu: NewRecordDateTimeHelper.getFinalDateTime(
+          selectedDate: _selectedDate,
+          selectedTime: _selectedTime,
+        ),
         isPrinted: false,
         idAuthor: 1, // Assuming a logged-in user with ID 1
         poznamka: null,
@@ -1089,34 +427,6 @@ class NewRecordPageState extends State<NewRecordPage> {
     Navigator.of(context).pop(false);
   }
 
-  Future<bool?> _confirmParticipantChange() async {
-    return showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Změnit účastníka?'),
-          content: const Text(
-              'Změnou účastníka se ztratí neuložené změny v formuláři. '
-              'Chcete pokračovat?'),
-          actions: [
-            TextButton(
-              key: const Key('dialog_cancel_button'),
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Zrušit'),
-            ),
-            FilledButton(
-              key: const Key('dialog_confirm_button'),
-              onPressed: () => Navigator.of(context).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.orangeBackground,
-              ),
-              child: const Text('Změnit účastníka'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1151,9 +461,11 @@ class NewRecordPageState extends State<NewRecordPage> {
 
           // Use centralized breakpoint instead of magic number.
           // See AppBreakpoints for all responsive thresholds.
-          final isCompact =
+            final isCompact =
               AppBreakpoints.isCompactHeight(constraints.maxHeight);
-          final spacing = isCompact ? 12.0 : 24.0; // Increased spacing for better separation
+            final spacing = isCompact
+              ? NewRecordLayoutConfig.spacingCompact
+              : NewRecordLayoutConfig.spacingRegular;
 
           final estimatedHistoryHeaderHeight = isCompact
               ? (AppSpacing.m + AppSpacing.s)
@@ -1161,87 +473,58 @@ class NewRecordPageState extends State<NewRecordPage> {
           final historyHeaderHeight =
               _historyHeaderHeight ?? estimatedHistoryHeaderHeight;
 
-          final minHistoryListHeight = AppBreakpoints.getListHeight(
-            context,
-            itemCount: 1,
-            peekRatio: 0.35,
-            dense: true,
-          );
-          final minHistoryHeight = historyHeaderHeight + minHistoryListHeight;
-
-          final recordCountForHeight = math.max(_recordCount, 1);
-          final fullListHeight = AppBreakpoints.getListHeight(
-            context,
-            itemCount: recordCountForHeight,
-            peekRatio: 0.0,
-            dense: true,
-          );
-          final fullHistoryHeight = historyHeaderHeight + fullListHeight;
-
-          final maxItemsWhenScroll = constraints.maxHeight <=
-                  AppBreakpoints.compactHeight * 0.6
-              ? 2
-              : constraints.maxHeight <= AppBreakpoints.compactHeight * 0.8
-                  ? 3
-                  : 5;
-          final maxListHeightWhenScroll = AppBreakpoints.getListHeight(
-            context,
-            itemCount: maxItemsWhenScroll,
-            peekRatio: 0.0,
-            dense: true,
-          );
-          final maxHistoryHeightWhenScroll =
-              historyHeaderHeight + maxListHeightWhenScroll;
-
-          final availableHeightForHistory = constraints.maxHeight -
-              (_headerHeight ?? 0) -
-              (_formHeight ?? 0) -
-              (spacing * 2);
-
-          final hasMeasuredHeights =
-              _headerHeight != null && _formHeight != null;
-
-          final effectiveAvailableHeight = hasMeasuredHeights
-              ? (availableHeightForHistory.isFinite
-                  ? availableHeightForHistory
-                  : fullListHeight)
-              : maxListHeightWhenScroll;
-
-          final fitsWithoutPageScroll =
-              fullHistoryHeight <= effectiveAvailableHeight;
-
-          final targetHistoryMaxHeight = fitsWithoutPageScroll
-              ? fullHistoryHeight
-              : maxHistoryHeightWhenScroll;
-
-          final cappedMaxHeight = effectiveAvailableHeight.isFinite
-              ? math.min(targetHistoryMaxHeight, effectiveAvailableHeight)
-              : targetHistoryMaxHeight;
-
-          final historyMaxHeight =
-              math.max(minHistoryHeight, cappedMaxHeight);
-
-          final requiredMinHeight = (_headerHeight ?? 0) +
-              (_formHeight ?? 0) +
-              minHistoryHeight +
-              (spacing * 2);
-
-          final shouldUsePageScroll =
-              hasMeasuredHeights && requiredMinHeight > constraints.maxHeight;
-
-          final historyHeightForScroll = math.max(
-            minHistoryHeight,
-            math.min(fullHistoryHeight, maxHistoryHeightWhenScroll),
+          final scrollMetrics = NewRecordScrollStrategy.compute(
+            context: context,
+            constraints: constraints,
+            spacing: spacing,
+            historyHeaderHeight: historyHeaderHeight,
+            recordCount: _recordCount,
+            headerHeight: _headerHeight,
+            formHeight: _formHeight,
           );
 
-          Widget formFields = NewRecordFormFields(
+          if (NewRecordLayoutConfig.enableLayoutDiagnostics) {
+            AppLogger.l.i(
+              'NewRecord layout: maxH=${constraints.maxHeight.toStringAsFixed(1)} '
+              'header=${_headerHeight?.toStringAsFixed(1)} '
+              'form=${_formHeight?.toStringAsFixed(1)} '
+              'minHistory=${scrollMetrics.minHistoryHeight.toStringAsFixed(1)} '
+              'maxHistory=${scrollMetrics.maxHistoryHeight.toStringAsFixed(1)} '
+              'usePageScroll=${scrollMetrics.shouldUsePageScroll}',
+            );
+          }
+
+          final participantSubtitle = _selectedParticipant != null
+              ? '${_selectedParticipant!.jmeno} ${_selectedParticipant!.prijmeni}${_formatAge()}'
+              : 'Vyberte účastníka...';
+          return NewRecordBodyLayout(
             isCompact: isCompact,
+            spacing: spacing,
+            scrollMetrics: scrollMetrics,
+            participantSubtitle: participantSubtitle,
+            hasParticipant: _selectedParticipant != null,
+            hasUnsavedChanges: _hasUnsavedChanges,
+            showBirthdateInfo: _selectedParticipant?.datumNarozeni != null,
             isParticipantSelected: _selectedParticipant != null,
+            availableParticipants: _availableParticipants,
+            omezeniList: _omezeniList,
+            lekyList: _lekyList,
+            selectedParticipant: _selectedParticipant,
+            recordCount: _recordCount,
+            refreshCounter: _refreshCounter,
+            headerKey: _headerKey,
+            historyHeaderKey: _historyHeaderKey,
+            formContainerKey: _formContainerKey,
+            formKey: _formKey,
             titleController: _titleController,
             descriptionController: _descriptionController,
             poznamkaController: _poznamkaController,
-            dateTimeLabel: _formatSelectedDateTime(),
-            onSelectDateTime: _selectedParticipant != null ? _selectDateTime : null,
+            dateTimeLabel: NewRecordDateTimeHelper.formatSelectedDateTime(
+              selectedDate: _selectedDate,
+              selectedTime: _selectedTime,
+            ),
+            onSelectDateTime:
+                _selectedParticipant != null ? _selectDateTime : null,
             showDateTimeReset: _selectedDate != null || _selectedTime != null,
             onResetDateTime: () {
               setState(() {
@@ -1253,7 +536,10 @@ class NewRecordPageState extends State<NewRecordPage> {
             onPrintAppend: _canPrint() ? _printAppendRecord : null,
             zpusobilostButton:
                 _selectedParticipant != null ? _buildZpusobilostButton() : null,
-            onShowPoznamka: _showPoznamkaBottomSheet,
+            onShowPoznamka: () => NewRecordPageDialogs.showPoznamkaBottomSheet(
+              context: context,
+              poznamkaController: _poznamkaController,
+            ),
             titleValidator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return 'Prosím zadejte nadpis';
@@ -1269,97 +555,21 @@ class NewRecordPageState extends State<NewRecordPage> {
               }
               return null;
             },
-          );
-
-          Widget formContent = shouldUsePageScroll
-              ? formFields
-              : SingleChildScrollView(child: formFields);
-
-          final participantSubtitle = _selectedParticipant != null
-              ? '${_selectedParticipant!.jmeno} ${_selectedParticipant!.prijmeni}${_formatAge()}'
-              : 'Vyberte účastníka...';
-
-          final healthInfo = _selectedParticipant != null
-              ? _buildHealthInfoRow(isCompact: isCompact)
-              : null;
-
-          Widget headerSection = NewRecordHeaderSection(
-            isCompact: isCompact,
-            hasParticipant: _selectedParticipant != null,
-            hasUnsavedChanges: _hasUnsavedChanges,
-            participantTitle: 'Účastník',
-            participantSubtitle: participantSubtitle,
-            showBirthdateInfo: _selectedParticipant?.datumNarozeni != null,
-            onBirthdateInfo: _showBirthdateInfo,
-            healthInfo: healthInfo,
-            availableParticipants: _availableParticipants,
-            onParticipantSelected: _onParticipantSelected,
             onRefresh: _onRefresh,
-            headerKey: _headerKey,
-          );
-
-          Widget historySection = NewRecordHistorySection(
-            isCompact: isCompact,
-            recordCount: _recordCount,
-            historyHeaderKey: _historyHeaderKey,
-            selectedParticipant: _selectedParticipant,
-            refreshCounter: _refreshCounter,
+            onParticipantSelected: _onParticipantSelected,
+            onBirthdateInfo: () {
+              final birthDate = _selectedParticipant?.datumNarozeni;
+              if (birthDate == null) return;
+              NewRecordPageDialogs.showBirthdateInfo(
+                context: context,
+                birthDate: birthDate,
+              );
+            },
             onRecordsLoaded: (count) {
               if (mounted && _recordCount != count) {
                 setState(() => _recordCount = count);
               }
             },
-          );
-
-          Widget historyBlock = shouldUsePageScroll
-              ? SizedBox(
-                  height: historyHeightForScroll,
-                  child: historySection,
-                )
-              : Flexible(
-                  fit: FlexFit.loose,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: minHistoryHeight,
-                      maxHeight: historyMaxHeight,
-                    ),
-                    child: historySection,
-                  ),
-                );
-
-          Widget formSection = SizedBox(
-            key: _formContainerKey,
-            child: Opacity(
-              opacity: _selectedParticipant != null ? 1.0 : 0.4,
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    formContent,
-                  ],
-                ),
-              ),
-            ),
-          );
-
-          Widget bodyContent = Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              headerSection,
-              SizedBox(height: spacing),
-              historyBlock,
-              SizedBox(height: spacing),
-              formSection,
-            ],
-          );
-
-          return Padding(
-            padding: AppSpacing.screenPadding,
-            child: shouldUsePageScroll
-                ? SingleChildScrollView(child: bodyContent)
-                : bodyContent,
           );
         },
       ), // Close LayoutBuilder
