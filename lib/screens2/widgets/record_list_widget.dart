@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/services/participant_service.dart';
+import 'package:denik_zza/screens2/widgets/zza_scrollable.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
-
 import 'package:denik_zza/design_system/tokens/app_radii.dart';
 
 /// A reusable widget for displaying a list of medical records
@@ -31,34 +31,17 @@ class _RecordListWidgetState extends State<RecordListWidget> {
   final ScrollController _scrollController = ScrollController();
   List<MemoryZaznam> _records = [];
   bool _isLoading = false;
-  bool _hasMoreBelow = false;
 
   @override
   void initState() {
     super.initState();
     _fetchRecords();
-    _scrollController.addListener(_updateScrollIndicator);
   }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_updateScrollIndicator);
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void _updateScrollIndicator() {
-    if (!_scrollController.hasClients) return;
-
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    final currentScroll = _scrollController.position.pixels;
-    final hasMore = currentScroll < maxScroll - 10; // 10px threshold
-
-    if (hasMore != _hasMoreBelow) {
-      setState(() {
-        _hasMoreBelow = hasMore;
-      });
-    }
   }
 
   Future<void> _fetchRecords() async {
@@ -72,11 +55,6 @@ class _RecordListWidgetState extends State<RecordListWidget> {
       setState(() {
         _records = records;
         _isLoading = false;
-      });
-
-      // Check if scrollable after rebuild
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _updateScrollIndicator();
       });
     } catch (error) {
       setState(() {
@@ -151,72 +129,19 @@ class _RecordListWidgetState extends State<RecordListWidget> {
       );
     }
 
-    return Stack(
-      children: [
-        ListView.builder(
-          controller: _scrollController,
-          shrinkWrap: true, // Important: Allow ListView to size itself
-          physics: const ClampingScrollPhysics(), // Prevent scrolling conflicts
-          itemCount: _records.length,
-          itemBuilder: (context, index) {
-            final record = _records[index];
-            return RecordListItem(record: record);
-          },
-        ),
-
-        // Bottom fade indicator when there's more content below
-        if (_hasMoreBelow)
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: IgnorePointer(
-              child: Container(
-                height: 40,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      AppColors.greyBackground.withValues(alpha: 0.0),
-                      AppColors.greyBackground.withValues(alpha: 0.9),
-                      AppColors.greyBackground,
-                    ],
-                  ),
-                ),
-                child: Center(
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.blueBackground,
-                      borderRadius: AppRadii.containerRadius,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.keyboard_arrow_down,
-                          size: 14,
-                          color: AppColors.blueText,
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          'více',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.blueText,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-      ],
+    // Use ZzaScrollable for consistent scroll indicators across the app
+    return ZzaScrollable(
+      controller: _scrollController,
+      child: ListView.builder(
+        controller: _scrollController,
+        shrinkWrap: true, // Important: Allow ListView to size itself
+        physics: const ClampingScrollPhysics(), // Prevent scrolling conflicts
+        itemCount: _records.length,
+        itemBuilder: (context, index) {
+          final record = _records[index];
+          return RecordListItem(record: record);
+        },
+      ),
     );
   }
 }

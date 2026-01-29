@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:provider/provider.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
@@ -513,6 +514,121 @@ class NewRecordPageState extends State<NewRecordPage> {
     );
   }
 
+  /// Shows poznámka (note) editing bottom sheet for mobile layout
+  void _showPoznamkaBottomSheet() {
+    // Create a temporary controller to allow cancel functionality
+    final tempController = TextEditingController(text: _poznamkaController.text);
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.yellow.shade50,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 12,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade200,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            // Title with sticky note style
+            Row(
+              children: [
+                Icon(Icons.sticky_note_2, size: 20, color: Colors.amber.shade700),
+                const SizedBox(width: 8),
+                Text(
+                  'Poznámka',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.amber.shade800,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Interní poznámka - netiskne se na výstup',
+              style: TextStyle(
+                fontSize: 11,
+                fontStyle: FontStyle.italic,
+                color: Colors.amber.shade600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Text input
+            TextField(
+              key: const Key('NewRecordPage_poznamka_bottomsheet_input'),
+              controller: tempController,
+              autofocus: true,
+              maxLines: 4,
+              decoration: InputDecoration(
+                hintText: 'Alergie, léky, interní poznámky...',
+                hintStyle: TextStyle(
+                  color: Colors.amber.shade400,
+                  fontStyle: FontStyle.italic,
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.amber.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.amber.shade600, width: 2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Action buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Zrušit',
+                    style: TextStyle(color: Colors.amber.shade700),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: () {
+                    _poznamkaController.text = tempController.text;
+                    Navigator.pop(context);
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.amber.shade600,
+                  ),
+                  child: const Text('Uložit'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ).then((_) => tempController.dispose());
+  }
+
   /// Builds compact collapse/expand button for health info
   Widget _buildCompactCollapseButton({required int hiddenCount}) {
     return InkWell(
@@ -1006,8 +1122,8 @@ class NewRecordPageState extends State<NewRecordPage> {
           // See AppBreakpoints for all responsive thresholds.
           final isCompact =
               AppBreakpoints.isCompactHeight(constraints.maxHeight);
-          final spacing = isCompact ? 8.0 : 12.0; // Increased spacing
-          final titleSpacing = isCompact ? 8.0 : 12.0; // Increased spacing
+          final spacing = isCompact ? 12.0 : 24.0; // Increased spacing for better separation
+          final titleSpacing = isCompact ? 12.0 : 16.0; // Increased spacing between form fields
 
           return Padding(
             padding: AppSpacing.screenPadding, // 20px for better breathing room
@@ -1073,8 +1189,8 @@ class NewRecordPageState extends State<NewRecordPage> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                // Dev warning: Mock data badge (reusable widget)
-                                const DevMockDataBadge(),
+                                // Dev warning: Mock data badge (only in debug builds)
+                                if (kDebugMode) const DevMockDataBadge(),
                                 const SizedBox(width: 8),
                                 // Unsaved changes warning badge
                                 if (_hasUnsavedChanges)
@@ -1167,27 +1283,12 @@ class NewRecordPageState extends State<NewRecordPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.search,
-                                  color: AppColors.blueText,
-                                  size: 14,
-                                ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    'Vyhledat osobu',
-                                    style: TextStyle(
-                                      fontSize: isCompact ? 11 : 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.blueText,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
+                            // Redundant label/icon removed based on feedback
+                            // Row(children: [Icon(Icons.search...), Text('Vyhledat osobu'...)]) removed
+                            const SizedBox(height: 0), // Placeholder to keep column structure valid if needed
+                            // Note: PersonAutocomplete has its own internal styling
+
+                            SizedBox(height: isCompact ? 2 : 4),
                             PersonAutocomplete(
                               key: const Key(
                                   'NewRecordPage_participantAutocomplete'),
@@ -1217,33 +1318,26 @@ class NewRecordPageState extends State<NewRecordPage> {
                     ),
                     child: Column(
                       children: [
-                        // Header for records list (compact)
+                        // Header for records list (responsive on mobile)
+                        // Header for records list (responsive on mobile)
+                        // Simplified to look more integrated (removed distinct background/border)
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10.0, vertical: 6.0),
-                          decoration: BoxDecoration(
-                            color: AppColors.greyBackgroundMedium,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(7.0),
-                              topRight: Radius.circular(7.0),
-                            ),
-                            border: Border(
-                              bottom:
-                                  BorderSide(color: AppColors.greyBorderDark),
-                            ),
-                          ),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: isCompact ? 8.0 : 12.0,
+                              vertical: isCompact ? 6.0 : 8.0),
+                          // Decoration removed to blend with list
                           child: Row(
                             children: [
                               Icon(
                                 Icons.history,
                                 color: AppColors.greyText,
-                                size: 14,
+                                size: isCompact ? 12 : 14,
                               ),
-                              const SizedBox(width: 6),
+                              SizedBox(width: isCompact ? 4 : 6),
                               Text(
                                 'Historie úrazů',
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: isCompact ? 10 : 12,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.greyIcon,
                                 ),
@@ -1577,17 +1671,17 @@ class NewRecordPageState extends State<NewRecordPage> {
                                   ),
                                   SizedBox(height: titleSpacing),
 
-                                  // Description and Note side-by-side
-                                  SizedBox(
-                                    height: isCompact ? 90 : 120,
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        // Description field (main focus - wider)
-                                        Expanded(
-                                          flex: 4,
-                                          child: TextFormField(
+                                  // Description and Note - responsive layout
+                                  // Mobile: full-width description with floating poznámka icon
+                                  // Desktop: side-by-side layout
+                                  if (isCompact)
+                                    // Mobile: Stack with description + floating note icon
+                                    SizedBox(
+                                      height: 100,
+                                      child: Stack(
+                                        children: [
+                                          // Full-width description field
+                                          TextFormField(
                                             key: const Key(
                                                 'NewRecordPage_description_input'),
                                             controller: _descriptionController,
@@ -1599,8 +1693,8 @@ class NewRecordPageState extends State<NewRecordPage> {
                                             expands: true,
                                             textAlignVertical:
                                                 TextAlignVertical.top,
-                                            style: TextStyle(
-                                              fontSize: isCompact ? 13 : 14,
+                                            style: const TextStyle(
+                                              fontSize: 13,
                                               fontWeight: FontWeight.w400,
                                               color: Colors.black87,
                                               height: 1.4,
@@ -1613,7 +1707,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                                 fontWeight: FontWeight.w500,
                                               ),
                                               hintText:
-                                                  'Co se stalo, jak k úrazu došlo, jaké ošetření bylo poskytnuto...',
+                                                  'Co se stalo, jak k úrazu došlo...',
                                               hintStyle: TextStyle(
                                                 color: AppColors.greyText,
                                                 fontStyle: FontStyle.italic,
@@ -1648,8 +1742,8 @@ class NewRecordPageState extends State<NewRecordPage> {
                                                     color: Colors.red,
                                                     width: 2),
                                               ),
-                                              contentPadding: EdgeInsets.all(
-                                                  isCompact ? 12 : 16),
+                                              contentPadding:
+                                                  const EdgeInsets.all(12),
                                               alignLabelWithHint: true,
                                               counterStyle: TextStyle(
                                                 color: AppColors.greyText,
@@ -1667,84 +1761,237 @@ class NewRecordPageState extends State<NewRecordPage> {
                                               return null;
                                             },
                                           ),
-                                        ),
-
-                                        SizedBox(width: AppSpacing.m),
-
-                                        // Poznámka field (side note - narrower, sticky note style)
-                                        Expanded(
-                                          flex: 1,
-                                          child: TextFormField(
-                                            key: const Key(
-                                                'NewRecordPage_poznamka_input'),
-                                            controller: _poznamkaController,
-                                            enabled:
-                                                _selectedParticipant != null,
-                                            maxLines: null,
-                                            minLines: null,
-                                            expands: true,
-                                            textAlignVertical:
-                                                TextAlignVertical.top,
-                                            style: TextStyle(
-                                              fontSize: isCompact ? 11 : 12,
-                                              fontWeight: FontWeight.w400,
-                                              color: Colors.black87,
-                                              height: 1.3,
-                                            ),
-                                            decoration: InputDecoration(
-                                              labelText: 'Poznámka',
-                                              labelStyle: TextStyle(
-                                                color: Colors.amber.shade800,
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: isCompact ? 11 : 12,
-                                              ),
-                                              hintText: 'Alergie, léky...',
-                                              hintStyle: TextStyle(
-                                                color: Colors.amber.shade700,
-                                                fontStyle: FontStyle.italic,
-                                                fontSize: 11,
-                                              ),
-                                              filled: true,
-                                              fillColor: Colors.yellow.shade50,
-                                              border: OutlineInputBorder(
+                                          // Floating poznámka icon (top-right)
+                                          Positioned(
+                                            top: 4,
+                                            right: 4,
+                                            child: Material(
+                                              color: Colors.yellow.shade100,
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                              child: InkWell(
+                                                key: const Key(
+                                                    'NewRecordPage_poznamka_icon'),
+                                                onTap: _selectedParticipant != null
+                                                    ? _showPoznamkaBottomSheet
+                                                    : null,
                                                 borderRadius:
-                                                    BorderRadius.circular(6.0),
-                                                borderSide: BorderSide(
-                                                    color:
-                                                        Colors.amber.shade300,
-                                                    width: 1.5),
-                                              ),
-                                              enabledBorder: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(6.0),
-                                                borderSide: BorderSide(
-                                                    color:
-                                                        Colors.amber.shade300,
-                                                    width: 1.5),
-                                              ),
-                                              focusedBorder: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(6.0),
-                                                borderSide: BorderSide(
-                                                    color:
-                                                        Colors.amber.shade600,
-                                                    width: 2),
-                                              ),
-                                              contentPadding: EdgeInsets.all(
-                                                  isCompact ? 8 : 10),
-                                              alignLabelWithHint: true,
-                                              helperText: 'Netiskne se',
-                                              helperStyle: TextStyle(
-                                                color: Colors.amber.shade700,
-                                                fontSize: 9,
-                                                fontStyle: FontStyle.italic,
+                                                    BorderRadius.circular(6),
+                                                child: Tooltip(
+                                                  message: _poznamkaController
+                                                          .text.isNotEmpty
+                                                      ? 'Poznámka: ${_poznamkaController.text}'
+                                                      : 'Přidat poznámku',
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(6),
+                                                    child: Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          Icons.sticky_note_2,
+                                                          size: 16,
+                                                          color: Colors
+                                                              .amber.shade700,
+                                                        ),
+                                                        if (_poznamkaController
+                                                            .text.isNotEmpty)
+                                                          Container(
+                                                            margin:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    left: 4),
+                                                            width: 6,
+                                                            height: 6,
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color: Colors
+                                                                  .amber
+                                                                  .shade600,
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                            ),
+                                                          ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
+                                    )
+                                  else
+                                    // Desktop: side-by-side layout
+                                    SizedBox(
+                                      height: 120,
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          // Description field (main focus - wider)
+                                          Expanded(
+                                            flex: 4,
+                                            child: TextFormField(
+                                              key: const Key(
+                                                  'NewRecordPage_description_input'),
+                                              controller: _descriptionController,
+                                              enabled:
+                                                  _selectedParticipant != null,
+                                              maxLines: null,
+                                              minLines: null,
+                                              maxLength: 1024,
+                                              expands: true,
+                                              textAlignVertical:
+                                                  TextAlignVertical.top,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w400,
+                                                color: Colors.black87,
+                                                height: 1.4,
+                                              ),
+                                              decoration: InputDecoration(
+                                                labelText:
+                                                    'Popis úrazu a ošetření',
+                                                labelStyle: TextStyle(
+                                                  color: AppColors.blueDark,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                                hintText:
+                                                    'Co se stalo, jak k úrazu došlo, jaké ošetření bylo poskytnuto...',
+                                                hintStyle: TextStyle(
+                                                  color: AppColors.greyText,
+                                                  fontStyle: FontStyle.italic,
+                                                ),
+                                                filled: true,
+                                                fillColor: Colors.white,
+                                                border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8.0),
+                                                  borderSide: BorderSide(
+                                                      color:
+                                                          AppColors.blueBorder),
+                                                ),
+                                                enabledBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8.0),
+                                                  borderSide: BorderSide(
+                                                      color:
+                                                          AppColors.blueBorder),
+                                                ),
+                                                focusedBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8.0),
+                                                  borderSide: BorderSide(
+                                                      color: AppColors.blueText,
+                                                      width: 2),
+                                                ),
+                                                errorBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8.0),
+                                                  borderSide: const BorderSide(
+                                                      color: Colors.red,
+                                                      width: 2),
+                                                ),
+                                                contentPadding:
+                                                    const EdgeInsets.all(16),
+                                                alignLabelWithHint: true,
+                                                counterStyle: TextStyle(
+                                                  color: AppColors.greyText,
+                                                  fontSize: 11,
+                                                ),
+                                                errorMaxLines: 1,
+                                                errorStyle: const TextStyle(
+                                                    fontSize: 11, height: 0.8),
+                                              ),
+                                              validator: (value) {
+                                                if (value != null &&
+                                                    value.length > 1024) {
+                                                  return 'Popis nesmí být delší než 1024 znaků';
+                                                }
+                                                return null;
+                                              },
+                                            ),
+                                          ),
+
+                                          SizedBox(width: AppSpacing.m),
+
+                                          // Poznámka field (side note - narrower, sticky note style)
+                                          Expanded(
+                                            flex: 1,
+                                            child: TextFormField(
+                                              key: const Key(
+                                                  'NewRecordPage_poznamka_input'),
+                                              controller: _poznamkaController,
+                                              enabled:
+                                                  _selectedParticipant != null,
+                                              maxLines: null,
+                                              minLines: null,
+                                              expands: true,
+                                              textAlignVertical:
+                                                  TextAlignVertical.top,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w400,
+                                                color: Colors.black87,
+                                                height: 1.3,
+                                              ),
+                                              decoration: InputDecoration(
+                                                labelText: 'Poznámka',
+                                                labelStyle: TextStyle(
+                                                  color: Colors.amber.shade800,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 12,
+                                                ),
+                                                hintText: 'Alergie, léky...',
+                                                hintStyle: TextStyle(
+                                                  color: Colors.amber.shade700,
+                                                  fontStyle: FontStyle.italic,
+                                                  fontSize: 11,
+                                                ),
+                                                filled: true,
+                                                fillColor: Colors.yellow.shade50,
+                                                border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(6.0),
+                                                  borderSide: BorderSide(
+                                                      color:
+                                                          Colors.amber.shade300,
+                                                      width: 1.5),
+                                                ),
+                                                enabledBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(6.0),
+                                                  borderSide: BorderSide(
+                                                      color:
+                                                          Colors.amber.shade300,
+                                                      width: 1.5),
+                                                ),
+                                                focusedBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(6.0),
+                                                  borderSide: BorderSide(
+                                                      color:
+                                                          Colors.amber.shade600,
+                                                      width: 2),
+                                                ),
+                                                contentPadding:
+                                                    const EdgeInsets.all(10),
+                                                alignLabelWithHint: true,
+                                                helperText: 'Netiskne se',
+                                                helperStyle: TextStyle(
+                                                  color: Colors.amber.shade700,
+                                                  fontSize: 9,
+                                                  fontStyle: FontStyle.italic,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
                                 ],
                               ),
                             ),
