@@ -29,6 +29,11 @@ class AppBreakpoints {
   // Height breakpoint for compact vertical layouts
   static const double compactHeight = 800.0;
 
+  // Default Window Dimensions (Windows Runner)
+  // Matches windows/runner/main.cpp - "flutter run" size
+  static const double flutterRunWindowWidth = 1280.0;
+  static const double flutterRunWindowHeight = 720.0;
+
   // Content width constraints
   static const double contentMaxWidth = 1200.0;
   static const double wideContentMaxWidth = 1600.0;
@@ -64,7 +69,8 @@ class AppBreakpoints {
   /// - Tablets have enough screen for compact mode
   /// - Multi-window on mobile breaks platform assumptions
   static bool useTouchMode(BuildContext context) {
-    final size = MediaQuery.maybeOf(context)?.size ?? const Size(1280, 720);
+    final size = MediaQuery.maybeOf(context)?.size ??
+        const Size(flutterRunWindowWidth, flutterRunWindowHeight);
     return size.shortestSide < mobile; // < 600px
   }
 

@@ -12,6 +12,7 @@ Print this page and keep it visible while coding!
 Mobile:  < 600px  → 1 column
 Tablet:  600-900px → 2 columns
 Desktop: > 900px  → 3 columns
+Default Window: 1280x720 (flutter_run_size)
 ```
 
 ### Max Widths (prevent stretching)
