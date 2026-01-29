@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 
 /// A wrapper widget that adds visual "fading edges" to scrollable content
 /// to signal that there is more content to view.
@@ -31,11 +32,15 @@ class ZzaScrollable extends StatefulWidget {
   /// Optional override for the fade color (defaults to Scaffold background).
   final Color? fadeColor;
 
+  /// Use a lighter, shorter fade for compact heights.
+  final bool compactMode;
+
   const ZzaScrollable({
     super.key,
     required this.child,
     required this.controller,
     this.fadeColor,
+    this.compactMode = false,
   });
 
   @override
@@ -97,6 +102,15 @@ class _ZzaScrollableState extends State<ZzaScrollable> {
     final fadeColor =
         widget.fadeColor ?? Theme.of(context).scaffoldBackgroundColor;
 
+    final topFadeHeight = widget.compactMode
+      ? AppSpacing.xl + AppSpacing.s
+      : 48.0;
+    final bottomFadeHeight = widget.compactMode
+      ? AppSpacing.xl + AppSpacing.m
+      : 64.0;
+    final fadeOpacity = widget.compactMode ? 0.75 : 0.95;
+    final arrowSize = widget.compactMode ? 18.0 : 24.0;
+
     return Stack(
       children: [
         // The Scrollable Content
@@ -108,7 +122,7 @@ class _ZzaScrollableState extends State<ZzaScrollable> {
             top: 0,
             left: 0,
             right: 0,
-            height: 48, // Taller fade (was 24)
+            height: topFadeHeight,
             child: IgnorePointer(
               child: Container(
                 decoration: BoxDecoration(
@@ -116,7 +130,7 @@ class _ZzaScrollableState extends State<ZzaScrollable> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      fadeColor.withValues(alpha: 0.95), // Stronger opacity
+                      fadeColor.withValues(alpha: fadeOpacity),
                       fadeColor.withValues(alpha: 0.0),
                     ],
                   ),
@@ -127,7 +141,7 @@ class _ZzaScrollableState extends State<ZzaScrollable> {
                     padding: const EdgeInsets.only(top: 4.0),
                     child: Icon(
                       Icons.keyboard_arrow_up,
-                      size: 24, // Larger arrow (was 16)
+                      size: arrowSize,
                       color: AppColors.greyText.withValues(alpha: 0.8),
                       shadows: [
                         Shadow(
@@ -149,7 +163,7 @@ class _ZzaScrollableState extends State<ZzaScrollable> {
             bottom: 0,
             left: 0,
             right: 0,
-            height: 64, // Much taller fade (was 32)
+            height: bottomFadeHeight,
             child: IgnorePointer(
               child: Container(
                 decoration: BoxDecoration(
@@ -157,7 +171,7 @@ class _ZzaScrollableState extends State<ZzaScrollable> {
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                     colors: [
-                      fadeColor.withValues(alpha: 0.95), // Stronger opacity
+                      fadeColor.withValues(alpha: fadeOpacity),
                       fadeColor.withValues(alpha: 0.0),
                     ],
                   ),
@@ -168,7 +182,7 @@ class _ZzaScrollableState extends State<ZzaScrollable> {
                     padding: const EdgeInsets.only(bottom: 4.0),
                     child: Icon(
                       Icons.keyboard_arrow_down,
-                      size: 24, // Larger arrow (was 16)
+                      size: arrowSize,
                       color: AppColors.greyText.withValues(alpha: 0.8),
                       // Add subtle text shadow to make it pop against any background
                       shadows: [

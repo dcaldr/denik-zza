@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 import 'package:provider/provider.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
@@ -64,6 +65,9 @@ class NewRecordPageState extends State<NewRecordPage> {
   final _descriptionController = TextEditingController();
   final _poznamkaController = TextEditingController();
   final _recordService = RecordService();
+  final _headerKey = GlobalKey();
+  final _historyHeaderKey = GlobalKey();
+  final _formContainerKey = GlobalKey();
 
   bool _isSaving = false;
   DateTime? _selectedDate;
@@ -72,6 +76,9 @@ class NewRecordPageState extends State<NewRecordPage> {
   MemoryOsoba? _selectedParticipant;
   bool _hasUnsavedChanges = false;
   List<MemoryOsoba> _availableParticipants = [];
+  double? _headerHeight;
+  double? _historyHeaderHeight;
+  double? _formHeight;
 
   // Health info loaded separately
   List<MemoryOmezeni> _omezeniList = [];
@@ -159,6 +166,29 @@ class NewRecordPageState extends State<NewRecordPage> {
 
   void _onRefresh() {
     _loadAvailableParticipants();
+  }
+
+  void _updateMeasuredHeights() {
+    final headerBox =
+        _headerKey.currentContext?.findRenderObject() as RenderBox?;
+    final historyHeaderBox =
+        _historyHeaderKey.currentContext?.findRenderObject() as RenderBox?;
+    final formBox =
+        _formContainerKey.currentContext?.findRenderObject() as RenderBox?;
+
+    final nextHeaderHeight = headerBox?.size.height;
+    final nextHistoryHeaderHeight = historyHeaderBox?.size.height;
+    final nextFormHeight = formBox?.size.height;
+
+    if (nextHeaderHeight != _headerHeight ||
+        nextHistoryHeaderHeight != _historyHeaderHeight ||
+        nextFormHeight != _formHeight) {
+      setState(() {
+        _headerHeight = nextHeaderHeight;
+        _historyHeaderHeight = nextHistoryHeaderHeight;
+        _formHeight = nextFormHeight;
+      });
+    }
   }
 
   @override
@@ -1121,12 +1151,76 @@ class NewRecordPageState extends State<NewRecordPage> {
       drawer: const AppDrawer(),
       body: LayoutBuilder(
         builder: (context, constraints) {
+          WidgetsBinding.instance
+              .addPostFrameCallback((_) => _updateMeasuredHeights());
+
           // Use centralized breakpoint instead of magic number.
           // See AppBreakpoints for all responsive thresholds.
           final isCompact =
               AppBreakpoints.isCompactHeight(constraints.maxHeight);
           final spacing = isCompact ? 12.0 : 24.0; // Increased spacing for better separation
           final titleSpacing = isCompact ? 12.0 : 16.0; // Increased spacing between form fields
+
+          final estimatedHistoryHeaderHeight = isCompact
+              ? (AppSpacing.m + AppSpacing.s)
+              : (AppSpacing.l + AppSpacing.s);
+          final historyHeaderHeight =
+              _historyHeaderHeight ?? estimatedHistoryHeaderHeight;
+
+          final minHistoryListHeight = AppBreakpoints.getListHeight(
+            context,
+            itemCount: 1,
+            peekRatio: 0.35,
+            dense: true,
+          );
+          final minHistoryHeight = historyHeaderHeight + minHistoryListHeight;
+
+          final recordCountForHeight = math.max(_recordCount, 1);
+          final fullListHeight = AppBreakpoints.getListHeight(
+            context,
+            itemCount: recordCountForHeight,
+            peekRatio: 0.0,
+            dense: true,
+          );
+          final fullHistoryHeight = historyHeaderHeight + fullListHeight;
+
+          final maxItemsWhenScroll = 5;
+          final maxListHeightWhenScroll = AppBreakpoints.getListHeight(
+            context,
+            itemCount: maxItemsWhenScroll,
+            peekRatio: 0.0,
+            dense: true,
+          );
+          final maxHistoryHeightWhenScroll =
+              historyHeaderHeight + maxListHeightWhenScroll;
+
+          final availableHeightForHistory = constraints.maxHeight -
+              (_headerHeight ?? 0) -
+              (_formHeight ?? 0) -
+              (spacing * 2);
+
+            final hasMeasuredHeights =
+              _headerHeight != null && _formHeight != null;
+
+            final effectiveAvailableHeight = hasMeasuredHeights
+              ? (availableHeightForHistory.isFinite
+                ? availableHeightForHistory
+                : fullListHeight)
+              : maxListHeightWhenScroll;
+
+            final fitsWithoutPageScroll =
+              fullHistoryHeight <= effectiveAvailableHeight;
+
+          final targetHistoryMaxHeight = fitsWithoutPageScroll
+              ? fullHistoryHeight
+              : maxHistoryHeightWhenScroll;
+
+            final cappedMaxHeight = effectiveAvailableHeight.isFinite
+              ? math.min(targetHistoryMaxHeight, effectiveAvailableHeight)
+              : targetHistoryMaxHeight;
+
+            final historyMaxHeight =
+              math.max(minHistoryHeight, cappedMaxHeight);
 
           return Padding(
             padding: AppSpacing.screenPadding, // 20px for better breathing room
@@ -1135,6 +1229,7 @@ class NewRecordPageState extends State<NewRecordPage> {
               children: [
                 // Compact horizontal participant selection with inline search
                 Container(
+                  key: _headerKey,
                   padding: AppSpacing.containerPadding, // 16px padding
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -1307,111 +1402,117 @@ class NewRecordPageState extends State<NewRecordPage> {
                 SizedBox(height: spacing),
 
                 // Display existing records (compact)
-                Expanded(
-                  // History takes all remaining space (after Form takes what it needs)
-                  flex: 1,
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: AppColors.greyBackground,
-                      borderRadius: BorderRadius.circular(8.0),
-                      border:
-                          Border.all(color: AppColors.greyBorderDark, width: 1),
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: minHistoryHeight,
+                      maxHeight: historyMaxHeight,
                     ),
-                    child: Column(
-                      children: [
-                        // Header for records list (responsive on mobile)
-                        // Header for records list (responsive on mobile)
-                        // Simplified to look more integrated (removed distinct background/border)
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: isCompact ? 8.0 : 12.0,
-                              vertical: isCompact ? 6.0 : 8.0),
-                          // Decoration removed to blend with list
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.history,
-                                color: AppColors.greyText,
-                                size: isCompact ? 12 : 14,
-                              ),
-                              SizedBox(width: isCompact ? 4 : 6),
-                              Text(
-                                'Historie úrazů',
-                                style: TextStyle(
-                                  fontSize: isCompact ? 10 : 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.greyIcon,
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: AppColors.greyBackground,
+                        borderRadius: BorderRadius.circular(8.0),
+                        border: Border.all(
+                            color: AppColors.greyBorderDark, width: 1),
+                      ),
+                      child: Column(
+                        children: [
+                          // Header for records list (responsive on mobile)
+                          // Header for records list (responsive on mobile)
+                          // Simplified to look more integrated (removed distinct background/border)
+                          Container(
+                            key: _historyHeaderKey,
+                            padding: EdgeInsets.symmetric(
+                                horizontal: isCompact ? 8.0 : 12.0,
+                                vertical: isCompact ? 6.0 : 8.0),
+                            // Decoration removed to blend with list
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.history,
+                                  color: AppColors.greyText,
+                                  size: isCompact ? 12 : 14,
                                 ),
-                              ),
-                              // Count badge - shows number of records
-                              if (_recordCount > 0) ...[
-                                const SizedBox(width: 6),
-                                CountBadge(
-                                  count: _recordCount,
-                                  isCompact: isCompact,
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        // Records list content
-                        Expanded(
-                          child: _selectedParticipant != null
-                              ? RecordListWidget(
-                                  key: ValueKey(_refreshCounter),
-                                  participant: _selectedParticipant!,
-                                  onRecordsLoaded: (count) {
-                                    if (mounted && _recordCount != count) {
-                                      setState(() => _recordCount = count);
-                                    }
-                                  },
-                                )
-                              : Container(
-                                  alignment: Alignment.center,
-                                  child: SingleChildScrollView(
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.person_search,
-                                          size:
-                                              24, // Reduced for test compatibility
-                                          color: AppColors.greyTextLight,
-                                        ),
-                                        const SizedBox(
-                                            height:
-                                                4), // Reduced for test compatibility
-                                        Text(
-                                          'Nejprve vyberte účastníka',
-                                          style: TextStyle(
-                                            fontSize:
-                                                12, // Reduced for test compatibility
-                                            color: AppColors.greyText,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                            height:
-                                                2), // Reduced for test compatibility
-                                        Text(
-                                          'Po výběru účastníka se zde zobrazí\njejí historie úrazů',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            fontSize:
-                                                10, // Reduced for test compatibility
-                                            color: AppColors.greyText,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                SizedBox(width: isCompact ? 4 : 6),
+                                Text(
+                                  'Historie úrazů',
+                                  style: TextStyle(
+                                    fontSize: isCompact ? 10 : 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.greyIcon,
                                   ),
                                 ),
-                        ),
-                      ],
+                                // Count badge - shows number of records
+                                if (_recordCount > 0) ...[
+                                  const SizedBox(width: 6),
+                                  CountBadge(
+                                    count: _recordCount,
+                                    isCompact: isCompact,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          // Records list content
+                          Expanded(
+                            child: _selectedParticipant != null
+                                ? RecordListWidget(
+                                    key: ValueKey(_refreshCounter),
+                                    participant: _selectedParticipant!,
+                                    onRecordsLoaded: (count) {
+                                      if (mounted && _recordCount != count) {
+                                        setState(() => _recordCount = count);
+                                      }
+                                    },
+                                  )
+                                : Container(
+                                    alignment: Alignment.center,
+                                    child: SingleChildScrollView(
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.person_search,
+                                            size:
+                                                24, // Reduced for test compatibility
+                                            color: AppColors.greyTextLight,
+                                          ),
+                                          const SizedBox(
+                                              height:
+                                                  4), // Reduced for test compatibility
+                                          Text(
+                                            'Nejprve vyberte účastníka',
+                                            style: TextStyle(
+                                              fontSize:
+                                                  12, // Reduced for test compatibility
+                                              color: AppColors.greyText,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                              height:
+                                                  2), // Reduced for test compatibility
+                                          Text(
+                                            'Po výběru účastníka se zde zobrazí\njejí historie úrazů',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize:
+                                                  10, // Reduced for test compatibility
+                                              color: AppColors.greyText,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -1420,9 +1521,11 @@ class NewRecordPageState extends State<NewRecordPage> {
 
                 // Form for new record (main focus)
                 // Intrinsic layout: Form takes only what it needs
-                Opacity(
-                  opacity: _selectedParticipant != null ? 1.0 : 0.4,
-                  child: Form(
+                SizedBox(
+                  key: _formContainerKey,
+                  child: Opacity(
+                    opacity: _selectedParticipant != null ? 1.0 : 0.4,
+                    child: Form(
                       key: _formKey,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1431,37 +1534,181 @@ class NewRecordPageState extends State<NewRecordPage> {
                           // Make form fields scrollable but keep action buttons pinned
                           SingleChildScrollView(
                             child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  // Title field with DateTime and action buttons - responsive layout
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-
-
-                                      // Title field takes remaining space using AppLayout flex
-                                      Expanded(
-                                        flex: AppLayout.inputFlex,
-                                        child: TextFormField(
-                                          key: const Key('NewRecordPage_title_input'),
-                                          controller: _titleController,
-                                          enabled: _selectedParticipant != null,
-                                          maxLines: 1,
-                                          maxLength: 200,
-                                          style: TextStyle(
-                                            fontSize: isCompact ? 14 : 15,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // Title field with DateTime and action buttons - responsive layout
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    // Title field takes remaining space using AppLayout flex
+                                    Expanded(
+                                      flex: AppLayout.inputFlex,
+                                      child: TextFormField(
+                                        key: const Key('NewRecordPage_title_input'),
+                                        controller: _titleController,
+                                        enabled: _selectedParticipant != null,
+                                        maxLines: 1,
+                                        maxLength: 200,
+                                        style: TextStyle(
+                                          fontSize: isCompact ? 14 : 15,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.black87,
+                                        ),
+                                        decoration: InputDecoration(
+                                          labelText: 'Nadpis * (povinné)',
+                                          labelStyle: TextStyle(
+                                            color: AppColors.blueDark,
                                             fontWeight: FontWeight.w500,
+                                          ),
+                                          hintText: _selectedParticipant != null
+                                              ? 'Povinné - typ úrazu nebo stížnosti (např. "Odřenina kolena", "Bolest hlavy")'
+                                              : 'Vyberte účastníka pro pokračování',
+                                          hintStyle: TextStyle(
+                                            color: AppColors.greyText,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8.0),
+                                            borderSide: BorderSide(
+                                                color: AppColors.blueBorder),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8.0),
+                                            borderSide: BorderSide(
+                                                color: AppColors.blueBorder),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8.0),
+                                            borderSide: BorderSide(
+                                                color: AppColors.blueText,
+                                                width: 2),
+                                          ),
+                                          errorBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8.0),
+                                            borderSide: const BorderSide(
+                                                color: Colors.red, width: 2),
+                                          ),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              horizontal: isCompact ? 12 : 16,
+                                              vertical: isCompact ? 8 : 12),
+                                          prefixIcon: Container(
+                                            margin: const EdgeInsets.all(8.0),
+                                            padding: const EdgeInsets.all(6.0),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.blueBackground,
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: Icon(
+                                              Icons.title,
+                                              color: AppColors.blueDark,
+                                              size: isCompact ? 16 : 18,
+                                            ),
+                                          ),
+                                          errorMaxLines: 1,
+                                          errorStyle: const TextStyle(
+                                              fontSize: 11, height: 0.8),
+                                        ),
+                                        validator: (value) {
+                                          if (value == null ||
+                                              value.trim().isEmpty) {
+                                            return 'Prosím zadejte nadpis';
+                                          }
+                                          if (value.length > 200) {
+                                            return 'Nadpis nesmí být delší než 200 znaků';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                    ),
+                                    SizedBox(width: AppSpacing.s),
+                                    // DateTime Chip (merged into title row, after title)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 2),
+                                      child: _buildDateTimeChip(
+                                          isCompact: isCompact),
+                                    ),
+                                    SizedBox(width: AppSpacing.s),
+                                    // Action buttons - wrap when narrow (~33% width)
+                                    // Action buttons - min width to let title expand
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 8),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          _buildPrintIconButton(
+                                            key: const Key(
+                                                'NewRecordPage_print_full_button'),
+                                            icon: Icons.print,
+                                            tooltip: 'Tisknout záznam',
+                                            onPressed: _canPrint()
+                                                ? _printFullRecord
+                                                : null,
+                                          ),
+                                          _buildPrintIconButton(
+                                            key: const Key(
+                                                'NewRecordPage_print_append_button'),
+                                            icon: Icons.add_to_photos,
+                                            tooltip:
+                                                'Přitisknout k existujícímu',
+                                            onPressed: _canPrint()
+                                                ? _printAppendRecord
+                                                : null,
+                                          ),
+                                          // Způsobilost document button
+                                          if (_selectedParticipant != null)
+                                            _buildZpusobilostButton(),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: titleSpacing),
+
+                                // Description and Note - responsive layout
+                                // Mobile: full-width description with floating poznámka icon
+                                // Desktop: side-by-side layout
+                                if (isCompact)
+                                  // Mobile: Stack with description + floating note icon
+                                  SizedBox(
+                                    height: 100,
+                                    child: Stack(
+                                      children: [
+                                        // Full-width description field
+                                        TextFormField(
+                                          key: const Key(
+                                              'NewRecordPage_description_input'),
+                                          controller: _descriptionController,
+                                          enabled:
+                                              _selectedParticipant != null,
+                                          maxLines: null,
+                                          minLines: null,
+                                          maxLength: 1024,
+                                          expands: true,
+                                          textAlignVertical:
+                                              TextAlignVertical.top,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w400,
                                             color: Colors.black87,
+                                            height: 1.4,
                                           ),
                                           decoration: InputDecoration(
-                                            labelText: 'Nadpis * (povinné)',
+                                            labelText:
+                                                'Popis úrazu a ošetření',
                                             labelStyle: TextStyle(
                                               color: AppColors.blueDark,
                                               fontWeight: FontWeight.w500,
                                             ),
-                                            hintText: _selectedParticipant != null
-                                                ? 'Povinné - typ úrazu nebo stížnosti (např. "Odřenina kolena", "Bolest hlavy")'
-                                                : 'Vyberte účastníka pro pokračování',
+                                            hintText:
+                                                'Co se stalo, jak k úrazu došlo...',
                                             hintStyle: TextStyle(
                                               color: AppColors.greyText,
                                               fontStyle: FontStyle.italic,
@@ -1472,13 +1719,15 @@ class NewRecordPageState extends State<NewRecordPage> {
                                               borderRadius:
                                                   BorderRadius.circular(8.0),
                                               borderSide: BorderSide(
-                                                  color: AppColors.blueBorder),
+                                                  color:
+                                                      AppColors.blueBorder),
                                             ),
                                             enabledBorder: OutlineInputBorder(
                                               borderRadius:
                                                   BorderRadius.circular(8.0),
                                               borderSide: BorderSide(
-                                                  color: AppColors.blueBorder),
+                                                  color:
+                                                      AppColors.blueBorder),
                                             ),
                                             focusedBorder: OutlineInputBorder(
                                               borderRadius:
@@ -1491,97 +1740,102 @@ class NewRecordPageState extends State<NewRecordPage> {
                                               borderRadius:
                                                   BorderRadius.circular(8.0),
                                               borderSide: const BorderSide(
-                                                  color: Colors.red, width: 2),
+                                                  color: Colors.red,
+                                                  width: 2),
                                             ),
-                                            contentPadding: EdgeInsets.symmetric(
-                                                horizontal: isCompact ? 12 : 16,
-                                                vertical: isCompact ? 8 : 12),
-                                            prefixIcon: Container(
-                                              margin: const EdgeInsets.all(8.0),
-                                              padding: const EdgeInsets.all(6.0),
-                                              decoration: BoxDecoration(
-                                                color: AppColors.blueBackground,
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                              ),
-                                              child: Icon(
-                                                Icons.title,
-                                                color: AppColors.blueDark,
-                                                size: isCompact ? 16 : 18,
-                                              ),
+                                            contentPadding:
+                                                const EdgeInsets.all(12),
+                                            alignLabelWithHint: true,
+                                            counterStyle: TextStyle(
+                                              color: AppColors.greyText,
+                                              fontSize: 11,
                                             ),
                                             errorMaxLines: 1,
                                             errorStyle: const TextStyle(
                                                 fontSize: 11, height: 0.8),
                                           ),
                                           validator: (value) {
-                                            if (value == null ||
-                                                value.trim().isEmpty) {
-                                              return 'Prosím zadejte nadpis';
-                                            }
-                                            if (value.length > 200) {
-                                              return 'Nadpis nesmí být delší než 200 znaků';
+                                            if (value != null &&
+                                                value.length > 1024) {
+                                              return 'Popis nesmí být delší než 1024 znaků';
                                             }
                                             return null;
                                           },
                                         ),
-                                      ),
-                                      SizedBox(width: AppSpacing.s),
-                                      // DateTime Chip (merged into title row, after title)
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 2),
-                                        child: _buildDateTimeChip(
-                                            isCompact: isCompact),
-                                      ),
-                                      SizedBox(width: AppSpacing.s),
-                                      // Action buttons - wrap when narrow (~33% width)
-                                      // Action buttons - min width to let title expand
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 8),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          crossAxisAlignment: CrossAxisAlignment.center,
-                                          children: [
-                                              _buildPrintIconButton(
-                                                key: const Key(
-                                                    'NewRecordPage_print_full_button'),
-                                                icon: Icons.print,
-                                                tooltip: 'Tisknout záznam',
-                                                onPressed: _canPrint()
-                                                    ? _printFullRecord
-                                                    : null,
+                                        // Floating poznámka icon (top-right)
+                                        Positioned(
+                                          top: 4,
+                                          right: 4,
+                                          child: Material(
+                                            color: Colors.yellow.shade100,
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                            child: InkWell(
+                                              key: const Key(
+                                                  'NewRecordPage_poznamka_icon'),
+                                              onTap: _selectedParticipant != null
+                                                  ? _showPoznamkaBottomSheet
+                                                  : null,
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                              child: Tooltip(
+                                                message: _poznamkaController
+                                                        .text.isNotEmpty
+                                                    ? 'Poznámka: ${_poznamkaController.text}'
+                                                    : 'Přidat poznámku',
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(6),
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.sticky_note_2,
+                                                        size: 16,
+                                                        color: Colors
+                                                            .amber.shade700,
+                                                      ),
+                                                      if (_poznamkaController
+                                                          .text.isNotEmpty)
+                                                        Container(
+                                                          margin:
+                                                              const EdgeInsets
+                                                                  .only(
+                                                                  left: 4),
+                                                          width: 6,
+                                                          height: 6,
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color: Colors
+                                                                .amber
+                                                                .shade600,
+                                                            shape: BoxShape
+                                                                .circle,
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                ),
                                               ),
-                                              _buildPrintIconButton(
-                                                key: const Key(
-                                                    'NewRecordPage_print_append_button'),
-                                                icon: Icons.add_to_photos,
-                                                tooltip:
-                                                    'Přitisknout k existujícímu',
-                                                onPressed: _canPrint()
-                                                    ? _printAppendRecord
-                                                    : null,
-                                              ),
-                                              // Způsobilost document button
-                                              if (_selectedParticipant != null)
-                                                _buildZpusobilostButton(),
-                                            ],
+                                            ),
                                           ),
                                         ),
                                       ],
                                     ),
-                                  SizedBox(height: titleSpacing),
-
-                                  // Description and Note - responsive layout
-                                  // Mobile: full-width description with floating poznámka icon
+                                  )
+                                else
                                   // Desktop: side-by-side layout
-                                  if (isCompact)
-                                    // Mobile: Stack with description + floating note icon
-                                    SizedBox(
-                                      height: 100,
-                                      child: Stack(
-                                        children: [
-                                          // Full-width description field
-                                          TextFormField(
+                                  SizedBox(
+                                    height: 120,
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Description field (main focus - wider)
+                                        Expanded(
+                                          flex: 4,
+                                          child: TextFormField(
                                             key: const Key(
                                                 'NewRecordPage_description_input'),
                                             controller: _descriptionController,
@@ -1594,7 +1848,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                             textAlignVertical:
                                                 TextAlignVertical.top,
                                             style: const TextStyle(
-                                              fontSize: 13,
+                                              fontSize: 14,
                                               fontWeight: FontWeight.w400,
                                               color: Colors.black87,
                                               height: 1.4,
@@ -1607,7 +1861,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                                 fontWeight: FontWeight.w500,
                                               ),
                                               hintText:
-                                                  'Co se stalo, jak k úrazu došlo...',
+                                                  'Co se stalo, jak k úrazu došlo, jaké ošetření bylo poskytnuto...',
                                               hintStyle: TextStyle(
                                                 color: AppColors.greyText,
                                                 fontStyle: FontStyle.italic,
@@ -1643,7 +1897,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                                                     width: 2),
                                               ),
                                               contentPadding:
-                                                  const EdgeInsets.all(12),
+                                                  const EdgeInsets.all(16),
                                               alignLabelWithHint: true,
                                               counterStyle: TextStyle(
                                                 color: AppColors.greyText,
@@ -1661,241 +1915,87 @@ class NewRecordPageState extends State<NewRecordPage> {
                                               return null;
                                             },
                                           ),
-                                          // Floating poznámka icon (top-right)
-                                          Positioned(
-                                            top: 4,
-                                            right: 4,
-                                            child: Material(
-                                              color: Colors.yellow.shade100,
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                              child: InkWell(
-                                                key: const Key(
-                                                    'NewRecordPage_poznamka_icon'),
-                                                onTap: _selectedParticipant != null
-                                                    ? _showPoznamkaBottomSheet
-                                                    : null,
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
-                                                child: Tooltip(
-                                                  message: _poznamkaController
-                                                          .text.isNotEmpty
-                                                      ? 'Poznámka: ${_poznamkaController.text}'
-                                                      : 'Přidat poznámku',
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(6),
-                                                    child: Row(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        Icon(
-                                                          Icons.sticky_note_2,
-                                                          size: 16,
-                                                          color: Colors
-                                                              .amber.shade700,
-                                                        ),
-                                                        if (_poznamkaController
-                                                            .text.isNotEmpty)
-                                                          Container(
-                                                            margin:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    left: 4),
-                                                            width: 6,
-                                                            height: 6,
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              color: Colors
-                                                                  .amber
-                                                                  .shade600,
-                                                              shape: BoxShape
-                                                                  .circle,
-                                                            ),
-                                                          ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  else
-                                    // Desktop: side-by-side layout
-                                    SizedBox(
-                                      height: 120,
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          // Description field (main focus - wider)
-                                          Expanded(
-                                            flex: 4,
-                                            child: TextFormField(
-                                              key: const Key(
-                                                  'NewRecordPage_description_input'),
-                                              controller: _descriptionController,
-                                              enabled:
-                                                  _selectedParticipant != null,
-                                              maxLines: null,
-                                              minLines: null,
-                                              maxLength: 1024,
-                                              expands: true,
-                                              textAlignVertical:
-                                                  TextAlignVertical.top,
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w400,
-                                                color: Colors.black87,
-                                                height: 1.4,
-                                              ),
-                                              decoration: InputDecoration(
-                                                labelText:
-                                                    'Popis úrazu a ošetření',
-                                                labelStyle: TextStyle(
-                                                  color: AppColors.blueDark,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                                hintText:
-                                                    'Co se stalo, jak k úrazu došlo, jaké ošetření bylo poskytnuto...',
-                                                hintStyle: TextStyle(
-                                                  color: AppColors.greyText,
-                                                  fontStyle: FontStyle.italic,
-                                                ),
-                                                filled: true,
-                                                fillColor: Colors.white,
-                                                border: OutlineInputBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(8.0),
-                                                  borderSide: BorderSide(
-                                                      color:
-                                                          AppColors.blueBorder),
-                                                ),
-                                                enabledBorder: OutlineInputBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(8.0),
-                                                  borderSide: BorderSide(
-                                                      color:
-                                                          AppColors.blueBorder),
-                                                ),
-                                                focusedBorder: OutlineInputBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(8.0),
-                                                  borderSide: BorderSide(
-                                                      color: AppColors.blueText,
-                                                      width: 2),
-                                                ),
-                                                errorBorder: OutlineInputBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(8.0),
-                                                  borderSide: const BorderSide(
-                                                      color: Colors.red,
-                                                      width: 2),
-                                                ),
-                                                contentPadding:
-                                                    const EdgeInsets.all(16),
-                                                alignLabelWithHint: true,
-                                                counterStyle: TextStyle(
-                                                  color: AppColors.greyText,
-                                                  fontSize: 11,
-                                                ),
-                                                errorMaxLines: 1,
-                                                errorStyle: const TextStyle(
-                                                    fontSize: 11, height: 0.8),
-                                              ),
-                                              validator: (value) {
-                                                if (value != null &&
-                                                    value.length > 1024) {
-                                                  return 'Popis nesmí být delší než 1024 znaků';
-                                                }
-                                                return null;
-                                              },
-                                            ),
-                                          ),
+                                        ),
 
-                                          SizedBox(width: AppSpacing.m),
+                                        SizedBox(width: AppSpacing.m),
 
-                                          // Poznámka field (side note - narrower, sticky note style)
-                                          Expanded(
-                                            flex: 1,
-                                            child: TextFormField(
-                                              key: const Key(
-                                                  'NewRecordPage_poznamka_input'),
-                                              controller: _poznamkaController,
-                                              enabled:
-                                                  _selectedParticipant != null,
-                                              maxLines: null,
-                                              minLines: null,
-                                              expands: true,
-                                              textAlignVertical:
-                                                  TextAlignVertical.top,
-                                              style: const TextStyle(
+                                        // Poznámka field (side note - narrower, sticky note style)
+                                        Expanded(
+                                          flex: 1,
+                                          child: TextFormField(
+                                            key: const Key(
+                                                'NewRecordPage_poznamka_input'),
+                                            controller: _poznamkaController,
+                                            enabled:
+                                                _selectedParticipant != null,
+                                            maxLines: null,
+                                            minLines: null,
+                                            expands: true,
+                                            textAlignVertical:
+                                                TextAlignVertical.top,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w400,
+                                              color: Colors.black87,
+                                              height: 1.3,
+                                            ),
+                                            decoration: InputDecoration(
+                                              labelText: 'Poznámka',
+                                              labelStyle: TextStyle(
+                                                color: Colors.amber.shade800,
+                                                fontWeight: FontWeight.w600,
                                                 fontSize: 12,
-                                                fontWeight: FontWeight.w400,
-                                                color: Colors.black87,
-                                                height: 1.3,
                                               ),
-                                              decoration: InputDecoration(
-                                                labelText: 'Poznámka',
-                                                labelStyle: TextStyle(
-                                                  color: Colors.amber.shade800,
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 12,
-                                                ),
-                                                hintText: 'Alergie, léky...',
-                                                hintStyle: TextStyle(
-                                                  color: Colors.amber.shade700,
-                                                  fontStyle: FontStyle.italic,
-                                                  fontSize: 11,
-                                                ),
-                                                filled: true,
-                                                fillColor: Colors.yellow.shade50,
-                                                border: OutlineInputBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(6.0),
-                                                  borderSide: BorderSide(
-                                                      color:
-                                                          Colors.amber.shade300,
-                                                      width: 1.5),
-                                                ),
-                                                enabledBorder: OutlineInputBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(6.0),
-                                                  borderSide: BorderSide(
-                                                      color:
-                                                          Colors.amber.shade300,
-                                                      width: 1.5),
-                                                ),
-                                                focusedBorder: OutlineInputBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(6.0),
-                                                  borderSide: BorderSide(
-                                                      color:
-                                                          Colors.amber.shade600,
-                                                      width: 2),
-                                                ),
-                                                contentPadding:
-                                                    const EdgeInsets.all(10),
-                                                alignLabelWithHint: true,
-                                                helperText: 'Netiskne se',
-                                                helperStyle: TextStyle(
-                                                  color: Colors.amber.shade700,
-                                                  fontSize: 9,
-                                                  fontStyle: FontStyle.italic,
-                                                ),
+                                              hintText: 'Alergie, léky...',
+                                              hintStyle: TextStyle(
+                                                color: Colors.amber.shade700,
+                                                fontStyle: FontStyle.italic,
+                                                fontSize: 11,
+                                              ),
+                                              filled: true,
+                                              fillColor: Colors.yellow.shade50,
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(6.0),
+                                                borderSide: BorderSide(
+                                                    color:
+                                                        Colors.amber.shade300,
+                                                    width: 1.5),
+                                              ),
+                                              enabledBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(6.0),
+                                                borderSide: BorderSide(
+                                                    color:
+                                                        Colors.amber.shade300,
+                                                    width: 1.5),
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(6.0),
+                                                borderSide: BorderSide(
+                                                    color:
+                                                        Colors.amber.shade600,
+                                                    width: 2),
+                                              ),
+                                              contentPadding:
+                                                  const EdgeInsets.all(10),
+                                              alignLabelWithHint: true,
+                                              helperText: 'Netiskne se',
+                                              helperStyle: TextStyle(
+                                                color: Colors.amber.shade700,
+                                                fontSize: 9,
+                                                fontStyle: FontStyle.italic,
                                               ),
                                             ),
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
-                                ],
-                              ),
+                                  ),
+                              ],
                             ),
-
+                          ),
 
                           // Action buttons (enhanced professional styling) pinned at bottom
                           Container(
@@ -1987,6 +2087,7 @@ class NewRecordPageState extends State<NewRecordPage> {
                       ),
                     ),
                   ),
+                ),
                 ],
               ),
             );

@@ -5,6 +5,7 @@ import 'package:denik_zza/screens2/services/participant_service.dart';
 import 'package:denik_zza/screens2/widgets/zza_scrollable.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
 import 'package:denik_zza/design_system/tokens/app_radii.dart';
+import 'package:denik_zza/design_system/tokens/app_breakpoints.dart';
 
 /// A reusable widget for displaying a list of medical records
 /// Replaces the old FullZraneniList from /screens folder
@@ -84,6 +85,7 @@ class _RecordListWidgetState extends State<RecordListWidget> {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch, // Full width
+      mainAxisSize: MainAxisSize.min,
       children: [
         if (widget.showRefreshButton)
           Padding(
@@ -103,15 +105,14 @@ class _RecordListWidgetState extends State<RecordListWidget> {
               ],
             ),
           ),
-        Expanded(
-          child: widget.height != null
-              ? SizedBox(
-                  height: widget.height,
-                  width: double.infinity,
-                  child: content,
-                )
-              : content,
-        ),
+        if (widget.height != null)
+          SizedBox(
+            height: widget.height,
+            width: double.infinity,
+            child: content,
+          )
+        else
+          content,
       ],
     );
   }
@@ -134,18 +135,33 @@ class _RecordListWidgetState extends State<RecordListWidget> {
     }
 
     // Use ZzaScrollable for consistent scroll indicators across the app
-    return ZzaScrollable(
-      controller: _scrollController,
-      child: ListView.builder(
-        controller: _scrollController,
-        shrinkWrap: true, // Important: Allow ListView to size itself
-        physics: const ClampingScrollPhysics(), // Prevent scrolling conflicts
-        itemCount: _records.length,
-        itemBuilder: (context, index) {
-          final record = _records[index];
-          return RecordListItem(record: record);
-        },
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compactThreshold = AppBreakpoints.getListHeight(
+          context,
+          itemCount: 4,
+          peekRatio: 0.0,
+          dense: true,
+        );
+
+        final isCompactHeight = constraints.maxHeight.isFinite &&
+            constraints.maxHeight <= compactThreshold;
+
+        return ZzaScrollable(
+          controller: _scrollController,
+          compactMode: isCompactHeight,
+          child: ListView.builder(
+            controller: _scrollController,
+            shrinkWrap: true, // Important: Allow ListView to size itself
+            physics: const ClampingScrollPhysics(), // Prevent scrolling conflicts
+            itemCount: _records.length,
+            itemBuilder: (context, index) {
+              final record = _records[index];
+              return RecordListItem(record: record);
+            },
+          ),
+        );
+      },
     );
   }
 }
