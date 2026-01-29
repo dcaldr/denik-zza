@@ -1,6 +1,6 @@
 import 'package:denik_zza/dev/dev_environment.dart';
 import 'package:denik_zza/dev/ui/dev_app_builder.dart';
-import 'package:denik_zza/screens2/new_record_page.dart';
+import 'package:denik_zza/screens2/new_record/new_record_page.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:drift/drift.dart';

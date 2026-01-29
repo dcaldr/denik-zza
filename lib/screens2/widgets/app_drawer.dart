@@ -3,7 +3,7 @@ import 'package:denik_zza/screens2/csv/import_screen.dart';
 import 'package:denik_zza/screens2/event_list.dart';
 import 'package:denik_zza/screens2/event_registration_form.dart';
 import 'package:denik_zza/screens2/intake_form_improved.dart';
-import 'package:denik_zza/screens2/new_record_page.dart';
+import 'package:denik_zza/screens2/new_record/new_record_page.dart';
 import 'package:denik_zza/screens2/participant_list_screen.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:denik_zza/print_ops2/print_center.dart';

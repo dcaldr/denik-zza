@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:denik_zza/screens2/new_record_page.dart';
+import 'package:denik_zza/screens2/new_record/new_record_page.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/utils/mode_coordinator.dart';
 import '../utils/base_test_widget.dart';

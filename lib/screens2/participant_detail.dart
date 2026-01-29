@@ -6,7 +6,7 @@ import 'package:denik_zza/screens2/services/participant_service.dart';
 import 'package:denik_zza/print_ops/confirm_print.dart';
 import 'package:denik_zza/print_ops/printer_woodoo.dart';
 
-import 'new_record_page.dart';
+import 'package:denik_zza/screens2/new_record/new_record_page.dart';
 import 'participant_edit_page.dart';
 
 class ParticipantDetailPage extends StatefulWidget {

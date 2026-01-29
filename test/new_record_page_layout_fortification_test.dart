@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:denik_zza/screens2/new_record_page.dart';
+import 'package:denik_zza/screens2/new_record/new_record_page.dart';
 import 'package:denik_zza/screens2/widgets/record_list_widget.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';

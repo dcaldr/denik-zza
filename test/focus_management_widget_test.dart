@@ -20,7 +20,7 @@ import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_akce.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/event_detail.dart';
-import 'package:denik_zza/screens2/new_record_page.dart';
+import 'package:denik_zza/screens2/new_record/new_record_page.dart';
 import 'package:denik_zza/screens2/participant_list_screen.dart';
 import 'package:denik_zza/screens2/widgets/intake_person_row.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';

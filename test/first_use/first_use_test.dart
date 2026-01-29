@@ -5,7 +5,7 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_akce.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/print_ops2/print_center.dart';
 import 'package:denik_zza/screens2/intake_form_improved.dart';
-import 'package:denik_zza/screens2/new_record_page.dart';
+import 'package:denik_zza/screens2/new_record/new_record_page.dart';
 import 'package:denik_zza/screens2/participant_detail.dart';
 import 'package:denik_zza/screens2/participant_list_screen.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
