@@ -256,14 +256,14 @@ void main() {
             reason: 'Append print button must be visible in datetime row');
       });
 
-      testWidgets('must show dev warning badge', (WidgetTester tester) async {
+      testWidgets('must not show dev warning badge',
+          (WidgetTester tester) async {
         await tester.pumpWidget(createTestableWidget());
         await tester.pumpAndSettle();
 
-        // Critical: Dev warning must be visible to indicate mock data
-        expect(find.text('USES MOCKUPS !!'), findsOneWidget,
-            reason:
-                'Dev warning badge must be present until real data entry implemented');
+        // Dev mock badge must not be shown (no mock/placeholder UI)
+        expect(find.text('USES MOCKUPS !!'), findsNothing,
+            reason: 'No mock/placeholder badge should be visible in UI');
       });
 
       testWidgets('must show způsobilost chip when flag is true',

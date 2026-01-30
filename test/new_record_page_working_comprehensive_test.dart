@@ -218,7 +218,12 @@ void main() {
         await tester.pumpAndSettle();
 
         // Should show datetime section
-        expect(find.text('Čas záznamu'), findsOneWidget);
+        expect(
+          find.byWidgetPredicate(
+            (widget) => widget is Tooltip && widget.message == 'Čas záznamu',
+          ),
+          findsOneWidget,
+        );
         expect(find.byKey(const Key('datetime_change_button')), findsOneWidget);
 
         // Should show default text indicating current time
@@ -257,8 +262,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Should show search area (button label + TextField hint)
-        expect(find.textContaining('Vyhledat'), findsNWidgets(2));
+        // Should show search area (TextField hint)
+        expect(find.text('Vyhledat osobu'), findsOneWidget);
         // Should have autocomplete widget (by key per conventions)
         expect(find.byKey(const Key('NewRecordPage_participantAutocomplete')),
             findsOneWidget);

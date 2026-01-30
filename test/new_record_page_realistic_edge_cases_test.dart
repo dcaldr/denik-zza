@@ -244,7 +244,12 @@ void main() {
         await _pumpNewRecordPage(tester);
 
         // Should show datetime section
-        expect(find.text('Čas záznamu'), findsOneWidget);
+        expect(
+          find.byWidgetPredicate(
+            (widget) => widget is Tooltip && widget.message == 'Čas záznamu',
+          ),
+          findsOneWidget,
+        );
         expect(find.byKey(const Key('datetime_change_button')), findsOneWidget);
 
         // Should show default timestamp text
@@ -300,7 +305,12 @@ void main() {
         expect(find.text('Nový záznam úrazu'), findsOneWidget);
         expect(find.text('Účastník'), findsOneWidget);
         expect(find.text('Historie úrazů'), findsOneWidget);
-        expect(find.text('Čas záznamu'), findsOneWidget);
+        expect(
+          find.byWidgetPredicate(
+            (widget) => widget is Tooltip && widget.message == 'Čas záznamu',
+          ),
+          findsOneWidget,
+        );
         expect(find.textContaining('Nadpis'), findsOneWidget);
         expect(find.text('Popis úrazu a ošetření'), findsOneWidget);
       });

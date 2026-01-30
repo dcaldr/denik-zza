@@ -115,7 +115,12 @@ void main() {
         await tester.pumpAndSettle();
 
         // Check that datetime section exists and shows current time
-        expect(find.text('Čas záznamu'), findsOneWidget);
+        expect(
+          find.byWidgetPredicate(
+            (widget) => widget is Tooltip && widget.message == 'Čas záznamu',
+          ),
+          findsOneWidget,
+        );
         expect(find.byKey(const Key('datetime_change_button')), findsOneWidget);
 
         // Timestamp should be preserved between participant changes
@@ -227,9 +232,13 @@ void main() {
 
         expect(find.text('Nový záznam úrazu'), findsOneWidget);
         expect(find.text('Účastník'), findsOneWidget);
-        expect(find.textContaining('Vyhledat'),
-            findsNWidgets(2)); // Button label + TextField hint
-        expect(find.text('Čas záznamu'), findsOneWidget);
+        expect(find.text('Vyhledat osobu'), findsOneWidget);
+        expect(
+          find.byWidgetPredicate(
+            (widget) => widget is Tooltip && widget.message == 'Čas záznamu',
+          ),
+          findsOneWidget,
+        );
         expect(
             find.byKey(const Key('NewRecordPage_save_button')), findsOneWidget);
 
@@ -244,7 +253,12 @@ void main() {
         expect(find.text('Účastník'), findsOneWidget);
         expect(find.textContaining('Nadpis'), findsOneWidget);
         expect(find.text('Popis úrazu a ošetření'), findsOneWidget);
-        expect(find.text('Čas záznamu'), findsOneWidget);
+        expect(
+          find.byWidgetPredicate(
+            (widget) => widget is Tooltip && widget.message == 'Čas záznamu',
+          ),
+          findsOneWidget,
+        );
         expect(
             find.byKey(const Key('NewRecordPage_save_button')), findsOneWidget);
       });
@@ -256,8 +270,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Search should always be visible (button label + TextField hint)
-        expect(find.textContaining('Vyhledat'), findsNWidgets(2));
+        // Search should always be visible (TextField hint)
+        expect(find.text('Vyhledat osobu'), findsOneWidget);
         expect(find.byKey(const Key('NewRecordPage_participantAutocomplete')),
             findsOneWidget);
       });

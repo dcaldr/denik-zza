@@ -182,7 +182,12 @@ void main() {
 
         // Should find the change time button
         expect(find.byKey(const Key('datetime_change_button')), findsOneWidget);
-        expect(find.text('Čas záznamu'), findsOneWidget);
+        expect(
+          find.byWidgetPredicate(
+            (widget) => widget is Tooltip && widget.message == 'Čas záznamu',
+          ),
+          findsOneWidget,
+        );
       });
     });
   });
