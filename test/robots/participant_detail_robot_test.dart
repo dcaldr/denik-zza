@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/screens2/participant_detail.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
-import 'package:denik_zza/database/database_wrapper.dart';
-import 'package:denik_zza/utils/mode_coordinator.dart';
 import '../utils/base_test_widget.dart';
 import '../../integration_test/infrastructure/robots/participant_detail_robot.dart';
+import '../setup_templates/hardcoded_setup.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
 
 void main() {
   setUpAll(() {
@@ -16,25 +16,19 @@ void main() {
     // Mode handled by flutter_test_config.dart
   });
 
-  /// Creates a test participant for widget tests.
-  MemoryOsoba createTestParticipant() {
-    return MemoryOsoba.named(
-      id: 1,
-      jmeno: 'Karel',
-      prijmeni: 'Čapek',
-      datumNarozeni: DateTime(2010, 1, 15),
-      adresa: 'Praha 1',
-      zpusobilost: true,
-      bezinfekcnost: true,
-      wasPrinted: false,
-    );
+  Future<MemoryOsoba> loadTestParticipant() async {
+    await HardcodedTestSetup.setupTestData();
+    final db = DatabaseWrapper.getDatabase();
+    final participants = await db.getParticipantsByCurrentEvent();
+    return participants.first;
   }
 
   group('ParticipantDetailRobot', () {
     testWidgets('finds edit button in AppBar', (tester) async {
+      final participant = await loadTestParticipant();
       await tester.pumpWidget(
         BaseTestWidget(
-          child: ParticipantDetailPage(participant: createTestParticipant()),
+          child: ParticipantDetailPage(participant: participant),
         ),
       );
       await tester.pumpAndSettle();
@@ -46,30 +40,33 @@ void main() {
     });
 
     testWidgets('displays participant name in AppBar', (tester) async {
+      final participant = await loadTestParticipant();
       await tester.pumpWidget(
         BaseTestWidget(
-          child: ParticipantDetailPage(participant: createTestParticipant()),
+          child: ParticipantDetailPage(participant: participant),
         ),
       );
       await tester.pumpAndSettle();
 
       // Verify participant name is shown in AppBar
-      expect(find.text('Karel Čapek'), findsOneWidget);
+      expect(
+        find.text('${participant.jmeno} ${participant.prijmeni}'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('finds action buttons after scrolling', (tester) async {
+      final participant = await loadTestParticipant();
       await tester.pumpWidget(
         BaseTestWidget(
-          child: ParticipantDetailPage(participant: createTestParticipant()),
+          child: ParticipantDetailPage(participant: participant),
         ),
       );
       await tester.pumpAndSettle();
 
       // Scroll to bottom to reveal action buttons
-      await tester.scrollUntilVisible(
-        find.byKey(const Key('ParticipantDetail_newRecord_button')),
-        100.0,
-      );
+      final listFinder = find.byType(ListView).first;
+      await tester.drag(listFinder, const Offset(0, -300));
       await tester.pumpAndSettle();
 
       final robot = ParticipantDetailRobot(tester);

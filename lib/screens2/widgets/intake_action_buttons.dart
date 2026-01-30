@@ -58,7 +58,7 @@ class IntakeActionButtons extends StatelessWidget {
         Tooltip(
           message: 'uložit',
           child: ElevatedButton.icon(
-            key: const Key('IntakeForm_save_button'),
+            key: const Key('IntakeBottomRow_save_button'),
             onPressed: () => handleSave(context, false),
             icon: Icon(Icons.save, color: Colors.white, size: iconSize),
             label: isMobile ? const SizedBox.shrink() : const Text('uložit'),

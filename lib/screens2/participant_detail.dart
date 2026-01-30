@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/screens2/services/participant_service.dart';
@@ -22,12 +23,34 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
   final ParticipantService _participantService = ParticipantService();
   List<MemoryZaznam> _records = [];
   bool _isLoading = false;
+  bool _isParticipantValid = true;
 
   @override
   void initState() {
     super.initState();
-    // Fetch records when the widget is initialized
-    _fetchRecords();
+    // Validate participant exists in current event before allowing actions
+    _validateParticipantInCurrentEvent();
+  }
+
+  Future<void> _validateParticipantInCurrentEvent() async {
+    try {
+      final db = DatabaseWrapper.getDatabase();
+      final participants = await db.getParticipantsByCurrentEvent();
+      final isValid = participants
+          .any((participant) => participant.id == widget.participant.id);
+      if (!mounted) return;
+      setState(() {
+        _isParticipantValid = isValid;
+      });
+      if (isValid) {
+        _fetchRecords();
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isParticipantValid = false;
+      });
+    }
   }
 
   Future<void> _fetchRecords() async {
@@ -57,22 +80,23 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
         title:
             Text('${widget.participant.jmeno} ${widget.participant.prijmeni}'),
         actions: [
-          IconButton(
-            key: const Key('ParticipantDetail_edit_button'),
-            icon: const Icon(Icons.edit),
-            onPressed: () async {
-              final result = await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) =>
-                      ParticipantEditPage(participant: widget.participant),
-                ),
-              );
-              // If participant was edited, refresh the data
-              if (result == true && context.mounted) {
-                _fetchRecords(); // This also refreshes participant data
-              }
-            },
-          ),
+          if (_isParticipantValid)
+            IconButton(
+              key: const Key('ParticipantDetail_edit_button'),
+              icon: const Icon(Icons.edit),
+              onPressed: () async {
+                final result = await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        ParticipantEditPage(participant: widget.participant),
+                  ),
+                );
+                // If participant was edited, refresh the data
+                if (result == true && context.mounted) {
+                  _fetchRecords(); // This also refreshes participant data
+                }
+              },
+            ),
         ],
       ),
       body: Padding(
@@ -113,32 +137,37 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
               children: [
                 FilledButton.icon(
                   key: const Key('ParticipantDetail_newRecord_button'),
-                  onPressed: () async {
-                    final result = await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            NewRecordPage(participant: widget.participant),
-                      ),
-                    );
-                    // If a record was added, refresh the records list
-                    if (result == true && context.mounted) {
-                      _fetchRecords();
-                    }
-                  },
+                  onPressed: _isParticipantValid
+                      ? () async {
+                          final result = await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  NewRecordPage(participant: widget.participant),
+                            ),
+                          );
+                          // If a record was added, refresh the records list
+                          if (result == true && context.mounted) {
+                            _fetchRecords();
+                          }
+                        }
+                      : null,
                   icon: const Icon(Icons.add),
                   label: const Text('Nový záznam'),
                 ),
                 FilledButton.icon(
                   key: const Key('ParticipantDetail_print_button'),
-                  onPressed: () async {
-                    // TODO: This should be moved to a service/controller
-                    final woodoo = PrinterWoodoo();
-                    final packedPdf =
-                        await woodoo.printSelected([widget.participant]);
-                    if (context.mounted) {
-                      ConfirmPrint().showConfirmPrintDialog(context, packedPdf);
-                    }
-                  },
+                  onPressed: _isParticipantValid
+                      ? () async {
+                          // TODO: This should be moved to a service/controller
+                          final woodoo = PrinterWoodoo();
+                          final packedPdf =
+                              await woodoo.printSelected([widget.participant]);
+                          if (context.mounted) {
+                            ConfirmPrint()
+                                .showConfirmPrintDialog(context, packedPdf);
+                          }
+                        }
+                      : null,
                   icon: const Icon(Icons.print),
                   label: const Text('Tisknout záznamy'),
                 ),

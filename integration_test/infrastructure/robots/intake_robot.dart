@@ -11,7 +11,7 @@ import 'base_robot.dart';
 ///
 /// ## Keys Used (from `intake_action_buttons.dart`):
 /// - `IntakeForm_saveAndArrived_button`
-/// - `IntakeForm_save_button`
+/// - `IntakeBottomRow_save_button`
 /// - `IntakeForm_cancel_button`
 class IntakeRobot extends BaseRobot {
   IntakeRobot(super.tester);
@@ -19,7 +19,7 @@ class IntakeRobot extends BaseRobot {
   // Action buttons
   Finder get saveAndArrivedButton =>
       findKey('IntakeForm_saveAndArrived_button');
-  Finder get saveButton => findKey('IntakeForm_save_button');
+  Finder get saveButton => findKey('IntakeBottomRow_save_button');
   Finder get cancelButton => findKey('IntakeForm_cancel_button');
 
   /// Verifies the page is shown with action buttons.

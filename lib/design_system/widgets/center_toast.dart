@@ -20,6 +20,13 @@ import '../tokens/app_spacing.dart';
 class CenterToast {
   CenterToast._();
 
+  static bool _disableTimers = false;
+
+  /// Test helper to disable timers and auto-dismiss scheduling.
+  static void configureForTests({bool disableTimers = true}) {
+    _disableTimers = disableTimers;
+  }
+
   /// Shows a center-screen toast with the given [message].
   ///
   /// - [icon]: The icon to display. Defaults to a green check circle.
@@ -41,10 +48,18 @@ class CenterToast {
         iconColor: iconColor ?? AppColors.greenIcon,
         backgroundColor: backgroundColor ?? Colors.white.withValues(alpha: 0.95),
         duration: duration,
+        disableTimers: _disableTimers,
       ),
     );
 
     overlay.insert(entry);
+
+    if (_disableTimers) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        entry.remove();
+      });
+      return;
+    }
 
     // Auto-remove after animation completes
     Future.delayed(duration + const Duration(milliseconds: 200), () {
@@ -59,6 +74,7 @@ class _CenterToastWidget extends StatefulWidget {
   final Color iconColor;
   final Color backgroundColor;
   final Duration duration;
+  final bool disableTimers;
 
   const _CenterToastWidget({
     required this.message,
@@ -66,6 +82,7 @@ class _CenterToastWidget extends StatefulWidget {
     required this.iconColor,
     required this.backgroundColor,
     required this.duration,
+    required this.disableTimers,
   });
 
   @override
@@ -98,12 +115,14 @@ class _CenterToastWidgetState extends State<_CenterToastWidget>
     // Start fade-in
     _controller.forward();
 
-    // Schedule fade-out
-    Future.delayed(widget.duration, () {
-      if (mounted) {
-        _controller.reverse();
-      }
-    });
+    if (!widget.disableTimers) {
+      // Schedule fade-out
+      Future.delayed(widget.duration, () {
+        if (mounted) {
+          _controller.reverse();
+        }
+      });
+    }
   }
 
   @override

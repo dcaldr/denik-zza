@@ -7,6 +7,7 @@ import 'package:denik_zza/screens2/widgets/intake_person_row.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:denik_zza/screens2/controllers/intake_controller.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
 
 /// Improved IntakeForm widget using IntakeController for business logic
 /// This version separates UI concerns from business logic
@@ -109,6 +110,28 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
   }
 
   Future<void> _handleSave(BuildContext context, bool markAsArrived) async {
+    final currentEventId =
+        await DatabaseWrapper.getDatabase().getCurrentEventID();
+    if (currentEventId == null) {
+      CenterToast.show(
+        context,
+        'Nejprve vytvořte akci',
+        icon: Icons.error_outline,
+        iconColor: Colors.red.shade600,
+      );
+      return;
+    }
+
+    if (_controller.selectedPerson == null) {
+      CenterToast.show(
+        context,
+        'Vyberte účastníka',
+        icon: Icons.error_outline,
+        iconColor: Colors.red.shade600,
+      );
+      return;
+    }
+
     // CRITICAL: Sync form data to controller before save
     // Form edits are stored in form's controllers, not in selectedPerson
     final formData = _participantFormKey.currentState?.createMemoryOsoba();

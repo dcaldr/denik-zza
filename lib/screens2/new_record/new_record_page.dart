@@ -451,7 +451,7 @@ class NewRecordPageState extends State<NewRecordPage> {
             isNarrow:
                 AppBreakpoints.isMobile(MediaQuery.sizeOf(context).width),
             isSaving: _isSaving,
-            onSave: _saveRecord,
+            onSave: _selectedParticipant == null ? null : _saveRecord,
             onCancel: _cancelAndReturn,
           ),
         ),

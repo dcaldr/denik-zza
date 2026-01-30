@@ -5,6 +5,7 @@ import 'package:denik_zza/screens2/services/participant_registration_service.dar
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
 import '../input/input_hold.dart';
 import '../input/rodne_cislo.dart';
 import '../input/text_tools.dart';
@@ -185,6 +186,13 @@ class ParticipantRegistrationFormState
 
   // This method should only be called for standalone usage (not from intake form)
   void _submitForm() async {
+    final currentEventId =
+        await DatabaseWrapper.getDatabase().getCurrentEventID();
+    if (currentEventId == null) {
+      _showSnackBar('Nejprve vytvořte akci');
+      return;
+    }
+
     if (_formKey.currentState!.validate()) {
       MemoryOsoba osoba = createMemoryOsoba();
       widget.onOsobaEdited?.call(osoba); // Ensure callback is called

@@ -9,6 +9,7 @@ import 'package:logger/logger.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/utils/mode_coordinator.dart';
+import 'package:denik_zza/design_system/widgets/center_toast.dart';
 
 FutureOr<void> testExecutable(FutureOr<void> Function() testMain) {
   // Ensure binding is initialized for plugins
@@ -19,6 +20,7 @@ FutureOr<void> testExecutable(FutureOr<void> Function() testMain) {
   // This bypasses the need for mocking path_provider in most unit/widget tests.
   setUp(() {
     ModeCoordinator.setTestingMode();
+    CenterToast.configureForTests();
   });
 
   // Suppress Drift multiple-database warnings globally for tests.

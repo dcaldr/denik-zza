@@ -14,6 +14,7 @@ import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'package:drift/drift.dart' hide isNull;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:denik_zza/design_system/widgets/center_toast.dart';
 
 import '../utils/base_test_widget.dart';
 
@@ -22,6 +23,7 @@ void main() {
     late DatabaseInterface db;
 
     setUp(() async {
+      CenterToast.configureForTests();
       // 1. Initialize Concrete Test DB for Setup
       final concreteDb = AppDatabase.testInMemory();
 
@@ -57,15 +59,28 @@ void main() {
         isDrawer: true,
         child: AppDrawer(),
       ));
+      final scaffoldState = tester.state<ScaffoldState>(find.byType(Scaffold));
+      scaffoldState.openDrawer();
       await tester.pumpAndSettle();
 
+      // Expand PŘÍPRAVA AKCE section to access participant items
+      await tester.tap(find.byKey(const Key('AppDrawer_priprava')));
+      await tester.pumpAndSettle();
+
+      final drawerFinder = find.byType(Drawer);
+
       // "New Record" should be DISABLED
-      final newRecordTile = find.byKey(const Key('AppDrawer_new_record'));
+      final newRecordTile = find.descendant(
+        of: drawerFinder,
+        matching: find.byKey(const Key('AppDrawer_new_record')),
+      );
       expect((tester.widget(newRecordTile) as ListTile).enabled, isFalse);
 
       // "Participant List" should be DISABLED
-      final participantListTile =
-          find.byKey(const Key('AppDrawer_participant_list'));
+      final participantListTile = find.descendant(
+        of: drawerFinder,
+        matching: find.byKey(const Key('AppDrawer_participant_list')),
+      );
       expect((tester.widget(participantListTile) as ListTile).enabled, isFalse);
     });
 
@@ -90,15 +105,28 @@ void main() {
         isDrawer: true,
         child: AppDrawer(),
       ));
+      final scaffoldState = tester.state<ScaffoldState>(find.byType(Scaffold));
+      scaffoldState.openDrawer();
       await tester.pumpAndSettle();
 
+      // Expand PŘÍPRAVA AKCE section to access participant items
+      await tester.tap(find.byKey(const Key('AppDrawer_priprava')));
+      await tester.pumpAndSettle();
+
+      final drawerFinder = find.byType(Drawer);
+
       // "New Participant" should be ENABLED (Now correct state)
-      final newParticipantTile =
-          find.byKey(const Key('AppDrawer_new_participant'));
+      final newParticipantTile = find.descendant(
+        of: drawerFinder,
+        matching: find.byKey(const Key('AppDrawer_new_participant')),
+      );
       expect((tester.widget(newParticipantTile) as ListTile).enabled, isTrue);
 
       // "New Record" should be DISABLED (Still requires participants)
-      final newRecordTile = find.byKey(const Key('AppDrawer_new_record'));
+      final newRecordTile = find.descendant(
+        of: drawerFinder,
+        matching: find.byKey(const Key('AppDrawer_new_record')),
+      );
       expect((tester.widget(newRecordTile) as ListTile).enabled, isFalse);
     });
 
@@ -149,7 +177,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert Desired Behavior: Save button should be DISABLED if no user selected
-      final saveBtn = tester.widget<IconButton>(
+        final saveBtn = tester.widget<FilledButton>(
           find.byKey(const Key('NewRecordPage_save_button')));
 
       // EXPECTED FAILURE: The button is currently enabled (reactive check only inside onPressed)
@@ -209,7 +237,7 @@ void main() {
 
       // Assert Desired Behavior: App should NOT crash
       // EXPECTED FAILURE: App crashes with Null Check Operator exception
-      await tester.pump();
+      await tester.pumpAndSettle(const Duration(seconds: 2));
       expect(tester.takeException(), isNull,
           reason: "App crashed on Intake Save");
     });
@@ -230,6 +258,7 @@ void main() {
 
       final saveButton =
           find.byKey(const Key('ParticipantRegistrationForm_submit_button'));
+        await tester.ensureVisible(saveButton);
       await tester.tap(saveButton);
 
       // Assert Desired Behavior: App should NOT crash
@@ -258,5 +287,5 @@ void main() {
           returnsNormally, // Or throwsA(isA<StateError>()) if we implemented fix
           reason: "Database method crashed instead of failing gracefully");
     });
-  }, skip: 'Sidequest: Re-enable after current task');
+  });
 }

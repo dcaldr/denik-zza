@@ -50,15 +50,10 @@ class AppDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     return FutureBuilder<Map<String, bool>>(
       future: _checkState(),
+      initialData: const {'hasEvent': false, 'hasParticipants': false},
       builder: (context, snapshot) {
-        // Show simple loading state while checking
-        if (!snapshot.hasData) {
-          return const Drawer(
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        final state = snapshot.data!;
+        final state = snapshot.data ??
+            const {'hasEvent': false, 'hasParticipants': false};
         final hasEvent = state['hasEvent']!;
         final hasParticipants = state['hasParticipants']!;
 

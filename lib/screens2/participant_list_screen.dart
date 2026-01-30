@@ -63,6 +63,7 @@ class _ParticipantListScreenState extends State<ParticipantListScreen> {
 
   Widget _buildParticipantsList() {
     if (_allParticipants.isEmpty) {
+      final hasEvent = _currentAction != null;
       return Center(
         key: const Key('ParticipantList_empty'),
         child: Column(
@@ -70,16 +71,18 @@ class _ParticipantListScreenState extends State<ParticipantListScreen> {
           children: [
             const Icon(Icons.people_outline, size: 48, color: Colors.grey),
             const SizedBox(height: 16),
-            const Text(
-              'Žádní účastníci',
-              style: TextStyle(fontSize: 18, color: Colors.grey),
+            Text(
+              hasEvent ? 'Žádní účastníci' : 'Nejprve vytvořte akci',
+              style: const TextStyle(fontSize: 18, color: Colors.grey),
             ),
-            const SizedBox(height: 8),
-            ElevatedButton.icon(
-              onPressed: () => _navigateToAddParticipant(context),
-              icon: const Icon(Icons.person_add),
-              label: const Text('Přidat účastníka'),
-            ),
+            if (hasEvent) ...[
+              const SizedBox(height: 8),
+              ElevatedButton.icon(
+                onPressed: () => _navigateToAddParticipant(context),
+                icon: const Icon(Icons.person_add),
+                label: const Text('Přidat účastníka'),
+              ),
+            ],
           ],
         ),
       );
@@ -132,12 +135,13 @@ class _ParticipantListScreenState extends State<ParticipantListScreen> {
               tooltip: 'Detail akce',
               onPressed: () => _navigateToActionDetail(context),
             ),
-          IconButton(
-            key: const Key('ParticipantList_addButton'),
-            icon: const Icon(Icons.person_add),
-            tooltip: 'Přidat účastníka',
-            onPressed: () => _navigateToAddParticipant(context),
-          ),
+          if (_currentAction != null)
+            IconButton(
+              key: const Key('ParticipantList_addButton'),
+              icon: const Icon(Icons.person_add),
+              tooltip: 'Přidat účastníka',
+              onPressed: () => _navigateToAddParticipant(context),
+            ),
         ],
       ),
       drawer: const AppDrawer(),

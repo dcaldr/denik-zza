@@ -62,8 +62,12 @@ class DriftDatabaseConnector implements DatabaseInterface {
     if (currentEventId == null) {
       return null;
     }
-    int? insCompId = await _driftDatabase
-        .getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna);
+    int? insCompId;
+    if (osoba.zdravotniPojistovna != null &&
+        osoba.zdravotniPojistovna!.trim().isNotEmpty) {
+      insCompId = await _driftDatabase
+          .getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna);
+    }
 
     // Only create insurance company if the name is not empty/null
     if (insCompId == null &&
@@ -482,8 +486,8 @@ class DriftDatabaseConnector implements DatabaseInterface {
       birthNumber: Value(osoba.cisloPojisteni),
       birthDate: Value(osoba.datumNarozeni),
       parentPhoneNumber: Value(osoba.telefonRodice),
-      eligibleConfirmation: Value(osoba.zpusobilost!),
-      nonInfectiousConfirmation: Value(osoba.bezinfekcnost!),
+      eligibleConfirmation: Value(osoba.zpusobilost ?? false),
+      nonInfectiousConfirmation: Value(osoba.bezinfekcnost ?? false),
       insuranceCompanyFK: Value(insCompId),
       zzaActionFK: Value(currentEventId),
       parentName: Value(osoba.jmenoRodice),
