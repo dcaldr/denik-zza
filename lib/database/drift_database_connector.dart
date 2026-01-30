@@ -58,6 +58,10 @@ class DriftDatabaseConnector implements DatabaseInterface {
 
   @override
   Future<int?> addOsobaAndReturnId(MemoryOsoba osoba) async {
+    final currentEventId = await _driftDatabase.getCurrentActionID();
+    if (currentEventId == null) {
+      return null;
+    }
     int? insCompId = await _driftDatabase
         .getInsuranceCompanyIDbyName(osoba.zdravotniPojistovna);
 
@@ -95,7 +99,8 @@ class DriftDatabaseConnector implements DatabaseInterface {
     //   eligibleConfirmationPath: Value(osoba.potvrzeniPath)
     //
     // );
-    ParticipantsCompanion c2 = await _toParticipantsCompanion(osoba);
+    ParticipantsCompanion c2 =
+      await _toParticipantsCompanion(osoba, currentEventId);
     int osobaID = await _driftDatabase.addParticipant(c2);
     //await _driftDatabase.addParticipant(c);
 
@@ -353,7 +358,11 @@ class DriftDatabaseConnector implements DatabaseInterface {
   Future<int> updateParticipant(
       {int? idOverride, required MemoryOsoba osoba}) async {
     final id = idOverride ?? osoba.id;
-    final c = await _toParticipantsCompanion(osoba);
+    final currentEventId = await _driftDatabase.getCurrentActionID();
+    if (currentEventId == null) {
+      return 0;
+    }
+    final c = await _toParticipantsCompanion(osoba, currentEventId);
     return _driftDatabase.updateParticipant(id, c);
   }
 
@@ -455,8 +464,8 @@ class DriftDatabaseConnector implements DatabaseInterface {
 
   /// Translators from MemoryOsoba, MemoryZaznam, MemoryAction to Drift Companions
   /// TODO: rewrite to use MemoryX directly as db companion (
-  Future<ParticipantsCompanion> _toParticipantsCompanion(
-      MemoryOsoba osoba) async {
+    Future<ParticipantsCompanion> _toParticipantsCompanion(
+      MemoryOsoba osoba, int currentEventId) async {
     // Get insurance company ID, but only if name is not empty
     int? insCompId;
     if (osoba.zdravotniPojistovna != null &&
@@ -476,7 +485,7 @@ class DriftDatabaseConnector implements DatabaseInterface {
       eligibleConfirmation: Value(osoba.zpusobilost!),
       nonInfectiousConfirmation: Value(osoba.bezinfekcnost!),
       insuranceCompanyFK: Value(insCompId),
-      zzaActionFK: Value((await _driftDatabase.getCurrentActionID())!),
+      zzaActionFK: Value(currentEventId),
       parentName: Value(osoba.jmenoRodice),
       parentEmail: Value(osoba.emailRodice),
       campUnit: Value(osoba.oddil),

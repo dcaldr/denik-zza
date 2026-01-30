@@ -33,6 +33,7 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
 
   // For preventing double-add: onSubmitted defers add, onSelected cancels it
   String? _pendingSubmitValue;
+  bool _suppressNextSubmit = false;
 
   @override
   void initState() {
@@ -208,6 +209,7 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
       onSelected: (selection) {
         // Cancel any pending submit from onSubmitted (prevents double-add)
         _pendingSubmitValue = null;
+        _suppressNextSubmit = true;
         // Add the selected suggestion
         _addItem(selection);
         // Clear the autocomplete's text field after frame
@@ -270,6 +272,10 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
                 textInputAction:
                     TextInputAction.done, // Enable Enter submission
                 onSubmitted: (value) {
+                  if (_suppressNextSubmit) {
+                    _suppressNextSubmit = false;
+                    return;
+                  }
                   // Defer add to next frame - allows onSelected to cancel if it fires
                   _pendingSubmitValue = value;
                   final hadFocus = focusNode.hasFocus;
