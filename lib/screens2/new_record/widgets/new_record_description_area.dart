@@ -7,6 +7,7 @@ import 'package:denik_zza/design_system/tokens/app_typography.dart';
 
 class NewRecordDescriptionArea extends StatelessWidget {
   final bool isCompact;
+  final bool isNarrow;
   final bool isParticipantSelected;
   final TextEditingController descriptionController;
   final TextEditingController poznamkaController;
@@ -16,6 +17,7 @@ class NewRecordDescriptionArea extends StatelessWidget {
   const NewRecordDescriptionArea({
     super.key,
     required this.isCompact,
+    required this.isNarrow,
     required this.isParticipantSelected,
     required this.descriptionController,
     required this.poznamkaController,
@@ -25,7 +27,7 @@ class NewRecordDescriptionArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isCompact) {
+    if (isCompact || isNarrow) {
       return SizedBox(
         height: 100,
         child: Stack(

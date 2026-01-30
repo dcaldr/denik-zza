@@ -448,6 +448,8 @@ class NewRecordPageState extends State<NewRecordPage> {
             isCompact: AppBreakpoints.isCompactHeight(
               MediaQuery.sizeOf(context).height,
             ),
+            isNarrow:
+                AppBreakpoints.isMobile(MediaQuery.sizeOf(context).width),
             isSaving: _isSaving,
             onSave: _saveRecord,
             onCancel: _cancelAndReturn,
@@ -461,9 +463,10 @@ class NewRecordPageState extends State<NewRecordPage> {
 
           // Use centralized breakpoint instead of magic number.
           // See AppBreakpoints for all responsive thresholds.
-            final isCompact =
+          final isCompact =
               AppBreakpoints.isCompactHeight(constraints.maxHeight);
-            final spacing = isCompact
+          final isNarrow = AppBreakpoints.isMobile(constraints.maxWidth);
+          final spacing = isCompact
               ? NewRecordLayoutConfig.spacingCompact
               : NewRecordLayoutConfig.spacingRegular;
 
@@ -481,6 +484,8 @@ class NewRecordPageState extends State<NewRecordPage> {
             recordCount: _recordCount,
             headerHeight: _headerHeight,
             formHeight: _formHeight,
+            isNarrow: isNarrow,
+            isCompactHeight: isCompact,
           );
 
           if (NewRecordLayoutConfig.enableLayoutDiagnostics) {
@@ -499,6 +504,7 @@ class NewRecordPageState extends State<NewRecordPage> {
               : 'Vyberte účastníka...';
           return NewRecordBodyLayout(
             isCompact: isCompact,
+            isNarrow: isNarrow,
             spacing: spacing,
             scrollMetrics: scrollMetrics,
             participantSubtitle: participantSubtitle,

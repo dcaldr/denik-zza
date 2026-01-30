@@ -5,6 +5,7 @@ import 'package:denik_zza/screens2/new_record/widgets/new_record_title_row.dart'
 
 class NewRecordFormFields extends StatelessWidget {
   final bool isCompact;
+  final bool isNarrow;
   final bool isParticipantSelected;
   final TextEditingController titleController;
   final TextEditingController descriptionController;
@@ -23,6 +24,7 @@ class NewRecordFormFields extends StatelessWidget {
   const NewRecordFormFields({
     super.key,
     required this.isCompact,
+    required this.isNarrow,
     required this.isParticipantSelected,
     required this.titleController,
     required this.descriptionController,
@@ -48,6 +50,7 @@ class NewRecordFormFields extends StatelessWidget {
       children: [
         NewRecordTitleRow(
           isCompact: isCompact,
+          isNarrow: isNarrow,
           isParticipantSelected: isParticipantSelected,
           titleController: titleController,
           dateTimeLabel: dateTimeLabel,
@@ -62,6 +65,7 @@ class NewRecordFormFields extends StatelessWidget {
         SizedBox(height: titleSpacing),
         NewRecordDescriptionArea(
           isCompact: isCompact,
+          isNarrow: isNarrow,
           isParticipantSelected: isParticipantSelected,
           descriptionController: descriptionController,
           poznamkaController: poznamkaController,

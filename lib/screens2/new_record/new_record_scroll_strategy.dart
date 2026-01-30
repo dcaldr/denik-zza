@@ -32,6 +32,8 @@ class NewRecordScrollStrategy {
     required int recordCount,
     required double? headerHeight,
     required double? formHeight,
+    required bool isNarrow,
+    required bool isCompactHeight,
   }) {
     final minHistoryListHeight = AppBreakpoints.getListHeight(
       context,
@@ -92,7 +94,9 @@ class NewRecordScrollStrategy {
         (spacing * 2);
 
     final shouldUsePageScroll =
-        hasMeasuredHeights && requiredMinHeight > constraints.maxHeight;
+      (hasMeasuredHeights && requiredMinHeight > constraints.maxHeight) ||
+        isNarrow ||
+        isCompactHeight;
 
     final historyHeightForScroll = math.max(
       minHistoryHeight,

@@ -12,6 +12,7 @@ import 'package:denik_zza/screens2/new_record/widgets/new_record_history_section
 
 class NewRecordBodyLayout extends StatelessWidget {
   final bool isCompact;
+  final bool isNarrow;
   final double spacing;
   final NewRecordScrollMetrics scrollMetrics;
   final String participantSubtitle;
@@ -50,6 +51,7 @@ class NewRecordBodyLayout extends StatelessWidget {
   const NewRecordBodyLayout({
     super.key,
     required this.isCompact,
+    required this.isNarrow,
     required this.spacing,
     required this.scrollMetrics,
     required this.participantSubtitle,
@@ -90,6 +92,7 @@ class NewRecordBodyLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     final formFields = NewRecordFormFields(
       isCompact: isCompact,
+      isNarrow: isNarrow,
       isParticipantSelected: isParticipantSelected,
       titleController: titleController,
       descriptionController: descriptionController,
@@ -120,6 +123,7 @@ class NewRecordBodyLayout extends StatelessWidget {
 
     final headerSection = NewRecordHeaderSection(
       isCompact: isCompact,
+      isNarrow: isNarrow,
       hasParticipant: hasParticipant,
       hasUnsavedChanges: hasUnsavedChanges,
       participantTitle: 'Účastník',

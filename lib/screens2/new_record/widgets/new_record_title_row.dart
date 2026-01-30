@@ -8,6 +8,7 @@ import 'package:denik_zza/design_system/tokens/app_typography.dart';
 
 class NewRecordTitleRow extends StatelessWidget {
   final bool isCompact;
+  final bool isNarrow;
   final bool isParticipantSelected;
   final TextEditingController titleController;
   final String dateTimeLabel;
@@ -22,6 +23,7 @@ class NewRecordTitleRow extends StatelessWidget {
   const NewRecordTitleRow({
     super.key,
     required this.isCompact,
+    required this.isNarrow,
     required this.isParticipantSelected,
     required this.titleController,
     required this.dateTimeLabel,
@@ -37,78 +39,30 @@ class NewRecordTitleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activeTextColor = AppColors.lightColorScheme.onSurface;
+    if (isNarrow) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildTitleField(activeTextColor),
+          const SizedBox(height: AppSpacing.s),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _buildDateTimeChip(context),
+              SizedBox(width: AppSpacing.s),
+              _buildPrintRow(context),
+            ],
+          ),
+        ],
+      );
+    }
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           flex: AppLayout.inputFlex,
-          child: TextFormField(
-            key: const Key('NewRecordPage_title_input'),
-            controller: titleController,
-            enabled: isParticipantSelected,
-            maxLines: 1,
-            maxLength: 200,
-            style: (isCompact
-                    ? AppTypography.desktopTextTheme.bodyMedium
-                    : AppTypography.desktopTextTheme.bodyLarge)
-                ?.copyWith(
-              fontWeight: FontWeight.w500,
-              color: activeTextColor,
-            ),
-            decoration: InputDecoration(
-              labelText: 'Nadpis * (povinné)',
-              labelStyle: TextStyle(
-                color: AppColors.blueDark,
-                fontWeight: FontWeight.w500,
-              ),
-              hintText: isParticipantSelected
-                  ? 'Povinné - typ úrazu nebo stížnosti (např. "Odřenina kolena", "Bolest hlavy")'
-                  : 'Vyberte účastníka pro pokračování',
-              hintStyle: TextStyle(
-                color: AppColors.greyText,
-                fontStyle: FontStyle.italic,
-              ),
-              filled: true,
-              fillColor: AppColors.lightColorScheme.surface,
-              border: OutlineInputBorder(
-                borderRadius: AppRadii.inputRadius,
-                borderSide: BorderSide(color: AppColors.blueBorder),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: AppRadii.inputRadius,
-                borderSide: BorderSide(color: AppColors.blueBorder),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: AppRadii.inputRadius,
-                borderSide: BorderSide(color: AppColors.blueText, width: 2),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderRadius: AppRadii.inputRadius,
-                borderSide:
-                    BorderSide(color: AppColors.lightColorScheme.error, width: 2),
-              ),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: isCompact ? AppSpacing.m : AppSpacing.l,
-                vertical: isCompact ? AppSpacing.s : AppSpacing.m,
-              ),
-              prefixIcon: Container(
-                margin: const EdgeInsets.all(AppSpacing.s),
-                padding: const EdgeInsets.all(AppSpacing.xs),
-                decoration: BoxDecoration(
-                  color: AppColors.blueBackground,
-                  borderRadius: BorderRadius.circular(AppRadii.small),
-                ),
-                child: Icon(
-                  Icons.title,
-                  color: AppColors.blueDark,
-                  size: isCompact ? 16 : 18,
-                ),
-              ),
-              errorMaxLines: 1,
-              errorStyle: const TextStyle(fontSize: 11, height: 0.8),
-            ),
-            validator: titleValidator,
-          ),
+          child: _buildTitleField(activeTextColor),
         ),
         SizedBox(width: AppSpacing.s),
         Padding(
@@ -118,28 +72,102 @@ class NewRecordTitleRow extends StatelessWidget {
         SizedBox(width: AppSpacing.s),
         Padding(
           padding: const EdgeInsets.only(top: 8),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              _buildPrintIconButton(
-                context,
-                key: const Key('NewRecordPage_print_full_button'),
-                icon: Icons.print,
-                tooltip: 'Tisknout záznam',
-                onPressed: onPrintFull,
-              ),
-              _buildPrintIconButton(
-                context,
-                key: const Key('NewRecordPage_print_append_button'),
-                icon: Icons.add_to_photos,
-                tooltip: 'Přitisknout k existujícímu',
-                onPressed: onPrintAppend,
-              ),
-              if (zpusobilostButton != null) zpusobilostButton!,
-            ],
+          child: _buildPrintRow(context),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTitleField(Color activeTextColor) {
+    return TextFormField(
+      key: const Key('NewRecordPage_title_input'),
+      controller: titleController,
+      enabled: isParticipantSelected,
+      maxLines: 1,
+      maxLength: 200,
+      style: (isCompact
+              ? AppTypography.desktopTextTheme.bodyMedium
+              : AppTypography.desktopTextTheme.bodyLarge)
+          ?.copyWith(
+        fontWeight: FontWeight.w500,
+        color: activeTextColor,
+      ),
+      decoration: InputDecoration(
+        labelText: 'Nadpis * (povinné)',
+        labelStyle: TextStyle(
+          color: AppColors.blueDark,
+          fontWeight: FontWeight.w500,
+        ),
+        hintText: isParticipantSelected
+            ? 'Povinné - typ úrazu nebo stížnosti (např. "Odřenina kolena", "Bolest hlavy")'
+            : 'Vyberte účastníka pro pokračování',
+        hintStyle: TextStyle(
+          color: AppColors.greyText,
+          fontStyle: FontStyle.italic,
+        ),
+        filled: true,
+        fillColor: AppColors.lightColorScheme.surface,
+        border: OutlineInputBorder(
+          borderRadius: AppRadii.inputRadius,
+          borderSide: BorderSide(color: AppColors.blueBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: AppRadii.inputRadius,
+          borderSide: BorderSide(color: AppColors.blueBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: AppRadii.inputRadius,
+          borderSide: BorderSide(color: AppColors.blueText, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: AppRadii.inputRadius,
+          borderSide:
+              BorderSide(color: AppColors.lightColorScheme.error, width: 2),
+        ),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: isCompact ? AppSpacing.m : AppSpacing.l,
+          vertical: isCompact ? AppSpacing.s : AppSpacing.m,
+        ),
+        prefixIcon: Container(
+          margin: const EdgeInsets.all(AppSpacing.s),
+          padding: const EdgeInsets.all(AppSpacing.xs),
+          decoration: BoxDecoration(
+            color: AppColors.blueBackground,
+            borderRadius: BorderRadius.circular(AppRadii.small),
+          ),
+          child: Icon(
+            Icons.title,
+            color: AppColors.blueDark,
+            size: isCompact ? 16 : 18,
           ),
         ),
+        errorMaxLines: 1,
+        errorStyle: const TextStyle(fontSize: 11, height: 0.8),
+      ),
+      validator: titleValidator,
+    );
+  }
+
+  Widget _buildPrintRow(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        _buildPrintIconButton(
+          context,
+          key: const Key('NewRecordPage_print_full_button'),
+          icon: Icons.print,
+          tooltip: 'Tisknout záznam',
+          onPressed: onPrintFull,
+        ),
+        _buildPrintIconButton(
+          context,
+          key: const Key('NewRecordPage_print_append_button'),
+          icon: Icons.add_to_photos,
+          tooltip: 'Přitisknout k existujícímu',
+          onPressed: onPrintAppend,
+        ),
+        if (zpusobilostButton != null) zpusobilostButton!,
       ],
     );
   }
