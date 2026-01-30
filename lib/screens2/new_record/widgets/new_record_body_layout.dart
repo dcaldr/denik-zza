@@ -45,6 +45,7 @@ class NewRecordBodyLayout extends StatelessWidget {
   final FormFieldValidator<String>? descriptionValidator;
   final VoidCallback onRefresh;
   final ValueChanged<MemoryOsoba> onParticipantSelected;
+  final ValueChanged<MemoryOsoba>? onParticipantTapped;
   final VoidCallback onBirthdateInfo;
   final ValueChanged<int> onRecordsLoaded;
 
@@ -84,6 +85,7 @@ class NewRecordBodyLayout extends StatelessWidget {
     required this.descriptionValidator,
     required this.onRefresh,
     required this.onParticipantSelected,
+    this.onParticipantTapped,
     required this.onBirthdateInfo,
     required this.onRecordsLoaded,
   });
@@ -133,6 +135,8 @@ class NewRecordBodyLayout extends StatelessWidget {
       healthInfo: healthInfo,
       availableParticipants: availableParticipants,
       onParticipantSelected: onParticipantSelected,
+      selectedParticipant: selectedParticipant,
+      onParticipantTapped: onParticipantTapped,
       onRefresh: onRefresh,
       headerKey: headerKey,
     );

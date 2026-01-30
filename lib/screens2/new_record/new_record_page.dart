@@ -21,6 +21,7 @@ import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/new_record/new_record_date_time.dart';
 import 'package:denik_zza/screens2/new_record/new_record_page_dialogs.dart';
 import 'package:denik_zza/utils/app_logger.dart';
+import 'package:denik_zza/screens2/participant_edit_page.dart';
 
 /// Enhanced new record page that matches the old system functionality
 /// but with improved architecture and validation
@@ -72,6 +73,7 @@ class NewRecordPageState extends State<NewRecordPage> {
   int _refreshCounter = 0; // For forcing widget refresh
   MemoryOsoba? _selectedParticipant;
   bool _hasUnsavedChanges = false;
+  bool _showBirthdateInline = false;
   List<MemoryOsoba> _availableParticipants = [];
   double? _headerHeight;
   double? _historyHeaderHeight;
@@ -156,6 +158,7 @@ class NewRecordPageState extends State<NewRecordPage> {
 
       // Reset unsaved changes flag since we're starting fresh with new participant
       _hasUnsavedChanges = false;
+      _showBirthdateInline = false;
     });
 
     // Load health data for new participant
@@ -231,6 +234,15 @@ class NewRecordPageState extends State<NewRecordPage> {
     }
 
     return ', $age let';
+  }
+
+  String _formatBirthdateInline() {
+    final birthDate = _selectedParticipant?.datumNarozeni;
+    if (birthDate == null || !_showBirthdateInline) return '';
+    final dd = birthDate.day.toString().padLeft(2, '0');
+    final mm = birthDate.month.toString().padLeft(2, '0');
+    final yyyy = birthDate.year.toString();
+    return ' ($dd.$mm.$yyyy)';
   }
 
 
@@ -499,8 +511,8 @@ class NewRecordPageState extends State<NewRecordPage> {
             );
           }
 
-          final participantSubtitle = _selectedParticipant != null
-              ? '${_selectedParticipant!.jmeno} ${_selectedParticipant!.prijmeni}${_formatAge()}'
+            final participantSubtitle = _selectedParticipant != null
+              ? '${_selectedParticipant!.jmeno} ${_selectedParticipant!.prijmeni}${_formatAge()}${_formatBirthdateInline()}'
               : 'Vyberte účastníka...';
           return NewRecordBodyLayout(
             isCompact: isCompact,
@@ -563,13 +575,20 @@ class NewRecordPageState extends State<NewRecordPage> {
             },
             onRefresh: _onRefresh,
             onParticipantSelected: _onParticipantSelected,
-            onBirthdateInfo: () {
-              final birthDate = _selectedParticipant?.datumNarozeni;
-              if (birthDate == null) return;
-              NewRecordPageDialogs.showBirthdateInfo(
-                context: context,
-                birthDate: birthDate,
+            onParticipantTapped: (MemoryOsoba p) {
+              // Navigate to participant edit page
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ParticipantEditPage(participant: p),
+                ),
               );
+            },
+            onBirthdateInfo: () {
+              if (_selectedParticipant?.datumNarozeni == null) return;
+              setState(() {
+                _showBirthdateInline = !_showBirthdateInline;
+              });
             },
             onRecordsLoaded: (count) {
               if (mounted && _recordCount != count) {

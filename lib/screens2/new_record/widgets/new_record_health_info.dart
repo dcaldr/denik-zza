@@ -47,7 +47,12 @@ class _NewRecordHealthInfoState extends State<NewRecordHealthInfo> {
       lekyList: widget.lekyList,
     );
 
-    if (alergieList.isEmpty && omezeniList.isEmpty && widget.lekyList.isEmpty) {
+    final totalItems = sections.fold<int>(
+      0,
+      (sum, section) => sum + section.items.length,
+    );
+
+    if (totalItems == 0) {
       return _buildHealthAllClearIndicator();
     }
 
@@ -57,8 +62,8 @@ class _NewRecordHealthInfoState extends State<NewRecordHealthInfo> {
 
     if (useCompactBadges) {
       return NewRecordHealthBadges(
-        criticalCount: alergieList.length + omezeniList.length,
-        medCount: widget.lekyList.length,
+        criticalCount: sections[0].items.length + sections[1].items.length,
+        medCount: sections[2].items.length,
         onTap: _showHealthDetailsBottomSheet,
       );
     }
@@ -138,27 +143,32 @@ class _NewRecordHealthInfoState extends State<NewRecordHealthInfo> {
     required List<MemoryOmezeni> omezeniList,
     required List<MemoryLek> lekyList,
   }) {
+    List<String> cleanItems(Iterable<String> items) => items
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+
     return [
       NewRecordHealthSectionData(
         label: 'Alergie',
         icon: Icons.warning_amber,
         iconColor: Theme.of(context).colorScheme.error,
         backgroundColor: Theme.of(context).colorScheme.errorContainer,
-        items: alergieList.map((item) => item.omezeni).toList(),
+        items: cleanItems(alergieList.map((item) => item.omezeni)),
       ),
       NewRecordHealthSectionData(
         label: 'Omezení',
         icon: Icons.block,
         iconColor: Theme.of(context).colorScheme.secondary,
         backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-        items: omezeniList.map((item) => item.omezeni).toList(),
+        items: cleanItems(omezeniList.map((item) => item.omezeni)),
       ),
       NewRecordHealthSectionData(
         label: 'Léky',
         icon: Icons.medication,
         iconColor: Theme.of(context).colorScheme.primary,
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-        items: lekyList.map((lek) => lek.nazev).toList(),
+        items: cleanItems(lekyList.map((lek) => lek.nazev)),
       ),
     ];
   }
@@ -187,12 +197,18 @@ class _NewRecordHealthInfoState extends State<NewRecordHealthInfo> {
     required String text,
     required int maxChars,
   }) {
-    final truncated = text.length > maxChars;
-    final displayText = truncated ? '${text.substring(0, maxChars)}...' : text;
+    final normalized = text.trim();
+    if (normalized.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final truncated = normalized.length > maxChars;
+    final displayText =
+      truncated ? '${normalized.substring(0, maxChars)}...' : normalized;
 
     return InkWell(
-      onTap: truncated
-          ? () => _showHealthDetailOverlay(text, icon, iconColor)
+        onTap: truncated
+          ? () => _showHealthDetailOverlay(normalized, icon, iconColor)
           : null,
       borderRadius: BorderRadius.circular(6),
       child: Container(
@@ -226,6 +242,7 @@ class _NewRecordHealthInfoState extends State<NewRecordHealthInfo> {
 
   void _showHealthDetailOverlay(
       String fullText, IconData icon, Color iconColor) {
+    final safeText = fullText.trim().isEmpty ? 'Neuvedeno' : fullText;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -236,7 +253,7 @@ class _NewRecordHealthInfoState extends State<NewRecordHealthInfo> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                fullText,
+                safeText,
                 style: const TextStyle(fontSize: 13),
               ),
             ),

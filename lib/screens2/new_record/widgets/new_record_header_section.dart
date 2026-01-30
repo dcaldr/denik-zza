@@ -18,6 +18,10 @@ class NewRecordHeaderSection extends StatelessWidget {
   final Widget? healthInfo;
   final List<MemoryOsoba> availableParticipants;
   final ValueChanged<MemoryOsoba> onParticipantSelected;
+  // The currently selected participant (optional) – used for header tap
+  final MemoryOsoba? selectedParticipant;
+  // Optional callback when header (participant block) is tapped
+  final ValueChanged<MemoryOsoba>? onParticipantTapped;
   final VoidCallback onRefresh;
   final GlobalKey headerKey;
 
@@ -34,24 +38,39 @@ class NewRecordHeaderSection extends StatelessWidget {
     required this.healthInfo,
     required this.availableParticipants,
     required this.onParticipantSelected,
+    this.selectedParticipant,
+    this.onParticipantTapped,
     required this.onRefresh,
     required this.headerKey,
   });
 
   @override
   Widget build(BuildContext context) {
+    final onParticipantTap = (hasParticipant && selectedParticipant != null)
+        ? () => onParticipantTapped?.call(selectedParticipant!)
+        : null;
+
     final participantBlock = Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Icon(
-            hasParticipant ? Icons.person : Icons.person_search,
-            color: Theme.of(context).colorScheme.primary,
-            size: isCompact ? 18 : 20,
+        MouseRegion(
+          cursor: onParticipantTap != null
+              ? SystemMouseCursors.click
+              : MouseCursor.defer,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onParticipantTap,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Icon(
+                hasParticipant ? Icons.person : Icons.person_search,
+                color: Theme.of(context).colorScheme.primary,
+                size: isCompact ? 18 : 20,
+              ),
+            ),
           ),
         ),
         SizedBox(width: AppSpacing.m),
@@ -105,38 +124,48 @@ class NewRecordHeaderSection extends StatelessWidget {
                     ),
                 ],
               ),
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      participantSubtitle,
-                      overflow: TextOverflow.ellipsis,
+              MouseRegion(
+                cursor: onParticipantTap != null
+                    ? SystemMouseCursors.click
+                    : MouseCursor.defer,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onParticipantTap,
+                  child: Text.rich(
+                    TextSpan(
                       style: TextStyle(
                         fontSize: isCompact ? 14 : 15,
                         fontWeight: FontWeight.bold,
-                        color: hasParticipant
-                            ? AppColors.greyIcon
-                            : AppColors.greyText,
+                        color:
+                            hasParticipant ? AppColors.greyIcon : AppColors.greyText,
                       ),
+                      children: [
+                        TextSpan(text: participantSubtitle),
+                        if (showBirthdateInfo) ...[
+                          const WidgetSpan(
+                            child: SizedBox(width: 4),
+                            alignment: PlaceholderAlignment.middle,
+                          ),
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.middle,
+                            child: InkWell(
+                              key: const Key('NewRecordPage_birthdate_info_icon'),
+                              onTap: onBirthdateInfo,
+                              borderRadius: AppRadii.containerRadius,
+                              child: Icon(
+                                Icons.info_outline,
+                                size: 14,
+                                color: AppColors.blueText,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  if (showBirthdateInfo) ...[
-                    const SizedBox(width: 4),
-                    InkWell(
-                      key: const Key('NewRecordPage_birthdate_info_icon'),
-                      onTap: onBirthdateInfo,
-                      borderRadius: AppRadii.containerRadius,
-                      child: Padding(
-                        padding: const EdgeInsets.all(2),
-                        child: Icon(
-                          Icons.info_outline,
-                          size: 14,
-                          color: AppColors.blueText,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
+                ),
               ),
               if (healthInfo != null) ...[
                 const SizedBox(height: 4),
@@ -173,6 +202,7 @@ class NewRecordHeaderSection extends StatelessWidget {
               children: [
                 PersonAutocomplete(
                   key: const Key('NewRecordPage_participantAutocomplete'),
+                  textFieldKey: const Key('NewRecordPage_personSearch_input'),
                   onPersonSelected: onParticipantSelected,
                   onRefresh: onRefresh,
                   availablePersons: availableParticipants,
@@ -197,6 +227,7 @@ class NewRecordHeaderSection extends StatelessWidget {
                       SizedBox(height: isCompact ? 2 : 4),
                       PersonAutocomplete(
                         key: const Key('NewRecordPage_participantAutocomplete'),
+                        textFieldKey: const Key('NewRecordPage_personSearch_input'),
                         onPersonSelected: onParticipantSelected,
                         onRefresh: onRefresh,
                         availablePersons: availableParticipants,

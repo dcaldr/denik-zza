@@ -79,15 +79,6 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
       appBar: AppBar(
         title: Text(
             'Upravit účastníka: ${widget.participant.jmeno} ${widget.participant.prijmeni}'),
-        actions: [
-          TextButton(
-            onPressed: _handleSave,
-            child: const Text(
-              'Uložit',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {

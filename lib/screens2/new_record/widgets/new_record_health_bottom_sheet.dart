@@ -33,6 +33,8 @@ class NewRecordHealthBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasAnyItems = sections.any((section) => section.items.isNotEmpty);
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
@@ -60,6 +62,14 @@ class NewRecordHealthBottomSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.l),
+            if (!hasAnyItems)
+              Text(
+                'Nejsou zadány žádné údaje.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.greyText,
+                ),
+              ),
             for (final section in sections)
               if (section.items.isNotEmpty) ...[
                 _HealthSectionHeader(
