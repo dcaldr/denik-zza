@@ -478,6 +478,21 @@ void main() {
            });
         }
 
+        // Records for Milada Horáková (P7) - baseline for append print
+        final milada = jurskyParkParticipants[7];
+        if (milada.zaznamy.isNotEmpty) {
+          await logger.step('Add Records for Milada Horáková', () async {
+            for (final record in milada.zaznamy) {
+              await newRecord.createRecordFromTestData('${milada.jmeno} ${milada.prijmeni}', record);
+              await newRecord.waitForKey('NewRecordPage_save_button');
+            }
+            final miladaId = await dbHelpers.getParticipantId(milada.jmeno, milada.prijmeni);
+            if (miladaId != null) {
+              await dbHelpers.verifyRecords(participantId: miladaId, expectedRecords: milada.zaznamy);
+            }
+          });
+        }
+
         await logger.step('Navigate to Print Center', () async {
           await dashboard.navigateToPrintCenter();
           await dashboard.pumpAndSettle();
@@ -491,8 +506,6 @@ void main() {
         await logger.step('Create Append Record for Milada', () async {
           await dashboard.navigateToNewRecordPage();
           await newRecord.waitForKey('NewRecordPage_participantAutocomplete');
-
-          final milada = jurskyParkParticipants[7];
           final appendRecord = TestRecord(
             nazev: 'Follow-up observation',
             popis: 'Patient continues to improve, ready for activities',

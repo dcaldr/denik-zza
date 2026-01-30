@@ -66,9 +66,15 @@ class NewRecordRobot extends BaseRobot {
     await enterText(participantAutocomplete, fullName);
     await pump();
 
+    final found = await waitForAnyText(fullName,
+        timeout: const Duration(seconds: 5));
+    if (!found) {
+      throw TestFailure('Autocomplete suggestion "$fullName" not found');
+    }
+
     // Wait for dropdown to appear and tap matching suggestion
     // Find text in the overlay dropdown, use .first if name appears multiple times
-    final suggestion = find.text(fullName).first;
+    final suggestion = find.text(fullName).last;
     await tester.tap(suggestion);
     await pumpAndSettle();
   }

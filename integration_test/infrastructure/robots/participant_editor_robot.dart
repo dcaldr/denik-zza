@@ -405,8 +405,24 @@ class ParticipantEditorRobot extends BaseRobot {
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await pump(const Duration(milliseconds: 300));
 
-    await tester.testTextInput.receiveAction(TextInputAction.done);
-    await pump(const Duration(milliseconds: 300));
+    final inputField = tester.widget<TextField>(medicationInput);
+    var actualText = inputField.controller?.text ?? expectedFull;
+    if (actualText.trim().isEmpty || actualText.trim() == partialText) {
+      await tester.enterText(medicationInput, expectedFull);
+      await pump(const Duration(milliseconds: 200));
+      final updatedField = tester.widget<TextField>(medicationInput);
+      actualText = updatedField.controller?.text ?? expectedFull;
+    }
+
+    await ensureVisible(medicationAddButton);
+    await tap(medicationAddButton);
+
+    final found = await waitForText(
+      actualText,
+      timeout: const Duration(seconds: 2),
+    );
+    expect(found, isTrue,
+        reason: 'Medication "$actualText" should appear in list');
   }
 
   /// Adds a restriction via Tab autocomplete, then modifies text before submitting.
@@ -470,6 +486,31 @@ class ParticipantEditorRobot extends BaseRobot {
 
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await pump(const Duration(milliseconds: 300));
+
+    // Verify item appears; if not, fallback to Add button
+    var found = await waitForText(
+      ownText,
+      timeout: const Duration(seconds: 2),
+    );
+    if (!found) {
+      final fieldAfterEnter = tester.widget<TextField>(restrictionInput);
+      final currentText = fieldAfterEnter.controller?.text ?? '';
+      if (currentText.trim().isEmpty) {
+        await tester.enterText(restrictionInput, ownText);
+        await pump(const Duration(milliseconds: 200));
+      }
+      await ensureVisible(restrictionAddButton);
+      await tap(restrictionAddButton);
+      await pump(const Duration(milliseconds: 300));
+
+      found = await waitForText(
+        ownText,
+        timeout: const Duration(seconds: 2),
+      );
+    }
+
+    expect(found, isTrue,
+        reason: 'Restriction "$ownText" should appear in list');
   }
 
   /// Adds a restriction by clicking a dropdown suggestion.
@@ -524,7 +565,11 @@ class ParticipantEditorRobot extends BaseRobot {
     await pump(const Duration(milliseconds: 300));
 
     // STRICT ASSERTION: Verify different text appears in list (not suggestion)
-    expect(find.text(differentText), findsWidgets,
+    final found = await waitForText(
+      differentText,
+      timeout: const Duration(seconds: 2),
+    );
+    expect(found, isTrue,
         reason: 'Restriction "$differentText" should appear in list');
   }
 

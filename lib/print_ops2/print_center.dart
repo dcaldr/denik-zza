@@ -929,8 +929,8 @@ class _EventPrintFlowPageState extends State<SelectedAggregatedPrintPage> {
                             }
 
                             if (context.mounted) {
-                              // Real Print execution
-                              await Printing.layoutPdf(
+                              // Real Print execution (via SystemInterface to avoid OS dialogs in tests)
+                              await SystemInterface.instance.printPdf(
                                 onLayout: (_) => ctrl.generateAggregatedPdf(
                                     _selectedIds.toList()),
                                 name:

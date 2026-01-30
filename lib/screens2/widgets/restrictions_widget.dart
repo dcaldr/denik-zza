@@ -232,6 +232,9 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
               _controller.text = textEditingController.text;
             }
             _updateGhostSuffix(textEditingController.text);
+            if (_suppressNextSubmit && textEditingController.text.isNotEmpty) {
+              _suppressNextSubmit = false;
+            }
           };
           textEditingController.addListener(_textListener!);
         }
@@ -348,6 +351,7 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
       onPressed: () {
         // Cancel any pending submit from Enter key (prevents double-add)
         _pendingSubmitValue = null;
+        _suppressNextSubmit = false;
 
         // Use autocomplete's controller directly to avoid sync race condition
         // Falls back to _controller if autocomplete not yet built

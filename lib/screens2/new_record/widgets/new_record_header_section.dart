@@ -50,27 +50,18 @@ class NewRecordHeaderSection extends StatelessWidget {
         ? () => onParticipantTapped?.call(selectedParticipant!)
         : null;
 
-    final participantBlock = Row(
+    final participantBlockContent = Row(
       children: [
-        MouseRegion(
-          cursor: onParticipantTap != null
-              ? SystemMouseCursors.click
-              : MouseCursor.defer,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: onParticipantTap,
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Icon(
-                hasParticipant ? Icons.person : Icons.person_search,
-                color: Theme.of(context).colorScheme.primary,
-                size: isCompact ? 18 : 20,
-              ),
-            ),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(
+            hasParticipant ? Icons.person : Icons.person_search,
+            color: Theme.of(context).colorScheme.primary,
+            size: isCompact ? 18 : 20,
           ),
         ),
         SizedBox(width: AppSpacing.m),
@@ -124,48 +115,39 @@ class NewRecordHeaderSection extends StatelessWidget {
                     ),
                 ],
               ),
-              MouseRegion(
-                cursor: onParticipantTap != null
-                    ? SystemMouseCursors.click
-                    : MouseCursor.defer,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: onParticipantTap,
-                  child: Text.rich(
-                    TextSpan(
-                      style: TextStyle(
-                        fontSize: isCompact ? 14 : 15,
-                        fontWeight: FontWeight.bold,
-                        color:
-                            hasParticipant ? AppColors.greyIcon : AppColors.greyText,
-                      ),
-                      children: [
-                        TextSpan(text: participantSubtitle),
-                        if (showBirthdateInfo) ...[
-                          const WidgetSpan(
-                            child: SizedBox(width: 4),
-                            alignment: PlaceholderAlignment.middle,
-                          ),
-                          WidgetSpan(
-                            alignment: PlaceholderAlignment.middle,
-                            child: InkWell(
-                              key: const Key('NewRecordPage_birthdate_info_icon'),
-                              onTap: onBirthdateInfo,
-                              borderRadius: AppRadii.containerRadius,
-                              child: Icon(
-                                Icons.info_outline,
-                                size: 14,
-                                color: AppColors.blueText,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+              Text.rich(
+                TextSpan(
+                  style: TextStyle(
+                    fontSize: isCompact ? 14 : 15,
+                    fontWeight: FontWeight.bold,
+                    color:
+                        hasParticipant ? AppColors.greyIcon : AppColors.greyText,
                   ),
+                  children: [
+                    TextSpan(text: participantSubtitle),
+                    if (showBirthdateInfo) ...[
+                      const WidgetSpan(
+                        child: SizedBox(width: 4),
+                        alignment: PlaceholderAlignment.middle,
+                      ),
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: InkWell(
+                          key: const Key('NewRecordPage_birthdate_info_icon'),
+                          onTap: onBirthdateInfo,
+                          borderRadius: AppRadii.containerRadius,
+                          child: Icon(
+                            Icons.info_outline,
+                            size: 14,
+                            color: AppColors.blueText,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               if (healthInfo != null) ...[
                 const SizedBox(height: 4),
@@ -175,6 +157,18 @@ class NewRecordHeaderSection extends StatelessWidget {
           ),
         ),
       ],
+    );
+
+    final participantBlock = MouseRegion(
+      cursor: onParticipantTap != null
+          ? SystemMouseCursors.click
+          : MouseCursor.defer,
+      child: InkWell(
+        key: const Key('NewRecordPage_participant_header'),
+        onTap: onParticipantTap,
+        borderRadius: BorderRadius.circular(6),
+        child: participantBlockContent,
+      ),
     );
 
     return Container(

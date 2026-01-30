@@ -3,6 +3,7 @@
 
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/services.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:drift/drift.dart';
 import 'package:logger/logger.dart';
@@ -32,6 +33,11 @@ FutureOr<void> testExecutable(FutureOr<void> Function() testMain) async {
 
   // Cleanup old runs (keep last 5 per category)
   await ModeCoordinator.cleanupOldRuns(keepLast: 5);
+
+  // Clear hardware keyboard state before each test to avoid stray key events
+  setUp(() {
+    HardwareKeyboard.instance.clearState();
+  });
 
   // Global tearDown - ensures no database leaks between tests
   tearDown(() async {

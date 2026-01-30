@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Base class for all Page Object Robots.
@@ -112,6 +113,27 @@ class BaseRobot {
     return false;
   }
 
+  /// Waits for a widget with the given text to appear.
+  ///
+  /// Use when the text may appear multiple times or in overlays.
+  /// Returns true if at least one widget is found within timeout.
+  Future<bool> waitForAnyText(
+    String text, {
+    Duration timeout = const Duration(seconds: 10),
+    Duration pollInterval = const Duration(milliseconds: 100),
+  }) async {
+    final stopwatch = Stopwatch()..start();
+    final finder = find.text(text);
+
+    while (stopwatch.elapsed < timeout) {
+      await pump(pollInterval);
+      if (finder.evaluate().isNotEmpty) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /// Helper to confirm date picker dialogs.
   Future<void> confirmDatePicker() async {
     // Try standard material "OK" (English/Default)
@@ -149,6 +171,37 @@ class BaseRobot {
     await tester.pump(const Duration(milliseconds: 300));
   }
 
+  /// Ensures a Drawer is available by popping routes if needed.
+  ///
+  /// Some flows (e.g., Print Center) use screens without a Drawer.
+  /// This helper navigates back until a Drawer is found or fails after retries.
+  Future<void> ensureDrawerAvailable({int maxBack = 3}) async {
+    for (int i = 0; i < maxBack; i++) {
+      final scaffoldFinder = find.byType(Scaffold);
+      if (scaffoldFinder.evaluate().isNotEmpty) {
+        final hasDrawer = scaffoldFinder.evaluate().any((element) {
+          final widget = element.widget;
+          return widget is Scaffold && widget.drawer != null;
+        });
+        if (hasDrawer) {
+          return;
+        }
+      }
+      try {
+        await tester.pageBack();
+      } catch (_) {
+        final handled = await tester.binding.handlePopRoute();
+        if (!handled) {
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        }
+      }
+      await pump(const Duration(milliseconds: 300));
+    }
+    if (find.byType(Drawer).evaluate().isEmpty) {
+      throw TestFailure('Drawer not available after navigating back');
+    }
+  }
+
   /// Taps the Intake Form item in the drawer.
   ///
   /// Requires drawer to be open first.
@@ -171,6 +224,7 @@ class BaseRobot {
   /// Opens drawer, expands the medical section, and taps intake form button.
   /// IntakeForm is inside a collapsed ExpansionTile (ZDRAVOTNICKÝ FILTR).
   Future<void> navigateToIntakeForm() async {
+    await ensureDrawerAvailable();
     await openDrawer();
     // Expand the medical section first (intake form is inside this ExpansionTile)
     await tap(findKey('AppDrawer_filtr'));
@@ -180,12 +234,14 @@ class BaseRobot {
 
   /// Navigates to New Record Page via drawer.
   Future<void> navigateToNewRecordPage() async {
+    await ensureDrawerAvailable();
     await openDrawer();
     await tapDrawerNewRecord();
   }
 
   /// Navigates to Print Center via drawer.
   Future<void> navigateToPrintCenter() async {
+    await ensureDrawerAvailable();
     await openDrawer();
     await tapDrawerPrintCenter();
   }
