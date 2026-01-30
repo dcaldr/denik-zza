@@ -50,6 +50,8 @@ class NewRecordTitleRow extends StatelessWidget {
             children: [
               _buildDateTimeChip(context),
               SizedBox(width: AppSpacing.s),
+              _buildSubtleDivider(),
+              SizedBox(width: AppSpacing.s),
               _buildPrintRow(context),
             ],
           ),
@@ -70,11 +72,24 @@ class NewRecordTitleRow extends StatelessWidget {
           child: _buildDateTimeChip(context),
         ),
         SizedBox(width: AppSpacing.s),
+        _buildSubtleDivider(),
+        SizedBox(width: AppSpacing.s),
         Padding(
           padding: const EdgeInsets.only(top: 8),
           child: _buildPrintRow(context),
         ),
       ],
+    );
+  }
+
+  Widget _buildSubtleDivider() {
+    return Container(
+      width: 2,
+      height: isCompact ? 18 : 22,
+      decoration: BoxDecoration(
+        color: AppColors.greyBorderDark.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(1),
+      ),
     );
   }
 
