@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 import 'package:denik_zza/screens2/new_record/new_record_page.dart';
-import 'package:denik_zza/database/database_wrapper.dart';
-import 'package:denik_zza/utils/mode_coordinator.dart';
 import '../utils/base_test_widget.dart';
 import '../../integration_test/infrastructure/robots/new_record_robot.dart';
+import '../setup_templates/hardcoded_setup.dart';
 
 void main() {
   setUpAll(() {
@@ -108,6 +108,32 @@ void main() {
       // Verify print buttons that createRecordFromTestData might use
       expect(robot.printFullButton, findsOneWidget);
       expect(robot.printAppendButton, findsOneWidget);
+    });
+
+    testWidgets('selectParticipant selects from autocomplete', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 900));
+      addTearDown(() async {
+        await tester.binding.setSurfaceSize(null);
+      });
+      await HardcodedTestSetup.setupTestData();
+
+      await tester.pumpWidget(
+        const BaseTestWidget(
+          child: NewRecordPage(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final robot = NewRecordRobot(tester);
+      await robot.selectParticipant('Karel Čapek');
+
+      final editableTexts = tester.widgetList<EditableText>(
+        find.byType(EditableText),
+      );
+      final hasSelection = editableTexts.any(
+        (editable) => editable.controller.text == 'Karel Čapek',
+      );
+      expect(hasSelection, isTrue);
     });
   });
 }

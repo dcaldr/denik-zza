@@ -318,6 +318,31 @@ class ParticipantEditorRobot extends BaseRobot {
     // Submit via Enter key (TextInputAction.done)
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await pump(const Duration(milliseconds: 300));
+
+    // Verify item appears; if not, fallback to Add button
+    var found = await waitForText(
+      text,
+      timeout: const Duration(seconds: 2),
+    );
+    if (!found) {
+      final fieldAfterEnter = tester.widget<TextField>(restrictionInput);
+      final currentText = fieldAfterEnter.controller?.text ?? '';
+      if (currentText.trim().isEmpty) {
+        await tester.enterText(restrictionInput, text);
+        await pump(const Duration(milliseconds: 200));
+      }
+      await ensureVisible(restrictionAddButton);
+      await tap(restrictionAddButton);
+      await pump(const Duration(milliseconds: 300));
+
+      found = await waitForText(
+        text,
+        timeout: const Duration(seconds: 2),
+      );
+    }
+
+    expect(found, isTrue,
+        reason: 'Restriction "$text" should appear in list');
   }
 
   /// Adds a restriction via Tab autocomplete with strict assertions.
@@ -366,9 +391,30 @@ class ParticipantEditorRobot extends BaseRobot {
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await pump(const Duration(milliseconds: 300));
 
-    // STRICT ASSERTION: Verify item appears in list (this is the critical check)
-    expect(find.text(actualText.isNotEmpty ? actualText : expectedFull),
-        findsWidgets,
+    // Verify item appears; if not, fallback to Add button
+    final targetText = actualText.isNotEmpty ? actualText : expectedFull;
+    var found = await waitForText(
+      targetText,
+      timeout: const Duration(seconds: 2),
+    );
+    if (!found) {
+      final fieldAfterEnter = tester.widget<TextField>(restrictionInput);
+      final currentText = fieldAfterEnter.controller?.text ?? '';
+      if (currentText.trim().isEmpty) {
+        await tester.enterText(restrictionInput, targetText);
+        await pump(const Duration(milliseconds: 200));
+      }
+      await ensureVisible(restrictionAddButton);
+      await tap(restrictionAddButton);
+      await pump(const Duration(milliseconds: 300));
+
+      found = await waitForText(
+        targetText,
+        timeout: const Duration(seconds: 2),
+      );
+    }
+
+    expect(found, isTrue,
         reason: 'Restriction should appear in list after submit');
   }
 

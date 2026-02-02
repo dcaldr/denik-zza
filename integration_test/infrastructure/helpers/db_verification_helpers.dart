@@ -52,6 +52,13 @@ class DbVerificationHelpers {
     String? pojistovna,
     String? adresa,
     String? telefonRodice,
+    String? jmenoRodice,
+    String? emailRodice,
+    String? poznamka,
+    String? oddil,
+    bool? prisel,
+    String? potvrzeniPath,
+    bool? wasPrinted,
     bool? bezinfekcnost,
     bool? zpusobilost,
   }) async {
@@ -100,6 +107,41 @@ class DbVerificationHelpers {
     if (telefonRodice != null) {
       expect(p.telefonRodice, equals(telefonRodice),
           reason: 'Telefon rodiče mismatch for $jmeno $prijmeni');
+    }
+
+    if (jmenoRodice != null) {
+      expect(p.jmenoRodice, equals(jmenoRodice),
+          reason: 'Jméno rodiče mismatch for $jmeno $prijmeni');
+    }
+
+    if (emailRodice != null) {
+      expect(p.emailRodice, equals(emailRodice),
+          reason: 'Email rodiče mismatch for $jmeno $prijmeni');
+    }
+
+    if (poznamka != null) {
+      expect(p.poznamka, equals(poznamka),
+          reason: 'Poznámka mismatch for $jmeno $prijmeni');
+    }
+
+    if (oddil != null) {
+      expect(p.oddil, equals(oddil),
+          reason: 'Oddíl mismatch for $jmeno $prijmeni');
+    }
+
+    if (prisel != null) {
+      expect(p.prisel, equals(prisel),
+          reason: 'Příchod mismatch for $jmeno $prijmeni');
+    }
+
+    if (potvrzeniPath != null) {
+      expect(p.potvrzeniPath, equals(potvrzeniPath),
+          reason: 'Potvrzení path mismatch for $jmeno $prijmeni');
+    }
+
+    if (wasPrinted != null) {
+      expect(p.wasPrinted, equals(wasPrinted),
+          reason: 'WasPrinted mismatch for $jmeno $prijmeni');
     }
 
     if (bezinfekcnost != null) {
@@ -215,6 +257,8 @@ class DbVerificationHelpers {
       pojistovna: testData.pojistovna,
       adresa: testData.adresa,
       telefonRodice: testData.telefonRodice,
+      jmenoRodice: testData.jmenoRodice,
+      emailRodice: testData.emailRodice,
       bezinfekcnost: testData.bezinfekcnost,
       zpusobilost: testData.zpusobilost,
     );

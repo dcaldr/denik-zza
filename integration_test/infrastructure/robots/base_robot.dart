@@ -168,7 +168,7 @@ class BaseRobot {
         reason: 'No Scaffold found to open drawer');
     final ScaffoldState scaffold = tester.firstState(scaffoldFinder);
     scaffold.openDrawer();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
   }
 
   /// Ensures a Drawer is available by popping routes if needed.

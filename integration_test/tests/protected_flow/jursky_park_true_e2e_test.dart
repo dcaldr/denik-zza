@@ -14,6 +14,7 @@ import '../../infrastructure/robots/new_record_robot.dart';
 import '../../infrastructure/helpers/db_verification_helpers.dart';
 import '../../infrastructure/data/models/test_record.dart';
 import '../../infrastructure/data/models/test_restriction.dart';
+import '../../infrastructure/data/models/test_participant.dart';
 import '../../infrastructure/helpers/test_step_logger.dart';
 import '../../../test/setup_templates/hardcoded_setup.dart';
 
@@ -83,7 +84,6 @@ void main() {
       testWidgets('DB Verification: Autocomplete Persistence', (tester) async {
         await logger.step('Setup: Seed DB with Event & Medic', () async {
           // Use HardcodedSetup to seed "Test Test Test" event and "Test Paramedic"
-          final db = DatabaseWrapper.getDatabase();
           // We need to cast or access the underlying app database if possible, 
           // but HardcodedTestSetup.setupTestData() usually creates a new DB and injects it.
           // Let's call it directly.
@@ -463,35 +463,52 @@ void main() {
           await newRecord.waitForKey('NewRecordPage_participantAutocomplete');
         });
 
-        // Records for Karel Čapek (P1)
-        final karel = jurskyParkParticipants[0];
-        if (karel.zaznamy.isNotEmpty) {
-           await logger.step('Add Records for Karel Čapek', () async {
-             for (final record in karel.zaznamy) {
-                await newRecord.createRecordFromTestData('${karel.jmeno} ${karel.prijmeni}', record);
-                await newRecord.waitForKey('NewRecordPage_save_button');
-             }
-             final karelId = await dbHelpers.getParticipantId(karel.jmeno, karel.prijmeni);
-             if (karelId != null) {
-               await dbHelpers.verifyRecords(participantId: karelId, expectedRecords: karel.zaznamy);
-             }
-           });
+        // Interleaved records across participants (simulate real arrival order)
+        final milada = jurskyParkParticipants[7];
+        final recordOrder = <int>[
+          0, 7, 2, 4, 1, 9, 3, 12, 5, 10, 6, 8, 11, 13, 14,
+        ];
+        final orderedParticipants = recordOrder
+            .map((index) => jurskyParkParticipants[index])
+            .toList();
+
+        final maxRecords = orderedParticipants.fold<int>(
+          0,
+          (max, p) => p.zaznamy.length > max ? p.zaznamy.length : max,
+        );
+        final interleavedRecords = <MapEntry<TestParticipant, TestRecord>>[];
+        for (int round = 0; round < maxRecords; round++) {
+          for (final p in orderedParticipants) {
+            if (round < p.zaznamy.length) {
+              interleavedRecords.add(MapEntry(p, p.zaznamy[round]));
+            }
+          }
         }
 
-        // Records for Milada Horáková (P7) - baseline for append print
-        final milada = jurskyParkParticipants[7];
-        if (milada.zaznamy.isNotEmpty) {
-          await logger.step('Add Records for Milada Horáková', () async {
-            for (final record in milada.zaznamy) {
-              await newRecord.createRecordFromTestData('${milada.jmeno} ${milada.prijmeni}', record);
-              await newRecord.waitForKey('NewRecordPage_save_button');
+        await logger.step('Add Interleaved Records (All Participants)', () async {
+          for (final entry in interleavedRecords) {
+            final p = entry.key;
+            final record = entry.value;
+            await newRecord.createRecordFromTestData(
+              '${p.jmeno} ${p.prijmeni}',
+              record,
+            );
+            await newRecord.waitForKey('NewRecordPage_save_button');
+          }
+        });
+
+        await logger.step('Verify All Records Inserted', () async {
+          for (final p in jurskyParkParticipants) {
+            if (p.zaznamy.isEmpty) continue;
+            final id = await dbHelpers.getParticipantId(p.jmeno, p.prijmeni);
+            if (id != null) {
+              await dbHelpers.verifyRecords(
+                participantId: id,
+                expectedRecords: p.zaznamy,
+              );
             }
-            final miladaId = await dbHelpers.getParticipantId(milada.jmeno, milada.prijmeni);
-            if (miladaId != null) {
-              await dbHelpers.verifyRecords(participantId: miladaId, expectedRecords: milada.zaznamy);
-            }
-          });
-        }
+          }
+        });
 
         await logger.step('Navigate to Print Center', () async {
           await dashboard.navigateToPrintCenter();
