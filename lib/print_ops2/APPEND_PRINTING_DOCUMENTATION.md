@@ -8,7 +8,7 @@
 
 ## Overview
 
-The append printing system enables printing new medical records onto previously printed paper by making already-printed content transparent. This conserves paper during events where records are continuously added throughout the day.
+The append printing system enables printing new medical records onto previously printed paper by making already-printed content transparent. This conserves paper during events where records are continuously added throughout the day. As of 2026, the system supports both single-page and multi-page append printing, with advanced transparency logic and per-page analysis.
 
 ## Core Concept
 
@@ -20,17 +20,17 @@ The append printing system enables printing new medical records onto previously 
 5. Result: Same paper now contains A, B, C
 
 ### Technical Implementation
-- **Transparency**: Already-printed content rendered with `hiddenColor = PdfColor(0, 0, 0, 0)`
-- **State Tracking**: Records track `isPrinted` status; Person tracks `wasPrinted`
-- **Record Validation**: Only chronological record order is validated
+- **Transparency**: Already-printed content is rendered with `hiddenColor = PdfColor(0, 0, 0, 0)`. This is implemented for both single and multi-page documents.
+- **State Tracking**: Records track `isPrinted` status; Person tracks `wasPrinted`.
+- **Record Validation**: Only chronological record order is validated. The system does not allow append if there are no records, even if the header is printed.
 
 ---
 
 ## Append Validation Logic
 
-### Simplified Validation Approach
+### Validation Approach
 
-The system only validates **chronological record order** - not headers, pages, or other complex state. This leverages the dart_pdf library's built-in capabilities rather than duplicating PDF functionality.
+The system validates **chronological record order** and ensures that all printed records are at the start of the list. If there are gaps (an unprinted record followed by a printed one), append is not allowed. The code logs and asserts if records are not sorted chronologically.
 
 #### ✅ **SAFE TO APPEND:**
 ```dart
@@ -88,37 +88,17 @@ bool canAppend() {
 
 ## Multi-Page Support
 
-### Current Implementation (Single Page)
-- Uses `pw.Page` for individual page creation
-- Append logic applies transparency to already-printed content
-- Works for single-page medical records
+### Multi-Page Support
 
-### Future Multi-Page Implementation  
-Based on dart_pdf research, multi-page support will use:
-
-```dart
-// Full Print Mode (new multi-page approach)
-pdf.addPage(pw.MultiPage(
-  build: (context) => contentWidgets,
-  header: (context) => buildHeaderForPage(context.pageNumber),
-));
-
-// Append Print Mode (existing approach)  
-pdf.addPage(pw.Page(
-  build: (context) => buildWithTransparency(),
-));
-```
-
-**Key Benefits of pw.MultiPage:**
-- Automatic pagination and page breaks
-- Built-in header/footer support with page context
-- Page numbering available via `context.pageNumber`
-- Eliminates need for manual page break calculations
+**Current Implementation:**
+- Uses `pw.MultiPage` for both full and append print modes.
+- Append logic applies transparency to already-printed content on a per-page basis.
+- Multi-page append printing is fully supported, including header hiding, page counting, and transparent masking per page.
 
 **Implementation Strategy:**
-- **Print Mode Selection**: `enum PrintMode { append, full }`
-- **Shared Content Builders**: Reusable widgets for both modes
-- **Header Differentiation**: Page 1 (full header + restrictions) vs Page 2+ (simplified header)
+- Print mode selection is handled in the UI and controller logic (currently only full and append modes are implemented).
+- Shared content builders are used for both modes.
+- Header differentiation for page 1 vs. subsequent pages is partially implemented; per-page header logic is planned for future refinement.
 
 ---
 
@@ -209,16 +189,14 @@ class GeneratePdfTemplate {
 ### Print Modes
 
 1. **Full Print Mode**
-   - Prints complete document from scratch
-   - Resets all `isPrinted` flags before printing  
-   - Uses `pw.MultiPage` for automatic pagination (future)
-   - Marks everything as printed after completion
+  - Prints complete document from scratch
+  - Marks everything as printed after completion
 
 2. **Append Print Mode**
-   - Adds new records using transparency logic
-   - Validates chronological record integrity
-   - Uses `pw.Page` with transparency rendering
-   - Only for single-page documents (current)
+  - Adds new records using transparency logic
+  - Supported for both single and multi-page documents
+
+**Note:** Only full and append print modes are currently implemented. "Print All People" and "Quick Copy" modes are not present in the codebase as of 2026.
 
 ### Event-Based Workflow
 
@@ -430,15 +408,11 @@ bool canAppend() {
 
 ### User Feedback Requirements
 
-After each print job, system MUST collect user feedback:
-
-```dart
-enum PrintJobResult {
-  success,           // Use as starting point for next append
-  needReprint,       // Something went wrong, reprint this job  
-  startFromScratch   // Major error, reset all print status
-}
-```
+After each print job, the system collects user feedback via a confirmation dialog with four options:
+1. **All went well** → Mark all as printed
+2. **Reprint the job** → Retry same print job
+3. **Don't mark as printed but continue** → Keep current state
+4. **Mark all as unprinted** → Reset all flags (reset logic is not fully implemented in the database as of 2026)
 
 **Why User Feedback Is Critical:**
 - Automatic detection cannot catch all physical errors
@@ -452,21 +426,19 @@ enum PrintJobResult {
 
 ### ✅ Currently Implemented
 - Basic state tracking with OkCodes
-- Chronological validation logic  
+- Chronological validation logic
 - Abstract interfaces for different printing modes
 - Font loading and PDF generation infrastructure
-- **Simple/Full printing**: Standard PDF generation without append logic
+- Simple/Full printing: Standard PDF generation
+- Append print computation engine: Transparency rendering for already-printed content, multi-page support, and per-page analysis
+- Print mode selection UI (full/append)
+- User feedback system: Post-print confirmation dialog with four options
 
-### ❌ Missing Critical Components  
-- **Print Mode Selection UI**: No differentiation between full vs append print
-- **Full Print Implementation**: No explicit "reset and reprint all" functionality
-- **Append Print Computation Engine**: Complex logic beyond simple printing:
-  - Transparency rendering for already-printed content
-  - Multi-page append scenario calculations  
-  - Content visibility determination per page
-  - Chronological conflict resolution
-- **User Feedback System**: No UI for post-print confirmation
-- **Multi-page Logic**: Single page only, no pagination
+### ❌ Missing or Partial Components
+- **Full Print Reset**: No explicit UI or controller logic to reset all `isPrinted` flags before a full print
+- **Print Queue Management**: No print queue or job management
+- **Manual Override UI**: No UI for manual toggle of print flags
+- **Automated Testing**: Comprehensive unit/integration tests for append logic are still needed
 
 ### 🚨 Known Bugs
 - **Infinite recursion** in setter methods (critical)
@@ -590,18 +562,8 @@ ListTile(
 ## Developer Notes
 
 ### Testing Append Logic
-```dart
-// Test data setup for various scenarios
-final person = MemoryOsoba(wasPrinted: true);
-final records = [
-  MemoryZaznam(isPrinted: true, casZaznamu: DateTime(2024, 1, 1)),
-  MemoryZaznam(isPrinted: true, casZaznamu: DateTime(2024, 1, 2)),
-  MemoryZaznam(isPrinted: false, casZaznamu: DateTime(2024, 1, 3)),
-];
 
-final template = GeneratePdfTemplate();
-final canAppend = template.canAppend(); // Test validation
-```
+Automated tests for append logic, multi-page support, and feedback flows are recommended but not yet present in the codebase. Manual testing is currently required for validation.
 
 ### Debugging State Issues
 ```dart
