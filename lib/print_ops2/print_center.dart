@@ -208,7 +208,7 @@ class PrintCenterPage extends StatelessWidget {
                   title: 'Tisk vybraných',
                   subtitle: ctrl.participants.isEmpty
                       ? 'Žádní účastníci – není co tisknout'
-                      : 'Vyber víc osob a vytiskni jejich záznamy v chronologickém sledu (agregace).',
+                      : 'Vybrat více osob a vytisknout jejich záznamy v chronologickém sledu (agregace).',
                   icon: Icons.playlist_add_check,
                   implemented: ctrl.participants.isNotEmpty,
                   onTap: ctrl.participants.isEmpty
@@ -227,6 +227,14 @@ class PrintCenterPage extends StatelessWidget {
                   title: 'Správa stavu',
                   subtitle: 'Ruční označení vytištěných (zatím neaktivní).',
                   icon: Icons.rule_folder,
+                  implemented: false,
+                ),
+
+                FeatureCard(
+                  title: 'Nastavení prvního tisku',
+                  subtitle:
+                      'Ověření že vše funguje správně s tiskovým systémem operačního systému a představení dotisku. Nastavení aplikace na fugnování s tiskárnou (pořadí stránek při dotisku)',
+                      icon: Icons.remove_red_eye,
                   implemented: false,
                 ),
                 // Multi‑page test do budoucna můžeme obnovit
