@@ -38,7 +38,7 @@ class FeatureCard extends StatelessWidget {
     this.implemented = true,
     this.emphasize = false,
   });
-
+//TODO: chybí menu v appbaru nejspíš (minimálně v dev_start)
   @override
   Widget build(BuildContext context) {
     final card = Card(
