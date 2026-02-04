@@ -7,6 +7,7 @@ import 'package:pdf/pdf.dart';
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
 import 'package:denik_zza/services/system/system_interface.dart';
+import 'widgets/step_badge.dart';
 
 /// NOVÉ TISK CENTRUM (UI ONLY) -------------------------------------------------
 /// Tento modul obsahuje pouze uživatelské rozhraní bez implementované logiky tisku.
@@ -112,51 +113,6 @@ class FeatureCard extends StatelessWidget {
   }
 }
 
-class StepBadge extends StatelessWidget {
-  final String text;
-  final bool active;
-  final bool done;
-  const StepBadge(
-      {super.key, required this.text, this.active = false, this.done = false});
-
-  @override
-  Widget build(BuildContext context) {
-    Color base;
-    if (active) {
-      base = Theme.of(context).colorScheme.primary;
-    } else if (done) {
-      base = AppColors.greenIcon;
-    } else {
-      base = AppColors.greyTextLight;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      margin: const EdgeInsets.only(right: 6, bottom: 6),
-      decoration: BoxDecoration(
-        color: base.withValues(alpha: active ? 0.18 : 0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: base),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (done) Icon(Icons.check, size: 14, color: AppColors.greenIcon),
-          if (done) const SizedBox(width: 4),
-          Text(text, style: TextStyle(fontSize: 12, color: base.darken(0.2))),
-        ],
-      ),
-    );
-  }
-}
-
-extension _ColorShade on Color {
-  Color darken([double amount = .1]) {
-    assert(amount >= 0 && amount <= 1);
-    final hsl = HSLColor.fromColor(this);
-    final hslDark = hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
-    return hslDark.toColor();
-  }
-}
 
 // -----------------------------------------------------------------------------
 // HLAVNÍ ROZCESTNÍK
