@@ -8,6 +8,7 @@ import '../database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
 import 'package:denik_zza/services/system/system_interface.dart';
 import 'widgets/step_badge.dart';
+import 'widgets/print_confirm_dialog.dart';
 
 /// NOVÉ TISK CENTRUM (UI ONLY) -------------------------------------------------
 /// Tento modul obsahuje pouze uživatelské rozhraní bez implementované logiky tisku.
@@ -515,239 +516,33 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
   Future<void> _showConfirmDialog(
       BuildContext context, PrintCenterController ctrl,
       {VoidCallback? onReprint}) async {
-    await showDialog<void>(
+    final result = await showPrintConfirmDialog(
       context: context,
-      builder: (c) => AlertDialog(
-        title: const Text('Jak dopadl tisk?'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                  'Zvolte hlavní výsledek. Sekce níže obsahuje méně časté případy.'),
-              const SizedBox(height: 12),
-              // Primární volby
-              Text('Hlavní volby',
-                  style: Theme.of(context).textTheme.titleSmall),
-              const SizedBox(height: 8),
-              const _ConfirmOptionDescription(
-                icon: Icons.check_circle_outline,
-                title: 'Vše OK (úspěšný tisk)',
-                body:
-                    'Označí (v budoucnu) nové záznamy/strany jako vytištěné. Pokud běží režim Dostisk, označí jen ty nové.',
-              ),
-              const _ConfirmOptionDescription(
-                icon: Icons.replay_circle_filled_outlined,
-                title: 'Zopakovat tisk',
-                body:
-                    'Nic neoznačí – můžete hned zkusit znovu (např. zaseklá tiskárna).',
-              ),
-              const SizedBox(height: 16),
-              Text('Vedlejší & speciální',
-                  style: Theme.of(context).textTheme.titleSmall),
-              const SizedBox(height: 8),
-              const _ConfirmOptionDescription(
-                icon: Icons.remove_done,
-                title: 'Neměnit označení',
-                body:
-                    'Nechá vše tak, jak bylo před tiskem. Vhodné pokud jen testujete náhled nebo čekáte na potvrzení.',
-              ),
-              const _ConfirmOptionDescription(
-                icon: Icons.error_outline,
-                title: 'Rozbitý tisk (reset)',
-                body:
-                    'Zruší označení vytištěného stavu (budoucí implementace). Po výběru Reset si ještě zvolíte zda rovnou spustit nový tisk.',
-              ),
-              const SizedBox(height: 16),
-              _AppendInfoBanner(
-                  appendActive: ctrl.mode == PrintMode.append,
-                  appendPossible: ctrl.appendPossible),
-              const SizedBox(height: 8),
-              const _ManualMarkingNote(),
-            ],
-          ),
-        ),
-        actions: [
-          // Sekundární: Neměnit (text), Reset (méně výrazný – text), primární: Zopakovat (outlined), Vše OK (filled)
-          TextButton.icon(
-            onPressed: () {
-              Navigator.of(c).pop();
-              ctrl.confirmPrintResult(PrintSimulationResult.noChange);
-            },
-            icon: const Icon(Icons.remove_done),
-            label: const Text('Neměnit'),
-          ),
-          TextButton.icon(
-            onPressed: () async {
-              Navigator.of(c).pop();
-              await showDialog<void>(
-                context: context,
-                builder: (sc) => AlertDialog(
-                  title: const Text('Reset tisku'),
-                  content: const Text(
-                      'Chcete pouze resetovat stav, nebo resetovat a ihned spustit nový tisk?'),
-                  actions: [
-                    TextButton.icon(
-                      onPressed: () {
-                        Navigator.of(sc).pop();
-                        ctrl.confirmPrintResult(PrintSimulationResult.reset);
-                      },
-                      icon: const Icon(Icons.restart_alt),
-                      label: const Text('Jen reset'),
-                    ),
-                    FilledButton.icon(
-                      onPressed: () {
-                        ctrl.confirmPrintResult(
-                            PrintSimulationResult.resetAndReprint);
-                        onReprint?.call();
-                      },
-                      icon: const Icon(Icons.restart_alt),
-                      label: const Text('Reset + znovu'),
-                    ),
-                  ],
-                ),
-              );
-            },
-            icon: const Icon(Icons.restart_alt),
-            label: const Text('Reset'),
-          ),
-          OutlinedButton.icon(
-            onPressed: () {
-              Navigator.of(c).pop();
-              ctrl.confirmPrintResult(PrintSimulationResult.repeat);
-            },
-            icon: const Icon(Icons.replay_circle_filled_outlined),
-            label: const Text('Zopakovat'),
-          ),
-          FilledButton.icon(
-            onPressed: () {
-              Navigator.of(c).pop();
-              ctrl.confirmPrintResult(PrintSimulationResult.success);
-            },
-            icon: const Icon(Icons.check_circle),
-            label: const Text('Vše OK'),
-          ),
-        ],
-      ),
+      appendActive: ctrl.mode == PrintMode.append,
+      appendPossible: ctrl.appendPossible,
     );
-  }
-}
 
-class _ConfirmOptionDescription extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String body;
-  const _ConfirmOptionDescription(
-      {required this.icon, required this.title, required this.body});
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 4),
-                Text(body,
-                    style: TextStyle(fontSize: 12, color: AppColors.greyText)),
-              ],
-            ),
-          )
-        ],
-      ),
-    );
-  }
-}
-
-class _AppendInfoBanner extends StatelessWidget {
-  final bool appendActive;
-  final bool? appendPossible;
-  const _AppendInfoBanner(
-      {required this.appendActive, required this.appendPossible});
-  @override
-  Widget build(BuildContext context) {
-    ColorScheme cs = Theme.of(context).colorScheme;
-    final bool allowed = appendActive && (appendPossible == true);
-    final bool explicitlyBlocked = appendActive && appendPossible == false;
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: allowed
-            ? cs.secondaryContainer
-            : (explicitlyBlocked
-                ? cs.errorContainer
-                : cs.surfaceContainerHighest),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-            color: allowed
-                ? cs.secondary
-                : (explicitlyBlocked ? cs.error : cs.outlineVariant)),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(appendActive ? Icons.layers : Icons.layers_clear,
-              color: allowed
-                  ? cs.onSecondaryContainer
-                  : (explicitlyBlocked
-                      ? cs.onErrorContainer
-                      : cs.onSurfaceVariant)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Režim Dostisk',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 4),
-                if (!appendActive)
-                  const Text(
-                      'Aktuálně tisknete celý obsah. To je v pořádku – tím vytváříte referenční stav, aby pozdější Dostisk mohl bezpečně vytisknout jen nové záznamy. Přepněte na Dostisk jen pokud nyní opravdu doplňujete předchozí tisk.',
-                      style: TextStyle(fontSize: 12))
-                else if (allowed)
-                  const Text(
-                      'Režim Dostisk: vytisknou se pouze nové záznamy od posledního plného tisku. Tím zachováte čistou historii a připravíte půdu pro další budoucí dostisky.',
-                      style: TextStyle(fontSize: 12))
-                else if (explicitlyBlocked)
-                  const Text(
-                      'Dostisk teď nelze – nepřibyly nové záznamy, nebo sledované pořadí už není konzistentní. Pro opětovné využití dostisku udělejte nejprve plný tisk.',
-                      style: TextStyle(fontSize: 12))
-                else
-                  const Text(
-                      'Kontroluji podmínky pro Dostisk (pořadí a nové záznamy)…',
-                      style: TextStyle(fontSize: 12)),
-              ],
-            ),
-          )
-        ],
-      ),
-    );
-  }
-}
-
-class _ManualMarkingNote extends StatelessWidget {
-  const _ManualMarkingNote();
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      'Poznámka: Ruční označení záznamů a plná logika ukládání stavů budou doplněny později.',
-      style: Theme.of(context)
-          .textTheme
-          .bodySmall
-          ?.copyWith(color: AppColors.greyText),
-    );
+    switch (result) {
+      case PrintSimulationResult.success:
+        ctrl.confirmPrintResult(PrintSimulationResult.success);
+        break;
+      case PrintSimulationResult.repeat:
+        ctrl.confirmPrintResult(PrintSimulationResult.repeat);
+        break;
+      case PrintSimulationResult.noChange:
+        ctrl.confirmPrintResult(PrintSimulationResult.noChange);
+        break;
+      case PrintSimulationResult.reset:
+        ctrl.confirmPrintResult(PrintSimulationResult.reset);
+        break;
+      case PrintSimulationResult.resetAndReprint:
+        ctrl.confirmPrintResult(PrintSimulationResult.resetAndReprint);
+        onReprint?.call();
+        break;
+      case null:
+        // Dialog dismissed without selection
+        break;
+    }
   }
 }
 

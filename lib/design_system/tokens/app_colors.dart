@@ -82,3 +82,34 @@ class AppColors {
     scrim: const Color(0xFF000000),
   );
 }
+
+// =============================================================================
+// COLOR EXTENSION - Darken/Lighten helpers
+// =============================================================================
+
+/// Extension on Color to provide darken and lighten functionality.
+///
+/// ## Usage
+/// ```dart
+/// final darkBlue = AppColors.blueText.darken(0.2);
+/// final lightBlue = AppColors.blueText.lighten(0.2);
+/// ```
+extension ColorShade on Color {
+  /// Darkens the color by reducing lightness.
+  /// [amount] should be between 0.0 and 1.0.
+  Color darken([double amount = .1]) {
+    assert(amount >= 0 && amount <= 1);
+    final hsl = HSLColor.fromColor(this);
+    final hslDark = hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
+    return hslDark.toColor();
+  }
+
+  /// Lightens the color by increasing lightness.
+  /// [amount] should be between 0.0 and 1.0.
+  Color lighten([double amount = .1]) {
+    assert(amount >= 0 && amount <= 1);
+    final hsl = HSLColor.fromColor(this);
+    final hslLight = hsl.withLightness((hsl.lightness + amount).clamp(0.0, 1.0));
+    return hslLight.toColor();
+  }
+}
