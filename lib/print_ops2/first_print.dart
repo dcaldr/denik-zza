@@ -40,7 +40,7 @@ class _FirstPrintState extends State<FirstPrint> {
     'Příprava papírů',
     'Testovací tisk',
     'Vyhodnocení',
-    'Vložení zpět',
+    'Druhý tisk',
     'Dostisk test',
     'Potvrzení',
   ];
@@ -418,6 +418,13 @@ class _FirstPrintState extends State<FirstPrint> {
                 ),
         ),
         const StepSpacing.medium(),
+        const InfoBox(
+          icon: Icons.info_outline,
+          title: 'potvrzení tisku',
+          content: 'Po tomto tisku se objeví dialog s potvrzením stavu tisku, ten se bude objevovat po každém tisku aby se záznamy správně označily.\n '
+          'Označí se tam co se povedlo a nepovedlo vytisknout, popř. nějaké chyby (chybějící papír apd) lze opakovat tisk, pokud došlo k velké chybě (otočení papíru apd.) lze vše označit, že je třeba začít od začátku'
+          ,
+        ),
         
         _buildNavigationButtons(),
       ],
@@ -451,7 +458,7 @@ class _FirstPrintState extends State<FirstPrint> {
         const StepSpacing.large(),
         
         // Explanation of the confirmation dialog
-        const InfoBox(
+/*         const InfoBox(
           icon: Icons.info_outline,
           title: 'O potvrzovacím dialogu',
           content:
@@ -462,7 +469,7 @@ class _FirstPrintState extends State<FirstPrint> {
             '• Reset – zruší označení (při chybě)\\n\\n'
             'Tento dialog je klíčový pro správné sledování stavu tisku!',
         ),
-        const StepSpacing.large(),
+        const StepSpacing.large(), */
         
         // Completion button
         Center(
@@ -478,7 +485,18 @@ class _FirstPrintState extends State<FirstPrint> {
         ),
         const StepSpacing.medium(),
         
-        _buildNavigationButtons(),
+        // Only show back button on final step (completion is handled by the green button above)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: _previousStep,
+              icon: const Icon(Icons.arrow_back),
+              label: const Text('Zpět'),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -511,10 +529,9 @@ class _FirstPrintState extends State<FirstPrint> {
       );
       
       if (mounted) {
-        await _showCalibrationConfirmDialog(
-          onSuccess: _nextStep,
-          onRetry: _runInitialCalibrationPrint,
-        );
+        // Don't show confirmation dialog here - it hasn't been introduced yet
+        // Just proceed to step 4 (Evaluation) where user checks the printed pages
+        _nextStep();
       }
     } catch (e) {
       if (mounted) {
