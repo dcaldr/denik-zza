@@ -195,6 +195,12 @@ class AppDatabase extends _$AppDatabase {
     }
     return cacheData.currentActionID;
   }
+
+  /// Get printer calibration: true = page 1 on top, false = page 2 on top, null = not calibrated
+  Future<bool?> getPrinterPage1OnTop() async {
+    final cacheData = await (select(cache)..where((c) => c.id.equals(1))).getSingleOrNull();
+    return cacheData?.printerPage1OnTop;
+  }
   /// Get insurance company ID by name
   Future<int?> getInsuranceCompanyIDbyName(String? name) async {
     if(name == null || name.trim().isEmpty) {

@@ -3186,8 +3186,19 @@ class $CacheTable extends Cache with TableInfo<$CacheTable, CacheData> {
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(null));
+  static const VerificationMeta _printerPage1OnTopMeta =
+      const VerificationMeta('printerPage1OnTop');
   @override
-  List<GeneratedColumn> get $columns => [id, pinnedActionID, currentActionID];
+  late final GeneratedColumn<bool> printerPage1OnTop = GeneratedColumn<bool>(
+      'printer_page1_on_top', aliasedName, true,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("printer_page1_on_top" IN (0, 1))'),
+      defaultValue: const Constant(null));
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, pinnedActionID, currentActionID, printerPage1OnTop];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3213,6 +3224,12 @@ class $CacheTable extends Cache with TableInfo<$CacheTable, CacheData> {
           currentActionID.isAcceptableOrUnknown(
               data['current_action_i_d']!, _currentActionIDMeta));
     }
+    if (data.containsKey('printer_page1_on_top')) {
+      context.handle(
+          _printerPage1OnTopMeta,
+          printerPage1OnTop.isAcceptableOrUnknown(
+              data['printer_page1_on_top']!, _printerPage1OnTopMeta));
+    }
     return context;
   }
 
@@ -3228,6 +3245,8 @@ class $CacheTable extends Cache with TableInfo<$CacheTable, CacheData> {
           .read(DriftSqlType.int, data['${effectivePrefix}pinned_action_i_d']),
       currentActionID: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}current_action_i_d']),
+      printerPage1OnTop: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}printer_page1_on_top']),
     );
   }
 
@@ -3241,8 +3260,12 @@ class CacheData extends DataClass implements Insertable<CacheData> {
   final int id;
   final int? pinnedActionID;
   final int? currentActionID;
+  final bool? printerPage1OnTop;
   const CacheData(
-      {required this.id, this.pinnedActionID, this.currentActionID});
+      {required this.id,
+      this.pinnedActionID,
+      this.currentActionID,
+      this.printerPage1OnTop});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -3252,6 +3275,9 @@ class CacheData extends DataClass implements Insertable<CacheData> {
     }
     if (!nullToAbsent || currentActionID != null) {
       map['current_action_i_d'] = Variable<int>(currentActionID);
+    }
+    if (!nullToAbsent || printerPage1OnTop != null) {
+      map['printer_page1_on_top'] = Variable<bool>(printerPage1OnTop);
     }
     return map;
   }
@@ -3265,6 +3291,9 @@ class CacheData extends DataClass implements Insertable<CacheData> {
       currentActionID: currentActionID == null && nullToAbsent
           ? const Value.absent()
           : Value(currentActionID),
+      printerPage1OnTop: printerPage1OnTop == null && nullToAbsent
+          ? const Value.absent()
+          : Value(printerPage1OnTop),
     );
   }
 
@@ -3275,6 +3304,7 @@ class CacheData extends DataClass implements Insertable<CacheData> {
       id: serializer.fromJson<int>(json['id']),
       pinnedActionID: serializer.fromJson<int?>(json['pinnedActionID']),
       currentActionID: serializer.fromJson<int?>(json['currentActionID']),
+      printerPage1OnTop: serializer.fromJson<bool?>(json['printerPage1OnTop']),
     );
   }
   @override
@@ -3284,13 +3314,15 @@ class CacheData extends DataClass implements Insertable<CacheData> {
       'id': serializer.toJson<int>(id),
       'pinnedActionID': serializer.toJson<int?>(pinnedActionID),
       'currentActionID': serializer.toJson<int?>(currentActionID),
+      'printerPage1OnTop': serializer.toJson<bool?>(printerPage1OnTop),
     };
   }
 
   CacheData copyWith(
           {int? id,
           Value<int?> pinnedActionID = const Value.absent(),
-          Value<int?> currentActionID = const Value.absent()}) =>
+          Value<int?> currentActionID = const Value.absent(),
+          Value<bool?> printerPage1OnTop = const Value.absent()}) =>
       CacheData(
         id: id ?? this.id,
         pinnedActionID:
@@ -3298,6 +3330,9 @@ class CacheData extends DataClass implements Insertable<CacheData> {
         currentActionID: currentActionID.present
             ? currentActionID.value
             : this.currentActionID,
+        printerPage1OnTop: printerPage1OnTop.present
+            ? printerPage1OnTop.value
+            : this.printerPage1OnTop,
       );
   CacheData copyWithCompanion(CacheCompanion data) {
     return CacheData(
@@ -3308,6 +3343,9 @@ class CacheData extends DataClass implements Insertable<CacheData> {
       currentActionID: data.currentActionID.present
           ? data.currentActionID.value
           : this.currentActionID,
+      printerPage1OnTop: data.printerPage1OnTop.present
+          ? data.printerPage1OnTop.value
+          : this.printerPage1OnTop,
     );
   }
 
@@ -3316,56 +3354,66 @@ class CacheData extends DataClass implements Insertable<CacheData> {
     return (StringBuffer('CacheData(')
           ..write('id: $id, ')
           ..write('pinnedActionID: $pinnedActionID, ')
-          ..write('currentActionID: $currentActionID')
+          ..write('currentActionID: $currentActionID, ')
+          ..write('printerPage1OnTop: $printerPage1OnTop')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, pinnedActionID, currentActionID);
+  int get hashCode =>
+      Object.hash(id, pinnedActionID, currentActionID, printerPage1OnTop);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CacheData &&
           other.id == this.id &&
           other.pinnedActionID == this.pinnedActionID &&
-          other.currentActionID == this.currentActionID);
+          other.currentActionID == this.currentActionID &&
+          other.printerPage1OnTop == this.printerPage1OnTop);
 }
 
 class CacheCompanion extends UpdateCompanion<CacheData> {
   final Value<int> id;
   final Value<int?> pinnedActionID;
   final Value<int?> currentActionID;
+  final Value<bool?> printerPage1OnTop;
   const CacheCompanion({
     this.id = const Value.absent(),
     this.pinnedActionID = const Value.absent(),
     this.currentActionID = const Value.absent(),
+    this.printerPage1OnTop = const Value.absent(),
   });
   CacheCompanion.insert({
     this.id = const Value.absent(),
     this.pinnedActionID = const Value.absent(),
     this.currentActionID = const Value.absent(),
+    this.printerPage1OnTop = const Value.absent(),
   });
   static Insertable<CacheData> custom({
     Expression<int>? id,
     Expression<int>? pinnedActionID,
     Expression<int>? currentActionID,
+    Expression<bool>? printerPage1OnTop,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (pinnedActionID != null) 'pinned_action_i_d': pinnedActionID,
       if (currentActionID != null) 'current_action_i_d': currentActionID,
+      if (printerPage1OnTop != null) 'printer_page1_on_top': printerPage1OnTop,
     });
   }
 
   CacheCompanion copyWith(
       {Value<int>? id,
       Value<int?>? pinnedActionID,
-      Value<int?>? currentActionID}) {
+      Value<int?>? currentActionID,
+      Value<bool?>? printerPage1OnTop}) {
     return CacheCompanion(
       id: id ?? this.id,
       pinnedActionID: pinnedActionID ?? this.pinnedActionID,
       currentActionID: currentActionID ?? this.currentActionID,
+      printerPage1OnTop: printerPage1OnTop ?? this.printerPage1OnTop,
     );
   }
 
@@ -3381,6 +3429,9 @@ class CacheCompanion extends UpdateCompanion<CacheData> {
     if (currentActionID.present) {
       map['current_action_i_d'] = Variable<int>(currentActionID.value);
     }
+    if (printerPage1OnTop.present) {
+      map['printer_page1_on_top'] = Variable<bool>(printerPage1OnTop.value);
+    }
     return map;
   }
 
@@ -3389,7 +3440,8 @@ class CacheCompanion extends UpdateCompanion<CacheData> {
     return (StringBuffer('CacheCompanion(')
           ..write('id: $id, ')
           ..write('pinnedActionID: $pinnedActionID, ')
-          ..write('currentActionID: $currentActionID')
+          ..write('currentActionID: $currentActionID, ')
+          ..write('printerPage1OnTop: $printerPage1OnTop')
           ..write(')'))
         .toString();
   }
@@ -5975,11 +6027,13 @@ typedef $$CacheTableCreateCompanionBuilder = CacheCompanion Function({
   Value<int> id,
   Value<int?> pinnedActionID,
   Value<int?> currentActionID,
+  Value<bool?> printerPage1OnTop,
 });
 typedef $$CacheTableUpdateCompanionBuilder = CacheCompanion Function({
   Value<int> id,
   Value<int?> pinnedActionID,
   Value<int?> currentActionID,
+  Value<bool?> printerPage1OnTop,
 });
 
 class $$CacheTableFilterComposer extends Composer<_$AppDatabase, $CacheTable> {
@@ -5999,6 +6053,10 @@ class $$CacheTableFilterComposer extends Composer<_$AppDatabase, $CacheTable> {
 
   ColumnFilters<int> get currentActionID => $composableBuilder(
       column: $table.currentActionID,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get printerPage1OnTop => $composableBuilder(
+      column: $table.printerPage1OnTop,
       builder: (column) => ColumnFilters(column));
 }
 
@@ -6021,6 +6079,10 @@ class $$CacheTableOrderingComposer
   ColumnOrderings<int> get currentActionID => $composableBuilder(
       column: $table.currentActionID,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get printerPage1OnTop => $composableBuilder(
+      column: $table.printerPage1OnTop,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$CacheTableAnnotationComposer
@@ -6040,6 +6102,9 @@ class $$CacheTableAnnotationComposer
 
   GeneratedColumn<int> get currentActionID => $composableBuilder(
       column: $table.currentActionID, builder: (column) => column);
+
+  GeneratedColumn<bool> get printerPage1OnTop => $composableBuilder(
+      column: $table.printerPage1OnTop, builder: (column) => column);
 }
 
 class $$CacheTableTableManager extends RootTableManager<
@@ -6068,21 +6133,25 @@ class $$CacheTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<int?> pinnedActionID = const Value.absent(),
             Value<int?> currentActionID = const Value.absent(),
+            Value<bool?> printerPage1OnTop = const Value.absent(),
           }) =>
               CacheCompanion(
             id: id,
             pinnedActionID: pinnedActionID,
             currentActionID: currentActionID,
+            printerPage1OnTop: printerPage1OnTop,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<int?> pinnedActionID = const Value.absent(),
             Value<int?> currentActionID = const Value.absent(),
+            Value<bool?> printerPage1OnTop = const Value.absent(),
           }) =>
               CacheCompanion.insert(
             id: id,
             pinnedActionID: pinnedActionID,
             currentActionID: currentActionID,
+            printerPage1OnTop: printerPage1OnTop,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

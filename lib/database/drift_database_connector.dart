@@ -205,6 +205,19 @@ class DriftDatabaseConnector implements DatabaseInterface {
   }
 
   @override
+  Future<bool?> getPrinterPage1OnTop() async {
+    return _driftDatabase.getPrinterPage1OnTop();
+  }
+
+  @override
+  Future<void> setPrinterPage1OnTop(bool? value) async {
+    await _driftDatabase.updateCache(CacheCompanion(
+      id: const Value(1),
+      printerPage1OnTop: Value(value),
+    ));
+  }
+
+  @override
   Future<List<MemoryZaznam>> getRecordsByParticipantID(int id) async {
     List<Record> records = await _driftDatabase.getRecordsByParticipantID(id);
     // now a function

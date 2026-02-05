@@ -100,4 +100,5 @@ class Cache extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get pinnedActionID => integer().nullable().withDefault(const Constant(null))();
   IntColumn get currentActionID => integer().nullable().withDefault(const Constant(null))();
+  BoolColumn get printerPage1OnTop => boolean().nullable().withDefault(const Constant(null))();
 }

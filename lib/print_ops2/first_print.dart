@@ -10,6 +10,7 @@
 // 7) Ask user to confirm correctness with confirm window
 
 import 'package:flutter/material.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
 import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:denik_zza/services/system/system_interface.dart';
@@ -501,8 +502,12 @@ class _FirstPrintState extends State<FirstPrint> {
     );
   }
 
-  void _completeWizard() {
-    // TODO: Save calibration result to database
+  Future<void> _completeWizard() async {
+    // Save calibration result to database
+    final db = DatabaseWrapper.getDatabase();
+    await db.setPrinterPage1OnTop(_page1OnTop);
+    
+    if (!mounted) return;
     Navigator.of(context).pop();
     
     ScaffoldMessenger.of(context).showSnackBar(

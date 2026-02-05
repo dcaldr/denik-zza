@@ -99,6 +99,13 @@ abstract class DatabaseInterface {
   /// If no current action ID is found, the method returns `null`.
   Future<int?> getCurrentEventID();
 
+  /// Gets printer page order calibration result.
+  /// Returns true if page 1 prints on top, false if page 2, null if not calibrated.
+  Future<bool?> getPrinterPage1OnTop();
+
+  /// Sets printer page order calibration result.
+  Future<void> setPrinterPage1OnTop(bool? value);
+
   /// This method returns all [MemoryAction]
   ///
   ///  if none present empty list will be returned
