@@ -1,12 +1,11 @@
 import 'package:denik_zza/print_ops2/print_pdf_header.dart';
-// import 'package:flutter/foundation.dart'; // Unused
 import 'package:denik_zza/print_ops2/print_pdf_records.dart';
 import 'package:denik_zza/print_ops2/pdf_record_row.dart';
 import 'package:denik_zza/print_ops2/pdf_header_section.dart';
+import 'package:denik_zza/print_ops2/pdf_fonts.dart';
 import 'package:denik_zza/print_ops2/models/append_analysis.dart';
 import 'package:denik_zza/print_ops2/models/append_build_result.dart';
 import 'package:denik_zza/print_ops2/models/doc_with_count.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:logger/logger.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:pdf/pdf.dart';
@@ -139,7 +138,7 @@ class GeneratePdfTemplate {
 
     return [
       pw.MultiPage(
-        theme: await _loadFonts(),
+        theme: await PdfFonts.loadTheme(),
         build: (pw.Context context) {
           return [
             header,
@@ -168,17 +167,7 @@ class GeneratePdfTemplate {
     ];
   }
 
-  Future<pw.ThemeData> _loadFonts() async {
-    return pw.ThemeData.withFont(
-      base:
-          pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Regular.ttf')),
-      bold: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Bold.ttf')),
-      italic:
-          pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Italic.ttf')),
-      boldItalic: pw.Font.ttf(
-          await rootBundle.load('fonts/CourierPrime-BoldItalic.ttf')),
-    );
-  }
+  // Font loading delegated to shared PdfFonts utility
 
   /// Three-pass algorithm for multi-page append analysis and PDF generation
   Future<AppendBuildResult> analyzeAndBuildAppend({
@@ -286,7 +275,7 @@ class GeneratePdfTemplate {
     required int hideHeaderOnPage,
     bool maskPrintedRecords = false,
   }) async {
-    final theme = await _loadFonts();
+    final theme = await PdfFonts.loadTheme();
     final doc = pw.Document();
 
     // Track pages for counting (fallback strategy)

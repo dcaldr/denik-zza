@@ -1,6 +1,7 @@
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'dart:typed_data';
+import 'package:denik_zza/print_ops2/pdf_fonts.dart';
 
 /// Generates test PDFs for the FirstPrint calibration wizard.
 /// 
@@ -24,7 +25,7 @@ class CalibrationPdfGenerator {
     int pageCount = 2,
     Set<int> hideContentOnPages = const {},
   }) async {
-    final doc = pw.Document();
+    final doc = pw.Document(theme: await PdfFonts.loadTheme());
     
     for (int pageNum = 1; pageNum <= pageCount; pageNum++) {
       final isHidden = hideContentOnPages.contains(pageNum);
@@ -54,7 +55,7 @@ class CalibrationPdfGenerator {
   /// - Transparent content for pass 1 (simulating already-printed content)
   /// - Visible pass 2 records appended below
   static Future<Uint8List> generateAppendTest() async {
-    final doc = pw.Document();
+    final doc = pw.Document(theme: await PdfFonts.loadTheme());
     
     for (int pageNum = 1; pageNum <= 2; pageNum++) {
       doc.addPage(_buildAppendTestPage(
