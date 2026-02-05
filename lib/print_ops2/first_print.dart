@@ -11,6 +11,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
+import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:denik_zza/services/system/system_interface.dart';
 import 'widgets/step_badge.dart';
 import 'widgets/print_confirm_dialog.dart';
@@ -319,7 +320,7 @@ class _FirstPrintState extends State<FirstPrint> {
       color: isSelected ? colorScheme.primaryContainer : null,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadii.cardRadius,
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -489,7 +490,7 @@ class _FirstPrintState extends State<FirstPrint> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Kalibrace dokončena!'),
-        backgroundColor: Colors.green,
+        backgroundColor: AppColors.actionGreen,
       ),
     );
   }
@@ -572,15 +573,15 @@ class _FirstPrintState extends State<FirstPrint> {
       extraContent: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.blue.shade50,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.blue.shade200),
+          color: AppColors.blueBackground,
+          borderRadius: AppRadii.buttonRadius,
+          border: Border.all(color: AppColors.blueBorder),
         ),
-        child: const Row(
+        child: Row(
           children: [
-            Icon(Icons.info_outline, color: Colors.blue),
-            SizedBox(width: 12),
-            Expanded(
+            Icon(Icons.info_outline, color: AppColors.blueText),
+            const SizedBox(width: 12),
+            const Expanded(
               child: Text(
                 'Toto je dialog, který uvidíte při každém tisku. '
                 'Pro kalibraci stačí "Vše OK" nebo "Zopakovat".',

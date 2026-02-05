@@ -16,6 +16,7 @@ class AppSpacing {
   static const double l = 16.0; // Form field padding
   static const double xl = 20.0; // NewRecord page padding
   static const double xxl = 24.0; // CSV import padding
+  static const double xxxl = 32.0; // Extra large (wizard step spacing)
 
   // Screen-level padding (matches NewRecord: 20px, CSV: 24px)
   static const EdgeInsets screenPadding = EdgeInsets.all(xl);

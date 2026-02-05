@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
+import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:denik_zza/print_ops2/print_center_controller.dart';
 
 // Re-export so consumers can use it without extra import
@@ -213,7 +214,7 @@ class AppendInfoBanner extends StatelessWidget {
             : (explicitlyBlocked
                 ? cs.errorContainer
                 : cs.surfaceContainerHighest),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: AppRadii.buttonRadius,
         border: Border.all(
             color: allowed
                 ? cs.secondary

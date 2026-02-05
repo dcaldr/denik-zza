@@ -46,6 +46,10 @@ class AppColors {
   static final Color orangeBorder = Colors.orange.shade300;
   static final Color orangeText = Colors.orange.shade600;
 
+  // Action colors (for buttons, snackbars with custom backgrounds)
+  static const Color actionGreen = Colors.green; // Success snackbars
+  static final Color snackbarBackground = Colors.grey.shade800;
+
   /// Light color scheme matching your actual app
   static final ColorScheme lightColorScheme = ColorScheme.light(
     // Primary: Blue (your current color - "okay" per feedback)

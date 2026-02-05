@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import '../models/append_analysis.dart';
 
 /// Widget for displaying append analysis results (T9)
@@ -105,7 +106,7 @@ class AppendAnalysisWidget extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: AppRadii.buttonRadius,
               ),
               child: Row(
                 children: [

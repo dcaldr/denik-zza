@@ -24,4 +24,9 @@ class AppRadii {
       BorderRadius.all(Radius.circular(large)); // 8px
   static const BorderRadius containerRadius =
       BorderRadius.all(Radius.circular(xl)); // 12px
+
+  // Pill shape (for badges like StepBadge)
+  static const double pill = 20.0;
+  static const BorderRadius pillRadius =
+      BorderRadius.all(Radius.circular(pill)); // 20px
 }

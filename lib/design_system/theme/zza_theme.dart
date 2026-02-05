@@ -54,7 +54,7 @@ class ZzaTheme {
       /// borderRadius: 8.0
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: Colors.blue.shade600, // Actual color from code
+          backgroundColor: AppColors.blueText, // From token
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(
             vertical: 14,
@@ -78,14 +78,14 @@ class ZzaTheme {
       /// side: Colors.grey.shade400, width: 1.5
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.grey.shade700, // Actual color from code
+          foregroundColor: AppColors.greyIcon, // From token
           padding: const EdgeInsets.symmetric(
             vertical: 14,
             horizontal: 16,
           ),
           minimumSize: const Size(100, 48),
           side: BorderSide(
-            color: Colors.grey.shade400, // Actual from code
+            color: AppColors.greyTextLight, // From token
             width: 1.5, // Actual from code
           ),
           shape: const RoundedRectangleBorder(
@@ -158,7 +158,7 @@ class ZzaTheme {
         focusedBorder: OutlineInputBorder(
           borderRadius: AppRadii.inputRadius,
           borderSide: BorderSide(
-            color: Colors.blue.shade600, // Actual from code
+            color: AppColors.blueText, // From token
             width: 2, // Actual from code
           ),
         ),
@@ -166,7 +166,7 @@ class ZzaTheme {
         errorBorder: OutlineInputBorder(
           borderRadius: AppRadii.inputRadius,
           borderSide: const BorderSide(
-            color: Colors.red,
+            color: Colors.red, // colorScheme.error would need context
             width: 2,
           ),
         ),
@@ -174,7 +174,7 @@ class ZzaTheme {
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: AppRadii.inputRadius,
           borderSide: const BorderSide(
-            color: Colors.red,
+            color: Colors.red, // colorScheme.error would need context
             width: 2,
           ),
         ),
@@ -243,7 +243,7 @@ class ZzaTheme {
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 2,
-        backgroundColor: Colors.blue, // Primary blue
+        backgroundColor: AppColors.lightColorScheme.primary, // Use colorScheme
         foregroundColor: Colors.white,
         titleTextStyle: AppTypography.textTheme.titleLarge?.copyWith(
           color: Colors.white,
@@ -274,12 +274,12 @@ class ZzaTheme {
 
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.grey.shade800,
+        backgroundColor: AppColors.snackbarBackground,
         contentTextStyle: AppTypography.textTheme.bodyMedium?.copyWith(
           color: Colors.white,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+        shape: const RoundedRectangleBorder(
+          borderRadius: AppRadii.buttonRadius, // 8px
         ),
       ),
 

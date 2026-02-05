@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
+import 'package:denik_zza/design_system/tokens/app_radii.dart';
 
 // =============================================================================
 // STEP BADGE - Individual step indicator
@@ -35,7 +36,7 @@ class StepBadge extends StatelessWidget {
       margin: const EdgeInsets.only(right: 6, bottom: 2),
       decoration: BoxDecoration(
         color: base.withValues(alpha: active ? 0.18 : 0.12),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: AppRadii.pillRadius,
         border: Border.all(color: base),
       ),
       child: Row(

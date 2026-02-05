@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
+import 'package:denik_zza/design_system/tokens/app_radii.dart';
 
 // =============================================================================
 // STEP HELPERS - Reusable widgets for multi-step wizards
@@ -33,7 +35,9 @@ class StepContent extends StatelessWidget {
       alignment: Alignment.topLeft,
       child: SingleChildScrollView(
         key: ValueKey(stepIndex),
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xxl, AppSpacing.s, AppSpacing.xxl, AppSpacing.xxl,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: children,
@@ -59,7 +63,7 @@ class StepHeader extends StatelessWidget {
     return Row(
       children: [
         Icon(icon, size: 32, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.m),
         Expanded(
           child: Text(
             title,
@@ -90,10 +94,10 @@ class InfoBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.l),
       decoration: BoxDecoration(
         color: colorScheme.primaryContainer.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadii.cardRadius,
         border: Border.all(
           color: colorScheme.primary.withValues(alpha: 0.3),
         ),
@@ -104,7 +108,7 @@ class InfoBox extends StatelessWidget {
           Row(
             children: [
               Icon(icon, color: colorScheme.primary),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s),
               Expanded(
                 child: Text(
                   title,
@@ -115,7 +119,7 @@ class InfoBox extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s),
           Text(content),
         ],
       ),
@@ -150,10 +154,10 @@ class SectionTitle extends StatelessWidget {
 class StepSpacing extends StatelessWidget {
   final double size;
   
-  const StepSpacing.small({super.key}) : size = 8;
-  const StepSpacing.medium({super.key}) : size = 16;
-  const StepSpacing.large({super.key}) : size = 24;
-  const StepSpacing.xlarge({super.key}) : size = 32;
+  const StepSpacing.small({super.key}) : size = AppSpacing.s;
+  const StepSpacing.medium({super.key}) : size = AppSpacing.l;
+  const StepSpacing.large({super.key}) : size = AppSpacing.xxl;
+  const StepSpacing.xlarge({super.key}) : size = AppSpacing.xxxl;
 
   @override
   Widget build(BuildContext context) => SizedBox(height: size);

@@ -6,6 +6,7 @@ import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import '../database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
+import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:denik_zza/services/system/system_interface.dart';
 import 'widgets/step_badge.dart';
 import 'widgets/print_confirm_dialog.dart';
@@ -48,7 +49,7 @@ class FeatureCard extends StatelessWidget {
       color: implemented ? null : AppColors.greyBackground,
       child: InkWell(
         onTap: implemented ? onTap : null,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: AppRadii.buttonRadius,
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
@@ -802,7 +803,7 @@ class _InfoBox extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: AppRadii.buttonRadius,
         border: Border.all(color: color.darken(0.1)),
       ),
       padding: const EdgeInsets.all(12),
