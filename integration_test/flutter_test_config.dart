@@ -2,6 +2,7 @@
 // Ensures all integration tests start with proper mode setup.
 
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/services.dart';
 import 'package:integration_test/integration_test.dart';
@@ -12,6 +13,9 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/utils/mode_coordinator.dart';
+import 'package:path/path.dart' as path;
+
+import '../test/utils/capturing_system_interface.dart';
 
 FutureOr<void> testExecutable(FutureOr<void> Function() testMain) async {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +46,14 @@ FutureOr<void> testExecutable(FutureOr<void> Function() testMain) async {
   // Global tearDown - ensures no database leaks between tests
   tearDown(() async {
     await DatabaseWrapper.dispose();
+    final testDir = ModeCoordinator.currentTestDirectory;
+    if (testDir != null) {
+      final artifactsDir = Directory(path.join(testDir.path, 'pdf_artifacts'));
+      await CapturingSystemInterface.cleanupOldArtifacts(
+        baseDir: artifactsDir,
+        keepLast: 5,
+      );
+    }
   });
 
   return testMain();

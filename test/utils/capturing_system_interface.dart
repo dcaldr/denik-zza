@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:pdf/pdf.dart';
 import 'package:path/path.dart' as path;
 import 'package:denik_zza/services/system/system_interface.dart';
+import 'package:denik_zza/utils/mode_coordinator.dart';
 
 import 'pdf_page_counter.dart';
 
@@ -42,6 +43,22 @@ class CapturingSystemInterface implements SystemInterface {
     return capturedPdfs.last;
   }
 
+  static CapturingSystemInterface forCurrentTest({
+    String artifactsDirName = 'pdf_artifacts',
+    bool saveToDisk = true,
+  }) {
+    final testDir = ModeCoordinator.currentTestDirectory;
+    if (testDir == null) {
+      return CapturingSystemInterface(saveToDisk: false);
+    }
+
+    final outputDir = Directory(path.join(testDir.path, artifactsDirName));
+    return CapturingSystemInterface(
+      saveToDisk: saveToDisk,
+      outputDir: outputDir,
+    );
+  }
+
   @override
   Future<FilePickerResult?> pickFiles({
     String? dialogTitle,
@@ -77,8 +94,14 @@ class CapturingSystemInterface implements SystemInterface {
         outputDir!.createSync(recursive: true);
       }
       final safeName = _sanitizeFileName(name);
-      final fileName = 'print_${index.toString().padLeft(3, '0')}_$safeName.pdf';
-      final filePath = path.join(outputDir!.path, fileName);
+      final subdirName =
+          'print_${index.toString().padLeft(3, '0')}_$safeName';
+      final subdir = Directory(path.join(outputDir!.path, subdirName));
+      if (!subdir.existsSync()) {
+        subdir.createSync(recursive: true);
+      }
+      final fileName = '$safeName.pdf';
+      final filePath = path.join(subdir.path, fileName);
       final file = File(filePath);
       await file.writeAsBytes(bytes, flush: true);
       savedPath = filePath;
@@ -99,12 +122,20 @@ class CapturingSystemInterface implements SystemInterface {
     int keepLast = 5,
   }) async {
     if (!await baseDir.exists()) return;
-    final files = await baseDir
-        .list()
-        .where((entity) => entity is File)
-        .cast<File>()
-        .toList();
+    final entities = await baseDir.list().toList();
+    final directories = entities.whereType<Directory>().toList();
 
+    if (directories.isNotEmpty) {
+        directories.sort(
+          (a, b) => b.statSync().modified.compareTo(a.statSync().modified));
+
+      for (var i = keepLast; i < directories.length; i++) {
+        await directories[i].delete(recursive: true);
+      }
+      return;
+    }
+
+    final files = entities.whereType<File>().toList();
     files.sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
 
     for (var i = keepLast; i < files.length; i++) {

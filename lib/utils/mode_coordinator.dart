@@ -48,10 +48,12 @@ class ModeCoordinator {
   static AppMode _currentMode = AppMode.production;
   static String? _currentTestName;
   static String? _currentRunId;
+  static Directory? _currentTestDirectory;
 
   /// Available application modes
   static AppMode get currentMode => _currentMode;
   static String? get currentTestName => _currentTestName;
+  static Directory? get currentTestDirectory => _currentTestDirectory;
 
   /// Get or generate the current run ID.
   /// Generated once per process (Dart VM session) on first access.
@@ -73,6 +75,7 @@ class ModeCoordinator {
   static void setTestingMode() {
     _currentMode = AppMode.testing;
     _currentTestName = null;
+    _currentTestDirectory = null;
 
     DatabaseWrapper.setTestMode();
     FileManager().setTestMode();
@@ -104,7 +107,8 @@ class ModeCoordinator {
 
     // Get isolated test directory
     final testDir =
-        await _getTestDirectory('integration', currentRunId, testName);
+      await _getTestDirectory('integration', currentRunId, testName);
+    _currentTestDirectory = testDir;
 
     // Set file-based database for inspection and debugging
     final dbPath = '${testDir.path}/db.sqlite';
@@ -134,6 +138,7 @@ class ModeCoordinator {
 
     // Use 'canary' subfolder for backward compatibility
     final testDir = await _getTestDirectory('canary', currentRunId, testName);
+    _currentTestDirectory = testDir;
     final dbPath = '${testDir.path}/db.sqlite';
     DatabaseWrapper.setIntegrationTestMode(dbPath);
     FileManager().setPersistentTestMode(testDir.path);
@@ -151,6 +156,7 @@ class ModeCoordinator {
   static Future<void> setDebugMode({required String testName}) async {
     _currentMode = AppMode.debug;
     _currentTestName = testName;
+    _currentTestDirectory = null;
 
     await DatabaseWrapper.dispose();
     // NOTE: Does NOT set DatabaseWrapper mode - uses production DB behavior
@@ -170,6 +176,7 @@ class ModeCoordinator {
     _currentMode = AppMode.production;
     _currentTestName = null;
     _currentRunId = null;
+    _currentTestDirectory = null;
 
     await DatabaseWrapper.dispose();
     FileManager().setProductionMode();
