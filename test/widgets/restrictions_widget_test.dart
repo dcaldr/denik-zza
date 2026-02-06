@@ -303,7 +303,12 @@ void main() {
       if (optionFinder.evaluate().isNotEmpty) {
         // Tap the dropdown option (should trigger onSelected)
         await tester.tap(optionFinder.last); // .last to tap dropdown, not input
-        await tester.pumpAndSettle();
+        
+        // Use manual pumps instead of pumpAndSettle to avoid hanging on persistent 
+        // animations (like cursor blinking or overlay fade) typical in Autocomplete
+        for(int i = 0; i < 5; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
 
         // BUG EXPOSURE: If double-add exists, this will be 2 items
         // Expected: Only 1 item ('Test Restriction For Dropdown')
