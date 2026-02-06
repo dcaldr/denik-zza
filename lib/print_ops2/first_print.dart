@@ -710,6 +710,7 @@ class _FirstPrintState extends State<FirstPrint> {
   }) async {
     final result = await showPrintConfirmDialog(
       context: context,
+      showTip: false,
       extraContent: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(

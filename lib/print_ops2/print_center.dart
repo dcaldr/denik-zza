@@ -546,27 +546,9 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
       appendPossible: ctrl.appendPossible,
     );
 
-    switch (result) {
-      case PrintSimulationResult.success:
-        ctrl.confirmPrintResult(PrintSimulationResult.success);
-        break;
-      case PrintSimulationResult.repeat:
-        ctrl.confirmPrintResult(PrintSimulationResult.repeat);
-        break;
-      case PrintSimulationResult.noChange:
-        ctrl.confirmPrintResult(PrintSimulationResult.noChange);
-        break;
-      case PrintSimulationResult.reset:
-        ctrl.confirmPrintResult(PrintSimulationResult.reset);
-        break;
-      case PrintSimulationResult.resetAndReprint:
-        ctrl.confirmPrintResult(PrintSimulationResult.resetAndReprint);
-        onReprint?.call();
-        break;
-      case null:
-        // Dialog dismissed without selection
-        break;
-    }
+    if (result == null) return;
+    ctrl.confirmPrintResult(result);
+    if (result == PrintSimulationResult.resetAndReprint) onReprint?.call();
   }
 }
 

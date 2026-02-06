@@ -17,7 +17,7 @@ import 'package:denik_zza/utils/app_logger.dart';
 /// Print mode (UI state).
 enum PrintMode { full, append }
 
-/// Simulated print confirmation result (UI only for now).
+/// Print confirmation result.
 enum PrintSimulationResult { success, repeat, noChange, reset, resetAndReprint }
 
 /// Controller (ChangeNotifier) for Print Center state.

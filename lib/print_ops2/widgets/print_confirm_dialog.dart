@@ -16,6 +16,7 @@ Future<PrintSimulationResult?> showPrintConfirmDialog({
   bool? appendActive,
   bool? appendPossible,
   Widget? extraContent,
+  bool showTip = true,
 }) async {
   return showDialog<PrintSimulationResult>(
     context: context,
@@ -24,6 +25,7 @@ Future<PrintSimulationResult?> showPrintConfirmDialog({
       appendActive: appendActive,
       appendPossible: appendPossible,
       extraContent: extraContent,
+      showTip: showTip,
     ),
   );
 }
@@ -32,11 +34,13 @@ class _PrintConfirmDialog extends StatelessWidget {
   final bool? appendActive;
   final bool? appendPossible;
   final Widget? extraContent;
+  final bool showTip;
 
   const _PrintConfirmDialog({
     this.appendActive,
     this.appendPossible,
     this.extraContent,
+    this.showTip = true,
   });
 
   @override
@@ -59,7 +63,7 @@ class _PrintConfirmDialog extends StatelessWidget {
                 icon: Icons.check_circle,
                 title: 'Vše OK (úspěšný tisk)',
                 body:
-                    'Označí (v budoucnu) nové záznamy/strany jako vytištěné. Pokud běží režim Dostisk, označí jen ty nové.',
+                    'Označí nové záznamy/strany jako vytištěné. Pokud běží režim Dostisk, označí jen ty nové.',
               ),
               const ConfirmOptionDescription(
                 icon: Icons.replay_circle_filled_outlined,
@@ -93,8 +97,9 @@ class _PrintConfirmDialog extends StatelessWidget {
                 const SizedBox(height: AppSpacing.s),
                 extraContent!,
               ],
-              const SizedBox(height: AppSpacing.s),
-              const ManualMarkingNote(),
+              if (showTip) ...[                const SizedBox(height: AppSpacing.s),
+                const ManualMarkingNote(),
+              ],
             ],
           ),
         ),
