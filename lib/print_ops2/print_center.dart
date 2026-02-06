@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import 'print_center_controller.dart';
 import 'print_center_service.dart';
+import 'print_state_controller.dart';
+import 'print_state_management_page.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
 import 'package:denik_zza/print_ops2/widgets/feature_card.dart';
 import 'package:denik_zza/print_ops2/person_mode_flow_page.dart';
@@ -88,9 +90,22 @@ class PrintCenterPage extends StatelessWidget {
                 ),
                 FeatureCard(
                   title: 'Správa stavu',
-                  subtitle: 'Ruční označení vytištěných (zatím neaktivní).',
+                  subtitle:
+                      'Ruční úprava stavu tisku účastníků a záznamů.',
                   icon: Icons.rule_folder,
-                  implemented: false,
+                  implemented: true,
+                  onTap: () {
+                    final service = PrintCenterService();
+                    final controller = PrintStateController(service);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PrintStateManagementPage(
+                          controller: controller,
+                        ),
+                      ),
+                    );
+                  },
                 ),
 
                 FeatureCard(
