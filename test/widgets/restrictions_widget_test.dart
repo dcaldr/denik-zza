@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
 import 'package:denik_zza/screens2/widgets/restrictions_widget.dart';
 import 'package:denik_zza/screens2/widgets/memory_restriction_widget.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
@@ -296,8 +296,7 @@ void main() {
       final optionFinder = find.text('Test Restriction For Dropdown');
 
       // Debug: print what we find
-      // ignore: avoid_print
-      print('Found options: ${optionFinder.evaluate().length}');
+
 
       // If dropdown shows, tap on it
       if (optionFinder.evaluate().isNotEmpty) {

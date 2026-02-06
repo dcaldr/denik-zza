@@ -50,11 +50,10 @@ class RecordPrintToggleRow extends StatelessWidget {
             width: 110,
             child: Text(
               '$dateStr $timeStr',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.greyText,
-                fontFamily: 'monospace',
-              ),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: AppColors.greyText,
+                    fontFamily: 'monospace',
+                  ),
             ),
           ),
           const SizedBox(width: AppSpacing.s),
@@ -77,7 +76,7 @@ class RecordPrintToggleRow extends StatelessWidget {
                 message:
                     'Odznačení ovlivní $cascadeCount následující${cascadeCount == 1 ? '' : 'ch'} záznam${pluralSuffixCz(cascadeCount)}',
                 child: Icon(Icons.warning_amber_rounded,
-                    size: 16, color: AppColors.orangeText),
+                  size: AppSpacing.l, color: AppColors.orangeText),
               ),
             ),
 
@@ -88,7 +87,9 @@ class RecordPrintToggleRow extends StatelessWidget {
               child: Tooltip(
                 message: 'Nejdříve označte předchozí záznamy',
                 child:
-                    Icon(Icons.block, size: 14, color: AppColors.greyTextLight),
+                    Icon(Icons.block,
+                        size: AppSpacing.m + (AppSpacing.xs / 2),
+                        color: AppColors.greyTextLight),
               ),
             ),
 

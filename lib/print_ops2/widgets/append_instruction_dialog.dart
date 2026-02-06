@@ -74,7 +74,12 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+      titlePadding: const EdgeInsets.fromLTRB(
+        AppSpacing.xxl,
+        AppSpacing.xl,
+        AppSpacing.xxl,
+        AppSpacing.s,
+      ),
       title: Row(
         children: [
           Icon(Icons.print, color: Theme.of(context).colorScheme.primary),

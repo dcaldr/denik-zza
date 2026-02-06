@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:denik_zza/design_system/tokens/app_radii.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 
 class PrintStatusBadge extends StatelessWidget {
   final Color backgroundColor;
@@ -48,7 +49,7 @@ class PrintStatusBadge extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, size: iconSize, color: iconColor),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSpacing.xs),
               Text(
                 label,
                 style: TextStyle(

@@ -22,8 +22,12 @@ class InstructionStepRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(top: 5),
-            child: Icon(Icons.circle, size: 8, color: Theme.of(context).colorScheme.primary),
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: Icon(
+              Icons.circle,
+              size: AppSpacing.s,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
           const SizedBox(width: AppSpacing.s),
           Expanded(

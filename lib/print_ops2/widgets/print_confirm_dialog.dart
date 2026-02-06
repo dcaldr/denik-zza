@@ -47,7 +47,12 @@ class _PrintConfirmDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+      titlePadding: const EdgeInsets.fromLTRB(
+        AppSpacing.xxl,
+        AppSpacing.xl,
+        AppSpacing.xxl,
+        AppSpacing.s,
+      ),
       title: const Text('Jak dopadl tisk?'),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),

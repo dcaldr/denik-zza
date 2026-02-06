@@ -111,7 +111,9 @@ class _PersonPrintStateCardState extends State<PersonPrintStateCard> {
                   const SizedBox(height: 2),
                   Text(
                     '${s.printedRecordCount}/${s.totalRecordCount} záznamů vytištěno',
-                    style: TextStyle(fontSize: 12, color: AppColors.greyText),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: AppColors.greyText,
+                        ),
                   ),
                 ],
               ),
@@ -232,7 +234,10 @@ class _PersonPrintStateCardState extends State<PersonPrintStateCard> {
                 ? () => widget.onMarkAllPrinted(s.person.id)
                 : null,
             icon: const Icon(Icons.check_circle_outline, size: 16),
-            label: const Text('Označit vše', style: TextStyle(fontSize: 12)),
+            label: Text(
+              'Označit vše',
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
           ),
           const SizedBox(width: AppSpacing.s),
           TextButton.icon(
@@ -242,8 +247,13 @@ class _PersonPrintStateCardState extends State<PersonPrintStateCard> {
                 : null,
             icon:
                 Icon(Icons.restart_alt, size: 16, color: AppColors.orangeText),
-            label: Text('Odznačit vše',
-                style: TextStyle(fontSize: 12, color: AppColors.orangeText)),
+            label: Text(
+              'Odznačit vše',
+              style: Theme.of(context)
+                  .textTheme
+                  .labelSmall
+                  ?.copyWith(color: AppColors.orangeText),
+            ),
           ),
         ],
       ),
