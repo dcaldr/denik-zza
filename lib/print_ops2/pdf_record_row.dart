@@ -1,5 +1,7 @@
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
+import 'package:denik_zza/utils/date_format_utils.dart';
 
 /// Abstract base for a record row in PDF (person/event)
 abstract class PdfRecordRow {
@@ -8,7 +10,7 @@ abstract class PdfRecordRow {
 
 /// Concrete implementation for person record row
 class PersonPdfRecordRow extends PdfRecordRow {
-  final dynamic record;
+  final MemoryZaznam record;
   final bool isHidden;
   final PdfColor? textColor;
 
@@ -26,11 +28,11 @@ class PersonPdfRecordRow extends PdfRecordRow {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                '${record.casZaznamu?.day.toString().padLeft(2, '0')}.${record.casZaznamu?.month.toString().padLeft(2, '0')}.${record.casZaznamu?.year}',
+                formatCzechDate(record.casZaznamu),
                 style: pw.TextStyle(fontSize: 8.0, color: textColor),
               ),
               pw.Text(
-                '${record.casZaznamu?.hour.toString().padLeft(2, '0')}:${record.casZaznamu?.minute.toString().padLeft(2, '0')}',
+                formatCzechTime(record.casZaznamu),
                 style: pw.TextStyle(fontSize: 9.0, color: textColor),
               ),
             ],

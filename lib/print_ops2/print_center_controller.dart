@@ -7,6 +7,7 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_lek.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart';
+import 'package:denik_zza/utils/record_sort_utils.dart';
 import 'package:denik_zza/print_ops2/models/append_analysis.dart';
 import 'print_center_service.dart';
 import 'generate_pdf_template.dart';
@@ -136,14 +137,7 @@ class PrintCenterController extends ChangeNotifier {
       final l = await _service.getLeky(osoba.id);
       final o = await _service.getOmezeni(osoba.id);
       _records = r
-        ..sort((a, b) {
-          final ad = a.casZaznamu;
-          final bd = b.casZaznamu;
-          if (ad == null && bd == null) return 0;
-          if (ad == null) return -1;
-          if (bd == null) return 1;
-          return ad.compareTo(bd);
-        });
+        ..sort(compareRecordsByTime);
       _leky = l;
       _omezeni = o;
 
@@ -224,14 +218,7 @@ class PrintCenterController extends ChangeNotifier {
         final restr = await _service.getOmezeni(pid);
 
         // Sort records standard way
-        records.sort((a, b) {
-          final ad = a.casZaznamu;
-          final bd = b.casZaznamu;
-          if (ad == null && bd == null) return 0;
-          if (ad == null) return -1;
-          if (bd == null) return 1;
-          return ad.compareTo(bd);
-        });
+        records.sort(compareRecordsByTime);
 
         // Generate pages
         final pages = await template.getPdfPages(
@@ -274,7 +261,7 @@ class PrintCenterController extends ChangeNotifier {
         }
       } catch (e) {
         // Log error but continue with others
-        debugPrint('Error confirming print for person $pid: $e');
+        AppLogger.l.e('Error confirming print for person $pid', error: e);
       }
     }
   }
@@ -355,18 +342,11 @@ class PrintCenterController extends ChangeNotifier {
       try {
         final r = await _service.getRecords(id);
         all.addAll(r);
-      } catch (_) {
-        // Ignore individual failures; TODO add logging
+      } catch (e) {
+        AppLogger.l.e('Error fetching records for aggregated print', error: e);
       }
     }
-    all.sort((a, b) {
-      final ad = a.casZaznamu;
-      final bd = b.casZaznamu;
-      if (ad == null && bd == null) return 0;
-      if (ad == null) return -1;
-      if (bd == null) return 1;
-      return ad.compareTo(bd);
-    });
+    all.sort(compareRecordsByTime);
     return all;
   }
 

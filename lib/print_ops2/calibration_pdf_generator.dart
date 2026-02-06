@@ -2,6 +2,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'dart:typed_data';
 import 'package:denik_zza/print_ops2/pdf_fonts.dart';
+import 'package:denik_zza/utils/date_format_utils.dart';
 
 /// Generates test PDFs for the FirstPrint calibration wizard.
 /// 
@@ -281,14 +282,11 @@ class CalibrationPdfGenerator {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Text(
-              '${timestamp.day.toString().padLeft(2, '0')}.'
-              '${timestamp.month.toString().padLeft(2, '0')}.'
-              '${timestamp.year}',
+              formatCzechDate(timestamp),
               style: pw.TextStyle(fontSize: 8, color: textColor),
             ),
             pw.Text(
-              '${timestamp.hour.toString().padLeft(2, '0')}:'
-              '${timestamp.minute.toString().padLeft(2, '0')}',
+              formatCzechTime(timestamp),
               style: pw.TextStyle(fontSize: 9, color: textColor),
             ),
           ],

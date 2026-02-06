@@ -1,5 +1,9 @@
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart';
+import 'package:denik_zza/database/in_memory_structures_tmp/memory_lek.dart';
+import 'package:denik_zza/utils/date_format_utils.dart';
 
 /// Abstract base for PDF header section (person/event)
 abstract class PdfHeaderSection {
@@ -8,10 +12,9 @@ abstract class PdfHeaderSection {
 
 /// Concrete implementation for person header (includes restrictions)
 class PersonPdfHeaderSection extends PdfHeaderSection {
-  final dynamic
-      osoba; // Should be MemoryOsoba, but kept dynamic for future event
-  final List<dynamic>? omezeniList; // MemoryOmezeni list
-  final List<dynamic>? lekList; // MemoryLek list
+  final MemoryOsoba osoba;
+  final List<MemoryOmezeni>? omezeniList;
+  final List<MemoryLek>? lekList;
   final PdfColor? textColor;
 
   PersonPdfHeaderSection(this.osoba,
@@ -20,11 +23,6 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
   @override
   pw.Widget buildHeader() {
     // Implementation similar to PrintPdfHeader.buildHeader
-    String formatDate(DateTime? date) {
-      if (date == null) return '';
-      return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
-    }
-
     String formatZdravotniPojistovna(String? zdravotniPojistovna) {
       return zdravotniPojistovna != null ? ' ($zdravotniPojistovna)' : '';
     }
@@ -55,7 +53,8 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
                           children: [
                             pw.TextSpan(
                               text:
-                                  '${osoba?.jmeno ?? ''} ${osoba?.prijmeni ?? ''}',
+                                  '${osoba.jmeno} ${osoba.prijmeni}',
+
                               style: pw.TextStyle(
                                   fontWeight: pw.FontWeight.bold,
                                   color: textColor),
@@ -64,16 +63,16 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
                         ),
                       ),
                       pw.Text(
-                          'Datum narození: ${formatDate(osoba?.datumNarozeni)}',
+                          'Datum narození: ${formatCzechDate(osoba.datumNarozeni)}',
                           style: pw.TextStyle(color: textColor)),
                       pw.Text(
-                        'Pojištění: ${osoba?.cisloPojisteni ?? ''}${formatZdravotniPojistovna(osoba?.zdravotniPojistovna)}',
+                        'Pojištění: ${osoba.cisloPojisteni ?? ''}${formatZdravotniPojistovna(osoba.zdravotniPojistovna)}',
                         maxLines: 2,
                         overflow: pw.TextOverflow.clip,
                         style: pw.TextStyle(color: textColor),
                       ),
                       pw.Text(
-                        'Adresa: ${osoba?.adresa ?? ''}',
+                        'Adresa: ${osoba.adresa ?? ''}',
                         maxLines: 2,
                         overflow: pw.TextOverflow.clip,
                         style: pw.TextStyle(color: textColor),
@@ -87,15 +86,15 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text('Rodič: ${osoba?.jmenoRodice ?? ''}',
+                      pw.Text('Rodič: ${osoba.jmenoRodice ?? ''}',
                           maxLines: 2,
                           overflow: pw.TextOverflow.clip,
                           style: pw.TextStyle(color: textColor)),
-                      pw.Text('Tel. rodič: ${osoba?.telefonRodice ?? ''}',
+                      pw.Text('Tel. rodič: ${osoba.telefonRodice ?? ''}',
                           maxLines: 2,
                           overflow: pw.TextOverflow.clip,
                           style: pw.TextStyle(color: textColor)),
-                      pw.Text('Email rodič: ${osoba?.emailRodice ?? ''}',
+                      pw.Text('Email rodič: ${osoba.emailRodice ?? ''}',
                           style: pw.TextStyle(color: textColor)),
                     ],
                   ),

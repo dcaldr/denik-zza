@@ -5,6 +5,7 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_lek.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 
 /// Service vrstva pro Tisk Centrum.
 /// Nemá žádnou UI logiku, pouze získává data a vrací je dále controlleru.
@@ -43,6 +44,7 @@ class PrintCenterService {
       final success = await _db.setParticipantPrintedValue(participantId, wasPrinted);
       return success;
     } catch (e) {
+      AppLogger.l.e('Failed to set participant printed flag for id=$participantId', error: e);
       return false;
     }
   }
@@ -53,6 +55,7 @@ class PrintCenterService {
       final success = await _db.setRecordPrintedValue(recordId, isPrinted);
       return success;
     } catch (e) {
+      AppLogger.l.e('Failed to set record printed flag for id=$recordId', error: e);
       return false;
     }
   }
