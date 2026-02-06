@@ -10,6 +10,9 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart'
 import 'package:denik_zza/print_ops2/models/append_analysis.dart';
 import 'print_center_service.dart';
 import 'generate_pdf_template.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/utils/app_logger.dart';
+
 
 /// Print mode (UI state).
 enum PrintMode { full, append }
@@ -24,6 +27,10 @@ class PrintCenterController extends ChangeNotifier {
   StreamSubscription<List<MemoryOsoba>>? _participantsSub;
 
   PrintCenterController(this._service);
+
+  // Printer calibration state
+  bool? _printerPage1OnTop; // null = not calibrated yet
+
 
   // Participants state
   List<MemoryOsoba> _participants = [];
@@ -81,10 +88,15 @@ class PrintCenterController extends ChangeNotifier {
   AppendAnalysis? get appendAnalysis => _appendAnalysis;
   bool get analysisInProgress => _analysisInProgress;
   String? get analysisError => _analysisError;
+  bool? get printerPage1OnTop => _printerPage1OnTop;
+
 
   /// Initialization – subscribe to participants stream.
   void init() {
+    _loadPrinterCalibration();
+
     _participantsSub = _service.watchCurrentEventParticipants().listen((data) {
+
       _participants = data;
       _loadingParticipants = false;
       _participantError = null;
@@ -456,6 +468,18 @@ class PrintCenterController extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Load printer calibration setting
+  Future<void> _loadPrinterCalibration() async {
+    try {
+      final db = DatabaseWrapper.getDatabase();
+      _printerPage1OnTop = await db.getPrinterPage1OnTop();
+      notifyListeners();
+    } catch (e) {
+      AppLogger.l.w('Failed to load printer calibration: $e');
+    }
+  }
+
 
   @override
   void dispose() {

@@ -1,0 +1,264 @@
+import 'package:flutter/material.dart';
+// removed invalid relative imports
+
+import 'package:denik_zza/design_system/tokens/app_colors.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
+import 'package:denik_zza/print_ops2/models/append_analysis.dart';
+import 'package:denik_zza/print_ops2/print_center_controller.dart';
+// provider import removed
+
+
+
+/// Scenarios detected from analysis
+enum _AppendScenario {
+  firstPrint, // baseline=0
+  fitsOnLast, // reused=true, final==baseline
+  overflowsNewPages, // reused=true, final>baseline
+  allNewPages, // reused=false (full page + new)
+}
+
+class AppendInstructionDialog extends StatefulWidget {
+  final PrintCenterController controller;
+
+  const AppendInstructionDialog({super.key, required this.controller});
+
+  @override
+  State<AppendInstructionDialog> createState() =>
+      _AppendInstructionDialogState();
+}
+
+class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _runAnalysis();
+  }
+
+  Future<void> _runAnalysis() async {
+    // Ensure calibration is loaded
+    if (widget.controller.printerPage1OnTop == null) {
+      // We could try to reload it here or just proceed to specific UI state
+    }
+
+    await widget.controller.analyzeAppendScenario();
+
+    if (mounted) {
+      setState(() {
+        _loading = false;
+        _error = widget.controller.analysisError;
+      });
+    }
+  }
+
+  _AppendScenario _detectScenario(AppendAnalysis a) {
+    if (a.baselinePages == 0) return _AppendScenario.firstPrint;
+    if (a.reusedLastPage && a.finalPages == a.baselinePages) {
+      return _AppendScenario.fitsOnLast;
+    }
+    if (a.reusedLastPage && a.finalPages > a.baselinePages) {
+      return _AppendScenario.overflowsNewPages;
+    }
+    return _AppendScenario.allNewPages;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Row(
+        children: [
+
+          Icon(Icons.print, color: AppColors.blueText),
+
+          SizedBox(width: 8),
+          Text('Instrukce pro tisk'),
+        ],
+      ),
+      content: _buildContent(),
+      actions: _buildActions(),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_loading) {
+      return const SizedBox(
+        height: 100,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Analyzuji dokument...'),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Text('Chyba analýzy: $_error',
+          style: const TextStyle(color: Colors.red));
+    }
+
+    final analysis = widget.controller.appendAnalysis;
+    if (analysis == null) return const Text('Žádná data k analýze.');
+
+    return _buildInstructions(analysis);
+  }
+
+  Widget _buildInstructions(AppendAnalysis analysis) {
+    final scenario = _detectScenario(analysis);
+    final page1Callback = widget.controller.printerPage1OnTop;
+
+    // Warning if not calibrated
+    Widget calibrationWarning = const SizedBox.shrink();
+    if (page1Callback == null) {
+      calibrationWarning = Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.m),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.orangeBackground,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.warning_amber, color: AppColors.orangeText, size: 20),
+
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Tiskárna není kalibrována! Pořadí stránek nemusí odpovídat.',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        calibrationWarning,
+        const Text('Vložte papír do zásobníku:',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        ..._getStepsForScenario(scenario, analysis, page1Callback),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.greyBackground,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Row(
+
+            children: [
+              Icon(Icons.info_outline, size: 16, color: AppColors.greyText),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Stránky s * obsahují pouze transparentní obsah - můžete použít existující výtisk nebo prázdný papír.',
+                  style: TextStyle(fontSize: 11, color: AppColors.greyText),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _getStepsForScenario(
+      _AppendScenario scenario, AppendAnalysis a, bool? page1OnTop) {
+    final steps = <String>[];
+
+    // Determine loading order based on printer type
+    // If page1OnTop=true (normal), we load in page order (1, 2, 3...)
+    // If page1OnTop=false (reverse), we load in reverse order (3, 2, 1...)
+    // Default to normal if unknown
+    final isNormalOrder = page1OnTop ?? true;
+
+    switch (scenario) {
+      case _AppendScenario.firstPrint:
+        steps.add('Vložte ${a.finalPages} prázdných listů.');
+        break;
+
+      case _AppendScenario.fitsOnLast:
+        // Just the reused page
+        steps.add('Stránka ${a.baselinePages} (existující)*');
+        break;
+
+      case _AppendScenario.overflowsNewPages:
+      case _AppendScenario.allNewPages:
+        // We print all pages involved
+        // E.g. reused page + new pages OR new pages only
+        final pagesToLoad = <String>[];
+
+        // If we reuse last page (Scenario 3, 5, 6)
+        if (a.reusedLastPage && a.baselinePages > 0) {
+          pagesToLoad.add('Stránka ${a.baselinePages} (existující)*');
+        }
+
+        // Add additional blank pages needed
+        final newPagesCount = a.finalPages -
+            (a.reusedLastPage ? a.baselinePages : a.baselinePages);
+        if (newPagesCount > 0) {
+          pagesToLoad.add('$newPagesCount x prázdný list');
+        } else {
+          // Should not happen in overflow scenario
+           // If we fall here, newPagesCount is <= 0 which implies no new pages needed
+           // or logic error. Safest is to add nothing or show error.
+           // For now, we assume if reusedLastPage=false (allNewPages), newPagesCount is finalPages
+           if (scenario == _AppendScenario.allNewPages) {
+              pagesToLoad.add('${a.finalPages} x prázdný list');
+           }
+        }
+
+        // Apply order
+        if (!isNormalOrder) {
+          pagesToLoad.reversed.forEach(steps.add);
+        } else {
+          pagesToLoad.forEach(steps.add);
+        }
+        break;
+    }
+
+    return steps
+        .map((s) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Icon(Icons.circle, size: 8, color: AppColors.primary),
+
+
+
+                  const SizedBox(width: 8),
+                  Text(s),
+                ],
+              ),
+            ))
+        .toList();
+  }
+
+  List<Widget> _buildActions() {
+    if (_loading) return [];
+
+    return [
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(false),
+        child: const Text('Zrušit'),
+      ),
+      FilledButton(
+        onPressed: _error != null
+            ? null
+            : () => Navigator.of(context).pop(true),
+        child: const Text('Pokračovat k tisku'),
+      ),
+    ];
+  }
+}

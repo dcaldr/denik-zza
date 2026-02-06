@@ -1,7 +1,11 @@
 import 'package:denik_zza/print_ops2/first_print.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+// unused imports removed
+import 'package:denik_zza/print_ops2/widgets/append_instruction_dialog.dart';
+
 import 'print_center_controller.dart';
+
 import 'print_center_service.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
@@ -418,6 +422,18 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
                     onPressed: () async {
                       Future<void> runPrintCycle() async {
                         try {
+                          // Append Instruction Dialog
+                          if (ctrl.mode == PrintMode.append) {
+                            final proceed = await showDialog<bool>(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) =>
+                                  AppendInstructionDialog(controller: ctrl),
+                            );
+
+                            if (proceed != true) return;
+                          }
+
                           await SystemInterface.instance.printPdf(
                             onLayout: (_) => ctrl.generateCurrentPdf(),
                             name: 'Osoba_${ctrl.selected?.id ?? "export"}',
