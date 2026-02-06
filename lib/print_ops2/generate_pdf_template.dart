@@ -7,6 +7,8 @@ import 'package:denik_zza/print_ops2/pdf_constants.dart';
 import 'package:denik_zza/print_ops2/models/append_analysis.dart';
 import 'package:denik_zza/print_ops2/models/append_build_result.dart';
 import 'package:denik_zza/print_ops2/models/doc_with_count.dart';
+import 'package:denik_zza/print_ops2/print_utils.dart';
+import 'package:denik_zza/print_ops2/print_status_codes.dart';
 import 'package:logger/logger.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:pdf/pdf.dart';
@@ -55,27 +57,20 @@ class GeneratePdfTemplate {
   /// Header T -> Records F - ok
   bool canAppend() {
     // Check if osoba exists and was printed
-    if (_osoba == null || !(_osoba?.wasPrinted ?? false)) {
-      return false;
-    }
+    if (_osoba == null) return false;
+    final wasPrinted = _osoba?.wasPrinted ?? false;
 
     // Special case: If there are no records at all, don't allow append
     // This is because append mode is designed to add new records to existing ones,
     // but without any records (even if the header exists), a full print makes more sense
-    if (_zaznamList == null || _zaznamList!.isEmpty) {
-      // TODO: In the future, this could be configurable if append for empty lists
-      // becomes a valid use case, but for now, we explicitly disallow it
-      return false;
-    }
+    if (_zaznamList == null) return false;
+
+    if (_zaznamList!.isEmpty) return false;
 
     // here osoba(header) always printed
     isRecordsOk();
-    // if records are broken return false
-    if (_recordStatus == OkCodes.broken) {
-      return false;
-    }
-
-    return true;
+    final printedFlags = _zaznamList!.map((record) => record.isPrinted).toList();
+    return canAppendPrint(wasPrinted: wasPrinted, isPrintedFlags: printedFlags);
   }
 
   /// tests if records aren't blocking appending
@@ -87,6 +82,11 @@ class GeneratePdfTemplate {
     }
     if (_zaznamList == null) {
       _recordStatus = OkCodes.unprinted;
+      return;
+    }
+
+    if (_zaznamList!.isEmpty) {
+      _recordStatus = OkCodes.unset;
       return;
     }
 
@@ -107,19 +107,8 @@ class GeneratePdfTemplate {
     /// order by time of the record (oldest first)
     _zaznamList!.sort((a, b) => a.casZaznamu!.compareTo(b.casZaznamu!));
 
-    /// after finding first true all the rest should be true or its broken
-    bool prevItem = _zaznamList!.first.isPrinted;
-    for (var item in _zaznamList!) {
-      // if isPrinted after some that wasn't printed
-      if (item.isPrinted && !prevItem) {
-        _recordStatus = OkCodes.broken;
-        return;
-      }
-      prevItem = item.isPrinted;
-    }
-
-    /// for here : if last item is printed then all are printed
-    _recordStatus = prevItem ? OkCodes.printed : OkCodes.unprinted;
+    final flags = _zaznamList!.map((record) => record.isPrinted).toList();
+    _recordStatus = evaluateRecordSequence(flags);
   }
 
   /// generates list of pages for pdf from the given person
@@ -389,9 +378,3 @@ class GeneratePdfTemplate {
   }
 }
 
-enum OkCodes {
-  unprinted,
-  printed,
-  broken,
-  unset,
-}

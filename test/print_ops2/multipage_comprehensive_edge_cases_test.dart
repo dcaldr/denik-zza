@@ -7,7 +7,7 @@ import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_akce.dart';
-import 'utils/database_test_helper.dart';
+import '../utils/database_test_helper.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

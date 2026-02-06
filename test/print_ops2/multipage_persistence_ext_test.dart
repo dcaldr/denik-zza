@@ -4,10 +4,7 @@ import 'package:denik_zza/print_ops2/print_center_service.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
-import 'setup_templates/hardcoded_setup.dart';
-import 'setup_templates/hardcoded_setup.dart';
-import 'utils/database_test_helper.dart';
-import 'package:denik_zza/utils/mode_coordinator.dart';
+import '../setup_templates/hardcoded_setup.dart';
 
 void main() {
   // Ensure Flutter bindings for rootBundle/font loading
