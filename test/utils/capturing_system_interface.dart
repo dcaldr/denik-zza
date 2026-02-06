@@ -13,6 +13,7 @@ class CapturedPdf {
   final Uint8List bytes;
   final String name;
   final int pageCount;
+  final int callIndex;
   final DateTime timestamp;
   final String? savedPath;
   final PdfPageFormat format;
@@ -21,6 +22,7 @@ class CapturedPdf {
     required this.bytes,
     required this.name,
     required this.pageCount,
+    required this.callIndex,
     required this.timestamp,
     required this.savedPath,
     required this.format,
@@ -44,7 +46,6 @@ class CapturingSystemInterface implements SystemInterface {
   }
 
   static CapturingSystemInterface forCurrentTest({
-    String artifactsDirName = 'pdf_artifacts',
     bool saveToDisk = true,
   }) {
     final testDir = ModeCoordinator.currentTestDirectory;
@@ -52,7 +53,7 @@ class CapturingSystemInterface implements SystemInterface {
       return CapturingSystemInterface(saveToDisk: false);
     }
 
-    final outputDir = Directory(path.join(testDir.path, artifactsDirName));
+    final outputDir = Directory(path.join(testDir.path, 'pdf_artifacts'));
     return CapturingSystemInterface(
       saveToDisk: saveToDisk,
       outputDir: outputDir,
@@ -86,7 +87,7 @@ class CapturingSystemInterface implements SystemInterface {
     final bytes = await onLayout(format);
     final pageCount = countPdfPages(bytes);
     final timestamp = DateTime.now();
-    final index = ++printCallCount;
+    final callIndex = ++printCallCount;
 
     String? savedPath;
     if (saveToDisk && outputDir != null) {
@@ -94,8 +95,8 @@ class CapturingSystemInterface implements SystemInterface {
         outputDir!.createSync(recursive: true);
       }
       final safeName = _sanitizeFileName(name);
-      final subdirName =
-          'print_${index.toString().padLeft(3, '0')}_$safeName';
+        final subdirName =
+          'print_${callIndex.toString().padLeft(3, '0')}_$safeName';
       final subdir = Directory(path.join(outputDir!.path, subdirName));
       if (!subdir.existsSync()) {
         subdir.createSync(recursive: true);
@@ -111,6 +112,7 @@ class CapturingSystemInterface implements SystemInterface {
       bytes: bytes,
       name: name,
       pageCount: pageCount,
+      callIndex: callIndex,
       timestamp: timestamp,
       savedPath: savedPath,
       format: format,
@@ -118,16 +120,18 @@ class CapturingSystemInterface implements SystemInterface {
   }
 
   static Future<void> cleanupOldArtifacts({
-    required Directory baseDir,
+    required String baseDir,
     int keepLast = 5,
   }) async {
-    if (!await baseDir.exists()) return;
-    final entities = await baseDir.list().toList();
+    final directory = Directory(baseDir);
+    if (!await directory.exists()) return;
+    final entities = await directory.list().toList();
     final directories = entities.whereType<Directory>().toList();
 
     if (directories.isNotEmpty) {
-        directories.sort(
-          (a, b) => b.statSync().modified.compareTo(a.statSync().modified));
+      directories.sort(
+        (a, b) => b.path.compareTo(a.path),
+      );
 
       for (var i = keepLast; i < directories.length; i++) {
         await directories[i].delete(recursive: true);

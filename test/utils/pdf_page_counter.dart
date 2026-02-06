@@ -3,10 +3,12 @@ import 'dart:typed_data';
 class PdfPageMetrics {
   final int pageCount;
   final int byteSize;
+  final List<int> perPageByteSizes;
 
   const PdfPageMetrics({
     required this.pageCount,
     required this.byteSize,
+    required this.perPageByteSizes,
   });
 }
 
@@ -20,8 +22,12 @@ int countPdfPages(Uint8List pdfBytes) {
 }
 
 PdfPageMetrics analyzePdf(Uint8List pdfBytes) {
+  final pageCount = countPdfPages(pdfBytes);
+  final byteSize = pdfBytes.length;
+  final avg = pageCount > 0 ? (byteSize / pageCount).round() : byteSize;
   return PdfPageMetrics(
-    pageCount: countPdfPages(pdfBytes),
-    byteSize: pdfBytes.length,
+    pageCount: pageCount,
+    byteSize: byteSize,
+    perPageByteSizes: List<int>.filled(pageCount, avg),
   );
 }

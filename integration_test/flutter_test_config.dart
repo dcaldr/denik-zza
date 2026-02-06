@@ -2,7 +2,6 @@
 // Ensures all integration tests start with proper mode setup.
 
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/services.dart';
 import 'package:integration_test/integration_test.dart';
@@ -48,7 +47,7 @@ FutureOr<void> testExecutable(FutureOr<void> Function() testMain) async {
     await DatabaseWrapper.dispose();
     final testDir = ModeCoordinator.currentTestDirectory;
     if (testDir != null) {
-      final artifactsDir = Directory(path.join(testDir.path, 'pdf_artifacts'));
+      final artifactsDir = path.join(testDir.path, 'pdf_artifacts');
       await CapturingSystemInterface.cleanupOldArtifacts(
         baseDir: artifactsDir,
         keepLast: 5,
