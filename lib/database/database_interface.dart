@@ -77,7 +77,7 @@ abstract class DatabaseInterface {
   /// This method takes an [pinnedEventID] as a parameter, which represents the ID of an action that is to be pinned.
   /// It updates the cache with this new [pinnedEventID].
   @Deprecated("Remove when possible")
-  void updatePinnedEvent(int? pinnedEventID);
+  Future<void> updatePinnedEvent(int? pinnedEventID);
 
   /// Updates the "settings" cache with a new [currentEventID] and syncs FileManager.
   ///
@@ -132,12 +132,12 @@ abstract class DatabaseInterface {
   /// Updates record wasPrinted value.
   ///
   /// Takes [id] of target record and [value] as a target bool value.
-  bool setRecordPrintedValue(int id, bool value);
+  Future<bool> setRecordPrintedValue(int id, bool value);
 
   /// Updates participant wasPrinted value.
   ///
   /// Takes [id] of target participant and [value] as a target bool value.
-  bool setParticipantPrintedValue(int id, bool value);
+  Future<bool> setParticipantPrintedValue(int id, bool value);
 
 //note: přidáno
 

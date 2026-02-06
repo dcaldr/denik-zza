@@ -85,7 +85,7 @@ class _PrintConfirmDialog extends StatelessWidget {
                 icon: Icons.restart_alt,
                 title: 'Rozbitý tisk (reset)',
                 body:
-                    'Zruší označení vytištěného stavu (budoucí implementace). Po výběru Reset si ještě zvolíte zda rovnou spustit nový tisk.',
+                    'Zruší označení vytištěného stavu – jako by se netisklo. Po výběru Reset si ještě zvolíte zda rovnou spustit nový tisk.',
               ),
               const SizedBox(height: AppSpacing.l),
               if (appendActive != null || appendPossible != null)

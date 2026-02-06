@@ -29,7 +29,7 @@ Future<void> runScenario() async {
   // debugPrint('SCENARIO: Created Person ID: $personId');
 
   // Mark Person as Printed
-  db.setParticipantPrintedValue(personId, true);
+  await db.setParticipantPrintedValue(personId, true);
 
   // 2. Create Records (Explicitly 4, sorted by expected timeline)
   // We want 3 PRINTED, 1 UNPRINTED (Last one)
@@ -121,7 +121,7 @@ Future<void> _addRecord(DatabaseInterface db, int personId, String title,
     final all = await db.getRecordsByParticipantID(personId);
     // Find the one we just added (by title/time)
     final justAdded = all.firstWhere((r) => r.nazev == title);
-    db.setRecordPrintedValue(justAdded.idZaznamu, true);
+    await db.setRecordPrintedValue(justAdded.idZaznamu, true);
   }
 }
 

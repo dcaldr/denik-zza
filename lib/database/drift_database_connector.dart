@@ -73,7 +73,7 @@ class DriftDatabaseConnector implements DatabaseInterface {
     if (insCompId == null &&
         osoba.zdravotniPojistovna != null &&
         osoba.zdravotniPojistovna!.trim().isNotEmpty) {
-      _driftDatabase.addInsuranceCompany(InsuranceCompaniesCompanion(
+      await _driftDatabase.addInsuranceCompany(InsuranceCompaniesCompanion(
         name: Value(osoba.zdravotniPojistovna!),
       ));
       // Update insCompId after creating the insurance company
@@ -252,8 +252,8 @@ class DriftDatabaseConnector implements DatabaseInterface {
 
   @Deprecated("Remove when possible")
   @override
-  void updatePinnedEvent(int? pinnedEventID) async {
-    _driftDatabase.updateCache(CacheCompanion(
+  Future<void> updatePinnedEvent(int? pinnedEventID) async {
+    await _driftDatabase.updateCache(CacheCompanion(
         id: const Value(1), pinnedActionID: Value(pinnedEventID)));
   }
 
@@ -313,15 +313,15 @@ class DriftDatabaseConnector implements DatabaseInterface {
   }
 
   @override
-  bool setRecordPrintedValue(int id, bool value) {
-    _driftDatabase.setRecordPrintedValue(id, value);
-    return true;
+  Future<bool> setRecordPrintedValue(int id, bool value) async {
+    final rows = await _driftDatabase.setRecordPrintedValue(id, value);
+    return rows > 0;
   }
 
   @override
-  bool setParticipantPrintedValue(int id, bool value) {
-    _driftDatabase.setParticipantPrintedValue(id, value);
-    return true;
+  Future<bool> setParticipantPrintedValue(int id, bool value) async {
+    final rows = await _driftDatabase.setParticipantPrintedValue(id, value);
+    return rows > 0;
   }
 
   @override

@@ -316,7 +316,15 @@ class PrintCenterController extends ChangeNotifier {
     } else if (result == PrintSimulationResult.reset ||
         result == PrintSimulationResult.resetAndReprint) {
       _simulatedPrinted = false;
-      // Note: Future feature could be to reset DB flags here too if needed
+
+      if (_selected != null) {
+        await _service.setParticipantPrintedFlag(_selected!.id, false);
+        final allIds = _records.map((e) => e.idZaznamu).toList();
+        if (allIds.isNotEmpty) {
+          await _service.setMultipleRecordPrintedFlags(allIds, false);
+        }
+        await _loadParticipantDetails(_selected!);
+      }
     }
 
     notifyListeners();

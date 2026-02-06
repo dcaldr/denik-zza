@@ -40,7 +40,7 @@ class PrintCenterService {
   Future<bool> setParticipantPrintedFlag(
       int participantId, bool wasPrinted) async {
     try {
-      final success = _db.setParticipantPrintedValue(participantId, wasPrinted);
+      final success = await _db.setParticipantPrintedValue(participantId, wasPrinted);
       return success;
     } catch (e) {
       return false;
@@ -50,7 +50,7 @@ class PrintCenterService {
   /// Sets record printed flag with error handling
   Future<bool> setRecordPrintedFlag(int recordId, bool isPrinted) async {
     try {
-      final success = _db.setRecordPrintedValue(recordId, isPrinted);
+      final success = await _db.setRecordPrintedValue(recordId, isPrinted);
       return success;
     } catch (e) {
       return false;

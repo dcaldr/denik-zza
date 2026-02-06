@@ -77,10 +77,10 @@ class ConfirmPrint {
   Future<bool> forAllSendResult(List<MemoryOsoba> osoby, bool isPrinted) async {
     for (var item in osoby) {
       List<MemoryZaznam> zaznamy = await db.getRecordsByParticipantID(item.id);
-      db.setParticipantPrintedValue(item.id, isPrinted);
+      await db.setParticipantPrintedValue(item.id, isPrinted);
       /// for [isPrinted] this is overkill but i cannot be bothered now //Todo: maybe optimize
       for(var zaznam in zaznamy){
-        db.setRecordPrintedValue(zaznam.idZaznamu, isPrinted);
+        await db.setRecordPrintedValue(zaznam.idZaznamu, isPrinted);
       }
     }
     return true;
