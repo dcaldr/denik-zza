@@ -1,8 +1,13 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:denik_zza/main.dart' as app;
 import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/services/system/system_interface.dart';
 
 import '../../infrastructure/data/datasets/jursky_park_data.dart';
 import '../../infrastructure/robots/dashboard_robot.dart';
@@ -11,12 +16,16 @@ import '../../infrastructure/robots/event_detail_robot.dart';
 import '../../infrastructure/robots/participant_editor_robot.dart';
 import '../../infrastructure/robots/intake_robot.dart';
 import '../../infrastructure/robots/new_record_robot.dart';
+import '../../infrastructure/robots/print_center_robot.dart';
+import '../../infrastructure/robots/person_mode_flow_robot.dart';
+import '../../infrastructure/robots/print_state_robot.dart';
 import '../../infrastructure/helpers/db_verification_helpers.dart';
 import '../../infrastructure/data/models/test_record.dart';
 import '../../infrastructure/data/models/test_restriction.dart';
 import '../../infrastructure/data/models/test_participant.dart';
 import '../../infrastructure/helpers/test_step_logger.dart';
 import '../../../test/setup_templates/hardcoded_setup.dart';
+import '../../../test/utils/capturing_system_interface.dart';
 
 /// TRUE E2E TEST: Jurský Park Full Workflow
 ///
@@ -253,6 +262,9 @@ void main() {
         final participantEditor = ParticipantEditorRobot(tester);
         final intake = IntakeRobot(tester);
         final newRecord = NewRecordRobot(tester);
+        final printCenter = PrintCenterRobot(tester);
+        final personMode = PersonModeFlowRobot(tester);
+        final printState = PrintStateRobot(tester);
         final db = DatabaseWrapper.getDatabase();
         final dbHelpers = DbVerificationHelpers(db);
 
@@ -516,6 +528,36 @@ void main() {
         });
 
         // ============================================================
+        // PHASE 4: Event Continued - Baseline Print for Append
+        // ============================================================
+        logger.section('PHASE 4: Event Continued - Baseline Print for Append');
+
+        await logger.step('Baseline Full Print for Milada', () async {
+          await printCenter.tapPersonModeCard();
+          await personMode.verifyPageShown();
+          await personMode.selectParticipant('Milada Horáková');
+          await personMode.selectFullPrintMode();
+          await personMode.tapPrintButton();
+          await personMode.confirmPrintSuccess();
+
+          final miladaId = await dbHelpers.getParticipantId(
+            milada.jmeno,
+            milada.prijmeni,
+          );
+          if (miladaId != null) {
+            await dbHelpers.verifyParticipantPrinted(
+              milada.jmeno,
+              milada.prijmeni,
+              true,
+            );
+            await dbHelpers.verifyAllRecordsPrinted(miladaId, true);
+          }
+
+          await personMode.tap(personMode.findKey('PersonMode_backToCenter'));
+          await printCenter.verifyPageShown();
+        });
+
+        // ============================================================
         // PHASE 4: Event Continued - Append Print
         // ============================================================
         logger.section('PHASE 4: Event Continued - Append Print');
@@ -536,6 +578,138 @@ void main() {
            if (miladaId != null) {
              await dbHelpers.verifyRecords(participantId: miladaId, expectedRecords: [...milada.zaznamy, appendRecord]);
            }
+        });
+
+        // ============================================================
+        // PHASE 5: Print Center Full + Append with PDF Artifacts
+        // ============================================================
+        logger.section('PHASE 5: Print Center Full + Append with Artifacts');
+
+        final capture = CapturingSystemInterface.forCurrentTest();
+        SystemInterface.registerWith(capture);
+
+        final kafka = jurskyParkParticipants[9];
+
+        await logger.step('Full Print: Franz Kafka', () async {
+          await dashboard.navigateToPrintCenter();
+          await printCenter.tapPersonModeCard();
+          await personMode.verifyPageShown();
+          await personMode.selectParticipant('Franz Kafka');
+          await personMode.selectFullPrintMode();
+          await personMode.tapPrintButton();
+          await personMode.confirmPrintSuccess();
+
+          final kafkaId = await dbHelpers.getParticipantId(
+            kafka.jmeno,
+            kafka.prijmeni,
+          );
+          if (kafkaId != null) {
+            await dbHelpers.verifyParticipantPrinted(
+              kafka.jmeno,
+              kafka.prijmeni,
+              true,
+            );
+            await dbHelpers.verifyAllRecordsPrinted(kafkaId, true);
+          }
+
+          expect(capture.capturedPdfs.length, equals(1),
+              reason: 'Expected 1 captured PDF after Kafka full print');
+          final kafkaPdf = capture.capturedPdfs.first;
+          expect(kafkaPdf.pageCount, greaterThan(0),
+              reason: 'Kafka PDF should have at least 1 page');
+
+          await personMode.tap(personMode.findKey('PersonMode_backToCenter'));
+          await printCenter.verifyPageShown();
+        });
+
+        await logger.step('Append Print: Milada Horáková', () async {
+          await printCenter.tapPersonModeCard();
+          await personMode.verifyPageShown();
+          await personMode.selectParticipant('Milada Horáková');
+          await personMode.selectAppendPrintMode();
+          await personMode.tapPrintButton();
+
+          final continueFound = await personMode.waitForKey(
+            'AppendInstruction_continue',
+          );
+          expect(continueFound, isTrue,
+              reason: 'Append instruction dialog should appear');
+          await personMode.tap(personMode.findKey('AppendInstruction_continue'));
+
+          await personMode.confirmPrintSuccess();
+
+          final miladaId = await dbHelpers.getParticipantId(
+            milada.jmeno,
+            milada.prijmeni,
+          );
+          if (miladaId != null) {
+            await dbHelpers.verifyParticipantPrinted(
+              milada.jmeno,
+              milada.prijmeni,
+              true,
+            );
+            await dbHelpers.verifyAllRecordsPrinted(miladaId, true);
+            await dbHelpers.verifyPrintStateContiguous(miladaId);
+          }
+
+          expect(capture.capturedPdfs.length, equals(2),
+              reason: 'Expected 2 captured PDFs after append print');
+          final miladaPdf = capture.capturedPdfs.last;
+          expect(miladaPdf.pageCount, greaterThan(0),
+              reason: 'Milada PDF should have at least 1 page');
+
+          await personMode.tap(personMode.findKey('PersonMode_backToCenter'));
+          await printCenter.verifyPageShown();
+        });
+
+        await logger.step('Print State Management Verification', () async {
+          await printCenter.tapStateManagementCard();
+          await printState.verifyPageShown();
+
+          await printState.ensureVisible(printState.findText('Franz Kafka'));
+          await printState.expandPerson('Franz Kafka');
+          await printState.verifyPersonPrintedBadge('Franz Kafka', true);
+
+          await printState.ensureVisible(printState.findText('Milada Horáková'));
+          await printState.expandPerson('Milada Horáková');
+          await printState.verifyPersonPrintedBadge('Milada Horáková', true);
+
+          await printState.toggleRecordPrinted(0);
+
+          final kafkaId = await dbHelpers.getParticipantId(
+            kafka.jmeno,
+            kafka.prijmeni,
+          );
+          if (kafkaId != null) {
+            await dbHelpers.verifyAllRecordsPrinted(kafkaId, false);
+            await dbHelpers.verifyPrintStateContiguous(kafkaId);
+          }
+        });
+
+        await logger.step('Write PDF manifest for review', () async {
+          final outputDir = capture.outputDir;
+          if (outputDir == null) return;
+
+          final manifest = {
+            'testName': 'jursky_park_true_e2e',
+            'timestamp': DateTime.now().toIso8601String(),
+            'prints': capture.capturedPdfs
+                .map((p) => {
+                      'name': p.name,
+                      'pageCount': p.pageCount,
+                      'callIndex': p.callIndex,
+                      'timestamp': p.timestamp.toIso8601String(),
+                      'savedPath': p.savedPath,
+                    })
+                .toList(),
+          };
+
+          final file = File('${outputDir.path}/test_manifest.json');
+          await file.writeAsString(jsonEncode(manifest), flush: true);
+
+          for (final pdf in capture.capturedPdfs) {
+            debugPrint('PDF artifact: ${pdf.savedPath}');
+          }
         });
 
         // ============================================================
