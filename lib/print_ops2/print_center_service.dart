@@ -37,6 +37,23 @@ class PrintCenterService {
     return _db.getOmezeniByParticipantID(participantId);
   }
 
+  Future<bool> getParticipantPrintedFlag(int participantId) async {
+    final participant = await _db.getOsobaById(participantId);
+    return participant.wasPrinted ?? false;
+  }
+
+  Future<Map<int, bool>> getRecordPrintedFlags(int participantId) async {
+    final records = await _db.getRecordsByParticipantID(participantId);
+    return {
+      for (final record in records) record.idZaznamu: record.isPrinted,
+    };
+  }
+
+  Future<int> countPrintedRecords(int participantId) async {
+    final records = await _db.getRecordsByParticipantID(participantId);
+    return records.where((record) => record.isPrinted).length;
+  }
+
   /// Sets participant printed flag with error handling
   Future<bool> setParticipantPrintedFlag(
       int participantId, bool wasPrinted) async {
