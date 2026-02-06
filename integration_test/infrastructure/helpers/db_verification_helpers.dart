@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
+import 'package:denik_zza/utils/record_sort_utils.dart';
 
 import '../data/models/test_participant.dart';
 import '../data/models/test_medication.dart';
@@ -227,6 +228,72 @@ class DbVerificationHelpers {
       expect(found, isTrue,
           reason:
               'Record "${expected.nazev}" not found for participant $participantId');
+    }
+  }
+
+  // ==================== PRINT STATE VERIFICATION ====================
+
+  /// Verifies that participant wasPrinted flag matches expectation.
+  Future<void> verifyParticipantPrinted(
+    String firstName,
+    String lastName,
+    bool expected,
+  ) async {
+    final participant = await verifyParticipantExists(
+      jmeno: firstName,
+      prijmeni: lastName,
+    );
+
+    expect(participant.wasPrinted ?? false, equals(expected),
+        reason:
+            'Participant "$firstName $lastName" printed mismatch: expected $expected');
+  }
+
+  /// Verifies that a record by id has expected isPrinted value.
+  Future<void> verifyRecordPrinted(int recordId, bool expected) async {
+    final participants = await db.getParticipantsByCurrentEvent();
+
+    for (final p in participants) {
+      final records = await db.getRecordsByParticipantID(p.id);
+      final match = records.where((r) => r.idZaznamu == recordId);
+      if (match.isNotEmpty) {
+        expect(match.first.isPrinted, equals(expected),
+            reason:
+                'Record $recordId printed mismatch: expected $expected');
+        return;
+      }
+    }
+
+    fail('Record id $recordId not found in current event');
+  }
+
+  /// Verifies all records for a participant are printed/unprinted.
+  Future<void> verifyAllRecordsPrinted(
+    int participantId,
+    bool expected,
+  ) async {
+    final records = await db.getRecordsByParticipantID(participantId);
+    final allMatch = records.every((r) => r.isPrinted == expected);
+    expect(allMatch, isTrue,
+        reason:
+            'Participant $participantId records expected printed=$expected');
+  }
+
+  /// Verifies printed state is a contiguous prefix (no printed after unprinted).
+  Future<void> verifyPrintStateContiguous(int participantId) async {
+    final records = await db.getRecordsByParticipantID(participantId);
+    sortRecordsByTime(records);
+
+    bool foundUnprinted = false;
+    for (final record in records) {
+      if (!record.isPrinted) {
+        foundUnprinted = true;
+        continue;
+      }
+      if (foundUnprinted) {
+        fail(
+            'Non-contiguous print state for participant $participantId: printed after unprinted');
+      }
     }
   }
 
