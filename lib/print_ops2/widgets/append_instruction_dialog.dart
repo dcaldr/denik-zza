@@ -50,11 +50,6 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
     final controller = widget.controller;
     if (controller == null) return;
 
-    // Ensure calibration is loaded
-    if (controller.printerPage1OnTop == null) {
-      // We could try to reload it here or just proceed to specific UI state
-    }
-
     await controller.analyzeAppendScenario();
 
     if (mounted) {

@@ -99,8 +99,6 @@ class _PrintConfirmDialog extends StatelessWidget {
           ),
         ),
       ),
-      // Primary actions as bottom row — only the 2 most common choices.
-      // Secondary actions (Neměnit, Reset) are accessible via overflow.
       actions: [
         TextButton.icon(
           onPressed: () => _handleReset(context),
@@ -184,10 +182,7 @@ class ConfirmOptionDescription extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    )),
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: AppSpacing.xs),
                 Text(body,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(

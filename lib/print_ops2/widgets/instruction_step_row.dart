@@ -16,9 +16,6 @@ class InstructionStepRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-      color: Theme.of(context).colorScheme.onSurface,
-    );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
@@ -33,8 +30,8 @@ class InstructionStepRow extends StatelessWidget {
             child: Text(
               text,
               style: isStrong
-                  ? baseStyle?.copyWith(fontWeight: FontWeight.bold)
-                  : baseStyle,
+                  ? const TextStyle(fontWeight: FontWeight.bold)
+                  : null,
             ),
           ),
         ],

@@ -37,9 +37,7 @@ class AppendInstructionsView extends StatelessWidget {
           const SizedBox(height: AppSpacing.m),
         ],
         Text('Vložte papír do zásobníku:',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface,
-            )),
+            style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: AppSpacing.s),
         ...steps,
         if (infoWidget != null) ...[
