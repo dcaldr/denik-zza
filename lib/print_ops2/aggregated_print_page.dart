@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/services/system/system_interface.dart';
 import 'print_center_controller.dart';
 
@@ -28,7 +29,7 @@ class _EventPrintFlowPageState extends State<SelectedAggregatedPrintPage> {
         children: [
           Expanded(
             child: ListView.separated(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(AppSpacing.s),
               itemCount: ctrl.participants.length,
               itemBuilder: (c, i) {
                 final p = ctrl.participants[i];
@@ -55,16 +56,37 @@ class _EventPrintFlowPageState extends State<SelectedAggregatedPrintPage> {
           ),
           const Divider(height: 1),
           Padding(
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.all(AppSpacing.m),
             child: Row(
               children: [
+                Checkbox(
+                  key: const Key('Aggregated_selectAll'),
+                  value: ctrl.participants.isNotEmpty &&
+                      _selectedIds.length == ctrl.participants.length,
+                  onChanged: (value) {
+                    setState(() {
+                      if (value == true) {
+                        _selectedIds
+                          ..clear()
+                          ..addAll(ctrl.participants.map((p) => p.id));
+                      } else {
+                        _selectedIds.clear();
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                const Text('Vybrat vše'),
+                const SizedBox(width: AppSpacing.l),
                 Text('Vybráno: ${_selectedIds.length}'),
-                const SizedBox(width: 16),
+                const SizedBox(width: AppSpacing.l),
                 Text(
                     'Agregovaný tisk: záznamy budou řazeny podle času napříč osobami.',
-                    style: TextStyle(fontSize: 12, color: AppColors.greyText)),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: AppColors.greyText,
+                        )),
                 const Spacer(),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.m),
                 FilledButton.icon(
                   key: const Key('Aggregated_printButton'),
                   onPressed: _selectedIds.isEmpty || _loadingPdf

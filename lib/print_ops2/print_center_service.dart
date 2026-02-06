@@ -95,4 +95,8 @@ class PrintCenterService {
   Future<void> setPrinterPage1OnTop(bool? page1OnTop) {
     return _db.setPrinterPage1OnTop(page1OnTop);
   }
+
+  Future<void> completeCalibration(bool? page1OnTop) {
+    return _db.setPrinterPage1OnTop(page1OnTop);
+  }
 }

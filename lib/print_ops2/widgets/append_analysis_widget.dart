@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:denik_zza/design_system/tokens/app_radii.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import '../models/append_analysis.dart';
 
 /// Widget for displaying append analysis results (T9)
@@ -24,15 +25,15 @@ class AppendAnalysisWidget extends StatelessWidget {
       return Card(
         key: const Key('AppendAnalysisWidget_loading_card'),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: AppSpacing.containerPadding,
           child: Row(
             children: [
               const SizedBox(
-                width: 20,
-                height: 20,
+                width: AppSpacing.xl,
+                height: AppSpacing.xl,
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.m),
               Text(
                 'Analyzuji možnosti tisku...',
                 style: Theme.of(context).textTheme.bodyMedium,
@@ -48,7 +49,7 @@ class AppendAnalysisWidget extends StatelessWidget {
         key: const Key('AppendAnalysisWidget_error_card'),
         color: Theme.of(context).colorScheme.errorContainer,
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: AppSpacing.containerPadding,
           child: Row(
             children: [
               Icon(
@@ -56,7 +57,7 @@ class AppendAnalysisWidget extends StatelessWidget {
                 color: Theme.of(context).colorScheme.error,
                 key: const Key('AppendAnalysisWidget_error_icon'),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.m),
               Expanded(
                 child: Text(
                   'Chyba analýzy: $error',
@@ -78,7 +79,7 @@ class AppendAnalysisWidget extends StatelessWidget {
     return Card(
       key: const Key('AppendAnalysisWidget_analysis_card'),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: AppSpacing.containerPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -89,7 +90,7 @@ class AppendAnalysisWidget extends StatelessWidget {
                   color: Theme.of(context).primaryColor,
                   key: const Key('AppendAnalysisWidget_analysis_icon'),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.s),
                 Text(
                   'Analýza tisku',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -98,12 +99,12 @@ class AppendAnalysisWidget extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.m),
 
             // Main description
             Container(
               key: const Key('AppendAnalysisWidget_description_container'),
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(AppSpacing.m),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: AppRadii.buttonRadius,
@@ -112,10 +113,10 @@ class AppendAnalysisWidget extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.print,
-                    size: 20,
+                    size: AppSpacing.xl,
                     color: Theme.of(context).colorScheme.primary,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.s),
                   Expanded(
                     child: Text(
                       analysis!.getAppendModeDescription(),
@@ -128,7 +129,7 @@ class AppendAnalysisWidget extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.m),
 
             // Detailed information
             _buildDetailRow(
@@ -170,7 +171,7 @@ class AppendAnalysisWidget extends StatelessWidget {
     required String key,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         key: Key('AppendAnalysisWidget_${key}_row'),
         children: [

@@ -67,6 +67,7 @@ class _FirstPrintState extends State<FirstPrint> {
         children: [
           // Step badges row
           StepBadgeRow(
+            key: const Key('FirstPrint_stepBadges'),
             stepLabels: _stepLabels,
             currentStep: _currentStep,
           ),
@@ -127,12 +128,12 @@ class _FirstPrintState extends State<FirstPrint> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.construction, size: 48, color: AppColors.greyIcon),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.l),
               Text('Krok ${_currentStep + 1} - ${_stepLabels[_currentStep]}'),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s),
               Text('Zatím neimplementováno',
                   style: TextStyle(color: AppColors.greyText)),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xxl),
               _buildNavigationButtons(),
             ],
           ),
@@ -141,7 +142,7 @@ class _FirstPrintState extends State<FirstPrint> {
   }
 
   Future<void> _completeWizard() async {
-    await _service.setPrinterPage1OnTop(_page1OnTop);
+    await _service.completeCalibration(_page1OnTop);
 
     if (!mounted) return;
     Navigator.of(context).pop();
