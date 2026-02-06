@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-// removed invalid relative imports
+import 'package:denik_zza/print_ops2/widgets/append_instructions_view.dart';
+import 'package:denik_zza/print_ops2/widgets/instruction_step_row.dart';
 
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/print_ops2/models/append_analysis.dart';
 import 'package:denik_zza/print_ops2/print_center_controller.dart';
-// provider import removed
-
-
 
 /// Scenarios detected from analysis
 enum _AppendScenario {
@@ -18,9 +16,15 @@ enum _AppendScenario {
 }
 
 class AppendInstructionDialog extends StatefulWidget {
-  final PrintCenterController controller;
+  final PrintCenterController? controller;
+  final Widget? customContent;
 
-  const AppendInstructionDialog({super.key, required this.controller});
+  const AppendInstructionDialog({
+    super.key,
+    this.controller,
+    this.customContent,
+  }) : assert(controller != null || customContent != null,
+            'Either controller or customContent must be provided');
 
   @override
   State<AppendInstructionDialog> createState() =>
@@ -34,21 +38,28 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
   @override
   void initState() {
     super.initState();
-    _runAnalysis();
+    if (widget.customContent != null) {
+      _loading = false;
+    } else {
+      _runAnalysis();
+    }
   }
 
   Future<void> _runAnalysis() async {
+    final controller = widget.controller;
+    if (controller == null) return;
+
     // Ensure calibration is loaded
-    if (widget.controller.printerPage1OnTop == null) {
+    if (controller.printerPage1OnTop == null) {
       // We could try to reload it here or just proceed to specific UI state
     }
 
-    await widget.controller.analyzeAppendScenario();
+    await controller.analyzeAppendScenario();
 
     if (mounted) {
       setState(() {
         _loading = false;
-        _error = widget.controller.analysisError;
+        _error = controller.analysisError;
       });
     }
   }
@@ -69,11 +80,9 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
     return AlertDialog(
       title: Row(
         children: [
-
           Icon(Icons.print, color: AppColors.blueText),
-
-          SizedBox(width: 8),
-          Text('Instrukce pro tisk'),
+          const SizedBox(width: 8),
+          const Text('Instrukce pro tisk'),
         ],
       ),
       content: _buildContent(),
@@ -82,6 +91,10 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
   }
 
   Widget _buildContent() {
+    if (widget.customContent != null) {
+      return widget.customContent!;
+    }
+
     if (_loading) {
       return const SizedBox(
         height: 100,
@@ -103,18 +116,21 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
           style: const TextStyle(color: Colors.red));
     }
 
-    final analysis = widget.controller.appendAnalysis;
+    final analysis = widget.controller?.appendAnalysis;
     if (analysis == null) return const Text('Žádná data k analýze.');
 
     return _buildInstructions(analysis);
   }
 
   Widget _buildInstructions(AppendAnalysis analysis) {
+    final controller = widget.controller;
+    if (controller == null) return const SizedBox();
+
     final scenario = _detectScenario(analysis);
-    final page1Callback = widget.controller.printerPage1OnTop;
+    final page1Callback = controller.printerPage1OnTop;
 
     // Warning if not calibrated
-    Widget calibrationWarning = const SizedBox.shrink();
+    Widget? calibrationWarning;
     if (page1Callback == null) {
       calibrationWarning = Container(
         margin: const EdgeInsets.only(bottom: AppSpacing.m),
@@ -126,9 +142,8 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
         child: Row(
           children: [
             Icon(Icons.warning_amber, color: AppColors.orangeText, size: 20),
-
-            SizedBox(width: 8),
-            Expanded(
+            const SizedBox(width: 8),
+            const Expanded(
               child: Text(
                 'Tiskárna není kalibrována! Pořadí stránek nemusí odpovídat.',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
@@ -139,41 +154,34 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
       );
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        calibrationWarning,
-        const Text('Vložte papír do zásobníku:',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        ..._getStepsForScenario(scenario, analysis, page1Callback),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColors.greyBackground,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Row(
+    final stepStrings = _getStepsForScenario(scenario, analysis, page1Callback);
 
-            children: [
-              Icon(Icons.info_outline, size: 16, color: AppColors.greyText),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Stránky s * obsahují pouze transparentní obsah - můžete použít existující výtisk nebo prázdný papír.',
-                  style: TextStyle(fontSize: 11, color: AppColors.greyText),
-                ),
-              ),
-            ],
-          ),
+    return AppendInstructionsView(
+      steps: stepStrings.map((s) => InstructionStepRow(text: s)).toList(),
+      warningWidget: calibrationWarning,
+      infoWidget: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.greyBackground,
+          borderRadius: BorderRadius.circular(4),
         ),
-      ],
+        child: Row(
+          children: [
+            Icon(Icons.info_outline, size: 16, color: AppColors.greyText),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Stránky s * obsahují pouze transparentní obsah - můžete použít existující výtisk nebo prázdný papír.',
+                style: TextStyle(fontSize: 11, color: AppColors.greyText),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  List<Widget> _getStepsForScenario(
+  List<String> _getStepsForScenario(
       _AppendScenario scenario, AppendAnalysis a, bool? page1OnTop) {
     final steps = <String>[];
 
@@ -211,12 +219,12 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
           pagesToLoad.add('$newPagesCount x prázdný list');
         } else {
           // Should not happen in overflow scenario
-           // If we fall here, newPagesCount is <= 0 which implies no new pages needed
-           // or logic error. Safest is to add nothing or show error.
-           // For now, we assume if reusedLastPage=false (allNewPages), newPagesCount is finalPages
-           if (scenario == _AppendScenario.allNewPages) {
-              pagesToLoad.add('${a.finalPages} x prázdný list');
-           }
+          // If we fall here, newPagesCount is <= 0 which implies no new pages needed
+          // or logic error. Safest is to add nothing or show error.
+          // For now, we assume if reusedLastPage=false (allNewPages), newPagesCount is finalPages
+          if (scenario == _AppendScenario.allNewPages) {
+            pagesToLoad.add('${a.finalPages} x prázdný list');
+          }
         }
 
         // Apply order
@@ -228,21 +236,7 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
         break;
     }
 
-    return steps
-        .map((s) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  Icon(Icons.circle, size: 8, color: AppColors.primary),
-
-
-
-                  const SizedBox(width: 8),
-                  Text(s),
-                ],
-              ),
-            ))
-        .toList();
+    return steps;
   }
 
   List<Widget> _buildActions() {
@@ -254,9 +248,7 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
         child: const Text('Zrušit'),
       ),
       FilledButton(
-        onPressed: _error != null
-            ? null
-            : () => Navigator.of(context).pop(true),
+        onPressed: _error != null ? null : () => Navigator.of(context).pop(true),
         child: const Text('Pokračovat k tisku'),
       ),
     ];

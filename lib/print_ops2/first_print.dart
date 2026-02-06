@@ -21,6 +21,9 @@ import 'calibration_pdf_generator.dart';
 
 // Step helpers imported from shared widgets
 import 'widgets/step_helpers.dart';
+import 'package:denik_zza/print_ops2/widgets/instruction_step_row.dart';
+import 'package:denik_zza/print_ops2/widgets/append_instructions_view.dart';
+import 'package:denik_zza/print_ops2/widgets/append_instruction_dialog.dart';
 
 
 // FIRST PRINT WIZARD
@@ -352,31 +355,96 @@ class _FirstPrintState extends State<FirstPrint> {
   }
 
   // STEP 6: Reinsert paper for append test
+  // STEP 6: Education - What to expect
   Widget _buildStep6ReinsertPaper() {
+    final isNormalOrder = _page1OnTop ?? true;
+
     return StepContent(
       stepIndex: 4,
       children: [
         const StepHeader(
-          icon: Icons.replay,
-          title: 'Vložení papírů zpět',
+          icon: Icons.school,
+          title: 'Co vás čeká?',
         ),
         const StepSpacing.medium(),
-        
+
         const Text(
-          'Vezměte vytištěné papíry a vložte je zpět do tiskárny.',
+          'V dalším kroku simulujeme reálný tisk. Až kliknete na "Spustit dostisk", uvidíte postupně dvě okna:',
         ),
         const StepSpacing.medium(),
-        
+
+        // 1. Instruction Dialog Preview
+        const SectionTitle('1. Instrukce pro vložení papíru'),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.greyBackground.withValues(alpha: 0.5),
+            border: Border.all(color: AppColors.greyBorder),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('UKÁZKA:',
+                  style:
+                      TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.greyText)),
+              const SizedBox(height: 8),
+              AppendInstructionsView(
+                // Show steps identical to Day-to-Day dialog style
+                steps: [
+                  InstructionStepRow(
+                    text: isNormalOrder ? 'Nahoře stránka 1' : 'Nahoře stránka 2',
+                    isStrong: true,
+                  ),
+                  InstructionStepRow(
+                    text: isNormalOrder ? 'Pod ní stránka 2' : 'Pod ní stránka 1',
+                    isStrong: true,
+                  ),
+                ],
+                infoWidget: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.blueBackground,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 16, color: AppColors.blueText),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          isNormalOrder
+                              ? 'Vložte podle čísel vzestupně (1 nahoře).'
+                              : 'Vložte podle čísel sestupně (2 nahoře).',
+                          style: TextStyle(fontSize: 12, color: AppColors.blueText),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const StepSpacing.medium(),
+
+        // 2. Confirmation Dialog Explanation
+        const SectionTitle('2. Potvrzení výsledku'),
+        const SizedBox(height: 8),
+        const Text(
+          'Po vytištění se objeví dialog s otázkou "Jak dopadl tisk?". '
+          'Tento dialog slouží k tomu, aby aplikace věděla, zda se tisk podařil, nebo zda došlo k chybě (např. zaseknutý papír) a je třeba jej opakovat.',
+        ),
+
+        const StepSpacing.medium(),
         const InfoBox(
-          icon: Icons.warning_amber,
-          title: 'DŮLEŽITÉ:',
-          content:
-            '• Zachovejte stejné pořadí\n'
-            '• NEOTÁČEJTE papíry\n'
-            '• NEPŘEVRACEJTE papíry',
+          icon: Icons.visibility,
+          title: 'Proč dvě okna?',
+          content: 'Každý tisk je dvoufázový: nejdříve **příprava** (vložení papíru) a pak **kontrola** (jestli se to povedlo).',
         ),
+
         const StepSpacing.medium(),
-        
         _buildNavigationButtons(),
       ],
     );
@@ -552,19 +620,69 @@ class _FirstPrintState extends State<FirstPrint> {
   }
 
   Future<void> _runAppendTestPrint() async {
+    // 1. Show Instruction Dialog (Static Mode)
+    final isNormalOrder = _page1OnTop ?? true;
+
+    // Prepare steps View for the Dialog
+    final instructionsView = AppendInstructionsView(
+      steps: [
+        InstructionStepRow(
+          text: isNormalOrder ? 'Nahoře stránka 1' : 'Nahoře stránka 2',
+          isStrong: true,
+        ),
+        InstructionStepRow(
+          text: isNormalOrder ? 'Pod ní stránka 2' : 'Pod ní stránka 1',
+          isStrong: true,
+        ),
+      ],
+      infoWidget: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.blueBackground,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.info_outline, size: 16, color: AppColors.blueText),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                isNormalOrder
+                    ? 'Vložte podle čísel vzestupně (1 nahoře).'
+                    : 'Vložte podle čísel sestupně (2 nahoře).',
+                style: TextStyle(fontSize: 12, color: AppColors.blueText),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    final shouldPrint = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AppendInstructionDialog(
+        customContent: instructionsView,
+      ),
+    );
+
+    if (shouldPrint != true) return;
+
+    // 2. Proceed to Print
     setState(() => _isPrinting = true);
-    
+
     try {
       final pdfBytes = await CalibrationPdfGenerator.generateAppendTest();
-      
+
       if (!mounted) return;
-      
+
       await SystemInterface.instance.printPdf(
         onLayout: (_) async => pdfBytes,
         name: 'Kalibrace_dostisk',
       );
-      
+
       if (mounted) {
+        // 3. Show Confirmation Dialog
         await _showCalibrationConfirmDialog(
           onSuccess: _nextStep,
           onRetry: _runAppendTestPrint,
