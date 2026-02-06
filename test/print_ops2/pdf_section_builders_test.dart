@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import 'package:denik_zza/print_ops2/pdf_fonts.dart';
 import 'package:denik_zza/print_ops2/pdf_header_section.dart';
 import 'package:denik_zza/print_ops2/pdf_record_row.dart';
 import 'package:denik_zza/print_ops2/print_pdf_records.dart';
@@ -27,7 +28,7 @@ void main() {
         lekList: [MemoryLek.fullNamed(id: 1, nazev: 'Med', idOsoby: 1)],
       ).buildHeader();
 
-      final doc = pw.Document();
+      final doc = pw.Document(theme: await PdfFonts.loadTheme());
       doc.addPage(pw.Page(build: (_) => header));
       final bytes = await doc.save();
       expect(bytes.isNotEmpty, true);
@@ -39,7 +40,7 @@ void main() {
 
       final header = PersonPdfHeaderSection(person).buildHeader();
 
-      final doc = pw.Document();
+      final doc = pw.Document(theme: await PdfFonts.loadTheme());
       doc.addPage(pw.Page(build: (_) => header));
       final bytes = await doc.save();
       expect(bytes.isNotEmpty, true);
@@ -52,7 +53,7 @@ void main() {
 
       final row = PersonPdfRecordRow(record).buildRow();
 
-      final doc = pw.Document();
+      final doc = pw.Document(theme: await PdfFonts.loadTheme());
       doc.addPage(pw.Page(build: (_) => row));
       final bytes = await doc.save();
       expect(bytes.isNotEmpty, true);
@@ -68,7 +69,7 @@ void main() {
       final widget = PrintPdfRecords(recordRows: rows)
           .buildRecordsList(rows, forMultiPage: true);
 
-      final doc = pw.Document();
+      final doc = pw.Document(theme: await PdfFonts.loadTheme());
       doc.addPage(pw.Page(build: (_) => widget));
       final bytes = await doc.save();
       expect(bytes.isNotEmpty, true);
