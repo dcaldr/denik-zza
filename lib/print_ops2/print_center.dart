@@ -1,3 +1,4 @@
+import 'package:denik_zza/print_ops2/first_print.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'print_center_controller.dart';
@@ -10,6 +11,7 @@ import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:denik_zza/services/system/system_interface.dart';
 import 'widgets/step_badge.dart';
 import 'widgets/print_confirm_dialog.dart';
+import '../screens2/widgets/app_drawer.dart';
 
 /// NOVÉ TISK CENTRUM (UI ONLY) -------------------------------------------------
 /// Tento modul obsahuje pouze uživatelské rozhraní bez implementované logiky tisku.
@@ -41,7 +43,7 @@ class FeatureCard extends StatelessWidget {
     this.implemented = true,
     this.emphasize = false,
   });
-//TODO: chybí menu v appbaru nejspíš (minimálně v dev_start)
+
   @override
   Widget build(BuildContext context) {
     final card = Card(
@@ -133,6 +135,7 @@ class PrintCenterPage extends StatelessWidget {
       },
       child: Builder(
         builder: (context) => Scaffold(
+          drawer: const AppDrawer(),
           appBar: AppBar(title: const Text('Tisk Centrum – Nové')),
           body: Consumer<PrintCenterController>(
             builder: (context, ctrl, _) => ListView(
@@ -189,11 +192,15 @@ class PrintCenterPage extends StatelessWidget {
                 ),
 
                 FeatureCard(
-                  title: 'Nastavení prvního tisku',
+                  title: 'Nastavení a průvodce před prvním tiskem',
                   subtitle:
                       'Ověření že vše funguje správně s tiskovým systémem operačního systému a představení dotisku. Nastavení aplikace na fugnování s tiskárnou (pořadí stránek při dotisku)',
-                      icon: Icons.remove_red_eye,
-                  implemented: false,
+                  icon: Icons.remove_red_eye,
+                  implemented: true,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const FirstPrint()),
+                  ),
                 ),
                 // Multi‑page test do budoucna můžeme obnovit
                 const SizedBox(height: 24),
