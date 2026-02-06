@@ -3,6 +3,7 @@ import 'package:denik_zza/print_ops2/widgets/append_instructions_view.dart';
 import 'package:denik_zza/print_ops2/widgets/instruction_step_row.dart';
 
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
+import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/print_ops2/models/append_analysis.dart';
 import 'package:denik_zza/print_ops2/print_center_controller.dart';
@@ -78,14 +79,18 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
       title: Row(
         children: [
-          Icon(Icons.print, color: AppColors.blueText),
-          const SizedBox(width: 8),
+          Icon(Icons.print, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: AppSpacing.s),
           const Text('Instrukce pro tisk'),
         ],
       ),
-      content: _buildContent(),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 450),
+        child: SingleChildScrollView(child: _buildContent()),
+      ),
       actions: _buildActions(),
     );
   }
@@ -103,7 +108,7 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               CircularProgressIndicator(),
-              SizedBox(height: 16),
+              SizedBox(height: AppSpacing.l),
               Text('Analyzuji dokument...'),
             ],
           ),
@@ -113,7 +118,7 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
 
     if (_error != null) {
       return Text('Chyba analýzy: $_error',
-          style: const TextStyle(color: Colors.red));
+          style: TextStyle(color: Theme.of(context).colorScheme.error));
     }
 
     final analysis = widget.controller?.appendAnalysis;
@@ -134,19 +139,21 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
     if (page1Callback == null) {
       calibrationWarning = Container(
         margin: const EdgeInsets.only(bottom: AppSpacing.m),
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(AppSpacing.s),
         decoration: BoxDecoration(
           color: AppColors.orangeBackground,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: AppRadii.buttonRadius,
         ),
         child: Row(
           children: [
             Icon(Icons.warning_amber, color: AppColors.orangeText, size: 20),
-            const SizedBox(width: 8),
-            const Expanded(
+            const SizedBox(width: AppSpacing.s),
+            Expanded(
               child: Text(
                 'Tiskárna není kalibrována! Pořadí stránek nemusí odpovídat.',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -160,19 +167,21 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
       steps: stepStrings.map((s) => InstructionStepRow(text: s)).toList(),
       warningWidget: calibrationWarning,
       infoWidget: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(AppSpacing.s),
         decoration: BoxDecoration(
           color: AppColors.greyBackground,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: AppRadii.buttonRadius,
         ),
         child: Row(
           children: [
             Icon(Icons.info_outline, size: 16, color: AppColors.greyText),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s),
             Expanded(
               child: Text(
                 'Stránky s * obsahují pouze transparentní obsah - můžete použít existující výtisk nebo prázdný papír.',
-                style: TextStyle(fontSize: 11, color: AppColors.greyText),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.greyText,
+                ),
               ),
             ),
           ],

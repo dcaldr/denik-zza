@@ -264,8 +264,12 @@ class ZzaTheme {
         shape: const RoundedRectangleBorder(
           borderRadius: AppRadii.containerRadius, // 12px
         ),
-        titleTextStyle: AppTypography.textTheme.headlineSmall,
-        contentTextStyle: AppTypography.textTheme.bodyMedium,
+        titleTextStyle: AppTypography.textTheme.headlineSmall?.copyWith(
+          color: AppColors.lightColorScheme.onSurface,
+        ),
+        contentTextStyle: AppTypography.textTheme.bodyMedium?.copyWith(
+          color: AppColors.lightColorScheme.onSurface,
+        ),
       ),
 
       // ========================================

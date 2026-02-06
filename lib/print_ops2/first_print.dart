@@ -441,7 +441,7 @@ class _FirstPrintState extends State<FirstPrint> {
         const InfoBox(
           icon: Icons.visibility,
           title: 'Proč dvě okna?',
-          content: 'Každý tisk je dvoufázový: nejdříve **příprava** (vložení papíru) a pak **kontrola** (jestli se to povedlo).',
+          content: 'Každý tisk je dvoufázový: nejdříve příprava (vložení papíru) a pak kontrola (jestli se to povedlo).',
         ),
 
         const StepSpacing.medium(),

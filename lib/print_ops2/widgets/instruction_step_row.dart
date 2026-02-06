@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:denik_zza/design_system/tokens/app_colors.dart';
+import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 
 /// A single instruction step row (bullet point icon + text).
 ///
@@ -16,22 +16,25 @@ class InstructionStepRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final baseStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+      color: Theme.of(context).colorScheme.onSurface,
+    );
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Icon(Icons.circle, size: 8, color: AppColors.primary),
+            padding: const EdgeInsets.only(top: 5),
+            child: Icon(Icons.circle, size: 8, color: Theme.of(context).colorScheme.primary),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s),
           Expanded(
             child: Text(
               text,
               style: isStrong
-                  ? const TextStyle(fontWeight: FontWeight.bold)
-                  : null,
+                  ? baseStyle?.copyWith(fontWeight: FontWeight.bold)
+                  : baseStyle,
             ),
           ),
         ],
