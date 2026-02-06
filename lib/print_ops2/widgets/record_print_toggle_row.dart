@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
-import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:denik_zza/utils/date_format_utils.dart';
+import 'package:denik_zza/print_ops2/print_utils.dart';
+import 'package:denik_zza/print_ops2/widgets/print_status_badge.dart';
 
 /// A row displaying a single record with a tappable print-status badge.
 ///
@@ -74,7 +75,7 @@ class RecordPrintToggleRow extends StatelessWidget {
               padding: const EdgeInsets.only(right: AppSpacing.xs),
               child: Tooltip(
                 message:
-                    'Odznačení ovlivní $cascadeCount následující${cascadeCount == 1 ? '' : 'ch'} záznam${_pluralSuffix(cascadeCount)}',
+                    'Odznačení ovlivní $cascadeCount následující${cascadeCount == 1 ? '' : 'ch'} záznam${pluralSuffixCz(cascadeCount)}',
                 child: Icon(Icons.warning_amber_rounded,
                     size: 16, color: AppColors.orangeText),
               ),
@@ -86,69 +87,30 @@ class RecordPrintToggleRow extends StatelessWidget {
               padding: const EdgeInsets.only(right: AppSpacing.xs),
               child: Tooltip(
                 message: 'Nejdříve označte předchozí záznamy',
-                child: Icon(Icons.block, size: 14, color: AppColors.greyTextLight),
+                child:
+                    Icon(Icons.block, size: 14, color: AppColors.greyTextLight),
               ),
             ),
 
           // Toggle badge
-          _PrintBadge(
-            printed: printed,
+          PrintStatusBadge(
+            key: const Key('PrintStateManagement_toggle_badge'),
+            backgroundColor:
+                printed ? AppColors.greenBackground : AppColors.greyBackground,
+            textColor: printed ? AppColors.greenText : AppColors.greyText,
+            iconColor: printed ? AppColors.greenIcon : AppColors.greyIcon,
+            label: printed ? 'Vytištěno' : 'Nevytištěno',
+            icon: printed ? Icons.print : Icons.print_disabled,
+            fontSize: 10,
+            iconSize: 12,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 6,
+              vertical: 2,
+            ),
             enabled: printed || canMarkPrinted,
             onTap: (printed || canMarkPrinted) ? onToggle : null,
           ),
         ],
-      ),
-    );
-  }
-
-  String _pluralSuffix(int count) {
-    if (count == 1) return '';
-    if (count >= 2 && count <= 4) return 'y';
-    return 'ů';
-  }
-}
-
-/// Tappable print status badge matching existing codebase pattern.
-class _PrintBadge extends StatelessWidget {
-  final bool printed;
-  final bool enabled;
-  final VoidCallback? onTap;
-
-  const _PrintBadge({
-    required this.printed,
-    this.enabled = true,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final bgColor = printed ? AppColors.greenBackground : AppColors.greyBackground;
-    final textColor = printed ? AppColors.greenText : AppColors.greyText;
-    final iconColor = printed ? AppColors.greenIcon : AppColors.greyIcon;
-    final label = printed ? 'Vytištěno' : 'Nevytištěno';
-    final icon = printed ? Icons.print : Icons.print_disabled;
-
-    return InkWell(
-      key: const Key('PrintStateManagement_toggle_badge'),
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadii.small),
-      child: Opacity(
-        opacity: enabled ? 1.0 : 0.5,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(AppRadii.small),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 12, color: iconColor),
-              const SizedBox(width: 3),
-              Text(label, style: TextStyle(fontSize: 10, color: textColor)),
-            ],
-          ),
-        ),
       ),
     );
   }

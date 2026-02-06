@@ -96,7 +96,7 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
       return const Center(child: CircularProgressIndicator());
     }
     if (ctrl.participants.isEmpty) {
-      return InfoBox(
+      return ModeFlowInfoBox(
         color: AppColors.orangeBackground,
         icon: Icons.warning_amber,
         text: 'Žádní účastníci\nNejsou k dispozici žádní účastníci pro tisk. '
@@ -109,6 +109,7 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
       itemBuilder: (c, i) {
         final p = ctrl.participants[i];
         return ListTile(
+          key: Key('PersonMode_select_${p.id}'),
           leading: CircleAvatar(child: Text(p.jmeno.substring(0, 1))),
           title: Text('${p.jmeno} ${p.prijmeni}'),
           subtitle: Text(p.poznamka ?? ''),
@@ -143,6 +144,7 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
                         '${ctrl.selected!.jmeno} ${ctrl.selected!.prijmeni}'),
                     subtitle: Text('ID: ${ctrl.selected!.id} – databáze'),
                     trailing: TextButton.icon(
+                      key: const Key('PersonMode_changePerson'),
                       onPressed: () => ctrl.resetFlow(),
                       icon: const Icon(Icons.swap_horiz),
                       label: const Text('Změnit'),
@@ -161,12 +163,14 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
                   child: Column(
                     children: [
                       RadioListTile<PrintMode>(
+                        key: const Key('PersonMode_fullPrint'),
                         value: PrintMode.full,
                         title: const Text('Úplný tisk'),
                         subtitle: const Text(
                             'Vygeneruje celý dokument od začátku (reset).'),
                       ),
                       RadioListTile<PrintMode>(
+                        key: const Key('PersonMode_appendPrint'),
                         value: PrintMode.append,
                         title: Row(
                           children: const [
@@ -197,6 +201,7 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: FilledButton.icon(
+                    key: const Key('PersonMode_printButton'),
                     icon: const Icon(Icons.print),
                     label: const Text('Tisk'),
                     onPressed: () async {
@@ -299,12 +304,14 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
               spacing: 12,
               children: [
                 FilledButton.icon(
+                  key: const Key('PersonMode_backToCenter'),
                   icon: const Icon(Icons.home),
                   label: const Text('Zpět na centrum'),
                   onPressed: () =>
                       Navigator.of(context).popUntil((r) => r.isFirst),
                 ),
                 OutlinedButton.icon(
+                  key: const Key('PersonMode_newPrint'),
                   icon: const Icon(Icons.replay),
                   label: const Text('Nový tisk'),
                   onPressed: () => ctrl.resetFlow(),
@@ -341,13 +348,14 @@ class _PersonPdfPreviewPane extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (controller.selected == null) {
-      return InfoBox(
+      return ModeFlowInfoBox(
         color: Theme.of(context).colorScheme.surface,
         icon: Icons.info_outline,
         text: 'Vyberte osobu vlevo…',
       );
     }
     return Card(
+      key: const Key('PersonMode_pdfPreview'),
       child: Column(
         children: [
           Container(
@@ -407,14 +415,14 @@ class _AppendHintBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (mode == PrintMode.full) {
-      return InfoBox(
+      return ModeFlowInfoBox(
         color: AppColors.blueBackground,
         icon: Icons.info_outline,
         text:
             'Úplný tisk znovu vytiskne vše. Později zde bude možnost resetovat isPrinted příznaky.',
       );
     }
-    return InfoBox(
+    return ModeFlowInfoBox(
       color: canAppend ? AppColors.greenBackground : AppColors.orangeBackground,
       icon:
           canAppend ? Icons.check_circle_outline : Icons.warning_amber_outlined,
@@ -427,11 +435,16 @@ class _AppendHintBox extends StatelessWidget {
 
 // --------------------------- Info Box ----------------------------------------
 
-class InfoBox extends StatelessWidget {
+class ModeFlowInfoBox extends StatelessWidget {
   final Color color;
   final IconData icon;
   final String text;
-  const InfoBox({super.key, required this.color, required this.icon, required this.text});
+  const ModeFlowInfoBox({
+    super.key,
+    required this.color,
+    required this.icon,
+    required this.text,
+  });
 
   @override
   Widget build(BuildContext context) {

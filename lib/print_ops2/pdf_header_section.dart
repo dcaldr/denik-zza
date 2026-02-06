@@ -4,6 +4,7 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_lek.dart';
 import 'package:denik_zza/utils/date_format_utils.dart';
+import 'package:denik_zza/print_ops2/pdf_constants.dart';
 
 /// Abstract base for PDF header section (person/event)
 abstract class PdfHeaderSection {
@@ -33,10 +34,10 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
         pw.Container(
           decoration: pw.BoxDecoration(
             border: pw.Border.all(
-                width: 2.0, color: textColor ?? PdfColor(0, 0, 0)),
+                width: kPdfBorderWidth, color: textColor ?? PdfColor(0, 0, 0)),
           ),
           child: pw.Padding(
-            padding: const pw.EdgeInsets.all(5.0),
+            padding: const pw.EdgeInsets.all(kPdfHeaderPadding),
             child: pw.Row(
               children: [
                 pw.Expanded(
@@ -52,9 +53,7 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
                               color: textColor),
                           children: [
                             pw.TextSpan(
-                              text:
-                                  '${osoba.jmeno} ${osoba.prijmeni}',
-
+                              text: '${osoba.jmeno} ${osoba.prijmeni}',
                               style: pw.TextStyle(
                                   fontWeight: pw.FontWeight.bold,
                                   color: textColor),
@@ -80,7 +79,7 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
                     ],
                   ),
                 ),
-                pw.SizedBox(width: 10),
+                pw.SizedBox(width: kPdfHeaderColumnGap),
                 pw.Expanded(
                   flex: 1,
                   child: pw.Column(
@@ -105,14 +104,15 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
         ),
         // Restrictions section (only for person headers)
         if (omezeniList != null || lekList != null) ...[
-          pw.SizedBox(height: 5),
+          pw.SizedBox(height: kPdfHeaderRecordsGap),
           pw.Container(
             decoration: pw.BoxDecoration(
               border: pw.Border.all(
-                  width: 2.0, color: textColor ?? PdfColor(0, 0, 0)),
+                  width: kPdfBorderWidth,
+                  color: textColor ?? PdfColor(0, 0, 0)),
             ),
             child: pw.Padding(
-              padding: const pw.EdgeInsets.all(5.0),
+              padding: const pw.EdgeInsets.all(kPdfHeaderPadding),
               child: pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
@@ -131,7 +131,7 @@ class PersonPdfHeaderSection extends PdfHeaderSection {
                       ],
                     ),
                   ),
-                  pw.SizedBox(width: 10),
+                  pw.SizedBox(width: kPdfHeaderColumnGap),
                   pw.Expanded(
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,

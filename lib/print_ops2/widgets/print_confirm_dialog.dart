@@ -5,10 +5,11 @@ import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/print_ops2/print_center_controller.dart';
 
 // Re-export so consumers can use it without extra import
-export 'package:denik_zza/print_ops2/print_center_controller.dart' show PrintSimulationResult;
+export 'package:denik_zza/print_ops2/print_center_controller.dart'
+    show PrintSimulationResult;
 
 /// Shows the standard print confirmation dialog.
-/// 
+///
 /// This is used after every print to let user confirm what happened.
 /// Returns the user's choice as [PrintSimulationResult].
 Future<PrintSimulationResult?> showPrintConfirmDialog({
@@ -97,7 +98,8 @@ class _PrintConfirmDialog extends StatelessWidget {
                 const SizedBox(height: AppSpacing.s),
                 extraContent!,
               ],
-              if (showTip) ...[                const SizedBox(height: AppSpacing.s),
+              if (showTip) ...[
+                const SizedBox(height: AppSpacing.s),
                 const ManualMarkingNote(),
               ],
             ],
@@ -106,22 +108,29 @@ class _PrintConfirmDialog extends StatelessWidget {
       ),
       actions: [
         TextButton.icon(
+          key: const Key('PrintConfirm_reset'),
           onPressed: () => _handleReset(context),
           icon: const Icon(Icons.restart_alt),
           label: const Text('Reset'),
         ),
         TextButton.icon(
-          onPressed: () => Navigator.of(context).pop(PrintSimulationResult.noChange),
+          key: const Key('PrintConfirm_noChange'),
+          onPressed: () =>
+              Navigator.of(context).pop(PrintSimulationResult.noChange),
           icon: const Icon(Icons.remove_done),
           label: const Text('Neměnit'),
         ),
         OutlinedButton.icon(
-          onPressed: () => Navigator.of(context).pop(PrintSimulationResult.repeat),
+          key: const Key('PrintConfirm_repeat'),
+          onPressed: () =>
+              Navigator.of(context).pop(PrintSimulationResult.repeat),
           icon: const Icon(Icons.replay_circle_filled_outlined),
           label: const Text('Zopakovat'),
         ),
         FilledButton.icon(
-          onPressed: () => Navigator.of(context).pop(PrintSimulationResult.success),
+          key: const Key('PrintConfirm_success'),
+          onPressed: () =>
+              Navigator.of(context).pop(PrintSimulationResult.success),
           icon: const Icon(Icons.check_circle),
           label: const Text('Vše OK'),
         ),
@@ -140,12 +149,15 @@ class _PrintConfirmDialog extends StatelessWidget {
             'Chcete pouze resetovat stav, nebo resetovat a ihned spustit nový tisk?'),
         actions: [
           TextButton.icon(
+            key: const Key('PrintConfirm_resetOnly'),
             onPressed: () => Navigator.of(sc).pop(PrintSimulationResult.reset),
             icon: const Icon(Icons.restart_alt),
             label: const Text('Jen reset'),
           ),
           FilledButton.icon(
-            onPressed: () => Navigator.of(sc).pop(PrintSimulationResult.resetAndReprint),
+            key: const Key('PrintConfirm_resetReprint'),
+            onPressed: () =>
+                Navigator.of(sc).pop(PrintSimulationResult.resetAndReprint),
             icon: const Icon(Icons.restart_alt),
             label: const Text('Reset + znovu'),
           ),
@@ -165,14 +177,14 @@ class ConfirmOptionDescription extends StatelessWidget {
   final IconData icon;
   final String title;
   final String body;
-  
+
   const ConfirmOptionDescription({
     super.key,
     required this.icon,
     required this.title,
     required this.body,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -191,8 +203,8 @@ class ConfirmOptionDescription extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xs),
                 Text(body,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.greyText,
-                    )),
+                          color: AppColors.greyText,
+                        )),
               ],
             ),
           )
@@ -218,7 +230,7 @@ class AppendInfoBanner extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final bool allowed = appendActive && (appendPossible == true);
     final bool explicitlyBlocked = appendActive && appendPossible == false;
-    
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -289,8 +301,8 @@ class ManualMarkingNote extends StatelessWidget {
     return Text(
       'Tip: Ruční označení je možné ve Správě stavu v Tisk Centru.',
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-        color: AppColors.greyText,
-      ),
+            color: AppColors.greyText,
+          ),
     );
   }
 }

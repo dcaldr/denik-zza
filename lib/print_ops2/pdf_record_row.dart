@@ -2,6 +2,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/utils/date_format_utils.dart';
+import 'package:denik_zza/print_ops2/pdf_constants.dart';
 
 /// Abstract base for a record row in PDF (person/event)
 abstract class PdfRecordRow {
@@ -29,16 +30,18 @@ class PersonPdfRecordRow extends PdfRecordRow {
             children: [
               pw.Text(
                 formatCzechDate(record.casZaznamu),
-                style: pw.TextStyle(fontSize: 8.0, color: textColor),
+                style: pw.TextStyle(
+                    fontSize: kPdfRecordDateFontSize, color: textColor),
               ),
               pw.Text(
                 formatCzechTime(record.casZaznamu),
-                style: pw.TextStyle(fontSize: 9.0, color: textColor),
+                style: pw.TextStyle(
+                    fontSize: kPdfRecordTimeFontSize, color: textColor),
               ),
             ],
           ),
         ),
-        pw.SizedBox(width: 20),
+        pw.SizedBox(width: kPdfRecordGapWidth),
         pw.Flexible(
           child: pw.RichText(
             text: pw.TextSpan(

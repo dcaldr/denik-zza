@@ -3,9 +3,11 @@ import 'package:denik_zza/design_system/tokens/app_colors.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
+import 'package:denik_zza/print_ops2/print_utils.dart';
 import 'package:denik_zza/print_ops2/models/person_print_state.dart';
 import 'package:denik_zza/print_ops2/models/toggle_impact.dart';
 import 'package:denik_zza/print_ops2/widgets/record_print_toggle_row.dart';
+import 'package:denik_zza/print_ops2/widgets/print_status_badge.dart';
 
 /// Expandable card showing a person's print state with record-level toggles.
 ///
@@ -116,8 +118,26 @@ class _PersonPrintStateCardState extends State<PersonPrintStateCard> {
             ),
 
             // Person printed badge (tappable)
-            _PersonPrintBadge(
-              printed: s.personPrinted,
+            PrintStatusBadge(
+              key: const Key('PrintState_personBadge_toggle'),
+              backgroundColor: s.personPrinted
+                  ? AppColors.greenBackground
+                  : AppColors.greyBackground,
+              textColor:
+                  s.personPrinted ? AppColors.greenText : AppColors.greyText,
+              iconColor:
+                  s.personPrinted ? AppColors.greenIcon : AppColors.greyIcon,
+              label: s.personPrinted ? 'Vytištěno' : 'Nevytištěno',
+              icon: s.personPrinted ? Icons.person : Icons.person_outline,
+              fontSize: 11,
+              iconSize: 14,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s,
+                vertical: 3,
+              ),
+              borderColor: s.personPrinted
+                  ? AppColors.greenBorder
+                  : AppColors.greyBorder,
               onTap: () => _handlePersonToggle(context, s),
             ),
             const SizedBox(width: AppSpacing.xs),
@@ -146,7 +166,9 @@ class _PersonPrintStateCardState extends State<PersonPrintStateCard> {
         text: 'Pořadí záznamů je porušeno — dostisk není možný.',
       );
     }
-    if (s.personPrinted && s.printedRecordCount == 0 && s.totalRecordCount > 0) {
+    if (s.personPrinted &&
+        s.printedRecordCount == 0 &&
+        s.totalRecordCount > 0) {
       return _StatusBanner(
         color: AppColors.blueBackground,
         borderColor: AppColors.blueBorder,
@@ -218,7 +240,8 @@ class _PersonPrintStateCardState extends State<PersonPrintStateCard> {
             onPressed: (s.personPrinted || s.printedRecordCount > 0)
                 ? () => _handleResetAll(context, s)
                 : null,
-            icon: Icon(Icons.restart_alt, size: 16, color: AppColors.orangeText),
+            icon:
+                Icon(Icons.restart_alt, size: 16, color: AppColors.orangeText),
             label: Text('Odznačit vše',
                 style: TextStyle(fontSize: 12, color: AppColors.orangeText)),
           ),
@@ -238,7 +261,7 @@ class _PersonPrintStateCardState extends State<PersonPrintStateCard> {
         builder: (c) => AlertDialog(
           title: const Text('Odznačit osobu?'),
           content: Text(
-            'Tím se odznačí i ${s.printedRecordCount} záznam${_pluralSuffix(s.printedRecordCount)}. '
+            'Tím se odznačí i ${s.printedRecordCount} záznam${pluralSuffixCz(s.printedRecordCount)}. '
             'Dostisk nebude možný.',
           ),
           actions: [
@@ -269,7 +292,7 @@ class _PersonPrintStateCardState extends State<PersonPrintStateCard> {
           content: Text(
             'Odznačením tohoto záznamu budou odznačeny i '
             '${impact.affectedRecordCount} následující '
-            'záznam${_pluralSuffix(impact.affectedRecordCount)}.',
+            'záznam${pluralSuffixCz(impact.affectedRecordCount)}.',
           ),
           actions: [
             TextButton(
@@ -288,8 +311,7 @@ class _PersonPrintStateCardState extends State<PersonPrintStateCard> {
     widget.onToggleRecordPrinted(s.person.id, record.idZaznamu);
   }
 
-  Future<void> _handleResetAll(
-      BuildContext context, PersonPrintState s) async {
+  Future<void> _handleResetAll(BuildContext context, PersonPrintState s) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
@@ -312,58 +334,6 @@ class _PersonPrintStateCardState extends State<PersonPrintStateCard> {
     );
     if (confirm != true) return;
     widget.onResetAll(s.person.id);
-  }
-
-  String _pluralSuffix(int count) {
-    if (count == 1) return '';
-    if (count >= 2 && count <= 4) return 'y';
-    return 'ů';
-  }
-}
-
-// --- Small helper widgets ---
-
-class _PersonPrintBadge extends StatelessWidget {
-  final bool printed;
-  final VoidCallback onTap;
-  const _PersonPrintBadge({required this.printed, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      key: const Key('PrintState_personBadge_toggle'),
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadii.small),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s, vertical: 3),
-        decoration: BoxDecoration(
-          color: printed ? AppColors.greenBackground : AppColors.greyBackground,
-          borderRadius: BorderRadius.circular(AppRadii.small),
-          border: Border.all(
-            color: printed ? AppColors.greenBorder : AppColors.greyBorder,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              printed ? Icons.person : Icons.person_outline,
-              size: 14,
-              color: printed ? AppColors.greenIcon : AppColors.greyIcon,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              printed ? 'Vytištěno' : 'Nevytištěno',
-              style: TextStyle(
-                fontSize: 11,
-                color: printed ? AppColors.greenText : AppColors.greyText,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

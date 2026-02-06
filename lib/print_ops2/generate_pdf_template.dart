@@ -3,6 +3,7 @@ import 'package:denik_zza/print_ops2/print_pdf_records.dart';
 import 'package:denik_zza/print_ops2/pdf_record_row.dart';
 import 'package:denik_zza/print_ops2/pdf_header_section.dart';
 import 'package:denik_zza/print_ops2/pdf_fonts.dart';
+import 'package:denik_zza/print_ops2/pdf_constants.dart';
 import 'package:denik_zza/print_ops2/models/append_analysis.dart';
 import 'package:denik_zza/print_ops2/models/append_build_result.dart';
 import 'package:denik_zza/print_ops2/models/doc_with_count.dart';
@@ -142,7 +143,7 @@ class GeneratePdfTemplate {
         build: (pw.Context context) {
           return [
             header,
-            pw.SizedBox(height: 5),
+            pw.SizedBox(height: kPdfHeaderRecordsGap),
             if (recordRows != null)
               PrintPdfRecords(
                       recordRows: recordRows,
@@ -159,7 +160,7 @@ class GeneratePdfTemplate {
             alignment: pw.Alignment.center,
             child: pw.Text(
               'Deník ZZA - $pageNum',
-              style: pw.TextStyle(fontSize: 8),
+              style: pw.TextStyle(fontSize: kPdfFooterFontSize),
             ),
           );
         },
@@ -264,7 +265,7 @@ class GeneratePdfTemplate {
   }
 
   // Transparent color for "ghosting" records
-  static final PdfColor transparentColor = PdfColor.fromHex("#FFFFFF00");
+  static final PdfColor transparentColor = kPdfTransparentColor;
 
   /// Generates PDF using MultiPage with header/footer control
   Future<DocWithCount> _generateBasePdf({
@@ -315,11 +316,11 @@ class GeneratePdfTemplate {
 
           if (hideHeaderOnPage != currentPage) {
             content.add(headerWidget);
-            content.add(pw.SizedBox(height: 5));
+            content.add(pw.SizedBox(height: kPdfHeaderRecordsGap));
           } else {
             // Render transparent header to maintain layout
             content.add(transparentHeaderWidget);
-            content.add(pw.SizedBox(height: 5));
+            content.add(pw.SizedBox(height: kPdfHeaderRecordsGap));
           }
 
           // Add records (using forMultiPage=true)
@@ -352,7 +353,8 @@ class GeneratePdfTemplate {
             alignment: pw.Alignment.center,
             child: pw.Text(
               'Deník ZZA - $currentPage',
-              style: pw.TextStyle(fontSize: 8, color: textColor),
+              style:
+                  pw.TextStyle(fontSize: kPdfFooterFontSize, color: textColor),
             ),
           );
         },
@@ -385,10 +387,6 @@ class GeneratePdfTemplate {
       return 1;
     }
   }
-}
-
-abstract class PdfSection {
-  pw.Widget buildSection(bool append);
 }
 
 enum OkCodes {

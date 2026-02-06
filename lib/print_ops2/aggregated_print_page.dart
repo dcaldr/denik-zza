@@ -34,6 +34,7 @@ class _EventPrintFlowPageState extends State<SelectedAggregatedPrintPage> {
                 final p = ctrl.participants[i];
                 final sel = _selectedIds.contains(p.id);
                 return CheckboxListTile(
+                  key: Key('Aggregated_participant_${p.id}'),
                   value: sel,
                   onChanged: (v) {
                     setState(() {
@@ -65,6 +66,7 @@ class _EventPrintFlowPageState extends State<SelectedAggregatedPrintPage> {
                 const Spacer(),
                 const SizedBox(width: 12),
                 FilledButton.icon(
+                  key: const Key('Aggregated_printButton'),
                   onPressed: _selectedIds.isEmpty || _loadingPdf
                       ? null
                       : () async {

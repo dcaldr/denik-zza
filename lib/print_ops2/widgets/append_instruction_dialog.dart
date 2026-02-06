@@ -147,8 +147,8 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
               child: Text(
                 'Tiskárna není kalibrována! Pořadí stránek nemusí odpovídat.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
             ),
           ],
@@ -175,8 +175,8 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
               child: Text(
                 'Stránky s * obsahují pouze transparentní obsah - můžete použít existující výtisk nebo prázdný papír.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.greyText,
-                ),
+                      color: AppColors.greyText,
+                    ),
               ),
             ),
           ],
@@ -248,11 +248,14 @@ class _AppendInstructionDialogState extends State<AppendInstructionDialog> {
 
     return [
       TextButton(
+        key: const Key('AppendInstruction_cancel'),
         onPressed: () => Navigator.of(context).pop(false),
         child: const Text('Zrušit'),
       ),
       FilledButton(
-        onPressed: _error != null ? null : () => Navigator.of(context).pop(true),
+        key: const Key('AppendInstruction_continue'),
+        onPressed:
+            _error != null ? null : () => Navigator.of(context).pop(true),
         child: const Text('Pokračovat k tisku'),
       ),
     ];

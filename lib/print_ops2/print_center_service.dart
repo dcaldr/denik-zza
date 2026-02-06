@@ -41,10 +41,13 @@ class PrintCenterService {
   Future<bool> setParticipantPrintedFlag(
       int participantId, bool wasPrinted) async {
     try {
-      final success = await _db.setParticipantPrintedValue(participantId, wasPrinted);
+      final success =
+          await _db.setParticipantPrintedValue(participantId, wasPrinted);
       return success;
     } catch (e) {
-      AppLogger.l.e('Failed to set participant printed flag for id=$participantId', error: e);
+      AppLogger.l.e(
+          'Failed to set participant printed flag for id=$participantId',
+          error: e);
       return false;
     }
   }
@@ -55,7 +58,8 @@ class PrintCenterService {
       final success = await _db.setRecordPrintedValue(recordId, isPrinted);
       return success;
     } catch (e) {
-      AppLogger.l.e('Failed to set record printed flag for id=$recordId', error: e);
+      AppLogger.l
+          .e('Failed to set record printed flag for id=$recordId', error: e);
       return false;
     }
   }
@@ -69,5 +73,9 @@ class PrintCenterService {
       results.add(success);
     }
     return results;
+  }
+
+  Future<void> setPrinterPage1OnTop(bool? page1OnTop) {
+    return _db.setPrinterPage1OnTop(page1OnTop);
   }
 }

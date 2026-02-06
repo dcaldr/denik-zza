@@ -21,7 +21,6 @@ import '../screens2/widgets/app_drawer.dart';
 ///  - Vše v češtině, jasně označit neimplementované části (ikona zámku + šedé)
 ///  - Připravit komponenty pro snadné doplnění logiky později
 
-
 // -----------------------------------------------------------------------------
 // HLAVNÍ ROZCESTNÍK
 // -----------------------------------------------------------------------------
@@ -49,6 +48,7 @@ class PrintCenterPage extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 8),
                 FeatureCard(
+                  key: const Key('PrintCenter_personMode'),
                   title: 'Tisk osoby',
                   subtitle: ctrl.loadingParticipants
                       ? 'Načítám účastníky…'
@@ -70,6 +70,7 @@ class PrintCenterPage extends StatelessWidget {
                   ),
                 ),
                 FeatureCard(
+                  key: const Key('PrintCenter_aggregated'),
                   title: 'Tisk vybraných',
                   subtitle: ctrl.participants.isEmpty
                       ? 'Žádní účastníci – není co tisknout'
@@ -89,9 +90,9 @@ class PrintCenterPage extends StatelessWidget {
                           ),
                 ),
                 FeatureCard(
+                  key: const Key('PrintCenter_stateManagement'),
                   title: 'Správa stavu',
-                  subtitle:
-                      'Ruční úprava stavu tisku účastníků a záznamů.',
+                  subtitle: 'Ruční úprava stavu tisku účastníků a záznamů.',
                   icon: Icons.rule_folder,
                   implemented: true,
                   onTap: () {
@@ -109,6 +110,7 @@ class PrintCenterPage extends StatelessWidget {
                 ),
 
                 FeatureCard(
+                  key: const Key('PrintCenter_firstPrint'),
                   title: 'Nastavení a průvodce před prvním tiskem',
                   subtitle:
                       'Ověření že vše funguje správně s tiskovým systémem operačního systému a představení dotisku. Nastavení aplikace na fugnování s tiskárnou (pořadí stránek při dotisku)',
@@ -122,7 +124,7 @@ class PrintCenterPage extends StatelessWidget {
                 // Multi‑page test do budoucna můžeme obnovit
                 const SizedBox(height: 24),
                 if (ctrl.participantError != null)
-                  InfoBox(
+                  ModeFlowInfoBox(
                     color: Theme.of(context).colorScheme.errorContainer,
                     icon: Icons.error_outline,
                     text: ctrl.participantError!,
