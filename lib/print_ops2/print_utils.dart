@@ -19,7 +19,10 @@ OkCodes evaluateRecordSequence(List<bool> isPrintedFlags) {
     prevItem = current;
   }
 
-  return prevItem ? OkCodes.printed : OkCodes.unprinted;
+  // If we get here, the sequence is monotonic (not broken)
+  // If the first item is true, then we have at least one printed item (since T->T or T->F is valid)
+  // If the first item is false, then all must be false (since F->T is broken)
+  return isPrintedFlags.first ? OkCodes.printed : OkCodes.unprinted;
 }
 
 bool canAppendPrint({

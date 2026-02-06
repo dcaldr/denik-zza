@@ -13,6 +13,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/screens2/widgets/file_viewer_screen_widget.dart';
+import '../../utils/base_test_widget.dart';
 
 void main() {
   // ============================================================
@@ -234,24 +235,22 @@ void main() {
       Completer<Uint8List?>? currentCompleter;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: StatefulBuilder(
-              builder: (context, setState) {
-                updateState = setState;
-                return SizedBox(
-                  width: 400,
-                  height: 600,
-                  child: FileViewerScreen(
-                    initialFilePath: currentPath,
-                    fileReader: (path) {
-                      currentCompleter = Completer<Uint8List?>();
-                      return currentCompleter!.future;
-                    },
-                  ),
-                );
-              },
-            ),
+        BaseTestWidget(
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              updateState = setState;
+              return SizedBox(
+                width: 400,
+                height: 600,
+                child: FileViewerScreen(
+                  initialFilePath: currentPath,
+                  fileReader: (path) {
+                    currentCompleter = Completer<Uint8List?>();
+                    return currentCompleter!.future;
+                  },
+                ),
+              );
+            },
           ),
         ),
       );
@@ -294,21 +293,19 @@ void main() {
       late StateSetter updateState;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: StatefulBuilder(
-              builder: (context, setState) {
-                updateState = setState;
-                return SizedBox(
-                  width: 400,
-                  height: 600,
-                  child: FileViewerScreen(
-                    initialFilePath: currentPath,
-                    fileReader: countingReader,
-                  ),
-                );
-              },
-            ),
+        BaseTestWidget(
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              updateState = setState;
+              return SizedBox(
+                width: 400,
+                height: 600,
+                child: FileViewerScreen(
+                  initialFilePath: currentPath,
+                  fileReader: countingReader,
+                ),
+              );
+            },
           ),
         ),
       );
@@ -410,21 +407,19 @@ void main() {
       late StateSetter updateState;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: StatefulBuilder(
-              builder: (context, setState) {
-                updateState = setState;
-                return SizedBox(
-                  width: 400,
-                  height: 600,
-                  child: FileViewerScreen(
-                    initialFilePath: currentPath,
-                    fileReader: (path) async => createMinimalPng(),
-                  ),
-                );
-              },
-            ),
+        BaseTestWidget(
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              updateState = setState;
+              return SizedBox(
+                width: 400,
+                height: 600,
+                child: FileViewerScreen(
+                  initialFilePath: currentPath,
+                  fileReader: (path) async => createMinimalPng(),
+                ),
+              );
+            },
           ),
         ),
       );
@@ -449,24 +444,22 @@ void main() {
       final List<String> loadedPaths = [];
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: StatefulBuilder(
-              builder: (context, setState) {
-                updateState = setState;
-                return SizedBox(
-                  width: 400,
-                  height: 600,
-                  child: FileViewerScreen(
-                    initialFilePath: currentPath,
-                    fileReader: (path) async {
-                      loadedPaths.add(path);
-                      return createMinimalPng();
-                    },
-                  ),
-                );
-              },
-            ),
+        BaseTestWidget(
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              updateState = setState;
+              return SizedBox(
+                width: 400,
+                height: 600,
+                child: FileViewerScreen(
+                  initialFilePath: currentPath,
+                  fileReader: (path) async {
+                    loadedPaths.add(path);
+                    return createMinimalPng();
+                  },
+                ),
+              );
+            },
           ),
         ),
       );
@@ -559,19 +552,17 @@ void main() {
       var fileReaderCalled = false;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SizedBox(
-              width: 400,
-              height: 600,
-              child: FileViewerScreen(
-                initialFilePath: 'cached.png',
-                cachedBytes: cachedBytes,
-                fileReader: (path) async {
-                  fileReaderCalled = true;
-                  return cachedBytes;
-                },
-              ),
+        BaseTestWidget(
+          child: SizedBox(
+            width: 400,
+            height: 600,
+            child: FileViewerScreen(
+              initialFilePath: 'cached.png',
+              cachedBytes: cachedBytes,
+              fileReader: (path) async {
+                fileReaderCalled = true;
+                return cachedBytes;
+              },
             ),
           ),
         ),
@@ -590,20 +581,18 @@ void main() {
       String? loadedPath;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SizedBox(
-              width: 400,
-              height: 600,
-              child: FileViewerScreen(
-                initialFilePath: 'new_file.png',
-                cachedBytes: null,
-                onBytesLoaded: (bytes, path) {
-                  loadedBytes = bytes;
-                  loadedPath = path;
-                },
-                fileReader: (path) async => createMinimalPng(),
-              ),
+        BaseTestWidget(
+          child: SizedBox(
+            width: 400,
+            height: 600,
+            child: FileViewerScreen(
+              initialFilePath: 'new_file.png',
+              cachedBytes: null,
+              onBytesLoaded: (bytes, path) {
+                loadedBytes = bytes;
+                loadedPath = path;
+              },
+              fileReader: (path) async => createMinimalPng(),
             ),
           ),
         ),
@@ -625,19 +614,17 @@ void main() {
       var callbackCalled = false;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SizedBox(
-              width: 400,
-              height: 600,
-              child: FileViewerScreen(
-                initialFilePath: 'cached.png',
-                cachedBytes: createMinimalPng(),
-                onBytesLoaded: (bytes, path) {
-                  callbackCalled = true;
-                },
-                fileReader: (path) async => createMinimalPng(),
-              ),
+        BaseTestWidget(
+          child: SizedBox(
+            width: 400,
+            height: 600,
+            child: FileViewerScreen(
+              initialFilePath: 'cached.png',
+              cachedBytes: createMinimalPng(),
+              onBytesLoaded: (bytes, path) {
+                callbackCalled = true;
+              },
+              fileReader: (path) async => createMinimalPng(),
             ),
           ),
         ),
@@ -664,15 +651,13 @@ Widget createTestWidget({
   required String filePath,
   required FileReader fileReader,
 }) {
-  return MaterialApp(
-    home: Scaffold(
-      body: SizedBox(
-        width: 400,
-        height: 600,
-        child: FileViewerScreen(
-          initialFilePath: filePath,
-          fileReader: fileReader,
-        ),
+  return BaseTestWidget(
+    child: SizedBox(
+      width: 400,
+      height: 600,
+      child: FileViewerScreen(
+        initialFilePath: filePath,
+        fileReader: fileReader,
       ),
     ),
   );
