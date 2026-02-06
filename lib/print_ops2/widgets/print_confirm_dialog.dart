@@ -287,7 +287,7 @@ class ManualMarkingNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      'Tip: Ruční označení je možné v detailu osoby.',
+      'Tip: Ruční označení je možné ve Správě stavu v Tisk Centru.',
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
         color: AppColors.greyText,
       ),
