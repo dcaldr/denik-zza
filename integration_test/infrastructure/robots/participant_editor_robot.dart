@@ -273,9 +273,7 @@ class ParticipantEditorRobot extends BaseRobot {
   /// Note: Uses tap-to-focus before entering text to ensure Autocomplete's
   /// internal controller syncs correctly with entered text.
   Future<void> addRestriction(TestRestriction restriction) async {
-    // DEBUG: Trace restriction adding
-    // ignore: avoid_print
-    print('📝 addRestriction: Adding "${restriction.popis}"');
+    // Print only on error (see expect below)
 
     // Ensure input visible (may have scrolled due to responsive layout)
     await ensureVisible(restrictionInput);
@@ -305,8 +303,7 @@ class ParticipantEditorRobot extends BaseRobot {
   ///
   /// Tests the Enter key submit flow (TextInputAction.done).
   Future<void> addRestrictionViaEnter(String text) async {
-    // ignore: avoid_print
-    print('📝 addRestrictionViaEnter: Adding "$text"');
+    // Print only on error (see expect below)
 
     await ensureVisible(restrictionInput);
     await tap(restrictionInput);
@@ -353,9 +350,7 @@ class ParticipantEditorRobot extends BaseRobot {
   /// Flow: Type partial → verify ghost → Tab completes → verify fill → Enter submits → verify in list
   Future<void> addRestrictionViaTab(
       String partialText, String expectedFull) async {
-    // ignore: avoid_print
-    print(
-        '📝 addRestrictionViaTab: Typing "$partialText", expecting "$expectedFull"');
+    // Print only on error (see expect below)
 
     await ensureVisible(restrictionInput);
     await tap(restrictionInput);
@@ -370,9 +365,7 @@ class ParticipantEditorRobot extends BaseRobot {
     if (expectedGhost.isNotEmpty) {
       final ghostFinder = find.text(expectedGhost);
       final ghostFound = ghostFinder.evaluate().isNotEmpty;
-      // ignore: avoid_print
-      print(
-          '📝 Ghost text "$expectedGhost": ${ghostFound ? "VISIBLE ✓" : "NOT VISIBLE (startsWith mismatch)"}');
+      // Print only on error (see expect below)
     }
 
     // Press Tab to autocomplete
@@ -383,9 +376,7 @@ class ParticipantEditorRobot extends BaseRobot {
     final inputField = tester.widget<TextField>(restrictionInput);
     final actualText = inputField.controller?.text ?? '';
     final tabFilled = actualText == expectedFull;
-    // ignore: avoid_print
-    print(
-        '📝 Tab fill: expected="$expectedFull", actual="$actualText", match=${tabFilled ? "✓" : "✗"}');
+    // Print only on error (see expect below)
 
     // Submit via Enter
     await tester.testTextInput.receiveAction(TextInputAction.done);
@@ -420,8 +411,7 @@ class ParticipantEditorRobot extends BaseRobot {
 
   /// Adds a medication by typing text and pressing Enter key.
   Future<void> addMedicationViaEnter(String text) async {
-    // ignore: avoid_print
-    print('📝 addMedicationViaEnter: Adding "$text"');
+    // Print only on error (see expect below)
 
     await ensureVisible(medicationInput);
     await tap(medicationInput);
@@ -437,9 +427,7 @@ class ParticipantEditorRobot extends BaseRobot {
   /// Adds a medication via Tab autocomplete.
   Future<void> addMedicationViaTab(
       String partialText, String expectedFull) async {
-    // ignore: avoid_print
-    print(
-        '📝 addMedicationViaTab: Typing "$partialText", expecting "$expectedFull"');
+    // Print only on error (see expect below)
 
     await ensureVisible(medicationInput);
     await tap(medicationInput);
