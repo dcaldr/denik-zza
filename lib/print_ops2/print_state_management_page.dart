@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
+import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:denik_zza/print_ops2/print_state_controller.dart';
 import 'package:denik_zza/print_ops2/widgets/person_print_state_card.dart';
 
@@ -81,6 +82,10 @@ class _PrintStateManagementPageState extends State<PrintStateManagementPage> {
       children: [
         // Info banner
         _InfoBanner(),
+        // TODO: Add "Tisknout vše pro akci" button here when per-event
+        // combined printing is implemented. PrintStateController.loadParticipants
+        // is already event-scoped by design.
+
         // Participant list
         Expanded(
           child: ListView.builder(
@@ -120,7 +125,7 @@ class _InfoBanner extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.m),
       decoration: BoxDecoration(
         color: AppColors.blueBackground,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: AppRadii.buttonRadius,
         border: Border.all(color: AppColors.blueBorder),
       ),
       child: Row(

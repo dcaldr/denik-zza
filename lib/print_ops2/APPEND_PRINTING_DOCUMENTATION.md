@@ -659,4 +659,26 @@ pdf.addPage(pw.Page(
 
 ---
 
-*This documentation reflects the simplified implementation as of September 7, 2025. Focus on record validation only, leveraging dart_pdf's built-in capabilities for layout and pagination.*
+## Manual Override (Správa stavu)
+
+The Print State Management page (`PrintStateManagementPage`) provides manual control over print flags as a fallback when automatic tracking produces incorrect state:
+
+- **Person-level toggle**: Toggle `wasPrinted` flag. Unmarking a printed person cascades to all their records.
+- **Record-level toggle**: Toggle individual `isPrinted` flags. Unmarking cascades to all chronologically-later records, preserving the contiguous-prefix invariant that `isRecordsOk()` requires.
+- **Bulk actions**: "Označit vše" (mark all printed) and "Odznačit vše" (reset all) with confirmation dialogs.
+- **Impact preview**: Before destructive toggles, the UI shows how many records will be affected and whether append will still be possible.
+- **Append indicator**: Each person card shows whether append mode is available after the current flag state.
+
+**Access**: Print Center → "Správa stavu" card.
+
+**Key files**:
+- `print_state_management_page.dart` — main page
+- `print_state_controller.dart` — ChangeNotifier with cascade logic
+- `widgets/person_print_state_card.dart` — per-person expandable card
+- `widgets/record_print_toggle_row.dart` — per-record toggle row
+- `models/toggle_impact.dart` — cascade impact preview data class
+- `models/person_print_state.dart` — per-person state snapshot
+
+---
+
+*This documentation reflects the implementation as of February 2026. Focus on record validation only, leveraging dart_pdf's built-in capabilities for layout and pagination.*

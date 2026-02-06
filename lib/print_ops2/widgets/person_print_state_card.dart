@@ -335,7 +335,7 @@ class _PersonPrintBadge extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadii.small),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s, vertical: 3),
         decoration: BoxDecoration(
           color: printed ? AppColors.greenBackground : AppColors.greyBackground,
           borderRadius: BorderRadius.circular(AppRadii.small),

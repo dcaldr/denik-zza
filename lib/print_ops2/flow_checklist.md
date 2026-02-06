@@ -79,9 +79,10 @@
 - [x] **IMPLEMENTED** - State validation after updates
 
 #### 👤 **4.3 Manual Override Capability**
-- [ ] **MISSING** - UI for manual toggle of individual record `isPrinted` status
-- [ ] **MISSING** - UI for manual toggle of person `wasPrinted` status  
-- [ ] **MISSING** - Bulk operations (mark all printed/unprinted)
+- [x] **IMPLEMENTED** - UI for manual toggle of individual record `isPrinted` status (`RecordPrintToggleRow`)
+- [x] **IMPLEMENTED** - UI for manual toggle of person `wasPrinted` status (`PersonPrintStateCard`)
+- [x] **IMPLEMENTED** - Bulk operations (mark all printed/unprinted) — "Označit vše" / "Odznačit vše"
+- [x] **IMPLEMENTED** - Cascade logic preserving contiguous-prefix invariant (`PrintStateController`)
 
 ---
 
