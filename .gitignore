@@ -132,3 +132,4 @@ coverage
 docs/reports/
 docs/reports/**
 /desktop.ini
+/test_outputs/
