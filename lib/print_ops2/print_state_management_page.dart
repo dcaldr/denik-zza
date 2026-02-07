@@ -27,13 +27,17 @@ class _PrintStateManagementPageState extends State<PrintStateManagementPage> {
   @override
   void initState() {
     super.initState();
+
     widget.controller.addListener(_onControllerChanged);
     widget.controller.loadParticipants();
+
   }
 
   @override
   void dispose() {
+
     widget.controller.removeListener(_onControllerChanged);
+
     super.dispose();
   }
 
@@ -64,10 +68,12 @@ class _PrintStateManagementPageState extends State<PrintStateManagementPage> {
     final ctrl = widget.controller;
 
     if (ctrl.loading) {
+
       return const Center(child: CircularProgressIndicator());
     }
 
     if (ctrl.error != null) {
+
       return _ErrorView(
         message: ctrl.error!,
         onRetry: ctrl.loadParticipants,
@@ -75,8 +81,10 @@ class _PrintStateManagementPageState extends State<PrintStateManagementPage> {
     }
 
     if (ctrl.personStates.isEmpty) {
+
       return _EmptyView();
     }
+
 
     return Column(
       children: [

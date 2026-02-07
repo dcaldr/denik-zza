@@ -23,16 +23,20 @@ import 'base_robot.dart';
 class PersonModeFlowRobot extends BaseRobot {
   PersonModeFlowRobot(super.tester);
 
-  Finder get changePersonButton => findKey('PersonMode_changePerson');
+
   Finder get fullPrintMode => findKey('PersonMode_fullPrint');
   Finder get appendPrintMode => findKey('PersonMode_appendPrint');
   Finder get printButton => findKey('PersonMode_printButton');
-  Finder get backToCenterButton => findKey('PersonMode_backToCenter');
-  Finder get newPrintButton => findKey('PersonMode_newPrint');
+
   Finder get pdfPreview => findKey('PersonMode_pdfPreview');
 
+  Future<void> _tapAndPump(Finder finder) async {
+    await tester.tap(finder);
+    await tester.pump();
+  }
+
   Future<void> verifyPageShown() async {
-    await pumpAndSettle();
+    await tester.pump();
     expect(find.text('Tisk osoby – krokový průvodce'), findsOneWidget);
   }
 
@@ -42,46 +46,31 @@ class PersonModeFlowRobot extends BaseRobot {
     if (!found) {
       throw TestFailure('Participant "$fullName" not found in list');
     }
-    await tap(find.text(fullName).first);
+    await _tapAndPump(find.text(fullName).first);
   }
 
   Future<void> selectFullPrintMode() async {
-    await tap(fullPrintMode);
+    await _tapAndPump(fullPrintMode);
   }
 
   Future<void> selectAppendPrintMode() async {
-    await tap(appendPrintMode);
+    await _tapAndPump(appendPrintMode);
   }
 
   Future<void> tapPrintButton() async {
-    await tap(printButton);
+    await _tapAndPump(printButton);
   }
 
   Future<void> verifyPdfPreviewShown() async {
-    await pumpAndSettle();
+    await tester.pump();
     expect(pdfPreview, findsOneWidget);
   }
 
-  Future<void> verifyAppendHint(String text) async {
-    final found = await waitForAnyText(text,
-        timeout: const Duration(seconds: 5));
-    expect(found, isTrue, reason: 'Append hint "$text" not found');
-  }
+
 
   Future<void> confirmPrintSuccess() async {
-    await tap(findKey('PrintConfirm_success'));
+    await _tapAndPump(findKey('PrintConfirm_success'));
   }
 
-  Future<void> confirmPrintRepeat() async {
-    await tap(findKey('PrintConfirm_repeat'));
-  }
 
-  Future<void> confirmPrintNoChange() async {
-    await tap(findKey('PrintConfirm_noChange'));
-  }
-
-  Future<void> confirmPrintReset() async {
-    await tap(findKey('PrintConfirm_reset'));
-    await tap(findKey('PrintConfirm_resetOnly'));
-  }
 }

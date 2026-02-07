@@ -11,6 +11,11 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'package:denik_zza/design_system/widgets/center_toast.dart';
 
+class _SilentLogOutput extends LogOutput {
+  @override
+  void output(OutputEvent event) {}
+}
+
 FutureOr<void> testExecutable(FutureOr<void> Function() testMain) {
   // Ensure binding is initialized for plugins
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +32,8 @@ FutureOr<void> testExecutable(FutureOr<void> Function() testMain) {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
   // Silence non-error logs to keep CI output readable.
-  AppLogger.configureForTests(level: Level.error);
+  AppLogger.configureOutput(_SilentLogOutput());
+  AppLogger.configureForTests(level: Level.fatal);
 
   // UNIVERSAL TEARDOWN:
   // Automatically dispose of any database resources after EVERY test.

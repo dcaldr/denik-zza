@@ -25,6 +25,7 @@ void main() {
     test('should create test databases in dedicated directory', () async {
       if (!TestConfiguration.isPersist) {
         markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
+        return;
       }
       // Create a file-based test database
       final database =
@@ -71,6 +72,7 @@ void main() {
     test('should create databases with unique filenames', () async {
       if (!TestConfiguration.isPersist) {
         markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
+        return;
       }
       // Create multiple databases quickly and track their exact file paths
       final databases = <AppDatabase>[];
@@ -142,6 +144,7 @@ void main() {
     test('should isolate file databases between tests', () async {
       if (!TestConfiguration.isPersist) {
         markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
+        return;
       }
       // Create first database and add data
       final db1 = DatabaseTestHelper.createTestDatabase(TestDatabaseType.file);

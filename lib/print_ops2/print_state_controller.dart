@@ -36,7 +36,6 @@ class PrintStateController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Get participants from the stream (take first emission)
       final participants = await _service
           .watchCurrentEventParticipants()
           .first;
@@ -44,6 +43,7 @@ class PrintStateController extends ChangeNotifier {
       final states = <PersonPrintState>[];
       for (final person in participants) {
         final records = await _service.getRecords(person.id);
+        sortRecordsByTime(records);
         sortRecordsByTime(records);
         states.add(_buildPersonState(person, records));
       }
@@ -194,7 +194,7 @@ class PrintStateController extends ChangeNotifier {
       // Simulate: will append still be possible?
       // After toggle, the printed prefix ends before recordIdx
       final personPrinted = state.person.wasPrinted ?? false;
-      final appendPossible = personPrinted && records.isNotEmpty;
+      final appendPossible = personPrinted;
 
       return ToggleImpact(
         affectedRecordCount: cascadeIds.length,
@@ -272,15 +272,13 @@ class PrintStateController extends ChangeNotifier {
 
     // Check for sequence issues: any printed record after an unprinted one
     bool hasSequenceIssue = false;
-    if (records.isNotEmpty) {
-      bool seenUnprinted = false;
-      for (final r in records) {
-        if (!r.isPrinted) {
-          seenUnprinted = true;
-        } else if (seenUnprinted) {
-          hasSequenceIssue = true;
-          break;
-        }
+    bool seenUnprinted = false;
+    for (final r in records) {
+      if (!r.isPrinted) {
+        seenUnprinted = true;
+      } else if (seenUnprinted) {
+        hasSequenceIssue = true;
+        break;
       }
     }
 

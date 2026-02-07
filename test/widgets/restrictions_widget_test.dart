@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import 'package:denik_zza/screens2/widgets/restrictions_widget.dart';
 import 'package:denik_zza/screens2/widgets/memory_restriction_widget.dart';
@@ -7,6 +8,8 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart';
 import '../utils/base_test_widget.dart';
+import '../utils/test_configuration.dart';
+
 
 /// Tests for RestrictionsWidget behavior:
 /// - Add button functionality
@@ -14,11 +17,32 @@ import '../utils/base_test_widget.dart';
 /// - Dropdown suggestions
 /// - Custom entries allowed
 /// - Duplicate prevention
+Future<void> pumpUntil(
+  WidgetTester tester,
+  bool Function() condition, {
+  Duration timeout = const Duration(seconds: 2),
+  Duration step = const Duration(milliseconds: 16),
+  String? debugLabel,
+}) async {
+
+  final deadline = DateTime.now().add(timeout);
+  while (true) {
+    if (condition()) return;
+    if (DateTime.now().isAfter(deadline)) {
+
+      final label = debugLabel == null ? '' : ' ($debugLabel)';
+      fail('pumpUntil timeout$label');
+    }
+    await tester.pump(step);
+  }
+}
+
 void main() {
   late AppDatabase database;
   late MemoryOmezeniLogic omezeniLogic;
 
   setUpAll(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
     TestWidgetsFlutterBinding.ensureInitialized();
   });
 
@@ -31,7 +55,14 @@ void main() {
   });
 
   tearDown(() async {
-    await database.close();
+    // In-memory DB is safe to keep open; closing can intermittently hang
+    // when widgets still hold references after test cleanup.
+    if (TestConfiguration.isPersist) {
+      await database.close();
+    }
+  });
+
+  tearDownAll(() {
   });
 
   group('RestrictionsWidget Add Item', () {
@@ -41,7 +72,7 @@ void main() {
           child: RestrictionsWidget(logic: omezeniLogic),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       // Find the input field and add button
       final inputFinder =
@@ -54,7 +85,11 @@ void main() {
       // Type text and tap Add button
       await tester.enterText(inputFinder, 'Alergie na ořechy');
       await tester.tap(addButtonFinder);
-      await tester.pumpAndSettle();
+      await pumpUntil(
+        tester,
+        () => omezeniLogic.items.contains('Alergie na ořechy'),
+        debugLabel: 'add restriction via button',
+      );
 
       // Verify item appears in the list by checking logic
       expect(omezeniLogic.items, contains('Alergie na ořechy'));
@@ -67,7 +102,7 @@ void main() {
           child: RestrictionsWidget(logic: omezeniLogic),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       final inputFinder =
           find.byKey(const Key('RestrictionsWidget_Omezení a alergie_input'));
@@ -77,12 +112,20 @@ void main() {
       // Add first item
       await tester.enterText(inputFinder, 'Diabetes');
       await tester.tap(addButtonFinder);
-      await tester.pumpAndSettle();
+      await pumpUntil(
+        tester,
+        () => omezeniLogic.items.length == 1,
+        debugLabel: 'add first duplicate candidate',
+      );
 
       // Try to add same item again
       await tester.enterText(inputFinder, 'Diabetes');
       await tester.tap(addButtonFinder);
-      await tester.pumpAndSettle();
+      await pumpUntil(
+        tester,
+        () => omezeniLogic.items.length == 1,
+        debugLabel: 'reject duplicate',
+      );
 
       // Should only appear once in logic
       expect(omezeniLogic.items.where((item) => item == 'Diabetes').length, 1);
@@ -94,7 +137,7 @@ void main() {
           child: RestrictionsWidget(logic: omezeniLogic),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       final inputFinder =
           find.byKey(const Key('RestrictionsWidget_Omezení a alergie_input'));
@@ -104,7 +147,11 @@ void main() {
       // Enter empty/whitespace
       await tester.enterText(inputFinder, '   ');
       await tester.tap(addButtonFinder);
-      await tester.pumpAndSettle();
+      await pumpUntil(
+        tester,
+        () => omezeniLogic.items.isEmpty,
+        debugLabel: 'ignore empty entry',
+      );
 
       // Nothing should be added
       expect(omezeniLogic.items, isEmpty);
@@ -125,7 +172,7 @@ void main() {
           child: RestrictionsWidget(logic: lekLogic),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       final inputFinder =
           find.byKey(const Key('RestrictionsWidget_Léky_input'));
@@ -135,7 +182,11 @@ void main() {
 
       await tester.enterText(inputFinder, 'Ibuprofen');
       await tester.tap(addButtonFinder);
-      await tester.pumpAndSettle();
+      await pumpUntil(
+        tester,
+        () => lekLogic.items.contains('Ibuprofen'),
+        debugLabel: 'add medication via button',
+      );
 
       expect(lekLogic.items, contains('Ibuprofen'));
     });
@@ -149,7 +200,7 @@ void main() {
           child: RestrictionsWidget(logic: omezeniLogic),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       final inputFinder =
           find.byKey(const Key('RestrictionsWidget_Omezení a alergie_input'));
@@ -159,7 +210,11 @@ void main() {
       // Type and tap Add button
       await tester.enterText(inputFinder, 'Test Restriction');
       await tester.tap(addButtonFinder);
-      await tester.pumpAndSettle();
+      await pumpUntil(
+        tester,
+        () => omezeniLogic.items.contains('Test Restriction'),
+        debugLabel: 'add item for clear test',
+      );
 
       // Verify item was added AND field is cleared
       expect(omezeniLogic.items, contains('Test Restriction'));
@@ -175,7 +230,7 @@ void main() {
           child: RestrictionsWidget(logic: omezeniLogic),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       final inputFinder =
           find.byKey(const Key('RestrictionsWidget_Omezení a alergie_input'));
@@ -185,12 +240,20 @@ void main() {
       // Add first item
       await tester.enterText(inputFinder, 'First Item');
       await tester.tap(addButtonFinder);
-      await tester.pumpAndSettle();
+      await pumpUntil(
+        tester,
+        () => omezeniLogic.items.contains('First Item'),
+        debugLabel: 'add first item',
+      );
 
       // Add second item - should start with empty field
       await tester.enterText(inputFinder, 'Second Item');
       await tester.tap(addButtonFinder);
-      await tester.pumpAndSettle();
+      await pumpUntil(
+        tester,
+        () => omezeniLogic.items.contains('Second Item'),
+        debugLabel: 'add second item',
+      );
 
       // Both items should be in list (not 'First ItemSecond Item')
       expect(omezeniLogic.items, contains('First Item'));
@@ -207,7 +270,7 @@ void main() {
           child: RestrictionsWidget(logic: omezeniLogic),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       final inputFinder =
           find.byKey(const Key('RestrictionsWidget_Omezení a alergie_input'));
@@ -218,7 +281,11 @@ void main() {
       for (int i = 1; i <= 5; i++) {
         await tester.enterText(inputFinder, 'Item $i');
         await tester.tap(addButtonFinder);
-        await tester.pumpAndSettle();
+        await pumpUntil(
+          tester,
+          () => omezeniLogic.items.length == i,
+          debugLabel: 'add item $i',
+        );
       }
 
       // All 5 items should be added correctly (no duplicates from stale listeners)
@@ -233,7 +300,7 @@ void main() {
           child: RestrictionsWidget(logic: omezeniLogic),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       final inputFinder =
           find.byKey(const Key('RestrictionsWidget_Omezení a alergie_input'));
@@ -243,15 +310,27 @@ void main() {
       // Rapid sequential entries
       await tester.enterText(inputFinder, 'A');
       await tester.tap(addButtonFinder);
-      await tester.pump();
+      await pumpUntil(
+        tester,
+        () => omezeniLogic.items.length == 1,
+        debugLabel: 'add fast A',
+      );
 
       await tester.enterText(inputFinder, 'B');
       await tester.tap(addButtonFinder);
-      await tester.pump();
+      await pumpUntil(
+        tester,
+        () => omezeniLogic.items.length == 2,
+        debugLabel: 'add fast B',
+      );
 
       await tester.enterText(inputFinder, 'C');
       await tester.tap(addButtonFinder);
-      await tester.pumpAndSettle();
+      await pumpUntil(
+        tester,
+        () => omezeniLogic.items.length == 3,
+        debugLabel: 'add fast C',
+      );
 
       // Each should be separate item
       expect(omezeniLogic.items, contains('A'));
@@ -272,15 +351,14 @@ void main() {
       // Re-fetch to populate logic.names with the new restriction
       omezeniLogic = MemoryOmezeniLogic();
       await omezeniLogic.fetchData();
-      // Reset items to ensure clean state for this test
-      omezeniLogic.reset();
+      // Items start empty for a new logic instance.
 
       await tester.pumpWidget(
         BaseTestWidget(
           child: RestrictionsWidget(logic: omezeniLogic),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       final inputFinder =
           find.byKey(const Key('RestrictionsWidget_Omezení a alergie_input'));
@@ -290,10 +368,15 @@ void main() {
       await tester.pump();
       await tester.enterText(inputFinder, 'Test');
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300)); // Wait for dropdown
 
       // Look for the dropdown option
       final optionFinder = find.text('Test Restriction For Dropdown');
+
+      await pumpUntil(
+        tester,
+        () => optionFinder.evaluate().isNotEmpty,
+        debugLabel: 'wait for dropdown option',
+      );
 
       // Debug: print what we find
 
@@ -302,12 +385,12 @@ void main() {
       if (optionFinder.evaluate().isNotEmpty) {
         // Tap the dropdown option (should trigger onSelected)
         await tester.tap(optionFinder.last); // .last to tap dropdown, not input
-        
-        // Use manual pumps instead of pumpAndSettle to avoid hanging on persistent 
-        // animations (like cursor blinking or overlay fade) typical in Autocomplete
-        for(int i = 0; i < 5; i++) {
-          await tester.pump(const Duration(milliseconds: 100));
-        }
+
+        await pumpUntil(
+          tester,
+          () => omezeniLogic.items.length == 1,
+          debugLabel: 'wait for dropdown add',
+        );
 
         // BUG EXPOSURE: If double-add exists, this will be 2 items
         // Expected: Only 1 item ('Test Restriction For Dropdown')

@@ -21,6 +21,7 @@ class RestrictionsWidget extends StatefulWidget {
   State<RestrictionsWidget> createState() => _RestrictionsWidgetState();
 }
 
+
 class _RestrictionsWidgetState extends State<RestrictionsWidget> {
   late final LogicInterface _logic;
   final TextEditingController _controller = TextEditingController();
@@ -214,6 +215,7 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
         _addItem(selection);
         // Clear the autocomplete's text field after frame
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
           _autocompleteController?.clear();
           setState(() => _ghostSuffix = '');
         });
@@ -283,6 +285,7 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
                   _pendingSubmitValue = value;
                   final hadFocus = focusNode.hasFocus;
                   WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted) return;
                     // Only add if onSelected didn't cancel it
                     if (_pendingSubmitValue != null) {
                       _addItem(_pendingSubmitValue!);

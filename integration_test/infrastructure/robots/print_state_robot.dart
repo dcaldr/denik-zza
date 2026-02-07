@@ -22,23 +22,31 @@ class PrintStateRobot extends BaseRobot {
 
   Finder personCard(int personId) => findKey('PrintState_person_$personId');
 
-  Finder markAllButton(int personId) => find.descendant(
+  Finder _personCardContainer(int personId) => find.ancestor(
         of: personCard(personId),
+        matching: find.byType(Card),
+      );
+
+  Finder markAllButton(int personId) => find.descendant(
+        of: _personCardContainer(personId),
         matching: findKey('PrintState_markAll'),
       );
 
   Finder resetAllButton(int personId) => find.descendant(
-        of: personCard(personId),
+        of: _personCardContainer(personId),
         matching: findKey('PrintState_resetAll'),
       );
 
   Future<void> verifyPageShown() async {
-    await pumpAndSettle();
+
+
     expect(findKey('PrintStateManagement_appBar'), findsOneWidget);
   }
 
   Future<void> expandPerson(String fullName) async {
-    await tap(find.text(fullName).first);
+    final nameFinder = find.text(fullName).first;
+    await ensureVisible(nameFinder);
+    await tap(nameFinder);
   }
 
   Future<void> toggleRecordPrinted(int recordIndex) async {
@@ -47,19 +55,23 @@ class PrintStateRobot extends BaseRobot {
       of: row,
       matching: findKey('PrintStateManagement_toggle_badge'),
     );
+    await ensureVisible(toggle);
     await tap(toggle);
   }
 
   Future<void> tapMarkAll(int personId) async {
+    await ensureVisible(markAllButton(personId));
     await tap(markAllButton(personId));
   }
 
   Future<void> tapResetAll(int personId) async {
+    await ensureVisible(resetAllButton(personId));
     await tap(resetAllButton(personId));
   }
 
   Future<void> verifyPersonPrintedBadge(String fullName, bool expected) async {
-    await pumpAndSettle();
+
+
     final nameFinder = find.text(fullName);
     expect(nameFinder, findsOneWidget);
 
@@ -69,15 +81,27 @@ class PrintStateRobot extends BaseRobot {
     );
     expect(cardFinder, findsOneWidget);
 
+    final badgeFinder = find.descendant(
+      of: cardFinder,
+      matching: find.byKey(const Key('PrintState_personBadge_toggle')),
+    );
+    expect(badgeFinder, findsOneWidget);
+
     final label = expected ? 'Vytištěno' : 'Nevytištěno';
-    expect(find.descendant(of: cardFinder, matching: find.text(label)),
+    expect(find.descendant(of: badgeFinder, matching: find.text(label)),
         findsOneWidget);
   }
 
   Future<void> verifyRecordPrintedBadge(int recordIndex, bool expected) async {
     final row = find.byType(RecordPrintToggleRow).at(recordIndex);
+    final badgeFinder = find.descendant(
+      of: row,
+      matching: find.byKey(const Key('PrintStateManagement_toggle_badge')),
+    );
+    expect(badgeFinder, findsOneWidget);
+
     final label = expected ? 'Vytištěno' : 'Nevytištěno';
-    expect(find.descendant(of: row, matching: find.text(label)),
+    expect(find.descendant(of: badgeFinder, matching: find.text(label)),
         findsOneWidget);
   }
 

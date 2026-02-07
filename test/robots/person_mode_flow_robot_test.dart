@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/print_ops2/print_center.dart';
 import 'package:denik_zza/services/system/system_interface.dart';
@@ -13,6 +14,10 @@ void main() {
 
   group('PersonModeFlowRobot', () {
     testWidgets('finds key elements and actions', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 900));
+      addTearDown(() async {
+        await tester.binding.setSurfaceSize(null);
+      });
       SystemInterface.registerWith(TestSystemInterface());
       await HardcodedTestSetup.setupTestData();
       await tester.pumpWidget(

@@ -19,10 +19,12 @@ class FakePrintCenterService extends PrintCenterService {
   FakePrintCenterService({
     required this.streamFactory,
     required this.recordsByPerson,
+    this.throwOnGetRecords = false,
   }) : super(database: null);
 
   final Stream<List<MemoryOsoba>> Function() streamFactory;
   final Map<int, List<MemoryZaznam>> recordsByPerson;
+  final bool throwOnGetRecords;
   int watchCalls = 0;
 
   @override
@@ -33,6 +35,9 @@ class FakePrintCenterService extends PrintCenterService {
 
   @override
   Future<List<MemoryZaznam>> getRecords(int participantId) async {
+    if (throwOnGetRecords) {
+      throw StateError('boom');
+    }
     return recordsByPerson[participantId] ?? <MemoryZaznam>[];
   }
 }
@@ -299,7 +304,11 @@ void main() {
   group('PrintStateManagementPage', () {
     testWidgets('shows loading indicator while waiting for data',
         (tester) async {
+
       final controllerStream = StreamController<List<MemoryOsoba>>();
+      addTearDown(() async {
+        await controllerStream.close();
+      });
       final service = FakePrintCenterService(
         streamFactory: () => controllerStream.stream,
         recordsByPerson: const {},
@@ -312,17 +321,21 @@ void main() {
         ),
       );
 
+
       await tester.pump();
+
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
-      await controllerStream.close();
     });
 
     testWidgets('shows error state with retry button', (tester) async {
+
+      final person = buildTestPerson(id: 1, jmeno: 'Test', prijmeni: 'One');
       final service = FakePrintCenterService(
-        streamFactory: () => Stream.error(StateError('boom')),
+        streamFactory: () => Stream.value([person]),
         recordsByPerson: const {},
+        throwOnGetRecords: true,
       );
       final controller = PrintStateController(service);
 
@@ -332,12 +345,16 @@ void main() {
         ),
       );
 
+
       await tester.pumpAndSettle();
 
+
       expect(find.text('Zkusit znovu'), findsOneWidget);
+
     });
 
     testWidgets('shows empty state when no participants', (tester) async {
+
       final service = FakePrintCenterService(
         streamFactory: () => Stream.value(const <MemoryOsoba>[]),
         recordsByPerson: const {},
@@ -350,12 +367,16 @@ void main() {
         ),
       );
 
+
       await tester.pumpAndSettle();
 
+
       expect(find.text('Žádní účastníci'), findsOneWidget);
+
     });
 
     testWidgets('refresh button triggers reload', (tester) async {
+
       final service = FakePrintCenterService(
         streamFactory: () => Stream.value(const <MemoryOsoba>[]),
         recordsByPerson: const {},
@@ -368,14 +389,17 @@ void main() {
         ),
       );
 
+
       await tester.pumpAndSettle();
+
       expect(service.watchCalls, 1);
 
       await tester
           .tap(find.byKey(const Key('PrintStateManagement_refresh')));
-      await tester.pumpAndSettle();
+
 
       expect(service.watchCalls, 2);
+
     });
   });
 }

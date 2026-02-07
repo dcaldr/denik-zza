@@ -30,16 +30,27 @@ class PrintCenterRobot extends BaseRobot {
     await tap(personModeCard);
   }
 
-  Future<void> tapAggregatedCard() async {
-    await tap(aggregatedCard);
-  }
 
-  Future<void> tapFirstPrintCard() async {
-    await tap(firstPrintCard);
-  }
 
   Future<void> tapStateManagementCard() async {
     await tap(stateManagementCard);
+  }
+
+  Future<void> waitForCardEnabled(String key, {Duration timeout = const Duration(seconds: 5)}) async {
+    final cardFinder = findKey(key);
+    final stopwatch = Stopwatch()..start();
+    while (stopwatch.elapsed < timeout) {
+      final inkWellFinder = find.descendant(
+        of: cardFinder,
+        matching: find.byType(InkWell),
+      );
+      if (inkWellFinder.evaluate().isNotEmpty) {
+        final inkWell = tester.widget<InkWell>(inkWellFinder.first);
+        if (inkWell.onTap != null) return;
+      }
+      await pump(const Duration(milliseconds: 100));
+    }
+    throw TestFailure('Card "$key" did not become enabled within $timeout');
   }
 
   Future<void> verifyCardEnabled(String key) async {
@@ -47,24 +58,16 @@ class PrintCenterRobot extends BaseRobot {
     expect(cardFinder, findsOneWidget,
         reason: 'Expected card "$key" to be present');
 
-    final absorbFinder = find.ancestor(
+    final inkWellFinder = find.descendant(
       of: cardFinder,
-      matching: find.byType(AbsorbPointer),
+      matching: find.byType(InkWell),
     );
-    expect(absorbFinder, findsNothing,
+    expect(inkWellFinder, findsOneWidget,
+        reason: 'Card "$key" should have InkWell');
+
+    final inkWell = tester.widget<InkWell>(inkWellFinder);
+    expect(inkWell.onTap, isNotNull,
         reason: 'Card "$key" should be enabled');
   }
 
-  Future<void> verifyCardDisabled(String key) async {
-    final cardFinder = findKey(key);
-    expect(cardFinder, findsOneWidget,
-        reason: 'Expected card "$key" to be present');
-
-    final absorbFinder = find.ancestor(
-      of: cardFinder,
-      matching: find.byType(AbsorbPointer),
-    );
-    expect(absorbFinder, findsWidgets,
-        reason: 'Card "$key" should be disabled');
-  }
 }

@@ -10,11 +10,13 @@ class FakePrintCenterService extends PrintCenterService {
   final List<MemoryOsoba> participants;
   final Map<int, List<MemoryZaznam>> records;
   final Stream<List<MemoryOsoba>>? participantsStream;
+  final bool throwOnGetRecords;
 
   FakePrintCenterService({
     required this.participants,
     required this.records,
     this.participantsStream,
+    this.throwOnGetRecords = false,
   }) : super(database: null);
 
   @override
@@ -24,6 +26,9 @@ class FakePrintCenterService extends PrintCenterService {
 
   @override
   Future<List<MemoryZaznam>> getRecords(int participantId) async {
+    if (throwOnGetRecords) {
+      throw StateError('boom');
+    }
     return records[participantId] ?? <MemoryZaznam>[];
   }
 
@@ -98,10 +103,12 @@ void main() {
       });
 
       test('loading error sets error state', () async {
+        final person = buildTestPerson(id: 1, jmeno: 'Test', prijmeni: 'One');
         final service = FakePrintCenterService(
-          participants: [],
+          participants: [person],
           records: const {},
-          participantsStream: Stream.error(StateError('boom')),
+          participantsStream: Stream.value([person]),
+          throwOnGetRecords: true,
         );
         final controller = PrintStateController(service);
 
