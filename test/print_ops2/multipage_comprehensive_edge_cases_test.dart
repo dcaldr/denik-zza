@@ -459,12 +459,12 @@ Future<int> _createParticipantWithLongRecord(DatabaseInterface db) async {
   if (participantId == null) throw Exception('Failed to create participant');
 
   // Create a very long record that should force page breaks (but under 512 char limit)
-  final longDescription = 'Velmi dlouhý popis záznamu s mnoha detaily. ' +
-      'Pacient si stěžuje na bolesti hlavy a nevolnost. ' +
-      'Provedeno základní vyšetření včetně měření teploty a tlaku. ' +
-      'Doporučen klid a sledování stavu. ' +
-      'V případě zhoršení okamžitě kontaktovat zdravotníka. ' +
-      'Pacient je při vědomí a spolupracuje při vyšetření. ' +
+  final longDescription = 'Velmi dlouhý popis záznamu s mnoha detaily. '
+      'Pacient si stěžuje na bolesti hlavy a nevolnost. '
+      'Provedeno základní vyšetření včetně měření teploty a tlaku. '
+      'Doporučen klid a sledování stavu. '
+      'V případě zhoršení okamžitě kontaktovat zdravotníka. '
+      'Pacient je při vědomí a spolupracuje při vyšetření. '
       'Žádné viditelné poranění ani známky infekce.'; // Under 512 chars
 
   final longRecord = MemoryZaznam.fullNamed(
@@ -542,10 +542,10 @@ Future<int> _createParticipantWithFewLargeRecords(DatabaseInterface db) async {
 
   // Create few large records (under 512 char limit each)
   for (int i = 1; i <= 3; i++) {
-    final largeDescription = 'Rozsáhlý popis záznamu $i: ' +
-        'Detailní popis situace s mnoha informacemi o stavu pacienta. ' +
-        'Zahrnuje symptomy, provedená vyšetření a doporučený postup. ' +
-        'Pacient vykazuje známky zlepšení po aplikované léčbě. ' +
+    final largeDescription = 'Rozsáhlý popis záznamu $i: '
+        'Detailní popis situace s mnoha informacemi o stavu pacienta. '
+        'Zahrnuje symptomy, provedená vyšetření a doporučený postup. '
+        'Pacient vykazuje známky zlepšení po aplikované léčbě. '
         'Doporučeno pokračovat v sledování a pravidelných kontrolách.'; // Under 512 chars
 
     final record = MemoryZaznam.fullNamed(

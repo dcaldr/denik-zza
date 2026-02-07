@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'base_robot.dart';
 
@@ -41,6 +42,18 @@ class PersonModeFlowRobot extends BaseRobot {
   }
 
   Future<void> selectParticipant(String fullName) async {
+    final listFinder = find.byKey(const Key('select-person'));
+    final itemFinder = find.text(fullName);
+
+    // Scroll until the participant is visible
+    // 15 participants might not fit on one screen
+    await tester.scrollUntilVisible(
+      itemFinder,
+      100.0,
+      scrollable: find.descendant(of: listFinder, matching: find.byType(Scrollable)),
+      maxScrolls: 50,
+    );
+
     final found = await waitForText(fullName,
         timeout: const Duration(seconds: 5));
     if (!found) {

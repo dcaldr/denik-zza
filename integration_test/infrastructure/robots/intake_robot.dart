@@ -59,7 +59,11 @@ class IntakeRobot extends BaseRobot {
     
     // Wait for loading to complete (spinner disappears)
     // Use pump() not pumpAndSettle() because CircularProgressIndicator is infinite animation
+    // Wait for loading to complete (spinner disappears)
+    // Use pump() not pumpAndSettle() because CircularProgressIndicator is infinite animation
     final loadingKey = findKey('IntakeForm_loading');
+    final searchInputFinder = personSearchInput;
+
     bool spinnerWasShown = false;
     for (int i = 0; i < 50; i++) {
       await pump(const Duration(milliseconds: 100));
@@ -67,11 +71,19 @@ class IntakeRobot extends BaseRobot {
       if (hasSpinner) {
         spinnerWasShown = true;
       }
+      
+      // Stop waiting if spinner effectively finished (was shown then hidden)
       if (spinnerWasShown && !hasSpinner) {
         break;
       }
-      // If spinner never appeared after reasonable time, assume data is ready
-      if (i > 30 && !spinnerWasShown) {
+
+      // Stop waiting if search input is already visible and spinner is not (fast init case)
+      if (!hasSpinner && searchInputFinder.evaluate().isNotEmpty) {
+        break;
+      }
+
+      // If spinner never appeared after reasonable time (1s), assume data is ready
+      if (i > 10 && !spinnerWasShown) {
         break;
       }
     }
