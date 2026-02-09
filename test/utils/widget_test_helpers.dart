@@ -16,13 +16,40 @@ Future<void> pumpUntilGone(
   bool found = finder.evaluate().isNotEmpty;
 
   while (found && DateTime.now().isBefore(end)) {
-    // Pump a single frame only.
-    // This allows animations/futures to progress without waiting for "settled" state.
-    await tester.pump();
+    // Pump a single frame with duration to advance clock and process timers (e.g. Drift)
+    await tester.pump(const Duration(milliseconds: 100));
     found = finder.evaluate().isNotEmpty;
   }
+
 
   if (found) {
     throw TestFailure('Timed out waiting for ${finder.description} to disappear');
   }
+}
+
+/// A "Drift-safe" replacement for [WidgetTester.pumpAndSettle].
+///
+/// Standard [pumpAndSettle] may hang if background timers (Drift isolates)
+/// are waiting for time to pass, as [pump] without duration freezes the clock.
+///
+/// This helper pumps with a 100ms duration step.
+Future<int> pumpAndSettleWithDuration(
+  WidgetTester tester, {
+  Duration duration = const Duration(milliseconds: 100),
+  EnginePhase phase = EnginePhase.sendSemanticsUpdate,
+  Duration timeout = const Duration(minutes: 10),
+}) async {
+  int count = 0;
+  final end = DateTime.now().add(timeout);
+  
+  // Initial pump
+  await tester.pump(duration, phase);
+  count++;
+
+  while (tester.binding.hasScheduledFrame && DateTime.now().isBefore(end)) {
+    await tester.pump(duration, phase);
+    count++;
+  }
+  
+  return count;
 }

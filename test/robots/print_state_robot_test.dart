@@ -9,6 +9,7 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import '../utils/base_test_widget.dart';
 import '../utils/widget_test_helpers.dart';
 import 'package:denik_zza/utils/mode_coordinator.dart';
+import '../setup_templates/hardcoded_setup.dart';
 
 // --- FAKE SERVICE ---
 class FakePrintCenterService extends PrintCenterService {
@@ -34,6 +35,7 @@ class FakePrintCenterService extends PrintCenterService {
   }
 }
 
+
 void main() {
   setUpAll(() {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -46,8 +48,7 @@ void main() {
 
   group('PrintStateRobot', () {
     testWidgets('finds key elements and actions', (tester) async {
-      
-      // Use Fake Service to isolate DB layer and prevent test hangs
+      // Use Fake Service to isolate DB layer and prevent test hangs (race conditions in Drift streams)
       final controller = PrintStateController(FakePrintCenterService());
 
       await tester.pumpWidget(
