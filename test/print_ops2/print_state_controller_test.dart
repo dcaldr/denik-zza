@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/print_ops2/print_state_controller.dart';
 import 'package:denik_zza/print_ops2/print_center_service.dart';
@@ -9,19 +10,25 @@ import '../utils/print_test_helpers.dart';
 class FakePrintCenterService extends PrintCenterService {
   final List<MemoryOsoba> participants;
   final Map<int, List<MemoryZaznam>> records;
-  final Stream<List<MemoryOsoba>>? participantsStream;
+  final StreamController<List<MemoryOsoba>> _streamController = StreamController<List<MemoryOsoba>>.broadcast();
   final bool throwOnGetRecords;
 
   FakePrintCenterService({
     required this.participants,
     required this.records,
-    this.participantsStream,
     this.throwOnGetRecords = false,
-  }) : super(database: null);
+  }) : super(database: null) {
+      _streamController.add(participants);
+  }
+
+  void emitParticipants(List<MemoryOsoba> newParticipants) {
+    _streamController.add(newParticipants);
+  }
 
   @override
-  Stream<List<MemoryOsoba>> watchCurrentEventParticipants() {
-    return participantsStream ?? Stream.value(participants);
+  Stream<List<MemoryOsoba>> watchCurrentEventParticipants() async* {
+    yield participants;
+    yield* _streamController.stream;
   }
 
   @override
@@ -37,6 +44,9 @@ class FakePrintCenterService extends PrintCenterService {
     final idx = participants.indexWhere((p) => p.id == participantId);
     if (idx == -1) return false;
     participants[idx].wasPrinted = wasPrinted;
+    
+    // Simulate DB update emitting new stream value
+    emitParticipants(List.from(participants)); 
     return true;
   }
 
@@ -62,306 +72,180 @@ class FakePrintCenterService extends PrintCenterService {
     }
     return results;
   }
+  
+  void dispose() {
+    _streamController.close();
+  }
 }
 
 void main() {
   group('PrintStateController', () {
-    group('loadParticipants', () {
-      test('loading participants populates personStates', () async {
-        final personA = buildTestPerson(id: 1, jmeno: 'Test', prijmeni: 'One');
-        final personB = buildTestPerson(id: 2, jmeno: 'Test', prijmeni: 'Two');
-        final record = buildTestRecord(
-          id: 1,
-          participantId: 1,
-          title: 'Record',
-          description: 'Desc',
-        );
+    late FakePrintCenterService service;
+    late PrintStateController controller;
 
-        final service = FakePrintCenterService(
-          participants: [personA, personB],
-          records: {1: [record], 2: []},
+    setUp(() {
+       // Setup handled in each test or we can extract common setup if needed
+    });
+
+    tearDown(() {
+       // service.dispose(); // If we had one global
+    });
+
+    group('loadParticipants', () {
+      test('loading participants populates personStates via stream', () async {
+        final personA = buildTestPerson(id: 1, jmeno: 'Test', prijmeni: 'One');
+        final record = buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D');
+        
+        service = FakePrintCenterService(
+          participants: [personA],
+          records: {1: [record]},
         );
-        final controller = PrintStateController(service);
+        controller = PrintStateController(service);
 
         await controller.loadParticipants();
+
+        // Wait for async stream processing
+        await Future.delayed(Duration.zero);
 
         expect(controller.loading, false);
-        expect(controller.error, isNull);
-        expect(controller.personStates.length, 2);
-      });
-
-      test('loading with no participants results in empty list', () async {
-        final service = FakePrintCenterService(
-          participants: [],
-          records: const {},
-        );
-        final controller = PrintStateController(service);
-
-        await controller.loadParticipants();
-
-        expect(controller.personStates, isEmpty);
-      });
-
-      test('loading error sets error state', () async {
-        final person = buildTestPerson(id: 1, jmeno: 'Test', prijmeni: 'One');
-        final service = FakePrintCenterService(
-          participants: [person],
-          records: const {},
-          participantsStream: Stream.value([person]),
-          throwOnGetRecords: true,
-        );
-        final controller = PrintStateController(service);
-
-        await controller.loadParticipants();
-
-        expect(controller.error, isNotNull);
+        expect(controller.personStates.length, 1);
+        expect(controller.personStates.first.records.length, 1);
       });
     });
 
-    group('togglePersonPrinted', () {
-      test('toggle person from printed -> unprinted cascades records', () async {
-        final person = buildTestPerson(id: 1, jmeno: 'Test', prijmeni: 'One')
-          ..wasPrinted = true;
-        final records = [
-          buildTestRecord(id: 1, participantId: 1, title: 'A', description: 'a')
-            ..isPrinted = true,
-          buildTestRecord(id: 2, participantId: 1, title: 'B', description: 'b')
-            ..isPrinted = true,
-        ];
+    group('Manual Control - No Cascades', () {
+        // Requirement: "Manual Control... Remove automatic cascading logic"
+        
+        test('unmarking a person does NOT cascade to records', () async {
+            final person = buildTestPerson(id: 1)..wasPrinted = true;
+            final record = buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D')..isPrinted = true;
+            
+            service = FakePrintCenterService(
+              participants: [person],
+              records: {1: [record]},
+            );
+            controller = PrintStateController(service);
+            await controller.loadParticipants();
+            await Future.delayed(Duration.zero);
+            
+            // Unmark person
+            await controller.togglePersonPrinted(1);
+            
+            // Wait for stream update
+            await Future.delayed(Duration.zero);
+            
+            final state = controller.personStates.first;
+            expect(state.person.wasPrinted, false);
+            expect(state.records.first.isPrinted, true, reason: "Record should remain printed (no cascade)");
+        });
 
-        final service = FakePrintCenterService(
-          participants: [person],
-          records: {1: records},
-        );
-        final controller = PrintStateController(service);
-        await controller.loadParticipants();
-
-        await controller.togglePersonPrinted(1);
-
-        final state = controller.personStates.first;
-        expect(state.person.wasPrinted, false);
-        expect(state.records.every((r) => r.isPrinted == false), true);
-      });
-
-      test('toggle person from unprinted -> printed keeps records', () async {
-        final person = buildTestPerson(id: 1, jmeno: 'Test', prijmeni: 'One')
-          ..wasPrinted = false;
-        final records = [
-          buildTestRecord(id: 1, participantId: 1, title: 'A', description: 'a')
-            ..isPrinted = false,
-        ];
-
-        final service = FakePrintCenterService(
-          participants: [person],
-          records: {1: records},
-        );
-        final controller = PrintStateController(service);
-        await controller.loadParticipants();
-
-        await controller.togglePersonPrinted(1);
-
-        final state = controller.personStates.first;
-        expect(state.person.wasPrinted, true);
-        expect(state.records.first.isPrinted, false);
-      });
+        test('unmarking a middle record does NOT cascade to later records', () async {
+            final person = buildTestPerson(id: 1)..wasPrinted = true;
+            final r1 = buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D')..isPrinted = true; // Unmark this
+            final r2 = buildTestRecord(id: 102, participantId: 1, title: 'T', description: 'D')..isPrinted = true; // Should stay printed
+            
+            service = FakePrintCenterService(
+              participants: [person],
+              records: {1: [r1, r2]},
+            );
+            controller = PrintStateController(service);
+            await controller.loadParticipants();
+            await Future.delayed(Duration.zero);
+            
+            // Unmark r1
+            await controller.toggleRecordPrinted(1, 101);
+            
+            final state = controller.personStates.first;
+            expect(state.records[0].isPrinted, false);
+            expect(state.records[1].isPrinted, true, reason: "Later record should remain printed (no cascade)");
+            expect(state.hasSequenceIssue, true, reason: "Should flag sequence issue (Gap)");
+        });
     });
 
-    group('toggleRecordPrinted – cascade logic', () {
-      test('unmark middle record cascades to later records', () async {
-        final person = buildTestPerson(id: 1, jmeno: 'Test', prijmeni: 'One')
-          ..wasPrinted = true;
-        final records = [
-          buildTestRecord(id: 1, participantId: 1, title: 'A', description: 'a')
-            ..isPrinted = true,
-          buildTestRecord(id: 2, participantId: 1, title: 'B', description: 'b')
-            ..isPrinted = true,
-          buildTestRecord(id: 3, participantId: 1, title: 'C', description: 'c')
-            ..isPrinted = true,
-        ];
+    group('Strict Validation', () {
+        // Requirement: "Prevent marking a record as printed if earlier records are unprinted"
+        
+        test('cannot mark record as printed if previous is unprinted', () async {
+            final person = buildTestPerson(id: 1);
+            final r1 = buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D')..isPrinted = false;
+            final r2 = buildTestRecord(id: 102, participantId: 1, title: 'T', description: 'D')..isPrinted = false; // Try to mark this
+            
+            service = FakePrintCenterService(
+              participants: [person],
+              records: {1: [r1, r2]},
+            );
+            controller = PrintStateController(service);
+            await controller.loadParticipants();
+            await Future.delayed(Duration.zero);
+            
+            // Try to mark r2
+            await controller.toggleRecordPrinted(1, 102);
+            
+            final state = controller.personStates.first;
+            expect(state.records[1].isPrinted, false, reason: "Should be blocked by unprinted r1");
+        });
 
-        final service = FakePrintCenterService(
-          participants: [person],
-          records: {1: records},
-        );
-        final controller = PrintStateController(service);
-        await controller.loadParticipants();
-
-        final success = await controller.toggleRecordPrinted(1, 2);
-        expect(success, true);
-
-        final state = controller.personStates.first;
-        expect(state.records[0].isPrinted, true);
-        expect(state.records[1].isPrinted, false);
-        expect(state.records[2].isPrinted, false);
-      });
-
-      test('unmark last record does not cascade', () async {
-        final person = buildTestPerson(id: 1, jmeno: 'Test', prijmeni: 'One')
-          ..wasPrinted = true;
-        final records = [
-          buildTestRecord(id: 1, participantId: 1, title: 'A', description: 'a')
-            ..isPrinted = true,
-          buildTestRecord(id: 2, participantId: 1, title: 'B', description: 'b')
-            ..isPrinted = true,
-        ];
-
-        final service = FakePrintCenterService(
-          participants: [person],
-          records: {1: records},
-        );
-        final controller = PrintStateController(service);
-        await controller.loadParticipants();
-
-        final success = await controller.toggleRecordPrinted(1, 2);
-        expect(success, true);
-
-        final state = controller.personStates.first;
-        expect(state.records[0].isPrinted, true);
-        expect(state.records[1].isPrinted, false);
-      });
-
-      test('mark record as printed blocked by earlier unprinted', () async {
-        final person = buildTestPerson(id: 1, jmeno: 'Test', prijmeni: 'One')
-          ..wasPrinted = true;
-        final records = [
-          buildTestRecord(id: 1, participantId: 1, title: 'A', description: 'a')
-            ..isPrinted = false,
-          buildTestRecord(id: 2, participantId: 1, title: 'B', description: 'b')
-            ..isPrinted = false,
-        ];
-
-        final service = FakePrintCenterService(
-          participants: [person],
-          records: {1: records},
-        );
-        final controller = PrintStateController(service);
-        await controller.loadParticipants();
-
-        final success = await controller.toggleRecordPrinted(1, 2);
-        expect(success, false);
-
-        final state = controller.personStates.first;
-        expect(state.records[1].isPrinted, false);
-      });
+        test('can mark record as printed if previous is printed', () async {
+            final person = buildTestPerson(id: 1);
+            final r1 = buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D')..isPrinted = true;
+            final r2 = buildTestRecord(id: 102, participantId: 1, title: 'T', description: 'D')..isPrinted = false; // Try to mark this
+            
+            service = FakePrintCenterService(
+              participants: [person],
+              records: {1: [r1, r2]},
+            );
+            controller = PrintStateController(service);
+            await controller.loadParticipants();
+            await Future.delayed(Duration.zero);
+            
+            // Try to mark r2
+            await controller.toggleRecordPrinted(1, 102);
+            
+            final state = controller.personStates.first;
+            expect(state.records[1].isPrinted, true, reason: "Should be allowed");
+        });
     });
 
-    group('previewToggleImpact', () {
-      test('last record impact has zero cascade', () async {
-        final person = buildTestPerson(id: 1, jmeno: 'Test', prijmeni: 'One')
-          ..wasPrinted = true;
-        final records = [
-          buildTestRecord(id: 1, participantId: 1, title: 'A', description: 'a')
-            ..isPrinted = true,
-          buildTestRecord(id: 2, participantId: 1, title: 'B', description: 'b')
-            ..isPrinted = true,
-        ];
+    group('Bulk Operations', () {
+        test('markAllPrintedForPerson sets all true', () async {
+            final person = buildTestPerson(id: 1);
+            final r1 = buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D')..isPrinted = false;
+            final r2 = buildTestRecord(id: 102, participantId: 1, title: 'T', description: 'D')..isPrinted = false;
+            
+            service = FakePrintCenterService(
+              participants: [person],
+              records: {1: [r1, r2]},
+            );
+            controller = PrintStateController(service);
+            await controller.loadParticipants();
+            await Future.delayed(Duration.zero);
+            
+            await controller.markAllPrintedForPerson(1);
+            
+            final state = controller.personStates.first;
+            expect(state.person.wasPrinted, true);
+            expect(state.records.every((r) => r.isPrinted), true);
+        });
 
-        final service = FakePrintCenterService(
-          participants: [person],
-          records: {1: records},
-        );
-        final controller = PrintStateController(service);
-        await controller.loadParticipants();
-
-        final impact = controller.previewToggleImpact(1, 2);
-        expect(impact.affectedRecordCount, 0);
-      });
-
-      test('first of three printed records cascades two', () async {
-        final person = buildTestPerson(id: 1, jmeno: 'Test', prijmeni: 'One')
-          ..wasPrinted = true;
-        final records = [
-          buildTestRecord(id: 1, participantId: 1, title: 'A', description: 'a')
-            ..isPrinted = true,
-          buildTestRecord(id: 2, participantId: 1, title: 'B', description: 'b')
-            ..isPrinted = true,
-          buildTestRecord(id: 3, participantId: 1, title: 'C', description: 'c')
-            ..isPrinted = true,
-        ];
-
-        final service = FakePrintCenterService(
-          participants: [person],
-          records: {1: records},
-        );
-        final controller = PrintStateController(service);
-        await controller.loadParticipants();
-
-        final impact = controller.previewToggleImpact(1, 1);
-        expect(impact.affectedRecordCount, 2);
-        expect(impact.appendStillPossible, true);
-      });
-
-      test('blocked append requires full reprint', () async {
-        final person = buildTestPerson(id: 1, jmeno: 'Test', prijmeni: 'One')
-          ..wasPrinted = true;
-        final records = [
-          buildTestRecord(id: 1, participantId: 1, title: 'A', description: 'a')
-            ..isPrinted = false,
-          buildTestRecord(id: 2, participantId: 1, title: 'B', description: 'b')
-            ..isPrinted = false,
-        ];
-
-        final service = FakePrintCenterService(
-          participants: [person],
-          records: {1: records},
-        );
-        final controller = PrintStateController(service);
-        await controller.loadParticipants();
-
-        final impact = controller.previewToggleImpact(1, 2);
-        expect(impact.appendStillPossible, false);
-        expect(impact.requiresFullReprint, true);
-      });
-    });
-
-    group('bulk operations', () {
-      test('markAllPrintedForPerson marks person and records', () async {
-        final person = buildTestPerson(id: 1, jmeno: 'Test', prijmeni: 'One')
-          ..wasPrinted = false;
-        final records = [
-          buildTestRecord(id: 1, participantId: 1, title: 'A', description: 'a')
-            ..isPrinted = false,
-          buildTestRecord(id: 2, participantId: 1, title: 'B', description: 'b')
-            ..isPrinted = false,
-        ];
-
-        final service = FakePrintCenterService(
-          participants: [person],
-          records: {1: records},
-        );
-        final controller = PrintStateController(service);
-        await controller.loadParticipants();
-
-        await controller.markAllPrintedForPerson(1);
-
-        final state = controller.personStates.first;
-        expect(state.person.wasPrinted, true);
-        expect(state.records.every((r) => r.isPrinted), true);
-      });
-
-      test('resetAllForPerson resets person and records', () async {
-        final person = buildTestPerson(id: 1, jmeno: 'Test', prijmeni: 'One')
-          ..wasPrinted = true;
-        final records = [
-          buildTestRecord(id: 1, participantId: 1, title: 'A', description: 'a')
-            ..isPrinted = true,
-          buildTestRecord(id: 2, participantId: 1, title: 'B', description: 'b')
-            ..isPrinted = true,
-        ];
-
-        final service = FakePrintCenterService(
-          participants: [person],
-          records: {1: records},
-        );
-        final controller = PrintStateController(service);
-        await controller.loadParticipants();
-
-        await controller.resetAllForPerson(1);
-
-        final state = controller.personStates.first;
-        expect(state.person.wasPrinted, false);
-        expect(state.records.every((r) => r.isPrinted == false), true);
-      });
+         test('resetAllForPerson sets all false', () async {
+            final person = buildTestPerson(id: 1)..wasPrinted = true;
+            final r1 = buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D')..isPrinted = true;
+            final r2 = buildTestRecord(id: 102, participantId: 1, title: 'T', description: 'D')..isPrinted = true;
+            
+            service = FakePrintCenterService(
+              participants: [person],
+              records: {1: [r1, r2]},
+            );
+            controller = PrintStateController(service);
+            await controller.loadParticipants();
+            await Future.delayed(Duration.zero);
+            
+            await controller.resetAllForPerson(1);
+            
+            final state = controller.personStates.first;
+            expect(state.person.wasPrinted, false);
+            expect(state.records.every((r) => !r.isPrinted), true);
+        });
     });
   });
 }

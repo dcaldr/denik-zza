@@ -416,7 +416,7 @@ class PrintCenterController extends ChangeNotifier {
     notifyListeners();
     try {
       final template = GeneratePdfTemplate.named(
-        osoba: _selected,
+        osoba: _selected!,
         zaznamList: List.of(_records), // copy to avoid mutation side-effects
       );
       final result = template.canAppend();

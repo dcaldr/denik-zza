@@ -5,22 +5,28 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/print_ops2/print_center_service.dart';
 import 'package:denik_zza/print_ops2/generate_pdf_template.dart';
 import 'package:denik_zza/print_ops2/models/person_print_state.dart';
-import 'package:denik_zza/print_ops2/models/toggle_impact.dart';
 import 'package:denik_zza/utils/record_sort_utils.dart';
 import 'package:denik_zza/utils/app_logger.dart';
+import 'package:denik_zza/print_ops2/print_utils.dart' as import_utils;
 
 /// Controller for manual print state management.
 ///
 /// Allows users to manually toggle isPrinted/wasPrinted flags
 /// as a fallback when automatic tracking produces incorrect state.
 /// Maintains the contiguous-prefix invariant via cascade logic.
+/// Controller for manual print state management.
+///
+/// Simplified implementation that:
+/// 1. Listens to participant changes (DB Stream)
+/// 2. Manually refreshes on record changes (since DB stream doesn't watch records)
+/// 3. Removes all "smart" cascading/blocking logic - pure manual control.
 class PrintStateController extends ChangeNotifier {
   final PrintCenterService _service;
-
-  PrintStateController(this._service);
+  StreamSubscription<List<MemoryOsoba>>? _participantsSub;
 
   // State
   List<PersonPrintState> _personStates = [];
+  List<MemoryOsoba> _lastParticipants = []; // Cache for manual refresh
   bool _loading = false;
   String? _error;
 
@@ -29,29 +35,50 @@ class PrintStateController extends ChangeNotifier {
   bool get loading => _loading;
   String? get error => _error;
 
-  /// Loads all participants and their records for the current event.
+  PrintStateController(this._service);
+
+  @override
+  void dispose() {
+    _participantsSub?.cancel();
+    super.dispose();
+  }
+
+  /// Loads participants and subscribes to updates.
   Future<void> loadParticipants() async {
     _loading = true;
     _error = null;
     notifyListeners();
 
-    try {
-      final participants = await _service
-          .watchCurrentEventParticipants()
-          .first;
+    _participantsSub?.cancel();
+    _participantsSub = _service.watchCurrentEventParticipants().listen((participants) {
+      _lastParticipants = participants;
+      _refreshStates(participants);
+    }, onError: (e) {
+      AppLogger.l.e('Failed to watch participants', error: e);
+      _error = 'Chyba při načítání: $e';
+      _loading = false;
+      notifyListeners();
+    });
+  }
 
+  /// Internal method to rebuild states from a list of participants.
+  /// Fetches records for each person to build the full state.
+  Future<void> _refreshStates(List<MemoryOsoba> participants) async {
+    try {
       final states = <PersonPrintState>[];
       for (final person in participants) {
         final records = await _service.getRecords(person.id);
+        
+        // Sort records by time for consistent display/logic
         sortRecordsByTime(records);
-        sortRecordsByTime(records);
+        
         states.add(_buildPersonState(person, records));
       }
-
       _personStates = states;
+      _error = null;
     } catch (e) {
-      AppLogger.l.e('Failed to load participants for print state management', error: e);
-      _error = 'Nepodařilo se načíst účastníky: $e';
+      AppLogger.l.e('Failed to refresh print states', error: e);
+      _error = 'Chyba při aktualizaci: $e';
     } finally {
       _loading = false;
       notifyListeners();
@@ -60,149 +87,53 @@ class PrintStateController extends ChangeNotifier {
 
   /// Toggles a person's wasPrinted flag.
   ///
-  /// When setting to false, cascades: all records are also set to false
-  /// (append is impossible without a printed header).
+  /// Directly updates DB. Stream will trigger refresh automatically.
   Future<void> togglePersonPrinted(int personId) async {
     final stateIdx = _personStates.indexWhere((s) => s.person.id == personId);
     if (stateIdx == -1) return;
 
-    final state = _personStates[stateIdx];
-    final newValue = !(state.person.wasPrinted ?? false);
+    final person = _personStates[stateIdx].person;
+    final newValue = !(person.wasPrinted ?? false);
 
-    // Persist person flag
     final success = await _service.setParticipantPrintedFlag(personId, newValue);
     if (!success) {
-      AppLogger.l.e('Failed to toggle person printed flag for id=$personId');
+      AppLogger.l.e('Failed to set person printed flag');
+    }
+    // No manual refresh needed - setParticipantPrintedFlag updates 'participants' table, triggering stream.
+  }
+
+  /// Toggles a record's isPrinted flag.
+  ///
+  /// Directly updates DB. REQUIRES manual refresh (stream doesn't watch records).
+  Future<void> toggleRecordPrinted(int personId, int recordId) async {
+    final stateIdx = _personStates.indexWhere((s) => s.person.id == personId);
+    if (stateIdx == -1) return;
+
+    final state = _personStates[stateIdx];
+    final recordIdx = state.records.indexWhere((r) => r.idZaznamu == recordId);
+    if (recordIdx == -1) return;
+
+    final record = state.records[recordIdx];
+    final newValue = !record.isPrinted;
+
+    // Strict Validation: Prevent marking as printed if earlier records are unprinted
+    if (newValue) {
+      for (int i = 0; i < recordIdx; i++) {
+        if (!state.records[i].isPrinted) {
+          AppLogger.l.w('Cannot mark record $recordId as printed: earlier records are unprinted.');
+          return; // Block action
+        }
+      }
+    }
+
+    final success = await _service.setRecordPrintedFlag(recordId, newValue);
+    if (!success) {
+      AppLogger.l.e('Failed to set record printed flag');
       return;
     }
-
-    // Update local model
-    state.person.wasPrinted = newValue;
-
-    // Cascade: if setting person to unprinted, all records must also be unprinted
-    if (!newValue && state.records.any((r) => r.isPrinted)) {
-      final printedIds = state.records
-          .where((r) => r.isPrinted)
-          .map((r) => r.idZaznamu)
-          .toList();
-      await _service.setMultipleRecordPrintedFlags(printedIds, false);
-      for (final r in state.records) {
-        r.isPrinted = false;
-      }
-    }
-
-    // Rebuild state for this person
-    _personStates[stateIdx] = _buildPersonState(state.person, state.records);
-    notifyListeners();
-  }
-
-  /// Toggles a record's isPrinted flag with cascade logic.
-  ///
-  /// - Setting to FALSE: all chronologically-later printed records are also
-  ///   set to false (maintains contiguous prefix).
-  /// - Setting to TRUE: only succeeds if all chronologically-earlier records
-  ///   are already printed. Returns false if precondition not met.
-  Future<bool> toggleRecordPrinted(int personId, int recordId) async {
-    final stateIdx = _personStates.indexWhere((s) => s.person.id == personId);
-    if (stateIdx == -1) return false;
-
-    final state = _personStates[stateIdx];
-    final records = state.records; // already sorted by time
-    final recordIdx = records.indexWhere((r) => r.idZaznamu == recordId);
-    if (recordIdx == -1) return false;
-
-    final record = records[recordIdx];
-    final newValue = !record.isPrinted;
-
-    if (newValue) {
-      // MARKING AS PRINTED: check all earlier records are printed
-      for (int i = 0; i < recordIdx; i++) {
-        if (!records[i].isPrinted) {
-          // Cannot mark as printed — earlier records are unprinted
-          return false;
-        }
-      }
-
-      // Persist
-      final success = await _service.setRecordPrintedFlag(recordId, true);
-      if (!success) return false;
-      record.isPrinted = true;
-
-    } else {
-      // MARKING AS UNPRINTED: cascade all later printed records
-      final idsToUnprint = <int>[recordId];
-      for (int i = recordIdx + 1; i < records.length; i++) {
-        if (records[i].isPrinted) {
-          idsToUnprint.add(records[i].idZaznamu);
-        }
-      }
-
-      await _service.setMultipleRecordPrintedFlags(idsToUnprint, false);
-      for (final r in records) {
-        if (idsToUnprint.contains(r.idZaznamu)) {
-          r.isPrinted = false;
-        }
-      }
-    }
-
-    // Rebuild state for this person
-    _personStates[stateIdx] = _buildPersonState(state.person, records);
-    notifyListeners();
-    return true;
-  }
-
-  /// Previews what toggling a record would do WITHOUT persisting.
-  ///
-  /// Returns a [ToggleImpact] describing cascade effects and resulting state.
-  ToggleImpact previewToggleImpact(int personId, int recordId) {
-    final stateIdx = _personStates.indexWhere((s) => s.person.id == personId);
-    if (stateIdx == -1) return const ToggleImpact.none();
-
-    final state = _personStates[stateIdx];
-    final records = state.records;
-    final recordIdx = records.indexWhere((r) => r.idZaznamu == recordId);
-    if (recordIdx == -1) return const ToggleImpact.none();
-
-    final record = records[recordIdx];
-    final newValue = !record.isPrinted;
-
-    if (newValue) {
-      // Marking as printed — check if earlier records block it
-      bool blocked = false;
-      for (int i = 0; i < recordIdx; i++) {
-        if (!records[i].isPrinted) {
-          blocked = true;
-          break;
-        }
-      }
-      // No cascade when marking as printed
-      return ToggleImpact(
-        affectedRecordCount: 0,
-        affectedRecordIds: const [],
-        appendStillPossible: !blocked && (state.person.wasPrinted ?? false),
-        requiresFullReprint: blocked,
-      );
-    } else {
-      // Marking as unprinted — find cascade targets
-      final cascadeIds = <int>[];
-      for (int i = recordIdx + 1; i < records.length; i++) {
-        if (records[i].isPrinted) {
-          cascadeIds.add(records[i].idZaznamu);
-        }
-      }
-
-      // Simulate: will append still be possible?
-      // After toggle, the printed prefix ends before recordIdx
-      final personPrinted = state.person.wasPrinted ?? false;
-      final appendPossible = personPrinted;
-
-      return ToggleImpact(
-        affectedRecordCount: cascadeIds.length,
-        affectedRecordIds: cascadeIds,
-        appendStillPossible: appendPossible,
-        requiresFullReprint: false,
-      );
-    }
+    
+    // Manual refresh needed because DB stream doesn't watch 'records' table
+    await _refreshStates(_lastParticipants);
   }
 
   /// Marks all records as printed for a person.
@@ -212,81 +143,69 @@ class PrintStateController extends ChangeNotifier {
 
     final state = _personStates[stateIdx];
 
-    // Mark person as printed
+    // 1. Mark Person (triggers stream eventually, but we want immediate update)
     if (!(state.person.wasPrinted ?? false)) {
       await _service.setParticipantPrintedFlag(personId, true);
-      state.person.wasPrinted = true;
     }
 
-    // Mark all records as printed
+    // 2. Mark Records
     final unprintedIds = state.records
         .where((r) => !r.isPrinted)
         .map((r) => r.idZaznamu)
         .toList();
+    
     if (unprintedIds.isNotEmpty) {
       await _service.setMultipleRecordPrintedFlags(unprintedIds, true);
-      for (final r in state.records) {
-        r.isPrinted = true;
-      }
     }
 
-    _personStates[stateIdx] = _buildPersonState(state.person, state.records);
-    notifyListeners();
+    // Full refresh to sync everything
+    // Note: setParticipantPrintedFlag triggers stream, but might race with record updates.
+    // Calling _refreshStates manually ensures we see record updates even if stream fires early.
+    await _refreshStates(_lastParticipants);
   }
 
-  /// Resets all print flags for a person (person + all records to unprinted).
+  /// Resets all print flags for a person.
   Future<void> resetAllForPerson(int personId) async {
     final stateIdx = _personStates.indexWhere((s) => s.person.id == personId);
     if (stateIdx == -1) return;
 
     final state = _personStates[stateIdx];
 
-    // Reset person
+    // 1. Reset Person
     await _service.setParticipantPrintedFlag(personId, false);
-    state.person.wasPrinted = false;
 
-    // Reset all records
+    // 2. Reset Records
     final printedIds = state.records
         .where((r) => r.isPrinted)
         .map((r) => r.idZaznamu)
         .toList();
+
     if (printedIds.isNotEmpty) {
       await _service.setMultipleRecordPrintedFlags(printedIds, false);
-      for (final r in state.records) {
-        r.isPrinted = false;
-      }
     }
 
-    _personStates[stateIdx] = _buildPersonState(state.person, state.records);
-    notifyListeners();
+    await _refreshStates(_lastParticipants);
   }
 
-  /// Builds a [PersonPrintState] with computed append status.
+  /// Builds a [PersonPrintState] with computed append status using simplified logic.
   PersonPrintState _buildPersonState(MemoryOsoba person, List<MemoryZaznam> records) {
-    // Use GeneratePdfTemplate to check append status (same logic as print flow)
+    // Use GeneratePdfTemplate to check append status (strict validation)
     final template = GeneratePdfTemplate.named(
       osoba: person,
       zaznamList: List.of(records),
     );
     final canAppend = template.canAppend();
 
-    // Check for sequence issues: any printed record after an unprinted one
-    bool hasSequenceIssue = false;
-    bool seenUnprinted = false;
-    for (final r in records) {
-      if (!r.isPrinted) {
-        seenUnprinted = true;
-      } else if (seenUnprinted) {
-        hasSequenceIssue = true;
-        break;
-      }
-    }
+    // Check for "Gap" (Sequence Issue) for UI warning
+    // We can use the same utility logic used by GeneratePdfTemplate
+    final flags = records.map((r) => r.isPrinted).toList();
+    final isSequenceValid = import_utils.isSequenceValid(flags);
 
     return PersonPrintState(
       person: person,
       records: records,
       appendPossible: canAppend,
-      hasSequenceIssue: hasSequenceIssue,
+      hasSequenceIssue: !isSequenceValid, // Issue if NOT valid
     );
   }
 }

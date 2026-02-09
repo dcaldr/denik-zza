@@ -6,10 +6,12 @@ import 'package:denik_zza/print_ops2/print_state_management_page.dart';
 import '../utils/base_test_widget.dart';
 import '../setup_templates/hardcoded_setup.dart';
 import '../../integration_test/infrastructure/robots/print_state_robot.dart';
+import 'package:denik_zza/utils/mode_coordinator.dart';
 
 void main() {
   setUpAll(() {
     TestWidgetsFlutterBinding.ensureInitialized();
+    ModeCoordinator.setTestingMode();
   });
 
   group('PrintStateRobot', () {

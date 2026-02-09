@@ -8,7 +8,7 @@ import 'package:denik_zza/print_ops2/print_state_management_page.dart';
 import 'package:denik_zza/print_ops2/widgets/person_print_state_card.dart';
 import 'package:denik_zza/print_ops2/widgets/record_print_toggle_row.dart';
 import 'package:denik_zza/print_ops2/models/person_print_state.dart';
-import 'package:denik_zza/print_ops2/models/toggle_impact.dart';
+
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 
@@ -140,7 +140,6 @@ void main() {
             state: state,
             onTogglePersonPrinted: (_) {},
             onToggleRecordPrinted: (_, __) {},
-            onPreviewImpact: (_, __) => const ToggleImpact.none(),
             onMarkAllPrinted: (_) {},
             onResetAll: (_) {},
           ),
@@ -185,7 +184,6 @@ void main() {
             state: state,
             onTogglePersonPrinted: (_) => toggled = true,
             onToggleRecordPrinted: (_, __) {},
-            onPreviewImpact: (_, __) => const ToggleImpact.none(),
             onMarkAllPrinted: (_) {},
             onResetAll: (_) {},
           ),
@@ -194,13 +192,9 @@ void main() {
 
       await tester.tap(
           find.byKey(const Key('PrintState_personBadge_toggle')));
-      await tester.pumpAndSettle();
+      await tester.pump(); // No settle needed as no dialog
 
-      expect(find.text('Odznačit osobu?'), findsOneWidget);
-
-      await tester.tap(find.text('Odznačit'));
-      await tester.pumpAndSettle();
-
+      expect(find.text('Odznačit osobu?'), findsNothing);
       expect(toggled, true);
     });
 
@@ -233,7 +227,6 @@ void main() {
             state: state,
             onTogglePersonPrinted: (_) {},
             onToggleRecordPrinted: (_, __) {},
-            onPreviewImpact: (_, __) => const ToggleImpact.none(),
             onMarkAllPrinted: (_) => markedAll = true,
             onResetAll: (_) => resetAll = true,
           ),
@@ -249,13 +242,9 @@ void main() {
       expect(markedAll, true);
 
       await tester.tap(find.byKey(const Key('PrintState_resetAll')));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
-      expect(find.text('Resetovat vše?'), findsOneWidget);
-
-      await tester.tap(find.text('Resetovat'));
-      await tester.pumpAndSettle();
-
+      expect(find.text('Resetovat vše?'), findsNothing);
       expect(resetAll, true);
     });
 
@@ -284,7 +273,6 @@ void main() {
             state: state,
             onTogglePersonPrinted: (_) {},
             onToggleRecordPrinted: (_, __) {},
-            onPreviewImpact: (_, __) => const ToggleImpact.none(),
             onMarkAllPrinted: (_) {},
             onResetAll: (_) {},
           ),

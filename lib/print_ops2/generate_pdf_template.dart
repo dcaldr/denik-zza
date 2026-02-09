@@ -8,7 +8,7 @@ import 'package:denik_zza/print_ops2/models/append_analysis.dart';
 import 'package:denik_zza/print_ops2/models/append_build_result.dart';
 import 'package:denik_zza/print_ops2/models/doc_with_count.dart';
 import 'package:denik_zza/print_ops2/print_utils.dart';
-import 'package:denik_zza/print_ops2/print_status_codes.dart';
+
 import 'package:logger/logger.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:pdf/pdf.dart';
@@ -32,23 +32,14 @@ class GeneratePdfTemplate {
   MemoryOsoba? _osoba;
   List<MemoryZaznam>? _zaznamList;
 
-  /// status for the records
-  OkCodes _recordStatus = OkCodes.unset;
-
-  set osoba(MemoryOsoba? inOsoba) {
-    if (inOsoba != _osoba) {
-      _recordStatus = OkCodes.unset;
-    }
-    _osoba = inOsoba;
-  }
-
   GeneratePdfTemplate();
 
+  /// Constructor for initialization with data (used by Controller)
   GeneratePdfTemplate.named({
-    required MemoryOsoba? osoba,
-    List<MemoryZaznam>? zaznamList,
-  })  : _zaznamList = zaznamList,
-        _osoba = osoba;
+    required MemoryOsoba osoba,
+    required List<MemoryZaznam> zaznamList,
+  })  : _osoba = osoba,
+        _zaznamList = zaznamList;
 
   /// tests if appending is possible or needs to be completely recreated
   ///
@@ -67,28 +58,16 @@ class GeneratePdfTemplate {
 
     if (_zaznamList!.isEmpty) return false;
 
-    // here osoba(header) always printed
-    isRecordsOk();
+    // Ensure strict chronological order for validation
+    _ensureSorted();
+
     final printedFlags = _zaznamList!.map((record) => record.isPrinted).toList();
     return canAppendPrint(wasPrinted: wasPrinted, isPrintedFlags: printedFlags);
   }
 
-  /// tests if records aren't blocking appending
-  ///
-  /// for entire safety it will order the list by time (but it should be already ordered)
-  void isRecordsOk() {
-    if (_recordStatus != OkCodes.unset) {
-      return;
-    }
-    if (_zaznamList == null) {
-      _recordStatus = OkCodes.unprinted;
-      return;
-    }
-
-    if (_zaznamList!.isEmpty) {
-      _recordStatus = OkCodes.unset;
-      return;
-    }
+  /// sorts records by time to ensure monotonic validation
+  void _ensureSorted() {
+    if (_zaznamList == null || _zaznamList!.isEmpty) return;
 
     // if in testing mode check and Logger warn if not ordered
     assert(() {
@@ -106,9 +85,6 @@ class GeneratePdfTemplate {
 
     /// order by time of the record (oldest first)
     _zaznamList!.sort((a, b) => a.casZaznamu!.compareTo(b.casZaznamu!));
-
-    final flags = _zaznamList!.map((record) => record.isPrinted).toList();
-    _recordStatus = evaluateRecordSequence(flags);
   }
 
   /// generates list of pages for pdf from the given person

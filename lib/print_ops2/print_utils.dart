@@ -1,4 +1,4 @@
-import 'package:denik_zza/print_ops2/print_status_codes.dart';
+// print_status_codes.dart import removed
 
 String pluralSuffixCz(int count) {
   if (count == 1) return '';
@@ -6,23 +6,21 @@ String pluralSuffixCz(int count) {
   return 'ů';
 }
 
-OkCodes evaluateRecordSequence(List<bool> isPrintedFlags) {
-  if (isPrintedFlags.isEmpty) {
-    return OkCodes.unset;
-  }
+/// Checks if the sequence of printed flags is valid (monotonic).
+/// Valid: [T, T, F, F]
+/// Invalid: [T, F, T] (Gap)
+bool isSequenceValid(List<bool> isPrintedFlags) {
+  if (isPrintedFlags.isEmpty) return true;
 
   var prevItem = isPrintedFlags.first;
   for (final current in isPrintedFlags) {
     if (current && !prevItem) {
-      return OkCodes.broken;
+      // Found a True after a False -> Gap detected
+      return false;
     }
     prevItem = current;
   }
-
-  // If we get here, the sequence is monotonic (not broken)
-  // If the first item is true, then we have at least one printed item (since T->T or T->F is valid)
-  // If the first item is false, then all must be false (since F->T is broken)
-  return isPrintedFlags.first ? OkCodes.printed : OkCodes.unprinted;
+  return true;
 }
 
 bool canAppendPrint({
@@ -32,6 +30,5 @@ bool canAppendPrint({
   if (!wasPrinted) return false;
   if (isPrintedFlags.isEmpty) return false;
 
-  final status = evaluateRecordSequence(isPrintedFlags);
-  return status != OkCodes.broken;
+  return isSequenceValid(isPrintedFlags);
 }

@@ -3,9 +3,8 @@ import 'package:denik_zza/design_system/tokens/app_colors.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
-import 'package:denik_zza/print_ops2/print_utils.dart';
+
 import 'package:denik_zza/print_ops2/models/person_print_state.dart';
-import 'package:denik_zza/print_ops2/models/toggle_impact.dart';
 import 'package:denik_zza/print_ops2/widgets/record_print_toggle_row.dart';
 import 'package:denik_zza/print_ops2/widgets/print_status_badge.dart';
 
@@ -21,7 +20,6 @@ class PersonPrintStateCard extends StatefulWidget {
   final PersonPrintState state;
   final ValueChanged<int> onTogglePersonPrinted;
   final void Function(int personId, int recordId) onToggleRecordPrinted;
-  final ToggleImpact Function(int personId, int recordId) onPreviewImpact;
   final ValueChanged<int> onMarkAllPrinted;
   final ValueChanged<int> onResetAll;
 
@@ -30,7 +28,6 @@ class PersonPrintStateCard extends StatefulWidget {
     required this.state,
     required this.onTogglePersonPrinted,
     required this.onToggleRecordPrinted,
-    required this.onPreviewImpact,
     required this.onMarkAllPrinted,
     required this.onResetAll,
   });
@@ -195,9 +192,8 @@ class _PersonPrintStateCardState extends State<PersonPrintStateCard> {
         const Divider(height: 1),
         ...List.generate(s.records.length, (i) {
           final record = s.records[i];
-          final impact = widget.onPreviewImpact(s.person.id, record.idZaznamu);
 
-          // Can mark as printed only if all earlier records are printed
+          // Can mark as printed only if all earlier records are printed (Strict Mode)
           bool canMark = true;
           if (!record.isPrinted) {
             for (int j = 0; j < i; j++) {
@@ -211,9 +207,9 @@ class _PersonPrintStateCardState extends State<PersonPrintStateCard> {
           return RecordPrintToggleRow(
             key: Key('PrintState_record_${record.idZaznamu}'),
             record: record,
-            cascadeCount: record.isPrinted ? impact.affectedRecordCount : 0,
+            cascadeCount: 0, // No cascades known to UI anymore
             canMarkPrinted: canMark,
-            onToggle: () => _handleRecordToggle(context, s, record, impact),
+            onToggle: () => _handleRecordToggle(context, s, record),
           );
         }),
       ],
@@ -260,89 +256,25 @@ class _PersonPrintStateCardState extends State<PersonPrintStateCard> {
     );
   }
 
-  // --- Handlers with confirmation dialogs ---
+  // --- Handlers (Simplified - Direct Action) ---
 
-  Future<void> _handlePersonToggle(
-      BuildContext context, PersonPrintState s) async {
-    if (s.personPrinted && s.printedRecordCount > 0) {
-      // Warn: cascading all records to unprinted
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (c) => AlertDialog(
-          title: const Text('Odznačit osobu?'),
-          content: Text(
-            'Tím se odznačí i ${s.printedRecordCount} záznam${pluralSuffixCz(s.printedRecordCount)}. '
-            'Dostisk nebude možný.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(c, false),
-              child: const Text('Zrušit'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(c, true),
-              child: const Text('Odznačit'),
-            ),
-          ],
-        ),
-      );
-      if (confirm != true) return;
-    }
+  Future<void> _handlePersonToggle(BuildContext context, PersonPrintState s) async {
+    // No confirmation dialog - direct toggle
     widget.onTogglePersonPrinted(s.person.id);
   }
 
   Future<void> _handleRecordToggle(BuildContext context, PersonPrintState s,
-      MemoryZaznam record, ToggleImpact impact) async {
-    if (record.isPrinted && impact.hasCascade) {
-      // Warn about cascade
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (c) => AlertDialog(
-          title: const Text('Odznačit záznam?'),
-          content: Text(
-            'Odznačením tohoto záznamu budou odznačeny i '
-            '${impact.affectedRecordCount} následující '
-            'záznam${pluralSuffixCz(impact.affectedRecordCount)}.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(c, false),
-              child: const Text('Zrušit'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(c, true),
-              child: const Text('Odznačit'),
-            ),
-          ],
-        ),
-      );
-      if (confirm != true) return;
-    }
+      MemoryZaznam record) async {
+    // No confirmation dialog - direct toggle
     widget.onToggleRecordPrinted(s.person.id, record.idZaznamu);
   }
 
   Future<void> _handleResetAll(BuildContext context, PersonPrintState s) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: const Text('Resetovat vše?'),
-        content: const Text(
-          'Tím se odznačí osoba i všechny záznamy jako nevytištěné. '
-          'Bude nutný plný tisk.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(c, false),
-            child: const Text('Zrušit'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(c, true),
-            child: const Text('Resetovat'),
-          ),
-        ],
-      ),
-    );
-    if (confirm != true) return;
+    // Keep confirmation for Reset All as it's a destructive bulk action?
+    // User requested "Manual Control" and "No cascading logic".
+    // A simple confirmation for "Uncheck ALL" is still good UX, but let's keep it simple for now if requested.
+    // However, the prompt said "remove confirmation dialogs". I will remove them to be consistent with "Manual Control".
+    // If the user misclicks, they can just click "Mark All" to fix it.
     widget.onResetAll(s.person.id);
   }
 }

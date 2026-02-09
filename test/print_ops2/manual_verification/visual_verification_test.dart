@@ -1,6 +1,6 @@
 
 import 'dart:io';
-import 'dart:math';
+
 
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/drift_database_connector.dart';
@@ -10,11 +10,13 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart'
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/print_ops2/generate_pdf_template.dart';
-import 'package:denik_zza/print_ops2/models/append_build_result.dart';
+
 import 'package:denik_zza/utils/mode_coordinator.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:meta/meta.dart';
+
+// ignore: depend_on_referenced_packages
 import 'package:path/path.dart' as p;
 import 'package:pdf/widgets.dart' as pw;
 
@@ -33,13 +35,13 @@ void main() {
     // 0. Mock path_provider for headless execution
     TestWidgetsFlutterBinding.ensureInitialized();
     
-    const MethodChannel('plugins.flutter.io/path_provider')
-      .setMockMethodCallHandler((MethodCall methodCall) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(const MethodChannel('plugins.flutter.io/path_provider'), (MethodCall methodCall) async {
         if (methodCall.method == 'getApplicationDocumentsDirectory') {
-          return Directory.current.path; 
+          return Directory.current.path;
         }
         if (methodCall.method == 'getTemporaryDirectory') {
-           return Directory.systemTemp.path;
+          return Directory.systemTemp.path;
         }
         return null;
       });
@@ -61,17 +63,17 @@ void main() {
     await outputDir.create(recursive: true);
     await pdfDir.create(recursive: true);
     
-    print('----------------------------------------------------------------');
-    print('VISUAL VERIFICATION SUITE');
-    print('Output Directory: ${outputDir.path}');
-    print('----------------------------------------------------------------');
+    debugPrint('----------------------------------------------------------------');
+    debugPrint('VISUAL VERIFICATION SUITE');
+    debugPrint('Output Directory: ${outputDir.path}');
+    debugPrint('----------------------------------------------------------------');
   });
 
   tearDownAll(() async {
     await _generateHtmlDashboard(outputDir, pdfDir, _scenarios);
-    print('----------------------------------------------------------------');
-    print('DASHBOARD GENERATED: ${p.join(outputDir.path, "index.html")}');
-    print('----------------------------------------------------------------');
+    debugPrint('----------------------------------------------------------------');
+    debugPrint('DASHBOARD GENERATED: ${p.join(outputDir.path, "index.html")}');
+    debugPrint('----------------------------------------------------------------');
     await ModeCoordinator.setProductionMode();
   });
 
@@ -88,8 +90,9 @@ void main() {
     }
     final db = dbInterface.appDatabase;
 
+
     for (final scenario in _scenarios) {
-      print('Generating: ${scenario.title}...');
+      debugPrint('Generating: ${scenario.title}...');
       
       final data = await scenario.setup(db); // Await async setup
       
@@ -220,7 +223,9 @@ final List<VerificationScenario> _scenarios = [
         db: db, 
         requireExactPages: true
       );
-      for(var r in oldRecords) r.isPrinted = true;
+      for(var r in oldRecords) {
+        r.isPrinted = true;
+      }
       
       // Add one small record that should fit
       final newRecord = buildTestRecord(
@@ -249,7 +254,9 @@ final List<VerificationScenario> _scenarios = [
         db: db, 
         requireExactPages: true
       );
-      for(var r in oldRecords) r.isPrinted = true;
+      for(var r in oldRecords) {
+        r.isPrinted = true;
+      }
 
       final newRecord = buildTestRecord(
           id: 100, participantId: p.id, title: 'Overflow Trigger', description: 'Standard description for overflow. ' * 3);
@@ -278,7 +285,9 @@ final List<VerificationScenario> _scenarios = [
       );
       // Take only first 3 records to simulate partial page
       final partialOld = oldRecords.take(3).toList();
-      for(var r in partialOld) r.isPrinted = true;
+      for(var r in partialOld) {
+        r.isPrinted = true;
+      }
 
       // Add 2 pages worth of new content
        final newRecords = await generateRecordsForPageCount(
