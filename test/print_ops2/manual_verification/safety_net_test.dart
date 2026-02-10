@@ -57,7 +57,7 @@ void main() {
     // Expectation: 
     //   1. canAppend() == FALSE (Strict Validation blocks usage)
     //   2. If forced, engine prints "Patch" (Only #2 visible? Or does it break?)
-    debugPrint('Testing Scenario 1: Gap [T, F, T]');
+    // debugPrint('Testing Scenario 1: Gap [T, F, T]');
     
     final p1 = buildTestPerson(id: 1, jmeno: 'Jan', prijmeni: 'Gap');
     p1.wasPrinted = true;
@@ -87,7 +87,7 @@ void main() {
       );
       final file1 = File(p.join(outputDir.path, '01_gap_forced.pdf'));
       await file1.writeAsBytes(result.pdfBytes);
-      debugPrint('  -> Engine survived [T, F, T]. PDF generated: ${file1.path}');
+      // debugPrint('  -> Engine survived [T, F, T]. PDF generated: ${file1.path}');
     } catch (e) {
       fail('Engine CRASHED on [T, F, T]: $e');
     }
@@ -98,7 +98,7 @@ void main() {
     // Context: User inserted a new record chronologically between printed ones.
     // State: [T, F (new), T]  <-- Logically same as Gap, but physically dangerous
     // Expectation: canAppend() == FALSE
-    debugPrint('Testing Scenario 2: Overlap [T, F(new), T]');
+    // debugPrint('Testing Scenario 2: Overlap [T, F(new), T]');
 
     final p2 = buildTestPerson(id: 2, jmeno: 'Eva', prijmeni: 'Overlap');
     p2.wasPrinted = true;

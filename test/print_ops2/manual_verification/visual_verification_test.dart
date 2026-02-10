@@ -63,17 +63,17 @@ void main() {
     await outputDir.create(recursive: true);
     await pdfDir.create(recursive: true);
     
-    debugPrint('----------------------------------------------------------------');
-    debugPrint('VISUAL VERIFICATION SUITE');
-    debugPrint('Output Directory: ${outputDir.path}');
-    debugPrint('----------------------------------------------------------------');
+    // debugPrint('----------------------------------------------------------------');
+    // debugPrint('VISUAL VERIFICATION SUITE');
+    // debugPrint('Output Directory: ${outputDir.path}');
+    // debugPrint('----------------------------------------------------------------');
   });
 
   tearDownAll(() async {
     await _generateHtmlDashboard(outputDir, pdfDir, _scenarios);
-    debugPrint('----------------------------------------------------------------');
-    debugPrint('DASHBOARD GENERATED: ${p.join(outputDir.path, "index.html")}');
-    debugPrint('----------------------------------------------------------------');
+    // debugPrint('----------------------------------------------------------------');
+    // debugPrint('DASHBOARD GENERATED: ${p.join(outputDir.path, "index.html")}');
+    // debugPrint('----------------------------------------------------------------');
     await ModeCoordinator.setProductionMode();
   });
 
@@ -92,7 +92,7 @@ void main() {
 
 
     for (final scenario in _scenarios) {
-      debugPrint('Generating: ${scenario.title}...');
+      // debugPrint('Generating: ${scenario.title}...');
       
       final data = await scenario.setup(db); // Await async setup
       
