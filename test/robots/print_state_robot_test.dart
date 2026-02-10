@@ -4,6 +4,7 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/print_ops2/print_center_service.dart';
 import 'package:denik_zza/print_ops2/print_state_controller.dart';
 import 'package:denik_zza/print_ops2/print_state_management_page.dart';
+import 'package:denik_zza/print_ops2/models/person_print_state.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import '../utils/base_test_widget.dart';
@@ -14,23 +15,35 @@ import '../setup_templates/hardcoded_setup.dart';
 // --- FAKE SERVICE ---
 class FakePrintCenterService extends PrintCenterService {
   @override
-  Stream<List<MemoryOsoba>> watchCurrentEventParticipants() {
+  Stream<List<PersonPrintState>> watchPersonPrintStates() {
     return Stream.value([
-      MemoryOsoba.named(
-        id: 1, 
-        jmeno: 'Karel', 
-        prijmeni: 'Čapek',
-        // minimal fields for functionality
-        pohlavi: 1, // POHLAVI_MUZ
-        datumNarozeni: DateTime(1890),
-        zpusobilost: true,
-        bezinfekcnost: true,
+      PersonPrintState(
+        person: MemoryOsoba.named(
+          id: 1,
+          jmeno: 'Karel',
+          prijmeni: 'Čapek',
+          // minimal fields for functionality
+          pohlavi: 1, // POHLAVI_MUZ
+          datumNarozeni: DateTime(1890),
+          zpusobilost: true,
+          bezinfekcnost: true,
+        ),
+        records: [],
+        appendPossible: true,
+        hasSequenceIssue: false,
       )
     ]);
   }
 
   @override
+  Stream<List<MemoryOsoba>> watchCurrentEventParticipants() {
+    // This method is no longer used by the controller, but kept for completeness if needed
+    throw UnimplementedError();
+  }
+
+  @override
   Future<List<MemoryZaznam>> getRecords(int participantId) async {
+    // No longer used by controller
     return [];
   }
 }

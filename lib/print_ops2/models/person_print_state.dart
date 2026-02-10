@@ -1,5 +1,6 @@
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
+import 'package:collection/collection.dart'; // For list equality
 
 /// Holds the print state for a single participant and their records.
 ///
@@ -33,4 +34,23 @@ class PersonPrintState {
 
   /// Display name for the person.
   String get displayName => '${person.jmeno} ${person.prijmeni}';
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    final listEquals = const DeepCollectionEquality().equals;
+
+    return other is PersonPrintState &&
+        other.person == person &&
+        listEquals(other.records, records) &&
+        other.appendPossible == appendPossible &&
+        other.hasSequenceIssue == hasSequenceIssue;
+  }
+
+  @override
+  int get hashCode =>
+      person.hashCode ^
+      const DeepCollectionEquality().hash(records) ^
+      appendPossible.hashCode ^
+      hasSequenceIssue.hashCode;
 }

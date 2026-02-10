@@ -465,6 +465,7 @@ class DriftDatabaseConnector implements DatabaseInterface {
   /// Uses watchSingleOrNull to avoid throwing when the cache table is empty
   /// (common in tests before setup). Emits an empty list until a current event
   /// is set.
+  @override
   Stream<List<MemoryOsoba>> watchParticipantsByCurrentEvent() {
     return _driftDatabase
         .select(_driftDatabase.cache)
@@ -476,6 +477,55 @@ class DriftDatabaseConnector implements DatabaseInterface {
       } else {
         return Stream.value(<MemoryOsoba>[]);
       }
+    });
+  }
+
+  @override
+  Stream<List<({MemoryOsoba person, List<MemoryZaznam> records})>>
+      watchPersonDetailsByCurrentEvent() {
+    return _driftDatabase
+        .select(_driftDatabase.cache)
+        .watchSingleOrNull()
+        .asyncExpand((cache) {
+      final currentEventId = cache?.currentActionID;
+      if (currentEventId == null) {
+        return Stream.value(
+            <({MemoryOsoba person, List<MemoryZaznam> records})>[]);
+      }
+
+      final query = _driftDatabase.select(_driftDatabase.participants).join([
+        leftOuterJoin(
+          _driftDatabase.records,
+          _driftDatabase.records.participantFK
+              .equalsExp(_driftDatabase.participants.id),
+        ),
+      ]);
+      
+      query.where(_driftDatabase.participants.zzaActionFK.equals(currentEventId));
+      query.orderBy([OrderingTerm(expression: _driftDatabase.participants.lastName), OrderingTerm(expression: _driftDatabase.participants.firstName)]);
+
+      return query.watch().asyncMap((rows) async {
+        final grouped = <int,
+            ({MemoryOsoba person, List<MemoryZaznam> records})>{};
+
+        for (final row in rows) {
+          final participant = row.readTable(_driftDatabase.participants);
+          final record = row.readTableOrNull(_driftDatabase.records);
+
+          if (!grouped.containsKey(participant.id)) {
+            grouped[participant.id] = (
+              person: await _toMemoryOsoba(participant),
+              records: <MemoryZaznam>[],
+            );
+          }
+
+          if (record != null) {
+            grouped[participant.id]!.records.add(_toMemoryZaznam(record));
+          }
+        }
+
+        return grouped.values.toList();
+      });
     });
   }
 

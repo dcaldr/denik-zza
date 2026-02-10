@@ -5,7 +5,11 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_lek.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
+import 'package:denik_zza/print_ops2/generate_pdf_template.dart';
+import 'package:denik_zza/print_ops2/models/person_print_state.dart';
+import 'package:denik_zza/print_ops2/print_utils.dart' as import_utils;
 import 'package:denik_zza/utils/app_logger.dart';
+import 'package:denik_zza/utils/record_sort_utils.dart';
 
 /// Service vrstva pro Tisk Centrum.
 /// Nemá žádnou UI logiku, pouze získává data a vrací je dále controlleru.
@@ -23,6 +27,39 @@ class PrintCenterService {
   /// Sleduje účastníky aktuální akce.
   Stream<List<MemoryOsoba>> watchCurrentEventParticipants() {
     return _db.watchParticipantsByCurrentEvent();
+  }
+
+  /// Watches combined print states for all participants in the current event.
+  ///
+  /// This merges participant data with their records and computes derivation logic
+  /// (append possibility, sequence validity) in a single reactive stream.
+  Stream<List<PersonPrintState>> watchPersonPrintStates() {
+    return _db.watchPersonDetailsByCurrentEvent().map((rows) {
+      return rows.map((row) {
+        final records = row.records;
+        // Sort records by time for consistent logic
+        sortRecordsByTime(records);
+
+        // Compute derived state
+        // 1. Append possibility
+        final template = GeneratePdfTemplate.named(
+          osoba: row.person,
+          zaznamList: List.of(records),
+        );
+        final canAppend = template.canAppend();
+
+        // 2. Sequence validity
+        final flags = records.map((r) => r.isPrinted).toList();
+        final isSequenceValid = import_utils.isSequenceValid(flags);
+
+        return PersonPrintState(
+          person: row.person,
+          records: records,
+          appendPossible: canAppend,
+          hasSequenceIssue: !isSequenceValid,
+        );
+      }).toList();
+    }).distinct(); // Use distinct to prevent redundant emissions
   }
 
   Future<List<MemoryZaznam>> getRecords(int participantId) {

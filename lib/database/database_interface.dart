@@ -146,6 +146,15 @@ abstract class DatabaseInterface {
   /// This method takes [personId] as a parameter, which must be already present
   ///  returns true if successful
   Future<bool> setNoteValue(int personId, String value);
+
+  /// Watches all participants and their records for the current event.
+  ///
+  /// Returns a stream of lists where each item is a record containing the `MemoryOsoba`
+  /// and their associated `List<MemoryZaznam>`.
+  /// This allows for efficient, atomic updates of the print state UI.
+  Stream<List<({MemoryOsoba person, List<MemoryZaznam> records})>>
+      watchPersonDetailsByCurrentEvent();
+
 // =============================UPDATES============================== //
 
   /// Updates a [MemoryOsoba] instance in the database, with necessary logic

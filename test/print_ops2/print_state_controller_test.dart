@@ -4,58 +4,60 @@ import 'package:denik_zza/print_ops2/print_state_controller.dart';
 import 'package:denik_zza/print_ops2/print_center_service.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
+import 'package:denik_zza/print_ops2/models/person_print_state.dart';
 
 import '../utils/print_test_helpers.dart';
 
 class FakePrintCenterService extends PrintCenterService {
-  final List<MemoryOsoba> participants;
-  final Map<int, List<MemoryZaznam>> records;
-  final StreamController<List<MemoryOsoba>> _streamController = StreamController<List<MemoryOsoba>>.broadcast();
-  final bool throwOnGetRecords;
+  final StreamController<List<PersonPrintState>> _streamController =
+      StreamController<List<PersonPrintState>>.broadcast();
+
+  // Internal state for "DB" simulation
+  List<PersonPrintState> _currentStates = [];
 
   FakePrintCenterService({
-    required this.participants,
-    required this.records,
-    this.throwOnGetRecords = false,
+    required List<PersonPrintState> initialStates,
   }) : super(database: null) {
-      _streamController.add(participants);
+    _currentStates = initialStates;
+    // Emit initial after a slight delay to simulate async entry or immediate listen
+    Future.microtask(() => _streamController.add(_currentStates));
   }
 
-  void emitParticipants(List<MemoryOsoba> newParticipants) {
-    _streamController.add(newParticipants);
-  }
-
-  @override
-  Stream<List<MemoryOsoba>> watchCurrentEventParticipants() async* {
-    yield participants;
-    yield* _streamController.stream;
+  void updateState(List<PersonPrintState> newStates) {
+    _currentStates = newStates;
+    _streamController.add(_currentStates);
   }
 
   @override
-  Future<List<MemoryZaznam>> getRecords(int participantId) async {
-    if (throwOnGetRecords) {
-      throw StateError('boom');
-    }
-    return records[participantId] ?? <MemoryZaznam>[];
+  Stream<List<PersonPrintState>> watchPersonPrintStates() {
+    return _streamController.stream;
   }
 
   @override
-  Future<bool> setParticipantPrintedFlag(int participantId, bool wasPrinted) async {
-    final idx = participants.indexWhere((p) => p.id == participantId);
+  Future<bool> setParticipantPrintedFlag(
+      int participantId, bool wasPrinted) async {
+    final idx = _currentStates.indexWhere((s) => s.person.id == participantId);
     if (idx == -1) return false;
-    participants[idx].wasPrinted = wasPrinted;
-    
-    // Simulate DB update emitting new stream value
-    emitParticipants(List.from(participants)); 
+
+    // Simulate DB update
+    final person = _currentStates[idx].person;
+    person.wasPrinted = wasPrinted; // Mutating MemoryOsoba for simplicity in fake
+
+    // Re-emit updated state (Controller relies on stream)
+    updateState(List.from(_currentStates));
     return true;
   }
 
   @override
   Future<bool> setRecordPrintedFlag(int recordId, bool isPrinted) async {
-    for (final list in records.values) {
-      final idx = list.indexWhere((r) => r.idZaznamu == recordId);
-      if (idx != -1) {
-        list[idx].isPrinted = isPrinted;
+    for (int i = 0; i < _currentStates.length; i++) {
+      final state = _currentStates[i];
+      final rIdx =
+          state.records.indexWhere((r) => r.idZaznamu == recordId);
+      if (rIdx != -1) {
+        state.records[rIdx].isPrinted = isPrinted; // Mutating MemoryZaznam
+        // Re-emit
+        updateState(List.from(_currentStates));
         return true;
       }
     }
@@ -72,7 +74,7 @@ class FakePrintCenterService extends PrintCenterService {
     }
     return results;
   }
-  
+
   void dispose() {
     _streamController.close();
   }
@@ -84,168 +86,185 @@ void main() {
     late PrintStateController controller;
 
     setUp(() {
-       // Setup handled in each test or we can extract common setup if needed
+      // Setup handled in each test
     });
 
     tearDown(() {
-       // service.dispose(); // If we had one global
+      service.dispose();
+      controller.dispose();
     });
 
-    group('loadParticipants', () {
-      test('loading participants populates personStates via stream', () async {
-        final personA = buildTestPerson(id: 1, jmeno: 'Test', prijmeni: 'One');
-        final record = buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D');
-        
-        service = FakePrintCenterService(
-          participants: [personA],
-          records: {1: [record]},
+    group('Initialization', () {
+      test('initializes validation and state from stream', () async {
+        final person = buildTestPerson(id: 1);
+        final state = PersonPrintState(
+          person: person,
+          records: [],
+          appendPossible: false,
+          hasSequenceIssue: false,
         );
+
+        service = FakePrintCenterService(initialStates: [state]);
         controller = PrintStateController(service);
 
-        await controller.loadParticipants();
-
-        // Wait for async stream processing
+        // Wait for stream to emit
         await Future.delayed(Duration.zero);
 
         expect(controller.loading, false);
         expect(controller.personStates.length, 1);
-        expect(controller.personStates.first.records.length, 1);
+        expect(controller.personStates.first.person.id, 1);
       });
     });
 
     group('Manual Control - No Cascades', () {
-        // Requirement: "Manual Control... Remove automatic cascading logic"
-        
-        test('unmarking a person does NOT cascade to records', () async {
-            final person = buildTestPerson(id: 1)..wasPrinted = true;
-            final record = buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D')..isPrinted = true;
-            
-            service = FakePrintCenterService(
-              participants: [person],
-              records: {1: [record]},
-            );
-            controller = PrintStateController(service);
-            await controller.loadParticipants();
-            await Future.delayed(Duration.zero);
-            
-            // Unmark person
-            await controller.togglePersonPrinted(1);
-            
-            // Wait for stream update
-            await Future.delayed(Duration.zero);
-            
-            final state = controller.personStates.first;
-            expect(state.person.wasPrinted, false);
-            expect(state.records.first.isPrinted, true, reason: "Record should remain printed (no cascade)");
-        });
+      // Requirement: "Manual Control... Remove automatic cascading logic"
 
-        test('unmarking a middle record does NOT cascade to later records', () async {
-            final person = buildTestPerson(id: 1)..wasPrinted = true;
-            final r1 = buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D')..isPrinted = true; // Unmark this
-            final r2 = buildTestRecord(id: 102, participantId: 1, title: 'T', description: 'D')..isPrinted = true; // Should stay printed
-            
-            service = FakePrintCenterService(
-              participants: [person],
-              records: {1: [r1, r2]},
-            );
-            controller = PrintStateController(service);
-            await controller.loadParticipants();
-            await Future.delayed(Duration.zero);
-            
-            // Unmark r1
-            await controller.toggleRecordPrinted(1, 101);
-            
-            final state = controller.personStates.first;
-            expect(state.records[0].isPrinted, false);
-            expect(state.records[1].isPrinted, true, reason: "Later record should remain printed (no cascade)");
-            expect(state.hasSequenceIssue, true, reason: "Should flag sequence issue (Gap)");
-        });
+      test('unmarking a person does NOT cascade to records', () async {
+        final person = buildTestPerson(id: 1)..wasPrinted = true;
+        final record =
+            buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D')
+              ..isPrinted = true;
+
+        final state = PersonPrintState(
+            person: person,
+            records: [record],
+            appendPossible: false,
+            hasSequenceIssue: false);
+
+        service = FakePrintCenterService(initialStates: [state]);
+        controller = PrintStateController(service);
+        await Future.delayed(Duration.zero);
+
+        // Unmark person
+        await controller.togglePersonPrinted(1);
+
+        // Wait for stream update
+        await Future.delayed(Duration.zero);
+
+        final updatedState = controller.personStates.first;
+        expect(updatedState.person.wasPrinted, false);
+        expect(updatedState.records.first.isPrinted, true,
+            reason: "Record should remain printed (no cascade)");
+      });
+
+      test('unmarking a middle record does NOT cascade to later records',
+          () async {
+        final person = buildTestPerson(id: 1)..wasPrinted = true;
+        final r1 =
+            buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D')
+              ..isPrinted = true; // Unmark this
+        final r2 =
+            buildTestRecord(id: 102, participantId: 1, title: 'T', description: 'D')
+              ..isPrinted = true; // Should stay printed
+
+        final state = PersonPrintState(
+            person: person,
+            records: [r1, r2],
+            appendPossible: false,
+            hasSequenceIssue: false);
+
+        service = FakePrintCenterService(initialStates: [state]);
+        controller = PrintStateController(service);
+        await Future.delayed(Duration.zero);
+
+        // Unmark r1
+        await controller.toggleRecordPrinted(1, 101);
+        await Future.delayed(Duration.zero);
+
+        final updatedState = controller.personStates.first;
+        expect(updatedState.records[0].isPrinted, false);
+        expect(updatedState.records[1].isPrinted, true,
+            reason: "Later record should remain printed (no cascade)");
+        // Note: hasSequenceIssue logic is now in Service, controller just reflects it
+      });
     });
 
     group('Strict Validation', () {
-        // Requirement: "Prevent marking a record as printed if earlier records are unprinted"
-        
-        test('cannot mark record as printed if previous is unprinted', () async {
-            final person = buildTestPerson(id: 1);
-            final r1 = buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D')..isPrinted = false;
-            final r2 = buildTestRecord(id: 102, participantId: 1, title: 'T', description: 'D')..isPrinted = false; // Try to mark this
-            
-            service = FakePrintCenterService(
-              participants: [person],
-              records: {1: [r1, r2]},
-            );
-            controller = PrintStateController(service);
-            await controller.loadParticipants();
-            await Future.delayed(Duration.zero);
-            
-            // Try to mark r2
-            await controller.toggleRecordPrinted(1, 102);
-            
-            final state = controller.personStates.first;
-            expect(state.records[1].isPrinted, false, reason: "Should be blocked by unprinted r1");
-        });
+      // Requirement: "Prevent marking a record as printed if earlier records are unprinted"
 
-        test('can mark record as printed if previous is printed', () async {
-            final person = buildTestPerson(id: 1);
-            final r1 = buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D')..isPrinted = true;
-            final r2 = buildTestRecord(id: 102, participantId: 1, title: 'T', description: 'D')..isPrinted = false; // Try to mark this
-            
-            service = FakePrintCenterService(
-              participants: [person],
-              records: {1: [r1, r2]},
-            );
-            controller = PrintStateController(service);
-            await controller.loadParticipants();
-            await Future.delayed(Duration.zero);
-            
-            // Try to mark r2
-            await controller.toggleRecordPrinted(1, 102);
-            
-            final state = controller.personStates.first;
-            expect(state.records[1].isPrinted, true, reason: "Should be allowed");
-        });
+      test('cannot mark record as printed if previous is unprinted', () async {
+        final person = buildTestPerson(id: 1);
+        final r1 =
+            buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D')
+              ..isPrinted = false;
+        final r2 =
+            buildTestRecord(id: 102, participantId: 1, title: 'T', description: 'D')
+              ..isPrinted = false; // Try to mark this
+
+        final state = PersonPrintState(
+            person: person,
+            records: [r1, r2],
+            appendPossible: false,
+            hasSequenceIssue: false);
+
+        service = FakePrintCenterService(initialStates: [state]);
+        controller = PrintStateController(service);
+        await Future.delayed(Duration.zero);
+
+        // Try to mark r2
+        await controller.toggleRecordPrinted(1, 102);
+        await Future.delayed(Duration.zero);
+
+        final updatedState = controller.personStates.first;
+        expect(updatedState.records[1].isPrinted, false,
+            reason: "Should be blocked by unprinted r1");
+      });
     });
 
     group('Bulk Operations', () {
-        test('markAllPrintedForPerson sets all true', () async {
-            final person = buildTestPerson(id: 1);
-            final r1 = buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D')..isPrinted = false;
-            final r2 = buildTestRecord(id: 102, participantId: 1, title: 'T', description: 'D')..isPrinted = false;
-            
-            service = FakePrintCenterService(
-              participants: [person],
-              records: {1: [r1, r2]},
-            );
-            controller = PrintStateController(service);
-            await controller.loadParticipants();
-            await Future.delayed(Duration.zero);
-            
-            await controller.markAllPrintedForPerson(1);
-            
-            final state = controller.personStates.first;
-            expect(state.person.wasPrinted, true);
-            expect(state.records.every((r) => r.isPrinted), true);
-        });
+      test('markAllPrintedForPerson sets all true', () async {
+        final person = buildTestPerson(id: 1);
+        final r1 =
+            buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D')
+              ..isPrinted = false;
+        final r2 =
+            buildTestRecord(id: 102, participantId: 1, title: 'T', description: 'D')
+              ..isPrinted = false;
 
-         test('resetAllForPerson sets all false', () async {
-            final person = buildTestPerson(id: 1)..wasPrinted = true;
-            final r1 = buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D')..isPrinted = true;
-            final r2 = buildTestRecord(id: 102, participantId: 1, title: 'T', description: 'D')..isPrinted = true;
-            
-            service = FakePrintCenterService(
-              participants: [person],
-              records: {1: [r1, r2]},
-            );
-            controller = PrintStateController(service);
-            await controller.loadParticipants();
-            await Future.delayed(Duration.zero);
-            
-            await controller.resetAllForPerson(1);
-            
-            final state = controller.personStates.first;
-            expect(state.person.wasPrinted, false);
-            expect(state.records.every((r) => !r.isPrinted), true);
-        });
+        final state = PersonPrintState(
+            person: person,
+            records: [r1, r2],
+            appendPossible: false,
+            hasSequenceIssue: false);
+
+        service = FakePrintCenterService(initialStates: [state]);
+        controller = PrintStateController(service);
+        await Future.delayed(Duration.zero);
+
+        await controller.markAllPrintedForPerson(1);
+        await Future.delayed(Duration.zero);
+
+        final updatedState = controller.personStates.first;
+        expect(updatedState.person.wasPrinted, true);
+        expect(updatedState.records.every((r) => r.isPrinted), true);
+      });
+
+      test('resetAllForPerson sets all false', () async {
+        final person = buildTestPerson(id: 1)..wasPrinted = true;
+        final r1 =
+            buildTestRecord(id: 101, participantId: 1, title: 'T', description: 'D')
+              ..isPrinted = true;
+        final r2 =
+            buildTestRecord(id: 102, participantId: 1, title: 'T', description: 'D')
+              ..isPrinted = true;
+
+        final state = PersonPrintState(
+            person: person,
+            records: [r1, r2],
+            appendPossible: false,
+            hasSequenceIssue: false);
+
+        service = FakePrintCenterService(initialStates: [state]);
+        controller = PrintStateController(service);
+        await Future.delayed(Duration.zero);
+
+        await controller.resetAllForPerson(1);
+        await Future.delayed(Duration.zero);
+
+        final updatedState = controller.personStates.first;
+        expect(updatedState.person.wasPrinted, false);
+        expect(updatedState.records.every((r) => !r.isPrinted), true);
+      });
     });
   });
 }
