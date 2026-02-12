@@ -1,13 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
-import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/print_ops2/print_center_service.dart';
-import 'package:denik_zza/print_ops2/generate_pdf_template.dart';
 import 'package:denik_zza/print_ops2/models/person_print_state.dart';
-import 'package:denik_zza/utils/record_sort_utils.dart';
 import 'package:denik_zza/utils/app_logger.dart';
-import 'package:denik_zza/print_ops2/print_utils.dart' as import_utils;
 
 /// Controller for manual print state management.
 ///
