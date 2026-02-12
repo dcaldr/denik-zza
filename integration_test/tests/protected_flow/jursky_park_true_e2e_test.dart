@@ -497,8 +497,11 @@ void main() {
           }
         }
 
-        await logger.step('Add Interleaved Records (All Participants)', () async {
-          for (final entry in interleavedRecords) {
+        // Helper to create a batch of records
+        Future<void> createRecordBatch(
+          List<MapEntry<TestParticipant, TestRecord>> records,
+        ) async {
+          for (final entry in records) {
             final p = entry.key;
             final record = entry.value;
             await newRecord.createRecordFromTestData(
@@ -507,6 +510,10 @@ void main() {
             );
             await newRecord.waitForKey('NewRecordPage_save_button');
           }
+        }
+
+        await logger.step('Add Interleaved Records (All Participants)', () async {
+          await createRecordBatch(interleavedRecords);
         });
 
         await logger.step('Verify All Records Inserted', () async {
@@ -526,6 +533,11 @@ void main() {
           await dashboard.navigateToPrintCenter();
           await dashboard.pumpAndSettle();
         });
+
+        // Register CapturingSystemInterface BEFORE any prints
+        // so all PDFs (including Phase 4 baseline) are captured.
+        final capture = CapturingSystemInterface.forCurrentTest();
+        SystemInterface.registerWith(capture);
 
         // ============================================================
         // PHASE 4: Event Continued - Baseline Print for Append
@@ -555,6 +567,10 @@ void main() {
 
           await personMode.tap(personMode.findKey('PersonMode_backToCenter'));
           await printCenter.verifyPageShown();
+
+          // Verify PDF was captured for Phase 4 baseline print
+          expect(capture.capturedPdfs.length, equals(1),
+              reason: 'Expected 1 captured PDF after Milada baseline print');
         });
 
         // ============================================================
@@ -585,9 +601,6 @@ void main() {
         // ============================================================
         logger.section('PHASE 5: Print Center Full + Append with Artifacts');
 
-        final capture = CapturingSystemInterface.forCurrentTest();
-        SystemInterface.registerWith(capture);
-
         final kafka = jurskyParkParticipants[9];
 
         await logger.step('Full Print: Franz Kafka', () async {
@@ -612,8 +625,8 @@ void main() {
             await dbHelpers.verifyAllRecordsPrinted(kafkaId, true);
           }
 
-          expect(capture.capturedPdfs.length, equals(1),
-              reason: 'Expected 1 captured PDF after Kafka full print');
+          expect(capture.capturedPdfs.length, equals(2),
+              reason: 'Expected 2 captured PDFs (Milada baseline + Kafka full)');
           final kafkaPdf = capture.capturedPdfs.first;
           expect(kafkaPdf.pageCount, greaterThan(0),
               reason: 'Kafka PDF should have at least 1 page');
@@ -652,8 +665,8 @@ void main() {
             await dbHelpers.verifyPrintStateContiguous(miladaId);
           }
 
-          expect(capture.capturedPdfs.length, equals(2),
-              reason: 'Expected 2 captured PDFs after append print');
+          expect(capture.capturedPdfs.length, equals(3),
+              reason: 'Expected 3 captured PDFs (Milada baseline + Kafka full + Milada append)');
           final miladaPdf = capture.capturedPdfs.last;
           expect(miladaPdf.pageCount, greaterThan(0),
               reason: 'Milada PDF should have at least 1 page');
