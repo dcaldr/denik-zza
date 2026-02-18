@@ -10,8 +10,8 @@ typedef PersonSelectedCallback = void Function(MemoryOsoba person);
 /// Callback when a file is uploaded  
 typedef FileUploadedCallback = void Function(String filePath);
 
-/// Callback for save operations with success/failure context
-typedef SaveCallback = Future<void> Function(BuildContext context, bool markAsArrived);
+/// Callback for save operations (no BuildContext — async-safe)
+typedef SaveCallback = Future<void> Function(bool markAsArrived);
 
 /// Callback for form validation
 typedef ValidationCallback = bool Function();

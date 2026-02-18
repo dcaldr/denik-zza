@@ -90,7 +90,7 @@ class _OldIntakeFormState extends State<OldIntakeForm> {
       setState(() => selectedPerson!.potvrzeniPath = newFilePath);
     }  }
 
-  Future<void> _handleSave(BuildContext context, bool markAsArrived) async {
+  Future<void> _handleSave(bool markAsArrived) async {
     if (_validateParticipantForm?.call() ?? false) {
       if (selectedPerson != null) {
         // Restrictions are now handled automatically by ParticipantRegistrationForm

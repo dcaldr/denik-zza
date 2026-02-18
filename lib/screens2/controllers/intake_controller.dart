@@ -62,12 +62,18 @@ class IntakeController extends ChangeNotifier {
     _validateParticipantForm = validate;
   }
     /// Handle person selection
+  ///
+  /// Notifies listeners immediately so the form shows basic person data
+  /// (name, DOB, insurance) instantly, then fetches restrictions/medications
+  /// in background and notifies again when those are ready.
   Future<void> selectPerson(MemoryOsoba person) async {
     selectedPerson = person;
+    notifyListeners(); // Immediate: form shows basic data right away
+
+    // Background: fetch restrictions & medications, then update
     await _omezeniLogic.fetchData(person.id);
     await _lekLogic.fetchData(person.id);
-    // Note: No need to refresh available persons when just selecting existing person
-    notifyListeners();
+    notifyListeners(); // Second update: restrictions/meds now populated
   }
     /// Handle file upload
   void uploadFile(String newFilePath) {

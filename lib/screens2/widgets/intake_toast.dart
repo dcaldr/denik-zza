@@ -10,19 +10,22 @@ import '../../design_system/tokens/app_colors.dart';
 /// ```dart
 /// showIntakeToast(context, 'Karel Čapek', arrived: true);
 /// // Shows: "✓ Karel Čapek přišel"
+/// showIntakeToast(context, 'Ema Destinnová', arrived: true, isFemale: true);
+/// // Shows: "✓ Ema Destinnová přišla"
 /// ```
 void showIntakeToast(
   BuildContext context,
   String personName, {
   bool arrived = true,
+  bool isFemale = false,
   Duration duration = const Duration(milliseconds: 1200),
 }) {
   final overlay = Overlay.of(context);
   late OverlayEntry entry;
 
   final message = arrived
-      ? '✓ $personName přišel'
-      : '✓ $personName uložen';
+      ? '✓ $personName ${isFemale ? 'přišla' : 'přišel'}'
+      : '✓ $personName ${isFemale ? 'uložena' : 'uložen'}';
 
   entry = OverlayEntry(
     builder: (context) => Positioned(

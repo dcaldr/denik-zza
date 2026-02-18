@@ -33,17 +33,20 @@ class IntakeActionButtons extends StatelessWidget {
         : const EdgeInsets.symmetric(horizontal: 16, vertical: 12);
     final spacing = isMobile ? 6.0 : 10.0;
     final iconSize = isMobile ? 18.0 : 24.0;
+    final arrivedLabel = selectedPerson?.pohlavi == MemoryOsoba.POHLAVI_ZENA
+        ? 'uložit a přišla'
+        : 'uložit a přišel';
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         Tooltip(
-          message: 'uložit a přišel',
+          message: arrivedLabel,
           child: ElevatedButton.icon(
             key: const Key('IntakeForm_saveAndArrived_button'),
-            onPressed: () => handleSave(context, true),
+            onPressed: () => handleSave(true),
             icon: Icon(Icons.check_circle, color: Colors.white, size: iconSize),
-            label: isMobile ? const SizedBox.shrink() : const Text('uložit a přišel'),
+            label: isMobile ? const SizedBox.shrink() : Text(arrivedLabel),
             style: ElevatedButton.styleFrom(
               foregroundColor: Colors.white,
               backgroundColor: Colors.green,
@@ -59,7 +62,7 @@ class IntakeActionButtons extends StatelessWidget {
           message: 'uložit',
           child: ElevatedButton.icon(
             key: const Key('IntakeBottomRow_save_button'),
-            onPressed: () => handleSave(context, false),
+            onPressed: () => handleSave(false),
             icon: Icon(Icons.save, color: Colors.white, size: iconSize),
             label: isMobile ? const SizedBox.shrink() : const Text('uložit'),
             style: ElevatedButton.styleFrom(

@@ -109,9 +109,11 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
     _controller.uploadFile(newFilePath);
   }
 
-  Future<void> _handleSave(BuildContext context, bool markAsArrived) async {
+  /// Handles save + toast feedback.
+  Future<void> _handleSave(bool markAsArrived) async {
     final currentEventId =
         await DatabaseWrapper.getDatabase().getCurrentEventID();
+    if (!mounted) return;
     if (currentEventId == null) {
       CenterToast.show(
         context,
@@ -139,10 +141,11 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
       _controller.updatePersonData(formData);
     }
     
-    // Capture participant name before save (for toast message)
+    // Capture participant name and gender before save (for toast message)
     final participantName = _controller.selectedPerson != null
         ? '${_controller.selectedPerson!.jmeno} ${_controller.selectedPerson!.prijmeni}'.trim()
         : 'Účastník';
+    final isFemale = _controller.selectedPerson?.pohlavi == MemoryOsoba.POHLAVI_ZENA;
     
     final success = await _controller.saveData(markAsArrived);
 
@@ -150,18 +153,18 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
     
     if (success) {
       if (markAsArrived) {
-        // Green for "přišel" (arrived)
+        // Green for "přišel/přišla" (arrived)
         CenterToast.show(
           context,
-          '$participantName přišel',
+          '$participantName ${isFemale ? 'přišla' : 'přišel'}',
           icon: Icons.check_circle,
           iconColor: Colors.green.shade600,
         );
       } else {
-        // Blue for "uložen" (saved only)
+        // Blue for "uložen/uložena" (saved only)
         CenterToast.show(
           context,
-          '$participantName uložen',
+          '$participantName ${isFemale ? 'uložena' : 'uložen'}',
           icon: Icons.save,
           iconColor: Colors.blue.shade600,
         );
@@ -171,7 +174,7 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
       // Red for error
       CenterToast.show(
         context,
-        '$participantName neuložen',
+        '$participantName ${isFemale ? 'neuložena' : 'neuložen'}',
         icon: Icons.error_outline,
         iconColor: Colors.red.shade600,
       );
