@@ -512,8 +512,42 @@ void main() {
           }
         }
 
-        await logger.step('Add Interleaved Records (All Participants)', () async {
-          await createRecordBatch(interleavedRecords);
+        // Split records into 3 batches with navigation interludes between them.
+        // This exercises page switching, route stack, and state persistence.
+        final totalRecords = interleavedRecords.length;
+        final batch1End = totalRecords ~/ 3;
+        final batch2End = 2 * totalRecords ~/ 3;
+
+        final batch1 = interleavedRecords.sublist(0, batch1End);
+        final batch2 = interleavedRecords.sublist(batch1End, batch2End);
+        final batch3 = interleavedRecords.sublist(batch2End);
+
+        await logger.step('Records Batch 1/${batch1.length} records', () async {
+          await createRecordBatch(batch1);
+        });
+
+        await logger.step('Navigation Interlude: Intake Form visit', () async {
+          await dashboard.navigateToIntakeForm();
+          await dashboard.waitForKey('IntakeForm_personSearch_input');
+          // Navigate back to NewRecordPage
+          await dashboard.navigateToNewRecordPage();
+          await newRecord.waitForKey('NewRecordPage_participantAutocomplete');
+        });
+
+        await logger.step('Records Batch 2/${batch2.length} records', () async {
+          await createRecordBatch(batch2);
+        });
+
+        await logger.step('Navigation Interlude: Print Center visit', () async {
+          await dashboard.navigateToPrintCenter();
+          await printCenter.verifyPageShown();
+          // Navigate back to NewRecordPage
+          await dashboard.navigateToNewRecordPage();
+          await newRecord.waitForKey('NewRecordPage_participantAutocomplete');
+        });
+
+        await logger.step('Records Batch 3/${batch3.length} records', () async {
+          await createRecordBatch(batch3);
         });
 
         await logger.step('Verify All Records Inserted', () async {
@@ -529,15 +563,42 @@ void main() {
           }
         });
 
+        // Register CapturingSystemInterface BEFORE any prints
+        // so all PDFs (including NewRecordPage print + Phase 4 baseline) are captured.
+        final capture = CapturingSystemInterface.forCurrentTest();
+        SystemInterface.registerWith(capture);
+
+        // Exercise the NewRecordPage → PersonAndModeFlowPage print path.
+        // This path is NEVER tested via PrintCenter — it's a separate Navigator.push.
+        await logger.step('Print from NewRecordPage (Karel Čapek)', () async {
+          // Participant must be selected for print buttons to be enabled
+          final printTarget = jurskyParkParticipants[0]; // Karel Čapek
+          await newRecord.selectParticipant(
+            '${printTarget.jmeno} ${printTarget.prijmeni}',
+          );
+          await newRecord.tapPrintFull();
+
+          // PersonAndModeFlowPage auto-selects participant + full mode via initState.
+          // Just wait for the page and tap print.
+          await personMode.verifyPageShown();
+          await personMode.tapPrintButton();
+          await personMode.confirmPrintSuccess();
+
+          // "Back to Center" uses popUntil(isFirst) → pops ALL routes to Dashboard
+          await personMode.tap(personMode.findKey('PersonMode_backToCenter'));
+          await dashboard.pumpAndSettle();
+
+          // Verify PDF was captured
+          expect(capture.capturedPdfs.length, equals(1),
+              reason: 'Expected 1 captured PDF after NewRecordPage print');
+          expect(capture.capturedPdfs.last.name, contains('Osoba_'),
+              reason: 'PDF name should contain participant ID pattern');
+        });
+
         await logger.step('Navigate to Print Center', () async {
           await dashboard.navigateToPrintCenter();
           await dashboard.pumpAndSettle();
         });
-
-        // Register CapturingSystemInterface BEFORE any prints
-        // so all PDFs (including Phase 4 baseline) are captured.
-        final capture = CapturingSystemInterface.forCurrentTest();
-        SystemInterface.registerWith(capture);
 
         // ============================================================
         // PHASE 4: Event Continued - Baseline Print for Append
@@ -569,8 +630,8 @@ void main() {
           await printCenter.verifyPageShown();
 
           // Verify PDF was captured for Phase 4 baseline print
-          expect(capture.capturedPdfs.length, equals(1),
-              reason: 'Expected 1 captured PDF after Milada baseline print');
+          expect(capture.capturedPdfs.length, equals(2),
+              reason: 'Expected 2 captured PDFs (NewRecordPage print + Milada baseline)');
         });
 
         // ============================================================
@@ -625,8 +686,8 @@ void main() {
             await dbHelpers.verifyAllRecordsPrinted(kafkaId, true);
           }
 
-          expect(capture.capturedPdfs.length, equals(2),
-              reason: 'Expected 2 captured PDFs (Milada baseline + Kafka full)');
+          expect(capture.capturedPdfs.length, equals(3),
+              reason: 'Expected 3 captured PDFs (NewRecordPage + Milada baseline + Kafka full)');
           final kafkaPdf = capture.capturedPdfs.first;
           expect(kafkaPdf.pageCount, greaterThan(0),
               reason: 'Kafka PDF should have at least 1 page');
@@ -665,8 +726,8 @@ void main() {
             await dbHelpers.verifyPrintStateContiguous(miladaId);
           }
 
-          expect(capture.capturedPdfs.length, equals(3),
-              reason: 'Expected 3 captured PDFs (Milada baseline + Kafka full + Milada append)');
+          expect(capture.capturedPdfs.length, equals(4),
+              reason: 'Expected 4 captured PDFs (NewRecordPage + Milada baseline + Kafka full + Milada append)');
           final miladaPdf = capture.capturedPdfs.last;
           expect(miladaPdf.pageCount, greaterThan(0),
               reason: 'Milada PDF should have at least 1 page');
