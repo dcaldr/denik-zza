@@ -736,28 +736,102 @@ void main() {
           await printCenter.verifyPageShown();
         });
 
-        await logger.step('Print State Management Verification', () async {
+        await logger.step('PDF Structural Verification', () async {
+          // We should have 4 PDFs: NewRecordPage(Čapek) + Milada full + Kafka full + Milada append
+          expect(capture.capturedPdfs.length, equals(4));
+
+          final capekPdf = capture.capturedPdfs[0];
+          final miladaFullPdf = capture.capturedPdfs[1];
+          final kafkaFullPdf = capture.capturedPdfs[2];
+          final miladaAppendPdf = capture.capturedPdfs[3];
+
+          // Name verification — each PDF name should contain participant DB ID
+          final capekId = await dbHelpers.getParticipantId('Karel', 'Čapek');
+          expect(capekPdf.name, equals('Osoba_$capekId'));
+
+          final miladaId = await dbHelpers.getParticipantId('Milada', 'Horáková');
+          expect(miladaFullPdf.name, equals('Osoba_$miladaId'));
+          expect(miladaAppendPdf.name, equals('Osoba_$miladaId'));
+
+          final kafkaId = await dbHelpers.getParticipantId('Franz', 'Kafka');
+          expect(kafkaFullPdf.name, equals('Osoba_$kafkaId'));
+
+          // Page count structural assertions
+          // Kafka (13 records) should have >= pages than Milada full (9 records)
+          expect(kafkaFullPdf.pageCount,
+              greaterThanOrEqualTo(miladaFullPdf.pageCount),
+              reason: 'Kafka 13 records should produce >= pages than Milada 9');
+
+          // Full print should have >= pages than append (append = only new records)
+          expect(miladaFullPdf.pageCount,
+              greaterThanOrEqualTo(miladaAppendPdf.pageCount),
+              reason: 'Full print should have >= pages than append');
+
+          // All PDFs should have at least 1 page
+          for (final pdf in capture.capturedPdfs) {
+            expect(pdf.pageCount, greaterThan(0),
+                reason: '${pdf.name} should have pages');
+          }
+
+          // Byte size: Kafka full > Čapek (more records = larger PDF)
+          expect(kafkaFullPdf.bytes.length, greaterThan(capekPdf.bytes.length),
+              reason: 'Kafka 13 records should produce larger PDF than Čapek 2');
+        });
+
+        await logger.step('Print State: Reset + Cascade Test', () async {
           await printCenter.tapStateManagementCard();
           await printState.verifyPageShown();
-
-          await printState.ensureVisible(printState.findText('Franz Kafka'));
-          await printState.expandPerson('Franz Kafka');
-          await printState.verifyPersonPrintedBadge('Franz Kafka', true);
-
-          await printState.ensureVisible(printState.findText('Milada Horáková'));
-          await printState.expandPerson('Milada Horáková');
-          await printState.verifyPersonPrintedBadge('Milada Horáková', true);
-
-          await printState.toggleRecordPrinted(0);
 
           final kafkaId = await dbHelpers.getParticipantId(
             kafka.jmeno,
             kafka.prijmeni,
           );
-          if (kafkaId != null) {
-            await dbHelpers.verifyAllRecordsPrinted(kafkaId, false);
-            await dbHelpers.verifyPrintStateContiguous(kafkaId);
-          }
+
+          // --- Verify initial state: Kafka fully printed ---
+          await printState.expandPerson('Franz Kafka');
+          await printState.verifyPersonPrintedBadge('Franz Kafka', true);
+
+          // Also verify Milada is printed (from Phase 4+5)
+          await printState.ensureVisible(printState.findText('Milada Horáková'));
+          await printState.expandPerson('Milada Horáková');
+          await printState.verifyPersonPrintedBadge('Milada Horáková', true);
+
+          // --- Step 1: Reset all Kafka records → all unprinted ---
+          await printState.tapResetAll(kafkaId!);
+          await tester.pumpAndSettle();
+
+          await printState.verifyPersonPrintedBadge('Franz Kafka', false);
+          await printState.verifyRecordPrintedBadge(0, false);
+          await dbHelpers.verifyAllRecordsPrinted(kafkaId, false);
+
+          // --- Step 2: Try toggle record 2 ON → BLOCKED (records 0,1 unprinted) ---
+          await printState.toggleRecordPrinted(2);
+          await tester.pumpAndSettle();
+          await printState.verifyRecordPrintedBadge(2, false); // Unchanged
+
+          // --- Step 3: Toggle records 0,1,2 ON sequentially (contiguous prefix) ---
+          await printState.toggleRecordPrinted(0);
+          await tester.pumpAndSettle();
+          await printState.verifyRecordPrintedBadge(0, true);
+
+          await printState.toggleRecordPrinted(1);
+          await tester.pumpAndSettle();
+          await printState.verifyRecordPrintedBadge(1, true);
+
+          await printState.toggleRecordPrinted(2);
+          await tester.pumpAndSettle();
+          await printState.verifyRecordPrintedBadge(2, true);
+
+          // Verify contiguous prefix: records 0-2 printed, 3+ unprinted
+          await dbHelpers.verifyPrintStateContiguous(kafkaId);
+
+          // --- Step 4: Mark all printed ---
+          await printState.tapMarkAll(kafkaId);
+          await tester.pumpAndSettle();
+
+          await printState.verifyPersonPrintedBadge('Franz Kafka', true);
+          await dbHelpers.verifyAllRecordsPrinted(kafkaId, true);
+          await dbHelpers.verifyPrintStateContiguous(kafkaId);
         });
 
         await logger.step('Write PDF manifest for review', () async {
