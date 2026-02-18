@@ -554,12 +554,10 @@ void main() {
           for (final p in jurskyParkParticipants) {
             if (p.zaznamy.isEmpty) continue;
             final id = await dbHelpers.getParticipantId(p.jmeno, p.prijmeni);
-            if (id != null) {
-              await dbHelpers.verifyRecords(
-                participantId: id,
-                expectedRecords: p.zaznamy,
-              );
-            }
+            await dbHelpers.verifyRecords(
+              participantId: id,
+              expectedRecords: p.zaznamy,
+            );
           }
         });
 
@@ -617,14 +615,12 @@ void main() {
             milada.jmeno,
             milada.prijmeni,
           );
-          if (miladaId != null) {
-            await dbHelpers.verifyParticipantPrinted(
-              milada.jmeno,
-              milada.prijmeni,
-              true,
-            );
-            await dbHelpers.verifyAllRecordsPrinted(miladaId, true);
-          }
+          await dbHelpers.verifyParticipantPrinted(
+            milada.jmeno,
+            milada.prijmeni,
+            true,
+          );
+          await dbHelpers.verifyAllRecordsPrinted(miladaId, true);
 
           await personMode.tap(personMode.findKey('PersonMode_backToCenter'));
           await printCenter.verifyPageShown();
@@ -652,9 +648,7 @@ void main() {
           await newRecord.waitForKey('NewRecordPage_save_button');
 
            final miladaId = await dbHelpers.getParticipantId(milada.jmeno, milada.prijmeni);
-           if (miladaId != null) {
-             await dbHelpers.verifyRecords(participantId: miladaId, expectedRecords: [...milada.zaznamy, appendRecord]);
-           }
+          await dbHelpers.verifyRecords(participantId: miladaId, expectedRecords: [...milada.zaznamy, appendRecord]);
         });
 
         // ============================================================
@@ -677,18 +671,16 @@ void main() {
             kafka.jmeno,
             kafka.prijmeni,
           );
-          if (kafkaId != null) {
-            await dbHelpers.verifyParticipantPrinted(
-              kafka.jmeno,
-              kafka.prijmeni,
-              true,
-            );
-            await dbHelpers.verifyAllRecordsPrinted(kafkaId, true);
-          }
+          await dbHelpers.verifyParticipantPrinted(
+            kafka.jmeno,
+            kafka.prijmeni,
+            true,
+          );
+          await dbHelpers.verifyAllRecordsPrinted(kafkaId, true);
 
           expect(capture.capturedPdfs.length, equals(3),
               reason: 'Expected 3 captured PDFs (NewRecordPage + Milada baseline + Kafka full)');
-          final kafkaPdf = capture.capturedPdfs.first;
+          final kafkaPdf = capture.capturedPdfs[2]; // Index 2: after Čapek[0] and Milada baseline[1]
           expect(kafkaPdf.pageCount, greaterThan(0),
               reason: 'Kafka PDF should have at least 1 page');
 
@@ -716,15 +708,13 @@ void main() {
             milada.jmeno,
             milada.prijmeni,
           );
-          if (miladaId != null) {
-            await dbHelpers.verifyParticipantPrinted(
-              milada.jmeno,
-              milada.prijmeni,
-              true,
-            );
-            await dbHelpers.verifyAllRecordsPrinted(miladaId, true);
-            await dbHelpers.verifyPrintStateContiguous(miladaId);
-          }
+          await dbHelpers.verifyParticipantPrinted(
+            milada.jmeno,
+            milada.prijmeni,
+            true,
+          );
+          await dbHelpers.verifyAllRecordsPrinted(miladaId, true);
+          await dbHelpers.verifyPrintStateContiguous(miladaId);
 
           expect(capture.capturedPdfs.length, equals(4),
               reason: 'Expected 4 captured PDFs (NewRecordPage + Milada baseline + Kafka full + Milada append)');
@@ -797,7 +787,7 @@ void main() {
           await printState.verifyPersonPrintedBadge('Milada Horáková', true);
 
           // --- Step 1: Reset all Kafka records → all unprinted ---
-          await printState.tapResetAll(kafkaId!);
+          await printState.tapResetAll(kafkaId);
           await tester.pumpAndSettle();
 
           await printState.verifyPersonPrintedBadge('Franz Kafka', false);

@@ -202,7 +202,7 @@ class ParticipantEditorRobot extends BaseRobot {
 
     if (currentValue != value) {
       await tap(bezinfekcnostCheckbox);
-      await pump(const Duration(milliseconds: 200));
+      await pumpAndSettle();
 
       // Strict assertion
       final updatedCheckbox =
@@ -221,7 +221,7 @@ class ParticipantEditorRobot extends BaseRobot {
 
     if (currentValue != value) {
       await tap(zpusobilostCheckbox);
-      await pump(const Duration(milliseconds: 200));
+      await pumpAndSettle();
 
       // Strict assertion
       final updatedCheckbox =
@@ -250,19 +250,19 @@ class ParticipantEditorRobot extends BaseRobot {
 
     // Tap to focus the input field first (critical for Autocomplete sync)
     await tap(medicationInput);
-    await pump(const Duration(milliseconds: 100));
+    await pumpAndSettle();
 
     // Enter text after focus is established
     await enterText(medicationInput, text);
 
     // Wait for Autocomplete internal controller to sync with entered text
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     await ensureVisible(medicationAddButton);
     await tap(medicationAddButton);
 
     // Wait for add to complete and input to clear
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
   }
 
   /// Adds a restriction via RestrictionsWidget.
@@ -280,19 +280,19 @@ class ParticipantEditorRobot extends BaseRobot {
 
     // Tap to focus the input field first (critical for Autocomplete sync)
     await tap(restrictionInput);
-    await pump(const Duration(milliseconds: 100));
+    await pumpAndSettle();
 
     // Enter text after focus is established
     await enterText(restrictionInput, restriction.popis);
 
     // Wait for Autocomplete internal controller to sync with entered text
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     await ensureVisible(restrictionAddButton);
     await tap(restrictionAddButton);
 
     // Wait for add to complete and input to clear
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     // STRICT ASSERTION: Verify restriction appears in visible list
     expect(find.text(restriction.popis), findsWidgets,
@@ -307,14 +307,14 @@ class ParticipantEditorRobot extends BaseRobot {
 
     await ensureVisible(restrictionInput);
     await tap(restrictionInput);
-    await pump(const Duration(milliseconds: 100));
+    await pumpAndSettle();
 
     await enterText(restrictionInput, text);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     // Submit via Enter key (TextInputAction.done)
     await tester.testTextInput.receiveAction(TextInputAction.done);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     // Verify item appears; if not, fallback to Add button
     var found = await waitForText(
@@ -326,11 +326,11 @@ class ParticipantEditorRobot extends BaseRobot {
       final currentText = fieldAfterEnter.controller?.text ?? '';
       if (currentText.trim().isEmpty) {
         await tester.enterText(restrictionInput, text);
-        await pump(const Duration(milliseconds: 200));
+        await pumpAndSettle();
       }
       await ensureVisible(restrictionAddButton);
       await tap(restrictionAddButton);
-      await pump(const Duration(milliseconds: 300));
+      await pumpAndSettle();
 
       found = await waitForText(
         text,
@@ -354,33 +354,25 @@ class ParticipantEditorRobot extends BaseRobot {
 
     await ensureVisible(restrictionInput);
     await tap(restrictionInput);
-    await pump(const Duration(milliseconds: 100));
+    await pumpAndSettle();
 
     // Type partial text to trigger autocomplete
     await tester.enterText(restrictionInput, partialText);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
-    // SOFT CHECK: Ghost text (uses startsWith, may not match when Tab uses contains)
-    final expectedGhost = expectedFull.substring(partialText.length);
-    if (expectedGhost.isNotEmpty) {
-      final ghostFinder = find.text(expectedGhost);
-      final ghostFound = ghostFinder.evaluate().isNotEmpty;
-      // Print only on error (see expect below)
-    }
+
 
     // Press Tab to autocomplete
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
-    // SOFT CHECK: Verify Tab filled the field (may fail if no match found)
     final inputField = tester.widget<TextField>(restrictionInput);
     final actualText = inputField.controller?.text ?? '';
-    final tabFilled = actualText == expectedFull;
     // Print only on error (see expect below)
 
     // Submit via Enter
     await tester.testTextInput.receiveAction(TextInputAction.done);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     // Verify item appears; if not, fallback to Add button
     final targetText = actualText.isNotEmpty ? actualText : expectedFull;
@@ -393,11 +385,11 @@ class ParticipantEditorRobot extends BaseRobot {
       final currentText = fieldAfterEnter.controller?.text ?? '';
       if (currentText.trim().isEmpty) {
         await tester.enterText(restrictionInput, targetText);
-        await pump(const Duration(milliseconds: 200));
+        await pumpAndSettle();
       }
       await ensureVisible(restrictionAddButton);
       await tap(restrictionAddButton);
-      await pump(const Duration(milliseconds: 300));
+      await pumpAndSettle();
 
       found = await waitForText(
         targetText,
@@ -415,13 +407,13 @@ class ParticipantEditorRobot extends BaseRobot {
 
     await ensureVisible(medicationInput);
     await tap(medicationInput);
-    await pump(const Duration(milliseconds: 100));
+    await pumpAndSettle();
 
     await enterText(medicationInput, text);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     await tester.testTextInput.receiveAction(TextInputAction.done);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
   }
 
   /// Adds a medication via Tab autocomplete.
@@ -431,19 +423,19 @@ class ParticipantEditorRobot extends BaseRobot {
 
     await ensureVisible(medicationInput);
     await tap(medicationInput);
-    await pump(const Duration(milliseconds: 100));
+    await pumpAndSettle();
 
     await tester.enterText(medicationInput, partialText);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     final inputField = tester.widget<TextField>(medicationInput);
     var actualText = inputField.controller?.text ?? expectedFull;
     if (actualText.trim().isEmpty || actualText.trim() == partialText) {
       await tester.enterText(medicationInput, expectedFull);
-      await pump(const Duration(milliseconds: 200));
+      await pumpAndSettle();
       final updatedField = tester.widget<TextField>(medicationInput);
       actualText = updatedField.controller?.text ?? expectedFull;
     }
@@ -469,13 +461,13 @@ class ParticipantEditorRobot extends BaseRobot {
 
     await ensureVisible(restrictionInput);
     await tap(restrictionInput);
-    await pump(const Duration(milliseconds: 100));
+    await pumpAndSettle();
 
     await tester.enterText(restrictionInput, partialText);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     // STRICT ASSERTION: Verify Tab filled with suggestion
     final fieldAfterTab = tester.widget<TextField>(restrictionInput);
@@ -483,10 +475,10 @@ class ParticipantEditorRobot extends BaseRobot {
         reason: 'Tab should fill field with "$tabFillsTo"');
 
     await tester.enterText(restrictionInput, modifiedTo);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     await tester.testTextInput.receiveAction(TextInputAction.done);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     // STRICT ASSERTION: Verify modified text appears in list
     expect(find.text(modifiedTo), findsWidgets,
@@ -504,22 +496,22 @@ class ParticipantEditorRobot extends BaseRobot {
 
     await ensureVisible(restrictionInput);
     await tap(restrictionInput);
-    await pump(const Duration(milliseconds: 100));
+    await pumpAndSettle();
 
     await tester.enterText(restrictionInput, partialText);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     await tester.enterText(restrictionInput, '');
-    await pump(const Duration(milliseconds: 100));
+    await pumpAndSettle();
 
     await tester.enterText(restrictionInput, ownText);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     await tester.testTextInput.receiveAction(TextInputAction.done);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     // Verify item appears; if not, fallback to Add button
     var found = await waitForText(
@@ -535,7 +527,7 @@ class ParticipantEditorRobot extends BaseRobot {
       }
       await ensureVisible(restrictionAddButton);
       await tap(restrictionAddButton);
-      await pump(const Duration(milliseconds: 300));
+      await pumpAndSettle();
 
       found = await waitForText(
         ownText,
@@ -558,17 +550,17 @@ class ParticipantEditorRobot extends BaseRobot {
 
     await ensureVisible(restrictionInput);
     await tap(restrictionInput);
-    await pump(const Duration(milliseconds: 100));
+    await pumpAndSettle();
 
     await tester.enterText(restrictionInput, partialText);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     // STRICT ASSERTION: Verify dropdown shows suggestion
     final dropdownFinder = find.text(fullSuggestion);
     expect(dropdownFinder, findsWidgets,
         reason: 'Dropdown should show "$fullSuggestion"');
     await tap(dropdownFinder.last);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     // STRICT ASSERTION: Verify item appears in list after dropdown selection
     expect(find.text(fullSuggestion), findsWidgets,
@@ -587,16 +579,16 @@ class ParticipantEditorRobot extends BaseRobot {
 
     await ensureVisible(restrictionInput);
     await tap(restrictionInput);
-    await pump(const Duration(milliseconds: 100));
+    await pumpAndSettle();
 
     await tester.enterText(restrictionInput, partialTrigger);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     await tester.enterText(restrictionInput, differentText);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     await tester.testTextInput.receiveAction(TextInputAction.done);
-    await pump(const Duration(milliseconds: 300));
+    await pumpAndSettle();
 
     // STRICT ASSERTION: Verify different text appears in list (not suggestion)
     final found = await waitForText(

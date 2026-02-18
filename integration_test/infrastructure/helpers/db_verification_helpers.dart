@@ -360,18 +360,17 @@ class DbVerificationHelpers {
 
   /// Gets participant ID by name for further verification.
   ///
-  /// Useful when you need the ID for medication/restriction verification
-  /// but don't need full participant verification.
-  Future<int?> getParticipantId(String jmeno, String prijmeni) async {
+  /// Fails with descriptive error if participant not found —
+  /// prefer this over silent null to catch test setup bugs early.
+  Future<int> getParticipantId(String jmeno, String prijmeni) async {
     final participants = await db.getParticipantsByCurrentEvent();
-    try {
-      final p = participants.firstWhere(
-        (p) => p.jmeno == jmeno && p.prijmeni == prijmeni,
-      );
-      return p.id;
-    } catch (_) {
-      return null;
-    }
+    final p = participants.firstWhere(
+      (p) => p.jmeno == jmeno && p.prijmeni == prijmeni,
+      orElse: () => throw TestFailure(
+        'Participant "$jmeno $prijmeni" not found in ${participants.length} participants',
+      ),
+    );
+    return p.id;
   }
 
   /// Verifies participant arrival status (prisel field).

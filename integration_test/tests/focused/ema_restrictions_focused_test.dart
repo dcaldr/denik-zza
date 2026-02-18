@@ -207,15 +207,11 @@ void main() {
       await dbHelpers.verifyCompleteParticipant(ema);
 
       final pid = await dbHelpers.getParticipantId(ema.jmeno, ema.prijmeni);
-      if (pid != null) {
-        final db = DatabaseWrapper.getDatabase();
-        final omezeni = await db.getOmezeniByParticipantID(pid);
-        final leky = await db.getLekyByParticipantID(pid);
-        logStep('DB omezeni count: ${omezeni.length} -> ${omezeni.map((o) => o.omezeni).toList()}');
-        logStep('DB leky count: ${leky.length} -> ${leky.map((l) => l.nazev).toList()}');
-      } else {
-        logStep('Participant ID not found for Ema (post-submit)');
-      }
+      final db = DatabaseWrapper.getDatabase();
+      final omezeni = await db.getOmezeniByParticipantID(pid);
+      final leky = await db.getLekyByParticipantID(pid);
+      logStep('DB omezeni count: ${omezeni.length} -> ${omezeni.map((o) => o.omezeni).toList()}');
+      logStep('DB leky count: ${leky.length} -> ${leky.map((l) => l.nazev).toList()}');
     });
   });
 }

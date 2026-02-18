@@ -195,7 +195,7 @@ class BaseRobot {
           await tester.sendKeyEvent(LogicalKeyboardKey.escape);
         }
       }
-      await pump(const Duration(milliseconds: 300));
+      await pumpAndSettle();
     }
     if (find.byType(Drawer).evaluate().isEmpty) {
       throw TestFailure('Drawer not available after navigating back');
@@ -228,7 +228,7 @@ class BaseRobot {
     await openDrawer();
     // Expand the medical section first (intake form is inside this ExpansionTile)
     await tap(findKey('AppDrawer_filtr'));
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
     await tapDrawerIntakeForm();
   }
 
