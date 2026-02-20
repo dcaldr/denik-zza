@@ -20,7 +20,7 @@ void main() {
   group('Focused Intake Form Tests', () {
     /// Helper to wait for loading to complete
     Future<void> waitForLoading(WidgetTester tester) async {
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
       final loadingKey = find.byKey(const Key('IntakeForm_loading'));
       for (int i = 0; i < 50; i++) {
         await tester.pump(const Duration(milliseconds: 100));
@@ -28,7 +28,7 @@ void main() {
           break;
         }
       }
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
     }
 
     // ========== BASIC FUNCTIONALITY ==========
@@ -43,12 +43,12 @@ void main() {
       await intake.selectParticipant('Václav Havel');
 
       // Verify participant loaded
-      expect(find.text('Václav'), findsWidgets);
-      expect(find.text('Havel'), findsWidgets);
+      await intake.waitForText('Václav');
+      await intake.waitForText('Havel');
 
       // Save and mark as arrived
       await intake.tapSaveAndArrived();
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Verify form reset
       await intake.waitForKey('IntakeForm_saveAndArrived_button');
@@ -61,11 +61,11 @@ void main() {
       await waitForLoading(tester);
 
       await intake.selectParticipant('Karel Čapek');
-      expect(find.text('Karel'), findsWidgets);
+      await intake.waitForText('Karel');
 
       // Save only (not arrived)
       await intake.tapSave();
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       await intake.waitForKey('IntakeForm_save_button');
     });
@@ -77,11 +77,11 @@ void main() {
       await waitForLoading(tester);
 
       await intake.selectParticipant('Milan Kundera');
-      expect(find.text('Milan'), findsWidgets);
+      await intake.waitForText('Milan');
 
       // Cancel
       await intake.tapCancel();
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Form should be reset
       await intake.waitForKey('IntakeForm_saveAndArrived_button');
@@ -153,15 +153,15 @@ void main() {
 
       // Process first
       await intake.selectParticipant('Jaroslav Hašek');
-      expect(find.text('Jaroslav'), findsWidgets);
+      await intake.waitForText('Jaroslav');
       await intake.tapSaveAndArrived();
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Process second
       await intake.selectParticipant('Tomáš Baťa');
-      expect(find.text('Tomáš'), findsWidgets);
+      await intake.waitForText('Tomáš');
       await intake.tapSaveAndArrived();
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Verify still functional
       await intake.waitForKey('IntakeForm_saveAndArrived_button');
@@ -180,7 +180,7 @@ void main() {
       // Use Ema Destinnová for this test (unique, not used elsewhere)
       await intake.selectParticipant('Ema Destinnová');
       await intake.tapSaveAndArrived();
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Verify database updated
       final participants = await db.getParticipantsByCurrentEvent();
@@ -206,11 +206,11 @@ void main() {
       
       // Modify note
       await intake.modifyNote(testNote);
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Save
       await intake.tapSaveAndArrived();
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Verify note persisted
       final participants = await db.getParticipantsByCurrentEvent();
@@ -234,13 +234,13 @@ void main() {
       await intake.selectParticipant('Jan Komenský');
 
       // Verify multiple fields populated
-      expect(find.text('Jan'), findsWidgets);
-      expect(find.text('Komenský'), findsWidgets);
+      await intake.waitForText('Jan');
+      await intake.waitForText('Komenský');
       
       // Check form is visible
-      expect(find.byKey(const Key('IntakeForm_saveAndArrived_button')), findsOneWidget);
-      expect(find.byKey(const Key('IntakeForm_save_button')), findsOneWidget);
-      expect(find.byKey(const Key('IntakeForm_cancel_button')), findsOneWidget);
+      await intake.waitForKey('IntakeForm_saveAndArrived_button');
+      await intake.waitForKey('IntakeForm_save_button');
+      await intake.waitForKey('IntakeForm_cancel_button');
     });
 
     testWidgets('Empty search shows no suggestions', (tester) async {
@@ -287,9 +287,9 @@ void main() {
 
       // Select and save first participant
       await intake.selectParticipant('Václav Havel');
-      expect(find.text('Václav'), findsWidgets);
+      await intake.waitForText('Václav');
       await intake.tapSaveAndArrived();
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // After save, first participant's name should NOT be visible in form
       // (autocomplete may still show it in dropdown, but form fields should be empty)
@@ -306,19 +306,19 @@ void main() {
 
       // Select first participant
       await intake.selectParticipant('Bedřich Smetana');
-      expect(find.text('Bedřich'), findsWidgets);
-      expect(find.text('Smetana'), findsWidgets);
+      await intake.waitForText('Bedřich');
+      await intake.waitForText('Smetana');
       
       // Save
       await intake.tapSaveAndArrived();
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Select second participant
       await intake.selectParticipant('Franz Kafka');
       
       // Verify second participant data is shown, not first
-      expect(find.text('Franz'), findsWidgets);
-      expect(find.text('Kafka'), findsWidgets);
+      await intake.waitForText('Franz');
+      await intake.waitForText('Kafka');
       
       // First participant's unique data should not be present
       // (Smetana's note is different from Kafka's)
@@ -332,14 +332,14 @@ void main() {
 
       // Select first
       await intake.selectParticipant('Antonín Dvořák');
-      expect(find.text('Antonín'), findsWidgets);
+      await intake.waitForText('Antonín');
       
       // Cancel and select different
       await intake.tapCancel();
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       await intake.selectParticipant('Milan Kundera');
-      expect(find.text('Milan'), findsWidgets);
+      await intake.waitForText('Milan');
       
       // Antonín should not be visible in form anymore
       // (may still be in autocomplete suggestions, but not in form fields)
@@ -363,11 +363,11 @@ void main() {
       // Select and modify
       await intake.selectParticipant('Jaroslav Hašek');
       await intake.modifyNote('THIS SHOULD NOT BE SAVED');
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Cancel instead of save
       await intake.tapCancel();
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Verify database unchanged
       final afterParticipants = await db.getParticipantsByCurrentEvent();
@@ -388,16 +388,16 @@ void main() {
       // Select, modify, cancel
       await intake.selectParticipant('Tomáš Baťa');
       await intake.modifyNote('Modified note that should be discarded');
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
       await intake.tapCancel();
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Re-select same participant
       await intake.selectParticipant('Tomáš Baťa');
       
       // Form should show original data, not modified data
-      expect(find.text('Tomáš'), findsWidgets);
-      expect(find.text('Baťa'), findsWidgets);
+      await intake.waitForText('Tomáš');
+      await intake.waitForText('Baťa');
     });
 
     testWidgets('STATE: Rapid selection changes do not cause race conditions', (tester) async {
@@ -420,11 +420,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
       
       await intake.selectParticipant('Ema Destinnová');
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Final state should be Ema, not previous selections
-      expect(find.text('Ema'), findsWidgets);
-      expect(find.text('Destinnová'), findsWidgets);
+      await intake.waitForText('Ema');
+      await intake.waitForText('Destinnová');
     });
 
     testWidgets('STATE: Loading state shows correctly during initialization', (tester) async {

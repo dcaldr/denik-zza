@@ -115,6 +115,7 @@ class PrintCenterController extends SafeChangeNotifier {
 
   /// Select a participant and load its details (records, meds, restrictions).
   Future<void> selectParticipant(MemoryOsoba osoba) async {
+    print('=== DEBUG CONTROLLER: selectParticipant called for "${osoba.jmeno} ${osoba.prijmeni}" (ID: ${osoba.id}) ===');
     _selected = osoba;
     // Reset flow state only on new selection
     _mode = PrintMode.full;
@@ -125,10 +126,18 @@ class PrintCenterController extends SafeChangeNotifier {
     _analysisInProgress = false;
     _analysisError = null;
 
-    await _loadParticipantDetails(osoba);
+    print('=== DEBUG CONTROLLER: selectParticipant calling _loadParticipantDetails ===');
+    try {
+      await _loadParticipantDetails(osoba);
+      print('=== DEBUG CONTROLLER: selectParticipant FINISHED evaluating append for "${osoba.jmeno}" ===');
+    } catch (e, st) {
+      print('=== DEBUG CONTROLLER: selectParticipant CAUGHT ERROR: $e ===');
+      AppLogger.l.e('selectParticipant error', error: e, stackTrace: st);
+    }
   }
 
   Future<void> _loadParticipantDetails(MemoryOsoba osoba) async {
+    print('=== DEBUG CONTROLLER: _loadParticipantDetails START ===');
     _loadingDetail = true;
     _detailError = null;
     _records = [];
@@ -137,6 +146,7 @@ class PrintCenterController extends SafeChangeNotifier {
     notifyListeners();
 
     try {
+      print('=== DEBUG CONTROLLER: _loadParticipantDetails fetching from service... ===');
       final r = await _service.getRecords(osoba.id);
       final l = await _service.getLeky(osoba.id);
       final o = await _service.getOmezeni(osoba.id);
@@ -145,11 +155,16 @@ class PrintCenterController extends SafeChangeNotifier {
       _leky = l;
       _omezeni = o;
 
+      print('=== DEBUG CONTROLLER: _loadParticipantDetails triggering _evaluateAppend... ===');
       // Trigger append validation
       await _evaluateAppend();
-    } catch (e) {
+      print('=== DEBUG CONTROLLER: _loadParticipantDetails FINISHED _evaluateAppend... ===');
+    } catch (e, st) {
+      print('=== DEBUG CONTROLLER: _loadParticipantDetails ERROR: $e ===');
+      AppLogger.l.e('_loadParticipantDetails error', error: e, stackTrace: st);
       _detailError = 'Chyba načítání detailu: $e';
     } finally {
+      print('=== DEBUG CONTROLLER: _loadParticipantDetails FINALLY (setting loadingDetail = false) ===');
       _loadingDetail = false;
       notifyListeners();
     }

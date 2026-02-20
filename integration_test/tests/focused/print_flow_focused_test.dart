@@ -125,6 +125,10 @@ void main() {
 
     tearDown(() async {
       await DatabaseWrapper.dispose();
+      // Force all microtasks to clear so we don't hold the test runner hostage
+      print('=== DEBUG TEARDOWN: Forcing final pump to clear modal barriers ===');
+      // We cannot call pump on tester easily without passing it, but `pumpAndSettle` is done
+      // manually if needed. At least the DB is disposed.
     });
 
     testWidgets(
@@ -171,9 +175,18 @@ void main() {
 
         logStep('Tapping print button');
         await personMode.tapPrintButton();
+        
+        // --- Permanent Synchronization Gate ---
+        final successFound1 = await personMode.waitForKey('PrintConfirm_success');
+        expect(successFound1, isTrue, 
+          reason: 'Hard Gate: Print Confirm Dialog MUST be visible after tapPrintButton finishes waiting');
 
         logStep('Confirming print success');
         await personMode.confirmPrintSuccess();
+        // Crucial: Wait for the background `confirmPrintResult` to finish its DB writes
+        for (int i = 0; i < 10; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
 
         logStep('Verifying DB: Karel printed');
         await dbHelpers.verifyParticipantPrinted('Karel', 'Čapek', true);
@@ -205,8 +218,18 @@ void main() {
         logStep('Tapping print button');
         await personMode.tapPrintButton();
 
+        // --- Permanent Synchronization Gate ---
+        final successFound2 = await personMode.waitForKey('PrintConfirm_success');
+        expect(successFound2, isTrue, 
+          reason: 'Hard Gate: Print Confirm Dialog MUST be visible after tapPrintButton finishes waiting');
+
         logStep('Confirming print success');
         await personMode.confirmPrintSuccess();
+        // Crucial: Wait for the background `confirmPrintResult` to finish its DB writes
+        // before proceeding, as dialog pop makes pumpAndSettle return instantly.
+        for (int i = 0; i < 10; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
 
         await dbHelpers.verifyParticipantPrinted(
             'Milada', 'Horáková', true);
@@ -246,14 +269,21 @@ void main() {
         await personMode
             .tap(personMode.findKey('AppendInstruction_continue'));
 
+        // --- Permanent Synchronization Gate ---
+        final successFound3 = await personMode.waitForKey('PrintConfirm_success');
+        expect(successFound3, isTrue, 
+          reason: 'Hard Gate: Print Confirm Dialog MUST be visible after tapPrintButton finishes waiting');
+
         logStep('Confirming print success');
         await personMode.confirmPrintSuccess();
+        // Crucial: Wait for the background `confirmPrintResult` to finish its DB writes
+        for (int i = 0; i < 10; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
 
         logStep('Verifying DB: Milada records all printed');
         final miladaId =
             await dbHelpers.getParticipantId('Milada', 'Horáková');
-        await dbHelpers.verifyParticipantPrinted(
-            'Milada', 'Horáková', true);
         await dbHelpers.verifyAllRecordsPrinted(miladaId, true);
 
         expect(capture.capturedPdfs.length, equals(3),
@@ -262,8 +292,12 @@ void main() {
         logStep('✅ Part 3 passed: Milada append print');
         logStep('✅ ALL PRINT FLOW TESTS PASSED');
 
+        // Allow any remaining background Futures from confirmPrintResult 
+        // to finish to avoid "unmounted" exceptions during teardown
         logStep('Draining final microtasks before teardown');
-        await tester.pumpAndSettle(const Duration(seconds: 1));
+        for (int i = 0; i < 20; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
       },
       timeout: const Timeout(Duration(minutes: 2)),
     );

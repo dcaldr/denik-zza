@@ -41,25 +41,36 @@ class PersonModeFlowRobot extends BaseRobot {
     expect(find.text('Tisk osoby – krokový průvodce'), findsOneWidget);
   }
 
-  Future<void> selectParticipant(String fullName) async {
+  Future<void> selectParticipant(String fullName, {int participantId = 1}) async {
+    // We use the new, robust semantic key if possible, falling back to text.
     final listFinder = find.byKey(const Key('select-person'));
+    
+    // Instead of scrolling blindly for unrendered text, we find the ListTile's specific Key
+    // Using a known fallback order. We don't have ID reliably from just name in test,
+    // but the test name is fine if we use scrollUntilVisible properly.
     final itemFinder = find.text(fullName);
 
-    // Scroll until the participant is visible
-    // 15 participants might not fit on one screen
-    await tester.scrollUntilVisible(
-      itemFinder,
-      100.0,
-      scrollable: find.descendant(of: listFinder, matching: find.byType(Scrollable)),
-      maxScrolls: 50,
-    );
-
-    final found = await waitForText(fullName,
-        timeout: const Duration(seconds: 5));
-    if (!found) {
-      throw TestFailure('Participant "$fullName" not found in list');
+    print('=== DEBUG ROBOT: Scrolling to find "$fullName" ===');
+    try {
+      await tester.scrollUntilVisible(
+        itemFinder,
+        100.0,
+        scrollable: find.descendant(of: listFinder, matching: find.byType(Scrollable)),
+        maxScrolls: 50,
+      );
+    } catch (e) {
+      print('=== DEBUG ROBOT: scrollUntilVisible failed, dumping tree! ===');
+      debugDumpApp();
+      rethrow;
     }
-    await _tapAndPump(find.text(fullName).first);
+
+    final found = await waitForText(fullName, timeout: const Duration(seconds: 5));
+    if (!found) {
+      throw TestFailure('Participant "$fullName" not found in list (even after scroll)');
+    }
+    
+    print('=== DEBUG ROBOT: Found "$fullName", tapping... ===');
+    await _tapAndPump(itemFinder.first);
   }
 
   Future<void> selectFullPrintMode() async {
@@ -71,6 +82,40 @@ class PersonModeFlowRobot extends BaseRobot {
   }
 
   Future<void> tapPrintButton() async {
+    print('=== DEBUG ROBOT: Attempting to tap Print Button ===');
+    
+    // Step 1: Wait for Enablement
+    int ticks = 0;
+    while (true) {
+      await tester.pump(const Duration(milliseconds: 100));
+      ticks++;
+      
+      final buttonFinder = find.byKey(const Key('PersonMode_printButton'));
+      if (buttonFinder.evaluate().isEmpty) {
+         if (ticks > 150) { 
+           debugDumpApp();
+           throw TestFailure("Print button not found in UI after 15 seconds.");
+         }
+         continue;
+      }
+      
+      final buttonWidget = tester.widget<FilledButton>(buttonFinder);
+      if (buttonWidget.onPressed != null) {
+        print('=== DEBUG ROBOT: Print button ENABLED after $ticks ticks (${ticks * 100}ms) ===');
+        break;
+      }
+      
+      if (ticks % 10 == 0) {
+        print('=== DEBUG ROBOT: Still waiting for Print button to enable (Tick $ticks)... ===');
+      }
+      
+      if (ticks > 150) { // 15 seconds
+        print('=== DEBUG ROBOT: Timeout! Print button remained disabled. Dumping App State: ===');
+        debugDumpApp();
+        throw TestFailure("Print button remained disabled. PDF generation likely failed or took too long.");
+      }
+    }
+
     await _tapAndPump(printButton);
   }
 
@@ -80,12 +125,11 @@ class PersonModeFlowRobot extends BaseRobot {
   }
 
   Future<void> tapNewPrint() async {
-    await _tapAndPump(findKey('PersonMode_newPrint'));
+    await tap(findKey('PersonMode_newPrint'));
   }
 
   Future<void> confirmPrintSuccess() async {
-    await _tapAndPump(findKey('PrintConfirm_success'));
+    await tap(findKey('PrintConfirm_success'));
   }
-
 
 }

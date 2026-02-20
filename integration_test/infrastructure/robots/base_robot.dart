@@ -25,16 +25,27 @@ class BaseRobot {
   }
 
   /// Taps a widget found by [finder] and waits for animations.
-  Future<void> tap(Finder finder) async {
+  /// Set [settle] to false if tapping triggers an infinite animation (e.g., a loading spinner)
+  /// to prevent pumpAndSettle from hanging indefinitely.
+  Future<void> tap(Finder finder, {bool settle = true}) async {
     // print('tapping $finder'); // Optional debug logging
     await tester.tap(finder);
-    await pumpAndSettle();
+    if (settle) {
+      await pumpAndSettle();
+    } else {
+      await pump();
+    }
   }
 
   /// Enters text into a widget found by [finder] and waits.
-  Future<void> enterText(Finder finder, String text) async {
+  /// Set [settle] to false if typing triggers an infinite animation.
+  Future<void> enterText(Finder finder, String text, {bool settle = true}) async {
     await tester.enterText(finder, text);
-    await pumpAndSettle();
+    if (settle) {
+      await pumpAndSettle();
+    } else {
+      await pump();
+    }
   }
 
   /// Scrolls to make a widget visible before interaction.

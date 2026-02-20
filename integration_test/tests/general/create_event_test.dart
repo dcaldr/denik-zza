@@ -21,7 +21,7 @@ void main() {
     // 2. Get DB and launch app
     DatabaseWrapper.getDatabase();
     app.main();
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 500));
     AppLogger.l.d('App Launched');
 
     final dashboard = DashboardRobot(tester);

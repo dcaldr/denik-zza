@@ -28,6 +28,6 @@ class TestHarness {
   static Future<void> pumpApp(WidgetTester tester) async {
     // MyApp includes MaterialApp, ZzaTheme, and Localization
     await tester.pumpWidget(const MyApp());
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 500));
   }
 }
