@@ -8,7 +8,7 @@ import 'package:denik_zza/print_ops2/print_state_management_page.dart';
 import 'package:denik_zza/print_ops2/widgets/person_print_state_card.dart';
 import 'package:denik_zza/print_ops2/widgets/record_print_toggle_row.dart';
 import 'package:denik_zza/print_ops2/models/person_print_state.dart';
-
+import 'package:denik_zza/print_ops2/models/toggle_impact.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 
@@ -18,15 +18,27 @@ import '../utils/print_test_helpers.dart';
 class FakePrintCenterService extends PrintCenterService {
   FakePrintCenterService({
     required this.streamFactory,
+    required this.recordsByPerson,
+    this.throwOnGetRecords = false,
   }) : super(database: null);
 
-  final Stream<List<PersonPrintState>> Function() streamFactory;
+  final Stream<List<MemoryOsoba>> Function() streamFactory;
+  final Map<int, List<MemoryZaznam>> recordsByPerson;
+  final bool throwOnGetRecords;
   int watchCalls = 0;
 
   @override
-  Stream<List<PersonPrintState>> watchPersonPrintStates() {
+  Stream<List<MemoryOsoba>> watchCurrentEventParticipants() {
     watchCalls += 1;
     return streamFactory();
+  }
+
+  @override
+  Future<List<MemoryZaznam>> getRecords(int participantId) async {
+    if (throwOnGetRecords) {
+      throw StateError('boom');
+    }
+    return recordsByPerson[participantId] ?? <MemoryZaznam>[];
   }
 }
 
@@ -128,6 +140,7 @@ void main() {
             state: state,
             onTogglePersonPrinted: (_) {},
             onToggleRecordPrinted: (_, __) {},
+            onPreviewImpact: (_, __) => const ToggleImpact.none(),
             onMarkAllPrinted: (_) {},
             onResetAll: (_) {},
           ),
@@ -172,6 +185,7 @@ void main() {
             state: state,
             onTogglePersonPrinted: (_) => toggled = true,
             onToggleRecordPrinted: (_, __) {},
+            onPreviewImpact: (_, __) => const ToggleImpact.none(),
             onMarkAllPrinted: (_) {},
             onResetAll: (_) {},
           ),
@@ -180,9 +194,13 @@ void main() {
 
       await tester.tap(
           find.byKey(const Key('PrintState_personBadge_toggle')));
-      await tester.pump(); // No settle needed as no dialog
+      await tester.pumpAndSettle();
 
-      expect(find.text('Odznačit osobu?'), findsNothing);
+      expect(find.text('Odznačit osobu?'), findsOneWidget);
+
+      await tester.tap(find.text('Odznačit'));
+      await tester.pumpAndSettle();
+
       expect(toggled, true);
     });
 
@@ -215,6 +233,7 @@ void main() {
             state: state,
             onTogglePersonPrinted: (_) {},
             onToggleRecordPrinted: (_, __) {},
+            onPreviewImpact: (_, __) => const ToggleImpact.none(),
             onMarkAllPrinted: (_) => markedAll = true,
             onResetAll: (_) => resetAll = true,
           ),
@@ -230,9 +249,13 @@ void main() {
       expect(markedAll, true);
 
       await tester.tap(find.byKey(const Key('PrintState_resetAll')));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
-      expect(find.text('Resetovat vše?'), findsNothing);
+      expect(find.text('Resetovat vše?'), findsOneWidget);
+
+      await tester.tap(find.text('Resetovat'));
+      await tester.pumpAndSettle();
+
       expect(resetAll, true);
     });
 
@@ -261,6 +284,7 @@ void main() {
             state: state,
             onTogglePersonPrinted: (_) {},
             onToggleRecordPrinted: (_, __) {},
+            onPreviewImpact: (_, __) => const ToggleImpact.none(),
             onMarkAllPrinted: (_) {},
             onResetAll: (_) {},
           ),
@@ -281,12 +305,13 @@ void main() {
     testWidgets('shows loading indicator while waiting for data',
         (tester) async {
 
-      final controllerStream = StreamController<List<PersonPrintState>>();
+      final controllerStream = StreamController<List<MemoryOsoba>>();
       addTearDown(() async {
         await controllerStream.close();
       });
       final service = FakePrintCenterService(
         streamFactory: () => controllerStream.stream,
+        recordsByPerson: const {},
       );
       final controller = PrintStateController(service);
 
@@ -296,16 +321,21 @@ void main() {
         ),
       );
 
+
       await tester.pump();
+
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
     });
 
-    testWidgets('shows error state on stream error', (tester) async {
+    testWidgets('shows error state with retry button', (tester) async {
 
+      final person = buildTestPerson(id: 1, jmeno: 'Test', prijmeni: 'One');
       final service = FakePrintCenterService(
-        streamFactory: () => Stream.error('boom'),
+        streamFactory: () => Stream.value([person]),
+        recordsByPerson: const {},
+        throwOnGetRecords: true,
       );
       final controller = PrintStateController(service);
 
@@ -315,7 +345,9 @@ void main() {
         ),
       );
 
+
       await tester.pumpAndSettle();
+
 
       expect(find.text('Zkusit znovu'), findsOneWidget);
 
@@ -324,7 +356,8 @@ void main() {
     testWidgets('shows empty state when no participants', (tester) async {
 
       final service = FakePrintCenterService(
-        streamFactory: () => Stream.value(const <PersonPrintState>[]),
+        streamFactory: () => Stream.value(const <MemoryOsoba>[]),
+        recordsByPerson: const {},
       );
       final controller = PrintStateController(service);
 
@@ -334,12 +367,39 @@ void main() {
         ),
       );
 
+
       await tester.pumpAndSettle();
+
 
       expect(find.text('Žádní účastníci'), findsOneWidget);
 
     });
 
-    // REFRESH TEST REMOVED: Controller is purely reactive and loadParticipants is a no-op.
+    testWidgets('refresh button triggers reload', (tester) async {
+
+      final service = FakePrintCenterService(
+        streamFactory: () => Stream.value(const <MemoryOsoba>[]),
+        recordsByPerson: const {},
+      );
+      final controller = PrintStateController(service);
+
+      await tester.pumpWidget(
+        BaseTestWidget(
+          child: PrintStateManagementPage(controller: controller),
+        ),
+      );
+
+
+      await tester.pumpAndSettle();
+
+      expect(service.watchCalls, 1);
+
+      await tester
+          .tap(find.byKey(const Key('PrintStateManagement_refresh')));
+
+
+      expect(service.watchCalls, 2);
+
+    });
   });
 }
