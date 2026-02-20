@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
 
 import 'package:pdf/widgets.dart' as pw;
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
@@ -13,6 +12,7 @@ import 'print_center_service.dart';
 import 'generate_pdf_template.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/utils/app_logger.dart';
+import 'package:denik_zza/shared/safe_change_notifier.dart';
 
 
 /// Print mode (UI state).
@@ -23,7 +23,7 @@ enum PrintSimulationResult { success, repeat, noChange, reset, resetAndReprint }
 
 /// Controller (ChangeNotifier) for Print Center state.
 /// Responsible for loading data, reacting to changes and exposing values to the UI.
-class PrintCenterController extends ChangeNotifier {
+class PrintCenterController extends SafeChangeNotifier {
   final PrintCenterService _service;
   StreamSubscription<List<MemoryOsoba>>? _participantsSub;
 
@@ -97,12 +97,16 @@ class PrintCenterController extends ChangeNotifier {
     _loadPrinterCalibration();
 
     _participantsSub = _service.watchCurrentEventParticipants().listen((data) {
-
+      print('=== DEBUG PrintCenterController: watchCurrentEventParticipants emitted ${data.length} participants ===');
+      for (var p in data) {
+        print('=== DEBUG Participant: ${p.jmeno} ${p.prijmeni} (wasPrinted: ${p.wasPrinted}) ===');
+      }
       _participants = data;
       _loadingParticipants = false;
       _participantError = null;
       notifyListeners();
     }, onError: (e) {
+      print('=== DEBUG PrintCenterController: Error loading participants: $e ===');
       _participantError = 'Chyba při načítání účastníků: $e';
       _loadingParticipants = false;
       notifyListeners();
@@ -268,17 +272,22 @@ class PrintCenterController extends ChangeNotifier {
 
   /// Confirm result of actual printing.
   /// Calls DB service to persist changes.
+  ///
+  /// Note: Captures [_selected] in a local variable before any async operations
+  /// to prevent null-dereference if [resetFlow] is called concurrently.
   Future<void> confirmPrintResult(PrintSimulationResult result) async {
     _lastResult = result;
+    // Capture current selection before any awaits — resetFlow() could null it.
+    final selectedPerson = _selected;
 
     // UI state update
     if (result == PrintSimulationResult.success) {
       _simulatedPrinted = true;
 
       // DB persistence update
-      if (_selected != null) {
+      if (selectedPerson != null) {
         // 1. Mark Person as printed
-        await _service.setParticipantPrintedFlag(_selected!.id, true);
+        await _service.setParticipantPrintedFlag(selectedPerson.id, true);
 
         // 2. Mark records
         List<int> recordsToMark = [];
@@ -298,19 +307,19 @@ class PrintCenterController extends ChangeNotifier {
         }
 
         // Refresh data to reflect changes WITHOUT resetting UI state
-        await _loadParticipantDetails(_selected!);
+        await _loadParticipantDetails(selectedPerson);
       }
     } else if (result == PrintSimulationResult.reset ||
         result == PrintSimulationResult.resetAndReprint) {
       _simulatedPrinted = false;
 
-      if (_selected != null) {
-        await _service.setParticipantPrintedFlag(_selected!.id, false);
+      if (selectedPerson != null) {
+        await _service.setParticipantPrintedFlag(selectedPerson.id, false);
         final allIds = _records.map((e) => e.idZaznamu).toList();
         if (allIds.isNotEmpty) {
           await _service.setMultipleRecordPrintedFlags(allIds, false);
         }
-        await _loadParticipantDetails(_selected!);
+        await _loadParticipantDetails(selectedPerson);
       }
     }
 

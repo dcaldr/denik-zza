@@ -105,12 +105,11 @@ class _PrintStateManagementPageState extends State<PrintStateManagementPage> {
             itemCount: ctrl.personStates.length,
             itemBuilder: (context, index) {
               final state = ctrl.personStates[index];
-                return PersonPrintStateCard(
+              return PersonPrintStateCard(
                 state: state,
                 onTogglePersonPrinted: (id) => ctrl.togglePersonPrinted(id),
                 onToggleRecordPrinted: (personId, recordId) =>
                     ctrl.toggleRecordPrinted(personId, recordId),
-                // removed onPreviewImpact
                 onMarkAllPrinted: (id) => ctrl.markAllPrintedForPerson(id),
                 onResetAll: (id) => ctrl.resetAllForPerson(id),
               );

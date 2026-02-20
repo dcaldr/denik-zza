@@ -5,7 +5,7 @@ import 'package:denik_zza/input/text_tools.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/services/models/csv_import_payload.dart';
 import 'package:denik_zza/utils/app_logger.dart';
-import 'package:flutter/foundation.dart';
+import 'package:denik_zza/shared/safe_change_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
@@ -41,7 +41,7 @@ typedef CsvReviewPrototypeWidgetBuilder = Widget Function(
 /// - ROW EDITING & MODIFICATION
 /// - FINALIZATION
 /// - UTILITY FUNCTIONS (Pure, static)
-class CsvReviewPrototypeController extends ChangeNotifier {
+class CsvReviewPrototypeController extends SafeChangeNotifier {
   // ═══════════════════════════════════════════════════════════════
   // CONSTRUCTOR & CONFIGURATION
   // ═══════════════════════════════════════════════════════════════

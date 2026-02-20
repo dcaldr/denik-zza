@@ -95,6 +95,12 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
     if (ctrl.loadingParticipants) {
       return const Center(child: CircularProgressIndicator());
     }
+    
+    print('=== DEBUG UI _buildSelectPerson: Rendering list. Participants count: ${ctrl.participants.length} ===');
+    for (var p in ctrl.participants) {
+      print('=== DEBUG UI _buildSelectPerson Participant: "${p.jmeno} ${p.prijmeni}" ===');
+    }
+
     if (ctrl.participants.isEmpty) {
       return ModeFlowInfoBox(
         color: AppColors.orangeBackground,
@@ -334,7 +340,7 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
     );
 
     if (result == null) return;
-    ctrl.confirmPrintResult(result);
+    await ctrl.confirmPrintResult(result);
     if (result == PrintSimulationResult.resetAndReprint) onReprint?.call();
   }
 }

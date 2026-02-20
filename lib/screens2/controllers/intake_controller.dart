@@ -1,15 +1,15 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import '../../database/in_memory_structures_tmp/memory_osoba.dart';
 import '../../database/database_wrapper.dart';
 import '../../input/file_manager.dart';
 import '../../utils/app_logger.dart';
 import '../widgets/memory_restriction_widget.dart';
+import '../../shared/safe_change_notifier.dart';
 
 /// Controller for handling intake form business logic
 /// Separates business operations from UI concerns
 /// Uses ChangeNotifier for reactive state management
-class IntakeController extends ChangeNotifier {
+class IntakeController extends SafeChangeNotifier {
   // Business logic instances
   final MemoryOmezeniLogic _omezeniLogic = MemoryOmezeniLogic();
   final MemoryLekLogic _lekLogic = MemoryLekLogic();

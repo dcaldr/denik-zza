@@ -261,6 +261,9 @@ void main() {
 
         logStep('✅ Part 3 passed: Milada append print');
         logStep('✅ ALL PRINT FLOW TESTS PASSED');
+
+        logStep('Draining final microtasks before teardown');
+        await tester.pumpAndSettle(const Duration(seconds: 1));
       },
       timeout: const Timeout(Duration(minutes: 2)),
     );

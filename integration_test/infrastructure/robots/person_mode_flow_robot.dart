@@ -79,7 +79,9 @@ class PersonModeFlowRobot extends BaseRobot {
     expect(pdfPreview, findsOneWidget);
   }
 
-
+  Future<void> tapNewPrint() async {
+    await _tapAndPump(findKey('PersonMode_newPrint'));
+  }
 
   Future<void> confirmPrintSuccess() async {
     await _tapAndPump(findKey('PrintConfirm_success'));
