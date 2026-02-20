@@ -183,10 +183,9 @@ void main() {
 
         logStep('Confirming print success');
         await personMode.confirmPrintSuccess();
-        // Crucial: Wait for the background `confirmPrintResult` to finish its DB writes
-        for (int i = 0; i < 10; i++) {
-          await tester.pump(const Duration(milliseconds: 100));
-        }
+        // Crucial: Wait for the background `confirmPrintResult` to finish.
+        // `pumpAndSettle` guarantees we wait for all microtasks and animations.
+        await tester.pumpAndSettle();
 
         logStep('Verifying DB: Karel printed');
         await dbHelpers.verifyParticipantPrinted('Karel', 'Čapek', true);
@@ -227,9 +226,7 @@ void main() {
         await personMode.confirmPrintSuccess();
         // Crucial: Wait for the background `confirmPrintResult` to finish its DB writes
         // before proceeding, as dialog pop makes pumpAndSettle return instantly.
-        for (int i = 0; i < 10; i++) {
-          await tester.pump(const Duration(milliseconds: 100));
-        }
+        await tester.pumpAndSettle();
 
         await dbHelpers.verifyParticipantPrinted(
             'Milada', 'Horáková', true);
@@ -276,10 +273,8 @@ void main() {
 
         logStep('Confirming print success');
         await personMode.confirmPrintSuccess();
-        // Crucial: Wait for the background `confirmPrintResult` to finish its DB writes
-        for (int i = 0; i < 10; i++) {
-          await tester.pump(const Duration(milliseconds: 100));
-        }
+        // Crucial: Wait for the background `confirmPrintResult` to finish its DB writes.
+        await tester.pumpAndSettle();
 
         logStep('Verifying DB: Milada records all printed');
         final miladaId =
@@ -292,14 +287,21 @@ void main() {
         logStep('✅ Part 3 passed: Milada append print');
         logStep('✅ ALL PRINT FLOW TESTS PASSED');
 
-        // Allow any remaining background Futures from confirmPrintResult 
-        // to finish to avoid "unmounted" exceptions during teardown
+        // Drain any pending microtasks but don't wait for infinite animations
         logStep('Draining final microtasks before teardown');
-        for (int i = 0; i < 20; i++) {
-          await tester.pump(const Duration(milliseconds: 100));
+        
+        // Tap 'Zpět na centrum' to leave the success screen.
+        // This stops the infinite checkmark animation so the test framework can shut down cleanly!
+        final backToCenterBtn = find.text('Zpět na centrum');
+        if (backToCenterBtn.evaluate().isNotEmpty) {
+          await tester.tap(backToCenterBtn);
+          await tester.pumpAndSettle();
+        } else {
+          await tester.pump(const Duration(milliseconds: 100)); // Just 1 pump
         }
       },
-      timeout: const Timeout(Duration(minutes: 2)),
+      // Give enough time for the 3 test portions (approx 20 seconds total execution time on slow devices)
+      timeout: const Timeout(Duration(seconds: 40)),
     );
   });
 }

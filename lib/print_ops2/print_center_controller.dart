@@ -104,12 +104,16 @@ class PrintCenterController extends SafeChangeNotifier {
       _participants = data;
       _loadingParticipants = false;
       _participantError = null;
-      notifyListeners();
+      Future.microtask(() {
+        if (!isDisposed) notifyListeners();
+      });
     }, onError: (e) {
       print('=== DEBUG PrintCenterController: Error loading participants: $e ===');
       _participantError = 'Chyba při načítání účastníků: $e';
       _loadingParticipants = false;
-      notifyListeners();
+      Future.microtask(() {
+        if (!isDisposed) notifyListeners();
+      });
     });
   }
 
@@ -143,13 +147,18 @@ class PrintCenterController extends SafeChangeNotifier {
     _records = [];
     _leky = [];
     _omezeni = [];
-    notifyListeners();
+    Future.microtask(() {
+      if (!isDisposed) notifyListeners();
+    });
 
     try {
       print('=== DEBUG CONTROLLER: _loadParticipantDetails fetching from service... ===');
       final r = await _service.getRecords(osoba.id);
       final l = await _service.getLeky(osoba.id);
       final o = await _service.getOmezeni(osoba.id);
+      
+      if (isDisposed) return; // Prevent updating state if unmounted
+
       _records = r
         ..sort(compareRecordsByTime);
       _leky = l;
@@ -321,6 +330,8 @@ class PrintCenterController extends SafeChangeNotifier {
           await _service.setMultipleRecordPrintedFlags(recordsToMark, true);
         }
 
+        if (isDisposed) return; // Prevent useless load/PDF check if unmounted
+
         // Refresh data to reflect changes WITHOUT resetting UI state
         await _loadParticipantDetails(selectedPerson);
       }
@@ -334,6 +345,9 @@ class PrintCenterController extends SafeChangeNotifier {
         if (allIds.isNotEmpty) {
           await _service.setMultipleRecordPrintedFlags(allIds, false);
         }
+
+        if (isDisposed) return; // Prevent useless load/PDF check if unmounted
+
         await _loadParticipantDetails(selectedPerson);
       }
     }
@@ -449,7 +463,10 @@ class PrintCenterController extends SafeChangeNotifier {
       _appendError = 'Nepodařilo se ověřit append: $e';
     } finally {
       _appendChecking = false;
-      notifyListeners();
+      // Defer to avoid setState during build crash
+      Future.microtask(() {
+        if (!isDisposed) notifyListeners();
+      });
     }
   }
 
@@ -460,7 +477,11 @@ class PrintCenterController extends SafeChangeNotifier {
     _analysisInProgress = true;
     _appendAnalysis = null;
     _analysisError = null;
-    notifyListeners();
+    
+    // Defer to avoid setState during build crash
+    Future.microtask(() {
+      if (!isDisposed) notifyListeners();
+    });
 
     try {
       final template = GeneratePdfTemplate();
@@ -477,7 +498,10 @@ class PrintCenterController extends SafeChangeNotifier {
       _analysisError = 'Nepodařilo se analyzovat: $e';
     } finally {
       _analysisInProgress = false;
-      notifyListeners();
+      // Defer to avoid setState during build crash
+      Future.microtask(() {
+        if (!isDisposed) notifyListeners();
+      });
     }
   }
 
