@@ -25,7 +25,7 @@ void main() {
           child: PrintCenterPage(),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       final centerRobot = PrintCenterRobot(tester);
       await centerRobot.tapPersonModeCard();

@@ -16,6 +16,19 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:denik_zza/shared/safe_change_notifier.dart';
 
+/// Runs [work] on a background Isolate in production/integration modes
+/// (keeps UI responsive), or synchronously in test mode (prevents
+/// un-cancellable Isolate futures from blocking test teardown).
+///
+/// Integration tests still exercise the full Isolate path because they
+/// use [DatabaseMode.integrationTest], not [DatabaseMode.testing].
+Future<T> _runPdfWork<T>(Future<T> Function() work) async {
+  if (DatabaseWrapper.getCurrentMode() == DatabaseMode.testing) {
+    return await work();
+  }
+  return await Isolate.run(work);
+}
+
 
 /// Print mode (UI state).
 enum PrintMode { full, append }
@@ -203,7 +216,7 @@ class PrintCenterController extends SafeChangeNotifier {
       final records = _records;
       final isAppend = _mode == PrintMode.append;
 
-      return await Isolate.run(() async {
+      return await _runPdfWork(() async {
         final theme = PdfFonts.buildTheme(fontData);
         final template = GeneratePdfTemplate();
 
@@ -278,7 +291,7 @@ class PrintCenterController extends SafeChangeNotifier {
         });
       }
 
-      return await Isolate.run(() async {
+      return await _runPdfWork(() async {
         final doc = pw.Document();
         final template = GeneratePdfTemplate();
         final theme = PdfFonts.buildTheme(fontData);
