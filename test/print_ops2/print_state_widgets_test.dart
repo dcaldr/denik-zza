@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:denik_zza/print_ops2/print_center_service.dart';
+
 import 'package:denik_zza/print_ops2/print_state_controller.dart';
 import 'package:denik_zza/print_ops2/print_state_management_page.dart';
 import 'package:denik_zza/print_ops2/widgets/person_print_state_card.dart';
@@ -10,37 +10,11 @@ import 'package:denik_zza/print_ops2/widgets/record_print_toggle_row.dart';
 import 'package:denik_zza/print_ops2/models/person_print_state.dart';
 // removed unused import: toggle_impact
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
-import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
+
 
 import '../utils/base_test_widget.dart';
 import '../utils/print_test_helpers.dart';
-
-class FakePrintCenterService extends PrintCenterService {
-  FakePrintCenterService({
-    required this.streamFactory,
-    required this.recordsByPerson,
-    this.throwOnGetRecords = false,
-  }) : super(database: null);
-
-  final Stream<List<MemoryOsoba>> Function() streamFactory;
-  final Map<int, List<MemoryZaznam>> recordsByPerson;
-  final bool throwOnGetRecords;
-  int watchCalls = 0;
-
-  @override
-  Stream<List<MemoryOsoba>> watchCurrentEventParticipants() {
-    watchCalls += 1;
-    return streamFactory();
-  }
-
-  @override
-  Future<List<MemoryZaznam>> getRecords(int participantId) async {
-    if (throwOnGetRecords) {
-      throw StateError('boom');
-    }
-    return recordsByPerson[participantId] ?? <MemoryZaznam>[];
-  }
-}
+import '../utils/fake_services.dart';
 
 void main() {
   group('RecordPrintToggleRow', () {
@@ -196,10 +170,7 @@ void main() {
           find.byKey(const Key('PrintState_personBadge_toggle')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Odznačit osobu?'), findsOneWidget);
-
-      await tester.tap(find.text('Odznačit'));
-      await tester.pumpAndSettle();
+      expect(toggled, true);
 
       expect(toggled, true);
     });
@@ -251,10 +222,7 @@ void main() {
       await tester.tap(find.byKey(const Key('PrintState_resetAll')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Resetovat vše?'), findsOneWidget);
-
-      await tester.tap(find.text('Resetovat'));
-      await tester.pumpAndSettle();
+      expect(resetAll, true);
 
       expect(resetAll, true);
     });

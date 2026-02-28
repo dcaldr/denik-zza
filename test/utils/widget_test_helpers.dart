@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Pumps frames until the widget defined by [finder] is no longer present in the widget tree.
@@ -23,7 +24,7 @@ Future<void> pumpUntilGone(
 
 
   if (found) {
-    throw TestFailure('Timed out waiting for ${finder.description} to disappear');
+    throw TestFailure('Timed out waiting for ${finder.toString()} to disappear');
   }
 }
 
@@ -52,4 +53,20 @@ Future<int> pumpAndSettleWithDuration(
   }
   
   return count;
+}
+
+/// A centralized emergency fallback for setting explicitly dimensioned surfaces.
+/// 
+/// ⚠️ ANTI-PATTERN WARNING: Hardcoding surface sizes in Widget tests is generally 
+/// a bad practice and should be avoided. Tests should ideally be responsive and 
+/// agnostic to absolute pixel coordinates.
+/// 
+/// 🚨 USE CASE: This is meant STRICTLY as an emergency bypass for the `printing` 
+/// package's `PdfPreview` widget, which enters catastrophic infinite Measure 
+/// loops when rendered in headless test zones without explicit geometric bounds.
+/// DO NOT use this to fix generic layout overflows.
+void applyPdfPreviewSurfaceWorkaround(WidgetTester tester) {
+  // 1280x720 is the standard Flutter desktop `run` default. We define it once 
+  // here to prevent scattering magic numbers across the codebase.
+  tester.binding.setSurfaceSize(const Size(1280, 720));
 }
