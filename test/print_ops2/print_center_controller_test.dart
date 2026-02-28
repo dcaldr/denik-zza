@@ -78,6 +78,10 @@ void main() {
     controller = PrintCenterController(mockService);
   });
 
+  tearDown(() {
+    controller.dispose();
+  });
+
   test('Initial state is correct', () {
     expect(controller.participants, isEmpty);
     expect(controller.selected, isNull);
