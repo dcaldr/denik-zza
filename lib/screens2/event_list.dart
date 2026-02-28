@@ -19,17 +19,28 @@ class EventList extends StatefulWidget {
 class _EventListState extends State<EventList> {
   late final DatabaseInterface database;
   int? _currentEventID;
+  late Future<List<MemoryAction>> _actionsFuture;
 
   @override
   void initState() {
     super.initState();
     database = DatabaseWrapper.getDatabase();
+    _actionsFuture = database.getAllZzaActions();
     _fetchCurrentEventID();
   }
 
   void _fetchCurrentEventID() async {
     _currentEventID = await database.getCurrentEventID();
+    if (!mounted) return;
     setState(() {});
+  }
+
+  /// Refresh cached data (e.g. after pinning an event)
+  void _refreshData() {
+    setState(() {
+      _actionsFuture = database.getAllZzaActions();
+    });
+    _fetchCurrentEventID();
   }
 
   @override
@@ -60,7 +71,7 @@ class _EventListState extends State<EventList> {
 
   Widget _buildActionList() {
     return FutureBuilder<List<MemoryAction>>(
-      future: database.getAllZzaActions(),
+      future: _actionsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const CircularProgressIndicator();
@@ -87,7 +98,7 @@ class _EventListState extends State<EventList> {
       await database.updateCurrentEvent(event.idAkce);
     }
 
-    _fetchCurrentEventID();
+    _refreshData();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text(EventListConstants.pinChangedMessage),

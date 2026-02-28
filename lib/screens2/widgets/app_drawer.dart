@@ -14,9 +14,22 @@ import 'package:denik_zza/design_system/tokens/app_radii.dart';
 
 /// Phase-based hybrid menu drawer with workflow-focused design
 /// Option C: Main workflow items always visible, supporting sections collapsible
-/// MVP approach: StatelessWidget + FutureBuilder for clean async state checking
-class AppDrawer extends StatelessWidget {
+/// Cached Future pattern: DB state is fetched once in initState(), not on every rebuild.
+class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
+
+  @override
+  State<AppDrawer> createState() => _AppDrawerState();
+}
+
+class _AppDrawerState extends State<AppDrawer> {
+  late Future<Map<String, bool>> _stateFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _stateFuture = _checkState();
+  }
 
   /// Check if current event is selected
   Future<bool> _hasCurrentEvent() async {
@@ -49,7 +62,7 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Map<String, bool>>(
-      future: _checkState(),
+      future: _stateFuture,
       initialData: const {'hasEvent': false, 'hasParticipants': false},
       builder: (context, snapshot) {
         final state = snapshot.data ??
