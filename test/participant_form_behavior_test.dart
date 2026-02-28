@@ -22,7 +22,6 @@ void main() {
   });
 
   setUp(() async {
-    DatabaseWrapper.setTestMode();
     database = AppDatabase.testInMemory();
     DatabaseWrapper.useTestDriftDatabase(database);
 

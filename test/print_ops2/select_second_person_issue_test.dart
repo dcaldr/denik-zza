@@ -1,3 +1,4 @@
+import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -8,7 +9,6 @@ import 'package:denik_zza/print_ops2/person_mode_flow_page.dart';
 import 'package:denik_zza/print_ops2/print_center_controller.dart';
 import 'package:denik_zza/print_ops2/widgets/print_confirm_dialog.dart';
 
-import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/print_ops2/print_center_service.dart';
 
 import '../setup_templates/hardcoded_setup.dart'; // From test folder
@@ -19,7 +19,6 @@ void main() {
   late PrintCenterController controller;
 
   setUp(() async {
-    DatabaseWrapper.setTestMode();
     database = await HardcodedTestSetup.setupTestData();
     service = PrintCenterService();
     controller = PrintCenterController(service);

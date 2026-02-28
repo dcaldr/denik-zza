@@ -19,7 +19,6 @@ void main() {
   late DbVerificationHelpers helpers;
 
   setUp(() async {
-    DatabaseWrapper.setTestMode();
     db = DatabaseWrapper.getDatabase();
     helpers = DbVerificationHelpers(db);
 

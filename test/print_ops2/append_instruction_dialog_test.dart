@@ -46,7 +46,6 @@ void main() {
   late FakePrintCenterController mockController;
 
   setUp(() {
-    DatabaseWrapper.setTestMode();
     DatabaseWrapper.useTestDriftDatabase(AppDatabase.testInMemory());
     mockController = FakePrintCenterController();
   });

@@ -39,7 +39,6 @@ void main() {
 
       // 3. Inject into Wrapper
       DatabaseWrapper.useTestDriftDatabase(concreteDb);
-      DatabaseWrapper.setTestMode();
 
       // 4. Get Interface for Test Usage
       db = DatabaseWrapper.getDatabase();

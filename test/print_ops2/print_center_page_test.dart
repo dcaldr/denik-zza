@@ -13,7 +13,6 @@ void main() {
   late AppDatabase database;
 
   setUp(() async {
-    DatabaseWrapper.setTestMode();
     database = AppDatabase.testInMemory();
     DatabaseWrapper.useTestDriftDatabase(database);
   });

@@ -1,4 +1,3 @@
-import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/dev/dev_environment.dart';
 import 'package:denik_zza/input/csv_review_models.dart';
@@ -39,7 +38,6 @@ void main() {
         () async {
       // Setup: Empty database WITHOUT current event
       // This is the scenario that caused the original bug!
-      DatabaseWrapper.setTestMode();
       database = AppDatabase.testInMemory();
       // Isolate: Do NOT use DatabaseWrapper
       // DatabaseWrapper.useTestDriftDatabase(database);
