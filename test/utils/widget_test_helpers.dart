@@ -28,6 +28,40 @@ Future<void> pumpUntilGone(
   }
 }
 
+/// Pumps frames until the widget defined by [finder] is present in the widget tree.
+///
+/// This is a robust, dynamic way to wait for delayed UI population
+/// (like Drift stream emissions) without brittle loops or [Future.delayed].
+///
+/// [timeout] defaults to 10 seconds.
+/// Throws a [TestFailure] if the widget is not present after the timeout.
+Future<void> pumpUntilFound(
+  WidgetTester tester,
+  Finder finder, {
+  Duration timeout = const Duration(seconds: 10),
+}) async {
+  final end = DateTime.now().add(timeout);
+  bool found = finder.evaluate().isNotEmpty;
+
+  int iter = 0;
+  while (!found && DateTime.now().isBefore(end)) {
+    iter++;
+    if (iter % 10 == 0) {
+      print('[VERBOSE] pumpUntilFound (${finder.toString()}): iter $iter, fake_time: ${DateTime.now()} (waiting for isolate stream)');
+    }
+    // Drift Streams cross isolate/asynchronous boundaries. We MUST yield to the real 
+    // Dart event loop to prevent FakeAsync from starving the database read operations!
+    await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 10)));
+    await tester.pump(const Duration(milliseconds: 50));
+    found = finder.evaluate().isNotEmpty;
+  }
+  print('[VERBOSE] pumpUntilFound finished. found: $found, iter: $iter');
+
+  if (!found) {
+    throw TestFailure('Timed out waiting for ${finder.toString()} to appear');
+  }
+}
+
 /// A "Drift-safe" replacement for [WidgetTester.pumpAndSettle].
 ///
 /// Standard [pumpAndSettle] may hang if background timers (Drift isolates)
@@ -65,8 +99,8 @@ Future<int> pumpAndSettleWithDuration(
 /// package's `PdfPreview` widget, which enters catastrophic infinite Measure 
 /// loops when rendered in headless test zones without explicit geometric bounds.
 /// DO NOT use this to fix generic layout overflows.
-void applyPdfPreviewSurfaceWorkaround(WidgetTester tester) {
+Future<void> applyPdfPreviewSurfaceWorkaround(WidgetTester tester) async {
   // 1280x720 is the standard Flutter desktop `run` default. We define it once 
   // here to prevent scattering magic numbers across the codebase.
-  tester.binding.setSurfaceSize(const Size(1280, 720));
+  await tester.binding.setSurfaceSize(const Size(1280, 720));
 }
