@@ -39,8 +39,8 @@ void main() {
       rethrow;
     }
 
-    AppLogger.l.d('PumpAndSettle Starting');
-    await tester.pumpAndSettle();
+    AppLogger.l.d('Pumping frames after launch');
+    await tester.pump(const Duration(milliseconds: 500));
     AppLogger.l.d('App Pumped');
 
     // 4. Verify Title "Všechny akce"

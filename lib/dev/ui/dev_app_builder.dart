@@ -1,15 +1,12 @@
+import 'package:denik_zza/design_system/zza_app_config.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'dev_banner.dart';
 import 'dev_theme.dart';
 
 /// Unified MaterialApp builder for all dev entry points
 ///
-/// This provides consistent setup across all development entry points:
-/// - Czech localization (delegates automatically included)
-/// - Debug banner enabled
-/// - Orange dev mode theme
-/// - Optional dev mode banner
+/// Uses [ZzaAppConfig] for locale and delegates to prevent config drift.
+/// Dev-specific differences: orange theme, debug banner.
 ///
 /// **Two variants available:**
 /// 1. `buildDevApp()` - Simple, no visible dev banner (for quick prototyping)
@@ -44,13 +41,9 @@ MaterialApp buildDevApp({
   return MaterialApp(
     title: title,
     debugShowCheckedModeBanner: true,
-    locale: const Locale('cs', 'CZ'),
-    supportedLocales: const <Locale>[Locale('cs', 'CZ')],
-    localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
-      GlobalMaterialLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-    ],
+    locale: ZzaAppConfig.supportedLocales.first,
+    supportedLocales: ZzaAppConfig.supportedLocales,
+    localizationsDelegates: ZzaAppConfig.delegates,
     theme: DevTheme.theme,
     home: home,
   );
@@ -71,13 +64,9 @@ MaterialApp buildDevAppWithBanner({
   return MaterialApp(
     title: title,
     debugShowCheckedModeBanner: true,
-    locale: const Locale('cs', 'CZ'),
-    supportedLocales: const <Locale>[Locale('cs', 'CZ')],
-    localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
-      GlobalMaterialLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-    ],
+    locale: ZzaAppConfig.supportedLocales.first,
+    supportedLocales: ZzaAppConfig.supportedLocales,
+    localizationsDelegates: ZzaAppConfig.delegates,
     theme: DevTheme.theme,
     home: DevBannerWrapper(
       message: bannerMessage,

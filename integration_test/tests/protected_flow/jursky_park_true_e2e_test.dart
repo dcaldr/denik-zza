@@ -276,7 +276,7 @@ void main() {
         await logger.step('Launch App', () async {
           app.main();
           await tester.pump();
-          await tester.pumpAndSettle();
+          await tester.pump(const Duration(milliseconds: 500));
         });
 
         await logger.step('Verify Clean DB State', () async {
@@ -788,7 +788,7 @@ void main() {
 
           // --- Step 1: Reset all Kafka records → all unprinted ---
           await printState.tapResetAll(kafkaId);
-          await tester.pumpAndSettle();
+          await tester.pump(const Duration(milliseconds: 500));
 
           await printState.verifyPersonPrintedBadge('Franz Kafka', false);
           await printState.verifyRecordPrintedBadge(0, false);
@@ -796,20 +796,20 @@ void main() {
 
           // --- Step 2: Try toggle record 2 ON → BLOCKED (records 0,1 unprinted) ---
           await printState.toggleRecordPrinted(2);
-          await tester.pumpAndSettle();
+          await tester.pump(const Duration(milliseconds: 500));
           await printState.verifyRecordPrintedBadge(2, false); // Unchanged
 
           // --- Step 3: Toggle records 0,1,2 ON sequentially (contiguous prefix) ---
           await printState.toggleRecordPrinted(0);
-          await tester.pumpAndSettle();
+          await tester.pump(const Duration(milliseconds: 500));
           await printState.verifyRecordPrintedBadge(0, true);
 
           await printState.toggleRecordPrinted(1);
-          await tester.pumpAndSettle();
+          await tester.pump(const Duration(milliseconds: 500));
           await printState.verifyRecordPrintedBadge(1, true);
 
           await printState.toggleRecordPrinted(2);
-          await tester.pumpAndSettle();
+          await tester.pump(const Duration(milliseconds: 500));
           await printState.verifyRecordPrintedBadge(2, true);
 
           // Verify contiguous prefix: records 0-2 printed, 3+ unprinted
@@ -817,7 +817,7 @@ void main() {
 
           // --- Step 4: Mark all printed ---
           await printState.tapMarkAll(kafkaId);
-          await tester.pumpAndSettle();
+          await tester.pump(const Duration(milliseconds: 500));
 
           await printState.verifyPersonPrintedBadge('Franz Kafka', true);
           await dbHelpers.verifyAllRecordsPrinted(kafkaId, true);

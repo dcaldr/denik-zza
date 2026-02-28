@@ -184,8 +184,8 @@ void main() {
         logStep('Confirming print success');
         await personMode.confirmPrintSuccess();
         // Crucial: Wait for the background `confirmPrintResult` to finish.
-        // `pumpAndSettle` guarantees we wait for all microtasks and animations.
-        await tester.pumpAndSettle();
+        // `pump` guarantees we wait for all microtasks without hanging on infinite animations.
+        await tester.pump(const Duration(milliseconds: 500));
 
         logStep('Verifying DB: Karel printed');
         await dbHelpers.verifyParticipantPrinted('Karel', 'Čapek', true);
@@ -226,7 +226,7 @@ void main() {
         await personMode.confirmPrintSuccess();
         // Crucial: Wait for the background `confirmPrintResult` to finish its DB writes
         // before proceeding, as dialog pop makes pumpAndSettle return instantly.
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 500));
 
         await dbHelpers.verifyParticipantPrinted(
             'Milada', 'Horáková', true);
@@ -274,7 +274,7 @@ void main() {
         logStep('Confirming print success');
         await personMode.confirmPrintSuccess();
         // Crucial: Wait for the background `confirmPrintResult` to finish its DB writes.
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 500));
 
         logStep('Verifying DB: Milada records all printed');
         final miladaId =
@@ -295,7 +295,7 @@ void main() {
         final backToCenterBtn = find.text('Zpět na centrum');
         if (backToCenterBtn.evaluate().isNotEmpty) {
           await tester.tap(backToCenterBtn);
-          await tester.pumpAndSettle();
+          await tester.pump(const Duration(milliseconds: 500));
         } else {
           await tester.pump(const Duration(milliseconds: 100)); // Just 1 pump
         }

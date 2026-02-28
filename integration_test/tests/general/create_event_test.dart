@@ -51,7 +51,7 @@ void main() {
     // 7. Verify Dashboard has new event
     AppLogger.l.d('Verifying New Event');
     await dashboard.verifyPageShown();
-    await tester.pumpAndSettle(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 500));
     try {
       await dashboard.verifyEventPresent('Test Turnus 2024');
     } catch (e) {

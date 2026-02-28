@@ -12,12 +12,10 @@ class EventEditorRobot extends BaseRobot {
 
   Future<void> enterEventName(String name) async {
     await enterText(nameInput, name);
-    await tester.pumpAndSettle();
   }
 
   Future<void> enterDescription(String description) async {
     await enterText(descriptionInput, description);
-    await tester.pumpAndSettle();
   }
 
   Future<void> enterDates(DateTime odkdy, DateTime dokdy) async {
@@ -34,6 +32,5 @@ class EventEditorRobot extends BaseRobot {
 
   Future<void> submit() async {
     await tap(submitButton);
-    await tester.pumpAndSettle();
   }
 }

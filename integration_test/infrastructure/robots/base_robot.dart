@@ -179,7 +179,7 @@ class BaseRobot {
         reason: 'No Scaffold found to open drawer');
     final ScaffoldState scaffold = tester.firstState(scaffoldFinder);
     scaffold.openDrawer();
-    await tester.pumpAndSettle();
+    await pumpAndSettle();
   }
 
   /// Ensures a Drawer is available by popping routes if needed.
@@ -239,7 +239,7 @@ class BaseRobot {
     await openDrawer();
     // Expand the medical section first (intake form is inside this ExpansionTile)
     await tap(findKey('AppDrawer_filtr'));
-    await tester.pumpAndSettle();
+    await pumpAndSettle();
     await tapDrawerIntakeForm();
   }
 
