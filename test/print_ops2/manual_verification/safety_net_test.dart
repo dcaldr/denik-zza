@@ -11,10 +11,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
+import 'package:pdf/widgets.dart' as pw;
+import 'package:denik_zza/print_ops2/pdf_fonts.dart';
+
 import '../../utils/print_test_helpers.dart';
 
 void main() {
   late Directory outputDir;
+  late pw.ThemeData theme;
 
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +36,7 @@ void main() {
       });
 
     await ModeCoordinator.setIntegrationTestMode(testName: 'safety_net');
+    theme = await PdfFonts.loadTheme();
     
     final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-').split('.').first;
     outputDir = Directory(p.join(Directory.current.path, 'test_outputs', 'safety_net', timestamp));
@@ -82,6 +87,7 @@ void main() {
     // Ideally, it might mask T records and print F record.
     try {
       final result = await template1.analyzeAndBuildAppend(
+        theme: theme,
         osoba: p1, 
         zaznamList: [r1, r2, r3]
       );

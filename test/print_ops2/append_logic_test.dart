@@ -3,6 +3,8 @@ import 'package:denik_zza/utils/app_logger.dart';
 import 'package:denik_zza/print_ops2/generate_pdf_template.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:denik_zza/print_ops2/pdf_fonts.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -10,6 +12,7 @@ void main() {
   group('Append Logic Tests', () {
     late MemoryOsoba person;
     late int pageCapacity;
+    late pw.ThemeData testTheme;
 
     List<MemoryZaznam> generateRecords(int count,
         {bool printed = false, int startId = 1}) {
@@ -33,6 +36,7 @@ void main() {
     }
 
     setUpAll(() async {
+      testTheme = await PdfFonts.loadTheme();
       person = MemoryOsoba.named(
         id: 1,
         jmeno: 'Test',
@@ -55,7 +59,7 @@ void main() {
             GeneratePdfTemplate.named(osoba: person, zaznamList: records);
         // Using analyzeAndBuildAppend PASS 1 logic (all printed)
         final result = await template.analyzeAndBuildAppend(
-            osoba: person, zaznamList: records);
+            theme: testTheme, osoba: person, zaznamList: records);
 
         if (result.analysis.finalPages > 1) {
           pageCapacity = i - 1; // Previous count fit on 1 page
@@ -85,6 +89,7 @@ void main() {
       final template =
           GeneratePdfTemplate.named(osoba: person, zaznamList: allRecords);
       final result = await template.analyzeAndBuildAppend(
+        theme: testTheme,
         osoba: person,
         zaznamList: allRecords,
       );
@@ -109,6 +114,7 @@ void main() {
       final template =
           GeneratePdfTemplate.named(osoba: person, zaznamList: allRecords);
       final result = await template.analyzeAndBuildAppend(
+        theme: testTheme,
         osoba: person,
         zaznamList: allRecords,
       );
@@ -136,6 +142,7 @@ void main() {
       final template =
           GeneratePdfTemplate.named(osoba: person, zaznamList: allRecords);
       final result = await template.analyzeAndBuildAppend(
+        theme: testTheme,
         osoba: person,
         zaznamList: allRecords,
       );

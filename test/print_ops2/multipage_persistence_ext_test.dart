@@ -4,6 +4,8 @@ import 'package:denik_zza/print_ops2/print_center_service.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:denik_zza/print_ops2/pdf_fonts.dart';
 import '../setup_templates/hardcoded_setup.dart';
 
 void main() {
@@ -14,12 +16,14 @@ void main() {
     late AppDatabase database;
     late PrintCenterService service;
     late DatabaseInterface db;
+    late pw.ThemeData theme;
 
     setUp(() async {
       // Mode handled by flutter_test_config.dart
       database = await HardcodedTestSetup.setupTestData();
       service = PrintCenterService();
       db = DatabaseWrapper.getDatabase();
+      theme = await PdfFonts.loadTheme();
     });
 
     tearDown(() async {
@@ -37,6 +41,7 @@ void main() {
       // Force generate with empty record list to simulate first print
       final template = GeneratePdfTemplate();
       final result = await template.analyzeAndBuildAppend(
+        theme: theme,
         osoba: p,
         omezeniList: [],
         lekList: [],

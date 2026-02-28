@@ -204,13 +204,16 @@ class NewRecordPageState extends State<NewRecordPage> {
   Future<void> _loadParticipantHealthData(int participantId) async {
     try {
       final database = DatabaseWrapper.getDatabase();
-      final omezeni = await database.getOmezeniByParticipantID(participantId);
-      final leky = await database.getLekyByParticipantID(participantId);
+      final results = await Future.wait([
+        database.getOmezeniByParticipantID(participantId),
+        database.getLekyByParticipantID(participantId),
+      ]);
+      
       if (!mounted) return;
 
       setState(() {
-        _omezeniList = omezeni;
-        _lekyList = leky;
+        _omezeniList = results[0] as List<MemoryOmezeni>;
+        _lekyList = results[1] as List<MemoryLek>;
       });
     } catch (e) {
       AppLogger.l.w(

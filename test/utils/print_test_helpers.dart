@@ -3,6 +3,9 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/print_ops2/generate_pdf_template.dart';
 
+import 'package:pdf/widgets.dart' as pw;
+import 'package:denik_zza/print_ops2/pdf_fonts.dart';
+
 final Map<String, int> _pageCountCache = {};
 
 MemoryOsoba buildTestPerson({
@@ -31,6 +34,7 @@ MemoryZaznam buildTestRecord({
 }
 
 Future<int> countPagesForRecords({
+  pw.ThemeData? theme,
   required MemoryOsoba person,
   required List<MemoryZaznam> records,
   required AppDatabase db,
@@ -40,11 +44,13 @@ Future<int> countPagesForRecords({
   if (cached != null) {
     return cached;
   }
+  final actualTheme = theme ?? await PdfFonts.loadTheme();
   final generator = GeneratePdfTemplate.named(
     osoba: person,
     zaznamList: records,
   );
   final result = await generator.analyzeAndBuildAppend(
+    theme: actualTheme,
     osoba: person,
     zaznamList: records,
   );

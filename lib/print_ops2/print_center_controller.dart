@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:pdf/widgets.dart' as pw;
@@ -10,6 +11,7 @@ import 'package:denik_zza/utils/record_sort_utils.dart';
 import 'package:denik_zza/print_ops2/models/append_analysis.dart';
 import 'print_center_service.dart';
 import 'generate_pdf_template.dart';
+import 'pdf_fonts.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:denik_zza/shared/safe_change_notifier.dart';
@@ -153,16 +155,18 @@ class PrintCenterController extends SafeChangeNotifier {
 
     try {
       print('=== DEBUG CONTROLLER: _loadParticipantDetails fetching from service... ===');
-      final r = await _service.getRecords(osoba.id);
-      final l = await _service.getLeky(osoba.id);
-      final o = await _service.getOmezeni(osoba.id);
+      final results = await Future.wait([
+        _service.getRecords(osoba.id),
+        _service.getLeky(osoba.id),
+        _service.getOmezeni(osoba.id),
+      ]);
       
       if (isDisposed) return; // Prevent updating state if unmounted
 
-      _records = r
+      _records = (results[0] as List<MemoryZaznam>)
         ..sort(compareRecordsByTime);
-      _leky = l;
-      _omezeni = o;
+      _leky = results[1] as List<MemoryLek>;
+      _omezeni = results[2] as List<MemoryOmezeni>;
 
       print('=== DEBUG CONTROLLER: _loadParticipantDetails triggering _evaluateAppend... ===');
       // Trigger append validation
@@ -192,32 +196,44 @@ class PrintCenterController extends SafeChangeNotifier {
     // infinite rebuild loops when this is called from PdfPreview.build()
 
     try {
-      if (_mode == PrintMode.append) {
-        // Append mode: strict usage of the 3-pass algorithm
-        final template = GeneratePdfTemplate();
-        final result = await template.analyzeAndBuildAppend(
-          osoba: _selected!,
-          omezeniList: _omezeni,
-          lekList: _leky,
-          zaznamList: _records,
-        );
-        return Uint8List.fromList(result.pdfBytes);
-      } else {
-        // Full mode: Standard generation logic
-        final template = GeneratePdfTemplate();
-        final pages = await template.getPdfPages(
-          osoba: _selected!,
-          omezeniList: _omezeni,
-          lekList: _leky,
-          zaznamList: _records,
-        );
+      final fontData = await PdfFonts.loadFontData();
+      final osoba = _selected!;
+      final omezeni = _omezeni;
+      final leky = _leky;
+      final records = _records;
+      final isAppend = _mode == PrintMode.append;
 
-        final doc = pw.Document();
-        for (final p in pages) {
-          doc.addPage(p);
+      return await Isolate.run(() async {
+        final theme = PdfFonts.buildTheme(fontData);
+        final template = GeneratePdfTemplate();
+
+        if (isAppend) {
+          // Append mode: strict usage of the 3-pass algorithm
+          final result = await template.analyzeAndBuildAppend(
+            theme: theme,
+            osoba: osoba,
+            omezeniList: omezeni,
+            lekList: leky,
+            zaznamList: records,
+          );
+          return Uint8List.fromList(result.pdfBytes);
+        } else {
+          // Full mode: Standard generation logic
+          final pages = await template.getPdfPages(
+            theme: theme,
+            osoba: osoba,
+            omezeniList: omezeni,
+            lekList: leky,
+            zaznamList: records,
+          );
+
+          final doc = pw.Document();
+          for (final p in pages) {
+            doc.addPage(p);
+          }
+          return await doc.save();
         }
-        return await doc.save();
-      }
+      });
     } catch (e) {
       _pdfGenerationError = "Chyba generování PDF: $e";
       // We notify on error so UI can show it, but only on error
@@ -233,35 +249,56 @@ class PrintCenterController extends SafeChangeNotifier {
     notifyListeners();
 
     try {
-      final doc = pw.Document();
-      final template = GeneratePdfTemplate();
+      final fontData = await PdfFonts.loadFontData();
+      final payloadData = <Map<String, dynamic>>[];
 
       for (final pid in ids) {
         final person = _participants.firstWhere((p) => p.id == pid,
             orElse: () => throw Exception('Person $pid not found'));
 
-        // Load details for this person
-        final records = await _service.getRecords(pid);
-        final meds = await _service.getLeky(pid);
-        final restr = await _service.getOmezeni(pid);
+        // Load details for this person safely on the main thread in parallel
+        final results = await Future.wait([
+          _service.getRecords(pid),
+          _service.getLeky(pid),
+          _service.getOmezeni(pid),
+        ]);
+        
+        final records = results[0] as List<MemoryZaznam>;
+        final meds = results[1] as List<MemoryLek>;
+        final restr = results[2] as List<MemoryOmezeni>;
 
         // Sort records standard way
         records.sort(compareRecordsByTime);
-
-        // Generate pages
-        final pages = await template.getPdfPages(
-          osoba: person,
-          omezeniList: restr,
-          lekList: meds,
-          zaznamList: records,
-        );
-
-        for (final p in pages) {
-          doc.addPage(p);
-        }
+        
+        payloadData.add({
+          'osoba': person,
+          'records': records,
+          'meds': meds,
+          'restr': restr,
+        });
       }
 
-      return await doc.save();
+      return await Isolate.run(() async {
+        final doc = pw.Document();
+        final template = GeneratePdfTemplate();
+        final theme = PdfFonts.buildTheme(fontData);
+
+        for (final data in payloadData) {
+          final pages = await template.getPdfPages(
+            theme: theme,
+            osoba: data['osoba'] as MemoryOsoba,
+            omezeniList: data['restr'] as List<MemoryOmezeni>?,
+            lekList: data['meds'] as List<MemoryLek>?,
+            zaznamList: data['records'] as List<MemoryZaznam>?,
+          );
+
+          for (final p in pages) {
+            doc.addPage(p);
+          }
+        }
+
+        return await doc.save();
+      });
     } catch (e) {
       _pdfGenerationError = "Chyba generování hromadného PDF: $e";
       notifyListeners();
@@ -427,14 +464,16 @@ class PrintCenterController extends SafeChangeNotifier {
   Future<Map<String, dynamic>> fetchParticipantPdfData(
       int participantId) async {
     try {
-      final records = await _service.getRecords(participantId);
-      final medications = await _service.getLeky(participantId);
-      final restrictions = await _service.getOmezeni(participantId);
+      final results = await Future.wait([
+        _service.getRecords(participantId),
+        _service.getLeky(participantId),
+        _service.getOmezeni(participantId),
+      ]);
 
       return {
-        'records': records,
-        'medications': medications,
-        'restrictions': restrictions,
+        'records': results[0],
+        'medications': results[1],
+        'restrictions': results[2],
       };
     } catch (e) {
       return {
@@ -485,8 +524,10 @@ class PrintCenterController extends SafeChangeNotifier {
 
     try {
       final template = GeneratePdfTemplate();
+      final theme = await PdfFonts.loadTheme();
 
       final result = await template.analyzeAndBuildAppend(
+        theme: theme,
         osoba: _selected!,
         omezeniList: _omezeni,
         lekList: _leky,

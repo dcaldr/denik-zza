@@ -19,6 +19,7 @@ import 'package:flutter_test/flutter_test.dart';
 // ignore: depend_on_referenced_packages
 import 'package:path/path.dart' as p;
 import 'package:pdf/widgets.dart' as pw;
+import 'package:denik_zza/print_ops2/pdf_fonts.dart';
 
 import '../../utils/print_test_helpers.dart';
 
@@ -30,6 +31,7 @@ void main() {
   late Directory outputDir;
   late Directory pdfDir;
   late String timestamp;
+  late pw.ThemeData theme;
 
   setUpAll(() async {
     // 0. Mock path_provider for headless execution
@@ -51,6 +53,7 @@ void main() {
     
     // Use ModeCoordinator to ensure we are in a safe integration mode
     await ModeCoordinator.setIntegrationTestMode(testName: 'visual_verification');
+    theme = await PdfFonts.loadTheme();
     
     // Override output path
     final projectRoot = Directory.current.path;
@@ -100,6 +103,7 @@ void main() {
       if (scenario.mode == PrintMode.full) {
         final template = GeneratePdfTemplate();
         final pages = await template.getPdfPages(
+          theme: theme,
           osoba: data.osoba,
           omezeniList: data.omezeni,
           lekList: data.leky,
@@ -115,6 +119,7 @@ void main() {
         // Append Mode
         final template = GeneratePdfTemplate();
         final result = await template.analyzeAndBuildAppend(
+          theme: theme,
           osoba: data.osoba,
           omezeniList: data.omezeni,
           lekList: data.leky,

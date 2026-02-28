@@ -2,7 +2,6 @@ import 'package:denik_zza/print_ops2/print_pdf_header.dart';
 import 'package:denik_zza/print_ops2/print_pdf_records.dart';
 import 'package:denik_zza/print_ops2/pdf_record_row.dart';
 import 'package:denik_zza/print_ops2/pdf_header_section.dart';
-import 'package:denik_zza/print_ops2/pdf_fonts.dart';
 import 'package:denik_zza/print_ops2/pdf_constants.dart';
 import 'package:denik_zza/print_ops2/models/append_analysis.dart';
 import 'package:denik_zza/print_ops2/models/append_build_result.dart';
@@ -88,6 +87,7 @@ class GeneratePdfTemplate {
   }
 
   Future<List<pw.Page>> getPdfPages({
+    required pw.ThemeData theme,
     required MemoryOsoba osoba,
     List<MemoryOmezeni>? omezeniList,
     List<MemoryLek>? lekList,
@@ -105,7 +105,7 @@ class GeneratePdfTemplate {
 
     return [
       pw.MultiPage(
-        theme: await PdfFonts.loadTheme(),
+        theme: theme,
         build: (pw.Context context) {
           return [
             header,
@@ -138,6 +138,7 @@ class GeneratePdfTemplate {
 
   /// Three-pass algorithm for multi-page append analysis and PDF generation
   Future<AppendBuildResult> analyzeAndBuildAppend({
+    required pw.ThemeData theme,
     required MemoryOsoba osoba,
     List<MemoryOmezeni>? omezeniList,
     List<MemoryLek>? lekList,
@@ -148,6 +149,7 @@ class GeneratePdfTemplate {
       _logger.w('analyzeAndBuildAppend called with empty records list');
       // Generate as first print
       final result = await _generateBasePdf(
+        theme: theme,
         osoba: osoba,
         omezeniList: omezeniList,
         lekList: lekList,
@@ -174,6 +176,7 @@ class GeneratePdfTemplate {
 
     // Pass 1: Generate baseline PDF with only printed content
     final baselineResult = await _generateBasePdf(
+      theme: theme,
       osoba: osoba,
       omezeniList: omezeniList,
       lekList: lekList,
@@ -190,6 +193,7 @@ class GeneratePdfTemplate {
     }
 
     final probeResult = await _generateBasePdf(
+      theme: theme,
       osoba: osoba,
       omezeniList: omezeniList,
       lekList: lekList,
@@ -208,6 +212,7 @@ class GeneratePdfTemplate {
 
     print('=== DEBUG PDF GEN: analyzeAndBuildAppend generating BASE PDF... ===');
     final finalResult = await _generateBasePdf(
+      theme: theme,
       osoba: osoba,
       omezeniList: omezeniList,
       lekList: lekList,
@@ -238,6 +243,7 @@ class GeneratePdfTemplate {
 
   /// Generates PDF using MultiPage with header/footer control
   Future<DocWithCount> _generateBasePdf({
+    required pw.ThemeData theme,
     required MemoryOsoba osoba,
     List<MemoryOmezeni>? omezeniList,
     List<MemoryLek>? lekList,
@@ -245,7 +251,6 @@ class GeneratePdfTemplate {
     required int hideHeaderOnPage,
     bool maskPrintedRecords = false,
   }) async {
-    final theme = await PdfFonts.loadTheme();
     final doc = pw.Document();
 
     // Track pages for counting (fallback strategy)
