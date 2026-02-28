@@ -48,7 +48,7 @@ FutureOr<void> testExecutable(FutureOr<void> Function() testMain) async {
     final testDir = ModeCoordinator.currentTestDirectory;
     if (testDir != null) {
       final artifactsDir = path.join(testDir.path, 'pdf_artifacts');
-      await CapturingSystemInterface.cleanupOldArtifacts(
+      await CapturingSystemInterface.cleanupOldFiles(
         baseDir: artifactsDir,
         keepLast: 5,
       );
