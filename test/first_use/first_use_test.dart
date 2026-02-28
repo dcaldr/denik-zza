@@ -45,7 +45,6 @@ void main() {
     });
 
     tearDown(() async {
-      await DatabaseWrapper.dispose();
     });
 
     // =========================================================================

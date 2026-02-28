@@ -19,7 +19,7 @@ import '../utils/unified_test_setup.dart';
 /// Run with:
 ///   flutter test --dart-define=TEST_MODE=persist test/infrastructure/tmp_persist_mode_db_file_alignment_test.dart
 ///
-/// Note: Do NOT auto-clean persist outputs; artifacts are intentionally preserved for inspection.
+/// Note: Do NOT auto-clean persist outputs; outputs are intentionally preserved for inspection.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -49,7 +49,6 @@ void main() {
         return;
       }
       // Close DB but DO NOT delete artifacts in persist mode
-      await database.close();
     });
 
     test(

@@ -25,7 +25,6 @@ void main() {
     test('should create test databases in dedicated directory', () async {
       if (!TestConfiguration.isPersist) {
         markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
-        return;
       }
       // Create a file-based test database
       final database =
@@ -41,8 +40,6 @@ void main() {
           .customSelect('SELECT COUNT(*) as count FROM test_table')
           .get();
       expect(result.first.data['count'], equals(1));
-
-      await database.close();
 
       // Now check if the test database directory exists and has files
       final dir = Directory(testDbDir);
@@ -72,7 +69,6 @@ void main() {
     test('should create databases with unique filenames', () async {
       if (!TestConfiguration.isPersist) {
         markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
-        return;
       }
       // Create multiple databases quickly and track their exact file paths
       final databases = <AppDatabase>[];
@@ -144,7 +140,6 @@ void main() {
     test('should isolate file databases between tests', () async {
       if (!TestConfiguration.isPersist) {
         markTestSkipped('Requires TEST_MODE=persist (on-disk checks).');
-        return;
       }
       // Create first database and add data
       final db1 = DatabaseTestHelper.createTestDatabase(TestDatabaseType.file);
@@ -174,7 +169,6 @@ void main() {
     });
 
     test('should successfully clean up test database files', () async {
-      // IMPORTANT: We only clean files created by THIS test to prove cleanup
       // works. In persist mode, other files are intentionally preserved for
       // manual inspection and debugging.
       if (!TestConfiguration.isPersist) {

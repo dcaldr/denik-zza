@@ -85,7 +85,6 @@ void main() {
         // Verify it's an in-memory database by checking the connection type
         // (We can't easily test the connection type directly, but we can verify it works)
 
-        await database.close();
       });
 
       test('should initialize test environment without errors', () async {

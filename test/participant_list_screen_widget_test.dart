@@ -1,13 +1,9 @@
-import 'package:denik_zza/database/database_wrapper.dart';
-import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/screens2/participant_list_screen.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:denik_zza/screens2/widgets/participant_list_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'setup_templates/hardcoded_setup.dart';
-
-import 'package:denik_zza/utils/mode_coordinator.dart';
 
 /// Comprehensive tests for ParticipantListScreen including challenging scenarios
 ///
@@ -24,22 +20,15 @@ import 'package:denik_zza/utils/mode_coordinator.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late AppDatabase database;
+  // late AppDatabase database; (unused)
 
   setUp(() async {
     // Mode handled by flutter_test_config.dart
-
-    database = await HardcodedTestSetup.setupTestData();
-
-    // Verify test mode is active
-    assert(DatabaseWrapper.getCurrentMode() == DatabaseMode.testing,
-        'Test mode must be active before widget creation');
+    await HardcodedTestSetup.setupTestData();
+    // Test mode setup done by HardcodedTestSetup
   });
 
-  tearDown(() async {
-    await database.close();
-    await DatabaseWrapper.dispose();
-  });
+  tearDown(() async {});
 
   group('ParticipantListScreen - Basic Rendering', () {
     testWidgets('renders with all required UI elements',
@@ -127,7 +116,6 @@ void main() {
       expect(textField.controller?.text, 'Test');
     });
 
-    // SKIPPED: Detailed search behavior tests removed because PersonAutocomplete
     // shows results in a dropdown overlay, making string matching unreliable.
     // The autocomplete widget itself is tested separately.
   },
@@ -169,17 +157,14 @@ void main() {
   });
 
   group('ParticipantListScreen - Performance & Edge Cases', () {
-    // SKIPPED: Edge case tests removed - PersonAutocomplete has different empty state handling
     // and dropdown behavior makes result counting unreliable with string matching
   }, skip: 'Search tests no longer applicable with PersonAutocomplete widget');
 
   group('ParticipantListScreen - Search on Insurance Number', () {
-    // SKIPPED: Insurance number search tests removed - PersonAutocomplete dropdown behavior
     // makes string matching unreliable for testing filtered results
   }, skip: 'Search tests no longer applicable with PersonAutocomplete widget');
 
   group('ParticipantListScreen - Multiple Matches', () {
-    // SKIPPED: Multiple match tests removed - PersonAutocomplete shows results in dropdown
     // overlay, causing duplicate text findings and unreliable string matching
   }, skip: 'Search tests no longer applicable with PersonAutocomplete widget');
 }

@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/input/file_manager.dart';
 import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/services/models/csv_import_payload.dart';
@@ -26,7 +25,6 @@ void main() {
   tearDown(() async {
     // Reset to production mode
     FileManager().setMode(FileManagerMode.production);
-    await DatabaseWrapper.dispose();
     // Cleanup is handled by FileManager in persist mode
   });
 

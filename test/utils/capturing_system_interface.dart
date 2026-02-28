@@ -95,7 +95,7 @@ class CapturingSystemInterface implements SystemInterface {
         outputDir!.createSync(recursive: true);
       }
       final safeName = _sanitizeFileName(name);
-        final subdirName =
+      final subdirName =
           'print_${callIndex.toString().padLeft(3, '0')}_$safeName';
       final subdir = Directory(path.join(outputDir!.path, subdirName));
       if (!subdir.existsSync()) {
@@ -119,7 +119,7 @@ class CapturingSystemInterface implements SystemInterface {
     ));
   }
 
-  static Future<void> cleanupOldArtifacts({
+  static Future<void> cleanupOldFiles({
     required String baseDir,
     int keepLast = 5,
   }) async {

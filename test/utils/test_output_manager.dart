@@ -8,12 +8,12 @@ import 'test_configuration.dart';
 /// Purpose:
 /// - Centralizes creation and management of test output directories for different
 ///   testing modes (inMemory, persist, production).
-/// - Provides stable, predictable locations for artifacts (e.g., SQLite files) so
+/// - Provides stable, predictable locations for files (e.g., SQLite files) so
 ///   developers can inspect results after a test run.
 ///
 /// IMPORTANT (Persistence Policy):
 /// - Do NOT auto-clean persist outputs after each test. The entire point of
-///   persist mode is to preserve artifacts (database files, logs) across tests
+///   persist mode is to preserve files (database files, logs) across tests
 ///   within a run for debugging and post-run inspection.
 /// - The cleanup() helpers provided here are intended for:
 ///   1) CI environments before or after a full test run, and
@@ -26,13 +26,13 @@ import 'test_configuration.dart';
 ///   global app state. It is safe to use in concurrent tests as long as the
 ///   same directory paths aren’t deleted mid-run.
 class TestOutputManager {
-  // Base directory for all persistent test artifacts is now under test/ for clarity
+  // Base directory for all persistent test files is now under test/ for clarity
   static const String _testOutputsDir = 'test/test_outputs';
   static const String _persistDir = 'persist';
   static const String _productionDir = 'production';
   static String? _persistRunId;
   static String? _productionRunId;
-  
+
   /// Initialize test output directories based on current test mode.
   ///
   /// inMemory: no directories are created.
@@ -40,7 +40,7 @@ class TestOutputManager {
   /// production: ensures `test/test_outputs/production` exists if `isProductionSafe`.
   static Future<void> initialize() async {
     final testMode = TestConfiguration.getTestMode();
-    
+
     switch (testMode) {
       case TestMode.inMemory:
         // No directory initialization needed for in-memory mode
@@ -52,17 +52,18 @@ class TestOutputManager {
         if (TestConfiguration.isProductionSafe) {
           await _ensureDirectoryExists(_getProductionDir());
         } else {
-          throw Exception('Production testing requires CONFIRM_PRODUCTION_TESTING=yes');
+          throw Exception(
+              'Production testing requires CONFIRM_PRODUCTION_TESTING=yes');
         }
         break;
     }
   }
-  
+
   /// Get the base test outputs directory path (absolute).
   static String getTestOutputsDir() {
     return path.absolute(_testOutputsDir);
   }
-  
+
   /// Get base directory for persist mode (absolute path).
   static String _getPersistDir() {
     return path.join(getTestOutputsDir(), _persistDir);
@@ -71,23 +72,26 @@ class TestOutputManager {
   /// Generate a run id: test_YYYYMMDD_HHMMSS_rand5
   static String _generateRunId() {
     final now = DateTime.now();
-    final date = '${now.year.toString().padLeft(4, '0')}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
-    final time = '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
-    final rand = (now.microsecondsSinceEpoch % 100000).toString().padLeft(5, '0');
+    final date =
+        '${now.year.toString().padLeft(4, '0')}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+    final time =
+        '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
+    final rand =
+        (now.microsecondsSinceEpoch % 100000).toString().padLeft(5, '0');
     return 'test_${date}_${time}_$rand';
   }
 
   /// Get or create a per-run directory for persist mode.
   ///
   /// WARNING: Do not delete this directory in per-test tearDown. Persist mode
-  /// is designed to preserve artifacts for the entire run.
+  /// is designed to preserve files for the entire run.
   static Future<String> getOrCreatePersistRunDirectory() async {
     _persistRunId ??= _generateRunId();
     final dir = path.join(_getPersistDir(), _persistRunId!);
     await _ensureDirectoryExists(dir);
     return dir;
   }
-  
+
   /// Get base directory for production mode (absolute path).
   static String _getProductionDir() {
     return path.join(getTestOutputsDir(), _productionDir);
@@ -100,7 +104,7 @@ class TestOutputManager {
     await _ensureDirectoryExists(dir);
     return dir;
   }
-  
+
   /// Get database file path for current test mode.
   ///
   /// - inMemory: returns an empty string (no file path).
@@ -113,9 +117,10 @@ class TestOutputManager {
   ///
   /// Optional: Set [useRunDir] to true to place the DB file under a per-run
   /// directory (e.g., `test/test_outputs/persist/test_YYYY.../<filename>`).
-  static Future<String> getDatabasePath(String filename, {bool useRunDir = false}) async {
+  static Future<String> getDatabasePath(String filename,
+      {bool useRunDir = false}) async {
     final testMode = TestConfiguration.getTestMode();
-    
+
     switch (testMode) {
       case TestMode.inMemory:
         // Return empty string for in-memory databases
@@ -134,23 +139,23 @@ class TestOutputManager {
         return path.join(_getProductionDir(), filename);
     }
   }
-  
+
   /// Clean up test outputs (use judiciously).
   ///
   /// WARNING: Do NOT call this from per-test tearDown. This is intended for
   /// full-run cleanup in CI or occasional manual resets. Persist mode is meant
-  /// to keep artifacts for inspection.
+  /// to keep files for inspection.
   static Future<void> cleanup() async {
     final testOutputsDir = Directory(getTestOutputsDir());
     if (await testOutputsDir.exists()) {
       await testOutputsDir.delete(recursive: true);
     }
   }
-  
+
   /// Clean up only persist mode outputs (use sparingly).
   ///
   /// WARNING: Avoid calling from per-test tearDown. Intended for CI or manual
-  /// maintenance when you explicitly want to remove persisted artifacts.
+  /// maintenance when you explicitly want to remove persisted files.
   static Future<void> cleanupPersist() async {
     final persistDir = Directory(_getPersistDir());
     if (await persistDir.exists()) {
@@ -158,7 +163,7 @@ class TestOutputManager {
     }
     _persistRunId = null; // reset for next run if desired
   }
-  
+
   /// Clean up only production mode outputs (guarded by production checks elsewhere).
   static Future<void> cleanupProduction() async {
     final productionDir = Directory(_getProductionDir());
@@ -167,7 +172,7 @@ class TestOutputManager {
     }
     _productionRunId = null;
   }
-  
+
   /// Get output summary for debugging (paths and basic existence flags).
   static Map<String, dynamic> getOutputSummary() {
     return {
@@ -178,7 +183,7 @@ class TestOutputManager {
       'outputsExist': Directory(getTestOutputsDir()).existsSync(),
     };
   }
-  
+
   /// Ensure directory exists, create if needed.
   ///
   /// This helper is idempotent and safe to call concurrently. It never deletes

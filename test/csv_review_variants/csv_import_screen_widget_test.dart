@@ -194,7 +194,6 @@ void main() {
 
   testWidgets('cleans up when disposed during file picking',
       (WidgetTester tester) async {
-    // This test verifies the dispose() cleanup doesn't crash
     mockSystem.enqueueResult(
       FilePickerResult(<PlatformFile>[
         PlatformFile(
@@ -216,7 +215,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Should not crash - dispose() handles cleanup gracefully
     expect(find.text('Screen popped'), findsOneWidget);
   });
 

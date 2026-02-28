@@ -22,7 +22,6 @@ void main() {
 
     tearDown(() async {
       // Close the database after each test
-      await database.close();
     });
 
     test('should have created test event "Test Test Test"', () async {

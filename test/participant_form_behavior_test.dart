@@ -39,7 +39,6 @@ void main() {
   });
 
   tearDown(() async {
-    await database.close();
   });
 
   group('Form Validation', () {

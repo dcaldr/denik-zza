@@ -4,7 +4,6 @@ import 'package:denik_zza/screens2/new_record/new_record_page.dart';
 import 'package:denik_zza/screens2/widgets/record_list_widget.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
-import 'package:denik_zza/database/database_wrapper.dart';
 import 'setup_templates/hardcoded_setup.dart';
 import 'utils/database_test_helper.dart';
 
@@ -152,7 +151,6 @@ void main() {
 
         // Test participant from HardcodedTestSetup has medical records
         // We should NOT see the empty state message
-        final emptyState = find.text('Zatím žádné zdravotní záznamy.');
 
         // If we see records (no empty state), test passes
         // If empty state shows, it means test data wasn't set up correctly

@@ -31,7 +31,6 @@ void main() {
     late DefaultCsvImportService service;
 
     tearDown(() async {
-      await database.close();
     });
 
     test('fails gracefully when no current event exists (the null error bug)',

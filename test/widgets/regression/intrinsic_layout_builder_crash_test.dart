@@ -9,11 +9,9 @@
 // instead of LayoutBuilder, breaking the IntrinsicHeight -> LayoutBuilder dependency cycle.
 
 import 'package:denik_zza/screens2/participant_registration_form.dart';
-import 'package:denik_zza/screens2/widgets/app_drawer.dart';
-import 'package:denik_zza/screens2/services/participant_registration_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:denik_zza/database/database_wrapper.dart';
+// removed unused imports: app_drawer, participant_registration_service, database_wrapper
 import '../../setup_templates/hardcoded_setup.dart';
 
 void main() {

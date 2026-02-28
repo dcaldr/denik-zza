@@ -24,7 +24,6 @@ void main() {
     });
 
     tearDown(() async {
-      await DatabaseWrapper.dispose();
     });
 
     Widget createTestableWidget() {

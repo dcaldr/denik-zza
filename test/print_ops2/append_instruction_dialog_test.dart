@@ -51,7 +51,6 @@ void main() {
   });
   
   tearDown(() async {
-    await DatabaseWrapper.dispose();
   });
 
   Future<void> showDialogInTest(WidgetTester tester) async {

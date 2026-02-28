@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 
-
 import 'package:denik_zza/screens2/widgets/restrictions_widget.dart';
 import 'package:denik_zza/screens2/widgets/memory_restriction_widget.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
@@ -9,7 +8,6 @@ import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart';
 import '../utils/base_test_widget.dart';
 import '../utils/test_configuration.dart';
-
 
 /// Tests for RestrictionsWidget behavior:
 /// - Add button functionality
@@ -24,12 +22,10 @@ Future<void> pumpUntil(
   Duration step = const Duration(milliseconds: 16),
   String? debugLabel,
 }) async {
-
   final deadline = DateTime.now().add(timeout);
   while (true) {
     if (condition()) return;
     if (DateTime.now().isAfter(deadline)) {
-
       final label = debugLabel == null ? '' : ' ($debugLabel)';
       fail('pumpUntil timeout$label');
     }
@@ -56,13 +52,10 @@ void main() {
   tearDown(() async {
     // In-memory DB is safe to keep open; closing can intermittently hang
     // when widgets still hold references after test cleanup.
-    if (TestConfiguration.isPersist) {
-      await database.close();
-    }
+    if (TestConfiguration.isPersist) {}
   });
 
-  tearDownAll(() {
-  });
+  // tearDownAll removed (was empty)
 
   group('RestrictionsWidget Add Item', () {
     testWidgets('typing text + Add button adds item to list', (tester) async {
@@ -379,7 +372,6 @@ void main() {
 
       // Debug: print what we find
 
-
       // If dropdown shows, tap on it
       if (optionFinder.evaluate().isNotEmpty) {
         // Tap the dropdown option (should trigger onSelected)
@@ -403,7 +395,7 @@ void main() {
             'logic.names has ${omezeniLogic.names.length} items: ${omezeniLogic.names}');
       }
     });
-    // NOTE: Enter key simulation test removed - keyboard events don't work
+
     // reliably in widget tests. The tap-based dropdown test above properly
     // verifies onSelected behavior. Real Enter key behavior tested manually.
   });

@@ -1,25 +1,20 @@
-import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
-// ...existing code...
-import 'package:denik_zza/database/drift_database/database.dart';
+// removed unused import: database.dart
 import 'package:denik_zza/print_ops2/person_mode_flow_page.dart';
 import 'package:denik_zza/print_ops2/print_center_controller.dart';
-// ...existing code...
-
 import 'package:denik_zza/print_ops2/print_center_service.dart';
 
 import '../setup_templates/hardcoded_setup.dart'; // From test folder
 
 void main() {
-  late AppDatabase database;
   late PrintCenterService service;
   late PrintCenterController controller;
 
   setUp(() async {
-    database = await HardcodedTestSetup.setupTestData();
+    await HardcodedTestSetup.setupTestData();
     service = PrintCenterService();
     controller = PrintCenterController(service);
     controller.init();
@@ -27,8 +22,6 @@ void main() {
 
   tearDown(() async {
     controller.dispose();
-    await database.close();
-    await DatabaseWrapper.dispose();
   });
 
   testWidgets('Selecting second person issue test', (WidgetTester tester) async {

@@ -62,11 +62,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // Find the SizedBox wrapping the list content
-      final sizedBoxFinder = find.byType(SizedBox).first; 
       // Note: RestrictionsWidget uses SizedBox for the list container in Unbounded mode
       
-      final Size boxSize = tester.getSize(sizedBoxFinder);
-      
+      // boxSize removed; pixel-exact checks are brittle in widget tests
       // We expect height to be roughly itemHeight * 3.3
       // Standard item height is usually around 48-50px (ListTile dense=true, padding, etc.)
       // Let's verify it's NOT just 3 items or 2 items.
@@ -113,8 +111,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Find ZzaScrollable
-      final zzaState = tester.state<State<ZzaScrollable>>(find.byType(ZzaScrollable));
-      
+      // zzaState removed; visual checks below assert expected behavior
       // Access internal state via type matching or just visual check?
       // Since _hasMoreBelow is private, we check for the Container with gradient/Icon
       // The icon is Icons.keyboard_arrow_down

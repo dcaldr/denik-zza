@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/screens2/new_record/new_record_page.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
-import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'setup_templates/hardcoded_setup.dart';
 
 /// Basic working tests for NewRecordPage
@@ -36,7 +35,6 @@ void main() {
     });
 
     tearDown(() async {
-      await database.close();
     });
 
     testWidgets('should render without crashing', (WidgetTester tester) async {

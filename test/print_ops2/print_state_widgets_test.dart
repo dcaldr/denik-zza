@@ -8,7 +8,7 @@ import 'package:denik_zza/print_ops2/print_state_management_page.dart';
 import 'package:denik_zza/print_ops2/widgets/person_print_state_card.dart';
 import 'package:denik_zza/print_ops2/widgets/record_print_toggle_row.dart';
 import 'package:denik_zza/print_ops2/models/person_print_state.dart';
-import 'package:denik_zza/print_ops2/models/toggle_impact.dart';
+// removed unused import: toggle_impact
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 
@@ -140,7 +140,7 @@ void main() {
             state: state,
             onTogglePersonPrinted: (_) {},
             onToggleRecordPrinted: (_, __) {},
-            onPreviewImpact: (_, __) => const ToggleImpact.none(),
+            // onPreviewImpact removed from widget API; ignore in test
             onMarkAllPrinted: (_) {},
             onResetAll: (_) {},
           ),
@@ -185,7 +185,7 @@ void main() {
             state: state,
             onTogglePersonPrinted: (_) => toggled = true,
             onToggleRecordPrinted: (_, __) {},
-            onPreviewImpact: (_, __) => const ToggleImpact.none(),
+            // onPreviewImpact removed from widget API; ignore in test
             onMarkAllPrinted: (_) {},
             onResetAll: (_) {},
           ),
@@ -233,7 +233,7 @@ void main() {
             state: state,
             onTogglePersonPrinted: (_) {},
             onToggleRecordPrinted: (_, __) {},
-            onPreviewImpact: (_, __) => const ToggleImpact.none(),
+            // onPreviewImpact removed from widget API; ignore in test
             onMarkAllPrinted: (_) => markedAll = true,
             onResetAll: (_) => resetAll = true,
           ),
@@ -284,7 +284,7 @@ void main() {
             state: state,
             onTogglePersonPrinted: (_) {},
             onToggleRecordPrinted: (_, __) {},
-            onPreviewImpact: (_, __) => const ToggleImpact.none(),
+            // onPreviewImpact removed from widget API; ignore in test
             onMarkAllPrinted: (_) {},
             onResetAll: (_) {},
           ),

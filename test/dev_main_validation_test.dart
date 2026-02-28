@@ -1,8 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'utils/database_test_helper.dart';
-import 'utils/database_test_helper.dart';
 import 'setup_templates/hardcoded_setup.dart';
-import 'package:denik_zza/utils/mode_coordinator.dart';
 
 /// Test to validate that the dev_main.dart setup works correctly
 void main() {
@@ -45,7 +42,6 @@ void main() {
       await HardcodedTestSetup.cleanup(database);
     });
 
-    // File database setup test removed as it is covered by universal_strategy_showcase_test.dart
     // and requires complex mocking of path_provider which is redundant here.
   });
 }

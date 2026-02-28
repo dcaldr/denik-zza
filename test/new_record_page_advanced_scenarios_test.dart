@@ -4,8 +4,6 @@ import 'package:denik_zza/screens2/new_record/new_record_page.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'setup_templates/hardcoded_setup.dart';
-import 'package:denik_zza/database/database_wrapper.dart';
-import 'package:denik_zza/utils/mode_coordinator.dart';
 
 /// Advanced tests focusing on warning behaviors and edge cases
 /// specifically requested by the user for "combination of situations"
@@ -36,8 +34,6 @@ void main() {
     });
 
     tearDown(() async {
-      await database.close();
-      await DatabaseWrapper.dispose();
     });
 
     group('Warning Behavior Tests', () {

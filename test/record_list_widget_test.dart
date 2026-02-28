@@ -18,7 +18,6 @@ void main() {
     });
 
     tearDown(() async {
-      await DatabaseWrapper.dispose();
     });
 
     Widget createTestWidget(MemoryOsoba participant) {

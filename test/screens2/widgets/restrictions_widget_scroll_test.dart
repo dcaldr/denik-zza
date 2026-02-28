@@ -1,5 +1,5 @@
 import 'package:denik_zza/screens2/widgets/restrictions_widget.dart';
-import 'package:denik_zza/screens2/widgets/zza_scrollable.dart';
+// removed unused import: zza_scrollable
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

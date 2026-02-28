@@ -5,7 +5,6 @@ import 'package:denik_zza/screens2/new_record/new_record_page.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
-import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'utils/database_test_helper.dart';
 import 'setup_templates/hardcoded_setup.dart';
@@ -59,7 +58,6 @@ void main() {
 
     tearDown(() async {
       await DatabaseTestHelper.closeTestDatabase(database);
-      await DatabaseWrapper.dispose();
     });
 
     group('Initial State Tests', () {
@@ -464,7 +462,6 @@ void main() {
 
     tearDown(() async {
       await helperDb.close();
-      await DatabaseWrapper.dispose();
     });
 
     // Test the helper functions themselves to ensure they work correctly

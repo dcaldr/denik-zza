@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:denik_zza/database/database_wrapper.dart';
+// removed unused import: database_wrapper
 import 'package:denik_zza/print_ops2/print_center_service.dart';
 import 'package:denik_zza/print_ops2/print_state_controller.dart';
 import 'package:denik_zza/print_ops2/print_state_management_page.dart';
 import '../utils/base_test_widget.dart';
 import '../setup_templates/hardcoded_setup.dart';
-import '../../integration_test/infrastructure/robots/print_state_robot.dart';
+// removed unused integration test robot import
 
 void main() {
   setUpAll(() {
@@ -16,13 +16,7 @@ void main() {
     testWidgets('finds key elements and actions', (tester) async {
 
       await HardcodedTestSetup.setupTestData();
-      final db = DatabaseWrapper.getDatabase();
-
-      final participants = await db.getParticipantsByCurrentEvent();
-
-      final karel = participants.firstWhere(
-        (p) => p.jmeno == 'Karel' && p.prijmeni == 'Čapek',
-      );
+      // database handle not needed in this test
 
       final controller = PrintStateController(PrintCenterService());
 

@@ -7,7 +7,6 @@ import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'utils/database_test_helper.dart';
 import 'utils/base_test_widget.dart';
-import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'setup_templates/hardcoded_setup.dart';
 
 /// Comprehensive edge case tests for NewRecordPage

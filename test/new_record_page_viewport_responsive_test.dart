@@ -20,10 +20,6 @@ void main() {
       participants = await db.getParticipantsByCurrentEvent();
     });
 
-    tearDown(() async {
-      await DatabaseWrapper.dispose();
-    });
-
     Future<void> _pumpWithSize(
       WidgetTester tester,
       Size size, {

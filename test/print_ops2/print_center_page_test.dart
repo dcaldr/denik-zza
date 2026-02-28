@@ -19,7 +19,6 @@ void main() {
 
   tearDown(() async {
     if (TestConfiguration.isPersist) {
-      await database.close();
     }
   });
 
