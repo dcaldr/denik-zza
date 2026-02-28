@@ -24,9 +24,8 @@ void main() {
       controller.init();
     });
 
-    tearDown(() async {
+    tearDown(() {
       controller.dispose();
-      await database.close();
     });
 
     test('analyzeAppendScenario works with test data', () async {
@@ -97,9 +96,7 @@ void main() {
       db = DatabaseWrapper.getDatabase(); // Use the interface
     });
 
-    tearDown(() async {
-      await database.close();
-    });
+
 
     test('participant printed flag persists and can be re-fetched', () async {
       // Get a test participant using the interface
