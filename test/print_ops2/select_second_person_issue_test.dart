@@ -23,6 +23,7 @@ void main() {
     database = await HardcodedTestSetup.setupTestData();
     service = PrintCenterService();
     controller = PrintCenterController(service);
+    controller.init();
   });
 
   tearDown(() async {
@@ -81,12 +82,9 @@ void main() {
     controller.resetFlow();
     
     // Allow AnimatedSwitcher to transition back to Stage 1
-    await tester.pumpWidget(Container()); // Force a rebuild? No, pumpAndSettle is better.
-    // Actually, animated switcher takes 250ms. Let's pump over time.
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 50));
     }
-    await tester.pumpAndSettle();
 
     print('\n--- Stage 1 After Reset ---');
     print('Participants loaded: ${controller.participants.length}');
@@ -105,7 +103,9 @@ void main() {
     } else {
       print('\n[SUCCESS] Milada found! Tapping...');
       await tester.tap(miladaFinder.first);
-      await tester.pumpAndSettle();
+      for (int i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
       print('Selected: ${controller.selected?.jmeno} ${controller.selected?.prijmeni}');
     }
   });

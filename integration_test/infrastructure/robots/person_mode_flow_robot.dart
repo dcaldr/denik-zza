@@ -116,7 +116,12 @@ class PersonModeFlowRobot extends BaseRobot {
       }
     }
 
-    await _tapAndPump(printButton);
+    await tester.tap(printButton);
+    // The tap triggers async runPrintCycle: printPdf → generateCurrentPdf → _showConfirmDialog.
+    // We need multiple frames for this async chain to complete.
+    for (int i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
   }
 
   Future<void> verifyPdfPreviewShown() async {
@@ -129,6 +134,11 @@ class PersonModeFlowRobot extends BaseRobot {
   }
 
   Future<void> confirmPrintSuccess() async {
+    // Wait for the confirm dialog to appear (it shows after async print cycle)
+    final found = await waitForKey('PrintConfirm_success');
+    if (!found) {
+      throw TestFailure('PrintConfirm_success dialog did not appear within timeout');
+    }
     await tap(findKey('PrintConfirm_success'));
   }
 
