@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/input/rodne_cislo.dart';
+import 'package:denik_zza/input/rodne_cislo.dart';
 
 void main() {
   group('RodneCislo Excel Leading Zero Fix Tests', () {

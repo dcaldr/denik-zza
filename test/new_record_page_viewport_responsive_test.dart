@@ -20,7 +20,7 @@ void main() {
       participants = await db.getParticipantsByCurrentEvent();
     });
 
-    Future<void> _pumpWithSize(
+    Future<void> pumpWithSize(
       WidgetTester tester,
       Size size, {
       MemoryOsoba? participant,
@@ -34,12 +34,12 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    Future<void> _resetSurface(WidgetTester tester) async {
+    Future<void> resetSurface(WidgetTester tester) async {
       await tester.binding.setSurfaceSize(null);
     }
 
     testWidgets('renders on narrow phone size', (tester) async {
-      await _pumpWithSize(
+      await pumpWithSize(
         tester,
         const Size(360, 640),
         participant: participants.isNotEmpty ? participants.first : null,
@@ -48,11 +48,11 @@ void main() {
       expect(find.text('Nový záznam úrazu'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
-      await _resetSurface(tester);
+      await resetSurface(tester);
     });
 
     testWidgets('renders on short height window', (tester) async {
-      await _pumpWithSize(
+      await pumpWithSize(
         tester,
         const Size(900, 520),
         participant: participants.isNotEmpty ? participants.first : null,
@@ -61,11 +61,11 @@ void main() {
       expect(find.text('Nový záznam úrazu'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
-      await _resetSurface(tester);
+      await resetSurface(tester);
     });
 
     testWidgets('renders on wide tablet size', (tester) async {
-      await _pumpWithSize(
+      await pumpWithSize(
         tester,
         const Size(1100, 800),
         participant: participants.isNotEmpty ? participants.first : null,
@@ -74,7 +74,7 @@ void main() {
       expect(find.text('Nový záznam úrazu'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
-      await _resetSurface(tester);
+      await resetSurface(tester);
     });
   });
 }

@@ -1,3 +1,5 @@
+library;
+
 /// Focus Management Tests
 ///
 /// Tests for the focus management fix that ensures TextField focus is maintained

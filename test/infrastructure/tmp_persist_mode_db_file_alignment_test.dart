@@ -11,8 +11,8 @@ import '../utils/unified_test_setup.dart';
 /// Persist-mode integration: DB and FileManager should align to the same per-run directory.
 ///
 /// What this test verifies (only meaningful in persist mode):
-/// - Database file is created under test/test_outputs/persist/<runId>/
-/// - FileManager writes into the SAME <runId> directory when wired via UnifiedTestSetup
+/// - Database file is created under test/test_outputs/persist/&lt;runId&gt;/
+/// - FileManager writes into the SAME &lt;runId&gt; directory when wired via UnifiedTestSetup
 /// - Basic DB operation succeeds (insert + read) to ensure the db file materializes
 /// - A simple file write through FileManager lands under the same run directory
 ///

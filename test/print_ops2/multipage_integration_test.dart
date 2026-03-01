@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/print_ops2/print_center_controller.dart';
@@ -10,14 +9,13 @@ void main() {
   // Initialize Flutter binding for tests that use services like rootBundle
   TestWidgetsFlutterBinding.ensureInitialized();
   group('Multi-page Append Integration Tests', () {
-    late AppDatabase database;
     late PrintCenterController controller;
     late PrintCenterService service;
 
     setUp(() async {
       // Set up test database with predefined data
       // Mode handled by flutter_test_config.dart
-      database = await HardcodedTestSetup.setupTestData();
+      await HardcodedTestSetup.setupTestData();
 
       service = PrintCenterService();
       controller = PrintCenterController(service);
@@ -85,13 +83,12 @@ void main() {
   });
 
   group('Database Flag Persistence Tests', () {
-    late AppDatabase database;
     late PrintCenterService service;
     late DatabaseInterface db;
 
     setUp(() async {
       // Mode handled by flutter_test_config.dart
-      database = await HardcodedTestSetup.setupTestData();
+      await HardcodedTestSetup.setupTestData();
       service = PrintCenterService();
       db = DatabaseWrapper.getDatabase(); // Use the interface
     });
