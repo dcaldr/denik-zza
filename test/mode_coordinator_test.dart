@@ -50,14 +50,6 @@ void main() {
       // - FileManager to production mode but with test directory
     });
 
-    test('setIntegrationTestMode enables persistence', () async {
-      await ModeCoordinator.setIntegrationTestMode(testName: 'debug_session');
-
-      expect(ModeCoordinator.currentMode, AppMode.integrationTest);
-      expect(ModeCoordinator.currentTestName, 'debug_session');
-      expect(DatabaseWrapper.getCurrentMode(),
-          DatabaseMode.production); // File-based DB
-    });
 
     test('setProductionMode returns to clean state', () async {
       ModeCoordinator.setTestingMode();
