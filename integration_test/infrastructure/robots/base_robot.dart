@@ -86,6 +86,10 @@ class BaseRobot {
     final stopwatch = Stopwatch()..start();
     final finder = findKey(key);
 
+    // Check immediately before pumping (avoids wasting one poll cycle
+    // when widget is already present).
+    if (finder.evaluate().isNotEmpty) return true;
+
     while (stopwatch.elapsed < timeout) {
       await pump(pollInterval);
       if (finder.evaluate().isNotEmpty) {
@@ -115,6 +119,8 @@ class BaseRobot {
     final stopwatch = Stopwatch()..start();
     final finder = findText(text);
 
+    if (finder.evaluate().isNotEmpty) return true;
+
     while (stopwatch.elapsed < timeout) {
       await pump(pollInterval);
       if (finder.evaluate().isNotEmpty) {
@@ -135,6 +141,8 @@ class BaseRobot {
   }) async {
     final stopwatch = Stopwatch()..start();
     final finder = find.text(text);
+
+    if (finder.evaluate().isNotEmpty) return true;
 
     while (stopwatch.elapsed < timeout) {
       await pump(pollInterval);

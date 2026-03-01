@@ -18,17 +18,14 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('Focused Intake Form Tests', () {
-    /// Helper to wait for loading to complete
+    /// Helper to wait for loading to complete (event-based).
     Future<void> waitForLoading(WidgetTester tester) async {
-      await tester.pump(const Duration(milliseconds: 500));
-      final loadingKey = find.byKey(const Key('IntakeForm_loading'));
-      for (int i = 0; i < 50; i++) {
-        await tester.pump(const Duration(milliseconds: 100));
-        if (loadingKey.evaluate().isEmpty) {
-          break;
-        }
+      final searchField = find.byKey(const Key('IntakeForm_personSearch_input'));
+      for (int i = 0; i < 100; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+        if (searchField.evaluate().isNotEmpty) return;
       }
-      await tester.pump(const Duration(milliseconds: 500));
+      throw StateError('IntakeForm search field not found after loading');
     }
 
     // ========== BASIC FUNCTIONALITY ==========
@@ -48,7 +45,6 @@ void main() {
 
       // Save and mark as arrived
       await intake.tapSaveAndArrived();
-      await tester.pump(const Duration(milliseconds: 500));
 
       // Verify form reset
       await intake.waitForKey('IntakeForm_saveAndArrived_button');
@@ -65,7 +61,6 @@ void main() {
 
       // Save only (not arrived)
       await intake.tapSave();
-      await tester.pump(const Duration(milliseconds: 500));
 
       await intake.waitForKey('IntakeForm_save_button');
     });
@@ -81,7 +76,6 @@ void main() {
 
       // Cancel
       await intake.tapCancel();
-      await tester.pump(const Duration(milliseconds: 500));
 
       // Form should be reset
       await intake.waitForKey('IntakeForm_saveAndArrived_button');
@@ -155,13 +149,11 @@ void main() {
       await intake.selectParticipant('Jaroslav Hašek');
       await intake.waitForText('Jaroslav');
       await intake.tapSaveAndArrived();
-      await tester.pump(const Duration(milliseconds: 500));
 
       // Process second
       await intake.selectParticipant('Tomáš Baťa');
       await intake.waitForText('Tomáš');
       await intake.tapSaveAndArrived();
-      await tester.pump(const Duration(milliseconds: 500));
 
       // Verify still functional
       await intake.waitForKey('IntakeForm_saveAndArrived_button');
@@ -180,7 +172,8 @@ void main() {
       // Use Ema Destinnová for this test (unique, not used elsewhere)
       await intake.selectParticipant('Ema Destinnová');
       await intake.tapSaveAndArrived();
-      await tester.pump(const Duration(milliseconds: 500));
+      // Wait for form reset (confirms save completed) before DB verification
+      await intake.waitForKey('IntakeForm_saveAndArrived_button');
 
       // Verify database updated
       final participants = await db.getParticipantsByCurrentEvent();
@@ -206,11 +199,11 @@ void main() {
       
       // Modify note
       await intake.modifyNote(testNote);
-      await tester.pump(const Duration(milliseconds: 500));
 
       // Save
       await intake.tapSaveAndArrived();
-      await tester.pump(const Duration(milliseconds: 500));
+      // Wait for form reset (confirms save completed) before DB verification
+      await intake.waitForKey('IntakeForm_saveAndArrived_button');
 
       // Verify note persisted
       final participants = await db.getParticipantsByCurrentEvent();
@@ -252,8 +245,8 @@ void main() {
       await tester.tap(searchField);
       await tester.pump();
       
-      // Type nothing, just tap
-      await tester.pump(const Duration(milliseconds: 500));
+      // Type nothing, just tap — wait long enough to confirm nothing appears
+      await tester.pump(const Duration(milliseconds: 200));
       
       // No dropdown suggestions should appear (only input field)
       // Specific participant names should not be visible as dropdown items
@@ -270,7 +263,7 @@ void main() {
       await tester.pump();
       await tester.enterText(searchField, 'XYZNOTEXIST');
       
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(const Duration(milliseconds: 200));
       
       // No participant names should match
       expect(find.text('Václav Havel'), findsNothing);
@@ -289,7 +282,6 @@ void main() {
       await intake.selectParticipant('Václav Havel');
       await intake.waitForText('Václav');
       await intake.tapSaveAndArrived();
-      await tester.pump(const Duration(milliseconds: 500));
 
       // After save, first participant's name should NOT be visible in form
       // (autocomplete may still show it in dropdown, but form fields should be empty)
@@ -311,7 +303,6 @@ void main() {
       
       // Save
       await intake.tapSaveAndArrived();
-      await tester.pump(const Duration(milliseconds: 500));
 
       // Select second participant
       await intake.selectParticipant('Franz Kafka');
@@ -336,7 +327,6 @@ void main() {
       
       // Cancel and select different
       await intake.tapCancel();
-      await tester.pump(const Duration(milliseconds: 500));
 
       await intake.selectParticipant('Milan Kundera');
       await intake.waitForText('Milan');
@@ -363,11 +353,11 @@ void main() {
       // Select and modify
       await intake.selectParticipant('Jaroslav Hašek');
       await intake.modifyNote('THIS SHOULD NOT BE SAVED');
-      await tester.pump(const Duration(milliseconds: 500));
 
       // Cancel instead of save
       await intake.tapCancel();
-      await tester.pump(const Duration(milliseconds: 500));
+      // Wait for form reset before DB verification
+      await intake.waitForKey('IntakeForm_saveAndArrived_button');
 
       // Verify database unchanged
       final afterParticipants = await db.getParticipantsByCurrentEvent();
@@ -388,9 +378,7 @@ void main() {
       // Select, modify, cancel
       await intake.selectParticipant('Tomáš Baťa');
       await intake.modifyNote('Modified note that should be discarded');
-      await tester.pump(const Duration(milliseconds: 500));
       await intake.tapCancel();
-      await tester.pump(const Duration(milliseconds: 500));
 
       // Re-select same participant
       await intake.selectParticipant('Tomáš Baťa');
@@ -408,19 +396,10 @@ void main() {
 
       // Rapidly select multiple participants
       await intake.selectParticipant('Václav Havel');
-      await tester.pump(const Duration(milliseconds: 100));
-      
       await intake.tapCancel();
-      await tester.pump(const Duration(milliseconds: 100));
-      
       await intake.selectParticipant('Karel Čapek');
-      await tester.pump(const Duration(milliseconds: 100));
-      
       await intake.tapCancel();
-      await tester.pump(const Duration(milliseconds: 100));
-      
       await intake.selectParticipant('Ema Destinnová');
-      await tester.pump(const Duration(milliseconds: 500));
 
       // Final state should be Ema, not previous selections
       await intake.waitForText('Ema');

@@ -30,18 +30,27 @@ class IntakeRobot extends BaseRobot {
   }
 
   /// Taps "uložit a přišel" button (save and mark as arrived).
+  ///
+  /// Uses settle:false because save triggers a CenterToast animation
+  /// (~1.2s) that blocks pumpAndSettle unnecessarily. Callers must
+  /// follow with waitForKey() for synchronization.
   Future<void> tapSaveAndArrived() async {
-    await tap(saveAndArrivedButton);
+    await tap(saveAndArrivedButton, settle: false);
   }
 
   /// Taps "uložit" button (save only).
+  ///
+  /// Uses settle:false — same rationale as [tapSaveAndArrived].
   Future<void> tapSave() async {
-    await tap(saveButton);
+    await tap(saveButton, settle: false);
   }
 
   /// Taps "neukládat" button (cancel).
+  ///
+  /// Uses settle:false — cancel resets the form which callers
+  /// synchronize via waitForKey.
   Future<void> tapCancel() async {
-    await tap(cancelButton);
+    await tap(cancelButton, settle: false);
   }
 
   // Person search - find by hint text 'Vyhledat osobu'
@@ -53,89 +62,47 @@ class IntakeRobot extends BaseRobot {
   /// then taps the full name suggestion.
   /// [fullName] should be in format "Jméno Příjmení" (e.g., "Karel Čapek")
   Future<void> selectParticipant(String fullName) async {
-    // CRITICAL: First allow async controller.initialize() to START
-    // The loading spinner won't appear until the first setState runs after async work begins
-    await pump(const Duration(milliseconds: 100));  // Allow initState async to start
-    
-    // Wait for loading to complete (spinner disappears)
-    // Use pump() not pumpAndSettle() because CircularProgressIndicator is infinite animation
-    // Wait for loading to complete (spinner disappears)
-    // Use pump() not pumpAndSettle() because CircularProgressIndicator is infinite animation
-    final loadingKey = findKey('IntakeForm_loading');
-    final searchInputFinder = personSearchInput;
-
-    bool spinnerWasShown = false;
-    for (int i = 0; i < 50; i++) {
-      await pump(const Duration(milliseconds: 100));
-      final hasSpinner = loadingKey.evaluate().isNotEmpty;
-      if (hasSpinner) {
-        spinnerWasShown = true;
-      }
-      
-      // Stop waiting if spinner effectively finished (was shown then hidden)
-      if (spinnerWasShown && !hasSpinner) {
-        break;
-      }
-
-      // Stop waiting if search input is already visible and spinner is not (fast init case)
-      if (!hasSpinner && searchInputFinder.evaluate().isNotEmpty) {
-        break;
-      }
-
-      // If spinner never appeared after reasonable time (1s), assume data is ready
-      if (i > 10 && !spinnerWasShown) {
-        break;
-      }
+    // Wait for search field to be ready (spinner gone, field visible).
+    final searchReady = await waitForKey(
+      'IntakeForm_personSearch_input',
+      timeout: const Duration(seconds: 5),
+    );
+    if (!searchReady) {
+      throw StateError('IntakeRobot: Search field not found within timeout');
     }
-    await pumpAndSettle();
 
     // Extract first name + first char of surname for unique matching
-    // (avoids collision when multiple people share first name, e.g., "Jan Hus" vs "Jan Neruda")
     final parts = fullName.split(' ');
     final firstName = parts.first;
-    final searchQuery = parts.length > 1 
-        ? '$firstName ${parts[1][0]}'  // e.g., "Jan H" 
+    final searchQuery = parts.length > 1
+        ? '$firstName ${parts[1][0]}'  // e.g., "Jan H"
         : firstName;
-    
-    // Find and tap the search field (by hint text)
+
+    // Tap and type into the search field
     final searchField = personSearchInput;
-    if (searchField.evaluate().isEmpty) {
-      throw StateError('IntakeRobot: Search field not found');
-    }
-    
-    await tap(searchField);
-    await pump();
-    
-    // Type search query to trigger suggestions (more unique than just first name)
+    await tap(searchField, settle: false);
     await tester.enterText(searchField, searchQuery);
-    
-    // Wait for dropdown to appear with retries (increased for slow machines)
-    Finder suggestion = find.text(fullName);
-    int foundCount = 0;
-    for (int attempt = 0; attempt < 30; attempt++) {
-      await pump(const Duration(milliseconds: 100));
-      foundCount = suggestion.evaluate().length;
-      if (foundCount > 1) {
-        // Found at least 2 (input + dropdown), break
-        break;
-      }
-    }
-    
-    if (foundCount < 1) {
+
+    // Wait for dropdown suggestion — event-based, not fixed delay.
+    final dropdownFound = await waitForAnyText(
+      fullName,
+      timeout: const Duration(seconds: 3),
+      pollInterval: const Duration(milliseconds: 50),
+    );
+    if (!dropdownFound) {
       throw StateError('IntakeRobot: No dropdown suggestion found for "$fullName"');
     }
-    
-    // Tap the suggestion (use .last to get dropdown, not input)
-    await tester.tap(suggestion.last);
-    await pumpAndSettle();
-    
-    // Dismiss keyboard/dropdown by tapping elsewhere (the page title)
-    try {
-      await tester.tap(find.text('Intake Form (Improved)'));
-      await pumpAndSettle();
-    } catch (_) {
-      // Title might not exist, that's ok
-    }
+
+    // Tap the suggestion (use .last to get dropdown, not any input echo).
+    await tester.tap(find.text(fullName).last);
+
+    // Wait for form to populate with selected person's data (event-based).
+    final lastName = parts.length > 1 ? parts.last : firstName;
+    await waitForText(
+      lastName,
+      timeout: const Duration(seconds: 3),
+      pollInterval: const Duration(milliseconds: 50),
+    );
   }
 
   /// Modifies the note (poznámka) field.
