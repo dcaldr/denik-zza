@@ -423,7 +423,12 @@ void main() {
               case 1: // P2 Božena - Modify Note
                 await intake.modifyNote('Intake note: Arrived on time');
                 await intake.tapSaveAndArrived();
-                await intake.waitForKey('IntakeForm_saveAndArrived_button');
+                // Hard Gate: wait for persisted DB state, not static button key.
+                await dbHelpers.waitForArrivalStatusPersisted(
+                  jmeno: p.jmeno,
+                  prijmeni: p.prijmeni,
+                  expectedArrived: true,
+                );
                 await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: true);
                 await dbHelpers.verifyNote(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedNote: 'Intake note');
                 break;
@@ -433,28 +438,47 @@ void main() {
                   TestRestriction.omezeni('Kontrola slunečního krému provedena'),
                 );
                 await intake.tapSaveAndArrived();
-                await intake.waitForKey('IntakeForm_saveAndArrived_button');
+                // Hard Gate: Jan Hus path is slower (restriction update + save).
+                await dbHelpers.waitForArrivalStatusPersisted(
+                  jmeno: p.jmeno,
+                  prijmeni: p.prijmeni,
+                  expectedArrived: true,
+                );
                 await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: true);
                 break;
                 
               case 3: // P4 Tomáš - Save only (NOT marked arrived)
                 await intake.tapSave();
-                await intake.waitForKey('IntakeForm_saveAndArrived_button');
+                // Hard Gate: save-only must persist as not-arrived.
+                await dbHelpers.waitForArrivalStatusPersisted(
+                  jmeno: p.jmeno,
+                  prijmeni: p.prijmeni,
+                  expectedArrived: false,
+                );
                 await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: false);
                 break;
                 
               case 6: // P7 Milada - Cancel then retry
                 await intake.tapCancel();
-                await intake.waitForKey('IntakeForm_saveAndArrived_button');
                 await intake.selectParticipant('${p.jmeno} ${p.prijmeni}');
                 await intake.tapSaveAndArrived();
-                await intake.waitForKey('IntakeForm_saveAndArrived_button');
+                // Hard Gate: wait for persisted DB state after retry save.
+                await dbHelpers.waitForArrivalStatusPersisted(
+                  jmeno: p.jmeno,
+                  prijmeni: p.prijmeni,
+                  expectedArrived: true,
+                );
                 await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: true);
                 break;
                 
               default: // Basic flow
                 await intake.tapSaveAndArrived();
-                await intake.waitForKey('IntakeForm_saveAndArrived_button');
+                // Hard Gate: wait for persisted DB state, not static button key.
+                await dbHelpers.waitForArrivalStatusPersisted(
+                  jmeno: p.jmeno,
+                  prijmeni: p.prijmeni,
+                  expectedArrived: true,
+                );
                 await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: true);
             }
           });
@@ -476,7 +500,7 @@ void main() {
         });
 
         // Interleaved records across participants (simulate real arrival order)
-        final milada = jurskyParkParticipants[7];
+        final milada = jurskyParkParticipants[6]; // Index 6 = Milada Horáková
         final recordOrder = <int>[
           0, 7, 2, 4, 1, 9, 3, 12, 5, 10, 6, 8, 11, 13, 14,
         ];
@@ -606,7 +630,7 @@ void main() {
         await logger.step('Baseline Full Print for Milada', () async {
           await printCenter.tapPersonModeCard();
           await personMode.verifyPageShown();
-          await personMode.selectParticipant('Milada Horáková');
+          await personMode.selectParticipant('${milada.jmeno} ${milada.prijmeni}');
           await personMode.selectFullPrintMode();
           await personMode.tapPrintButton();
           await personMode.confirmPrintSuccess();
@@ -662,7 +686,7 @@ void main() {
           await dashboard.navigateToPrintCenter();
           await printCenter.tapPersonModeCard();
           await personMode.verifyPageShown();
-          await personMode.selectParticipant('Franz Kafka');
+          await personMode.selectParticipant('${kafka.jmeno} ${kafka.prijmeni}');
           await personMode.selectFullPrintMode();
           await personMode.tapPrintButton();
           await personMode.confirmPrintSuccess();
@@ -691,7 +715,7 @@ void main() {
         await logger.step('Append Print: Milada Horáková', () async {
           await printCenter.tapPersonModeCard();
           await personMode.verifyPageShown();
-          await personMode.selectParticipant('Milada Horáková');
+          await personMode.selectParticipant('${milada.jmeno} ${milada.prijmeni}');
           await personMode.selectAppendPrintMode();
           await personMode.tapPrintButton();
 

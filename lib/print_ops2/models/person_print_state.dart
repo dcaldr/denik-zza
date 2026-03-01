@@ -1,6 +1,5 @@
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
-import 'package:collection/collection.dart'; // For list equality
 
 /// Holds the print state for a single participant and their records.
 ///
@@ -38,11 +37,10 @@ class PersonPrintState {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    final listEquals = const DeepCollectionEquality().equals;
 
     return other is PersonPrintState &&
         other.person == person &&
-        listEquals(other.records, records) &&
+        _listEquals(other.records, records) &&
         other.appendPossible == appendPossible &&
         other.hasSequenceIssue == hasSequenceIssue;
   }
@@ -50,7 +48,25 @@ class PersonPrintState {
   @override
   int get hashCode =>
       person.hashCode ^
-      const DeepCollectionEquality().hash(records) ^
+      _listHash(records) ^
       appendPossible.hashCode ^
       hasSequenceIssue.hashCode;
+
+  /// Helper to compare lists of records.
+  static bool _listEquals(List<MemoryZaznam> a, List<MemoryZaznam> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  /// Helper to hash list of records.
+  static int _listHash(List<MemoryZaznam> records) {
+    int hash = 0;
+    for (final record in records) {
+      hash = hash ^ record.hashCode;
+    }
+    return hash;
+  }
 }

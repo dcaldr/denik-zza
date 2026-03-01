@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:denik_zza/utils/app_logger.dart';
 import 'base_robot.dart';
 
 /// Robot for the person print flow (select person -> mode -> preview -> confirm).
@@ -103,7 +102,6 @@ class PersonModeFlowRobot extends BaseRobot {
       
       
       if (ticks > 150) { // 15 seconds
-        AppLogger.l.e('Timeout! Print button remained disabled.');
         debugDumpApp();
         throw TestFailure("Print button remained disabled. PDF generation likely failed or took too long.");
       }

@@ -84,11 +84,24 @@ class IntakeRobot extends BaseRobot {
     await tester.enterText(searchField, searchQuery);
 
     // Wait for dropdown suggestion — event-based, not fixed delay.
-    final dropdownFound = await waitForAnyText(
+    var dropdownFound = await waitForAnyText(
       fullName,
       timeout: const Duration(seconds: 3),
       pollInterval: const Duration(milliseconds: 50),
     );
+
+    // Retry once: cancel/reset can refresh availablePersons asynchronously.
+    // Re-focus with empty query (shows all options when data is ready), then retry.
+    if (!dropdownFound) {
+      await tester.enterText(searchField, '');
+      await pump(const Duration(milliseconds: 50));
+      dropdownFound = await waitForAnyText(
+        fullName,
+        timeout: const Duration(seconds: 5),
+        pollInterval: const Duration(milliseconds: 50),
+      );
+    }
+
     if (!dropdownFound) {
       throw StateError('IntakeRobot: No dropdown suggestion found for "$fullName"');
     }

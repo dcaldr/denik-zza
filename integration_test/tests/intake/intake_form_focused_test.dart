@@ -13,6 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
 import '../../infrastructure/robots/intake_robot.dart';
+import '../../infrastructure/helpers/db_verification_helpers.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -62,7 +63,7 @@ void main() {
       // Save only (not arrived)
       await intake.tapSave();
 
-      await intake.waitForKey('IntakeForm_save_button');
+      await intake.waitForKey('IntakeBottomRow_save_button');
     });
 
     testWidgets('Cancel discards selection', (tester) async {
@@ -168,12 +169,17 @@ void main() {
       await waitForLoading(tester);
 
       final db = DatabaseWrapper.getDatabase();
+      final dbHelpers = DbVerificationHelpers(db);
 
       // Use Ema Destinnová for this test (unique, not used elsewhere)
       await intake.selectParticipant('Ema Destinnová');
       await intake.tapSaveAndArrived();
-      // Wait for form reset (confirms save completed) before DB verification
-      await intake.waitForKey('IntakeForm_saveAndArrived_button');
+      // Hard Gate: wait for persisted DB state, not static button key.
+      await dbHelpers.waitForArrivalStatusPersisted(
+        jmeno: 'Ema',
+        prijmeni: 'Destinnová',
+        expectedArrived: true,
+      );
 
       // Verify database updated
       final participants = await db.getParticipantsByCurrentEvent();
@@ -192,6 +198,7 @@ void main() {
       await waitForLoading(tester);
 
       final db = DatabaseWrapper.getDatabase();
+      final dbHelpers = DbVerificationHelpers(db);
       const testNote = 'Unique test note 98765';
 
       // Use Franz Kafka for this test
@@ -202,8 +209,12 @@ void main() {
 
       // Save
       await intake.tapSaveAndArrived();
-      // Wait for form reset (confirms save completed) before DB verification
-      await intake.waitForKey('IntakeForm_saveAndArrived_button');
+      // Hard Gate: wait for persisted DB state before note verification.
+      await dbHelpers.waitForArrivalStatusPersisted(
+        jmeno: 'Franz',
+        prijmeni: 'Kafka',
+        expectedArrived: true,
+      );
 
       // Verify note persisted
       final participants = await db.getParticipantsByCurrentEvent();
@@ -232,7 +243,7 @@ void main() {
       
       // Check form is visible
       await intake.waitForKey('IntakeForm_saveAndArrived_button');
-      await intake.waitForKey('IntakeForm_save_button');
+      await intake.waitForKey('IntakeBottomRow_save_button');
       await intake.waitForKey('IntakeForm_cancel_button');
     });
 

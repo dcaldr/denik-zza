@@ -394,6 +394,45 @@ class DbVerificationHelpers {
             'Participant $jmeno $prijmeni arrival status mismatch: expected $expectedArrived, got ${p.prisel}');
   }
 
+  /// Waits until participant arrival status is persisted in DB.
+  ///
+  /// Hard Gate for intake save synchronization. This avoids waiting on static
+  /// UI keys (buttons that exist before and after save) and instead waits for
+  /// the real business outcome in persistence.
+  Future<void> waitForArrivalStatusPersisted({
+    required String jmeno,
+    required String prijmeni,
+    required bool expectedArrived,
+    Duration timeout = const Duration(seconds: 10),
+    Duration pollInterval = const Duration(milliseconds: 100),
+  }) async {
+    final stopwatch = Stopwatch()..start();
+
+    while (stopwatch.elapsed < timeout) {
+      final participants = await db.getParticipantsByCurrentEvent();
+      final found = participants.where(
+        (p) => p.jmeno == jmeno && p.prijmeni == prijmeni,
+      );
+
+      if (found.length == 1 && found.first.prisel == expectedArrived) {
+        return;
+      }
+
+      await Future<void>.delayed(pollInterval);
+    }
+
+    final participants = await db.getParticipantsByCurrentEvent();
+    final found = participants.where(
+      (p) => p.jmeno == jmeno && p.prijmeni == prijmeni,
+    );
+
+    final actual = found.length == 1 ? found.first.prisel : null;
+    fail(
+      'Timeout waiting for arrival status persistence for $jmeno $prijmeni. '
+      'Expected=$expectedArrived, actual=$actual',
+    );
+  }
+
   /// Verifies count of arrived participants.
   ///
   /// Used after intake phase to verify correct number arrived.

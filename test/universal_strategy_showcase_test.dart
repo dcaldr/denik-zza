@@ -239,7 +239,7 @@ void main() {
                 DatabaseTestHelper.createTestDatabase(TestDatabaseType.file);
             databases.add(db);
             await Future.delayed(
-                const Duration(milliseconds: 10)); // Ensure unique timestamps
+                const Duration(milliseconds: 50)); // Filesystem timestamp safety (safe minimum)
           }
 
           // Verify they are distinct

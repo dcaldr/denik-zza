@@ -86,8 +86,12 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
   }
 
   Widget _buildStage(BuildContext context, PrintCenterController ctrl) {
-    if (ctrl.selected == null) return _buildSelectPerson(context, ctrl);
-    if (!ctrl.simulatedPrinted) return _buildModeAndPreview(context, ctrl);
+    if (ctrl.selected == null) {
+      return _buildSelectPerson(context, ctrl);
+    }
+    if (!ctrl.simulatedPrinted) {
+      return _buildModeAndPreview(context, ctrl);
+    }
     return _buildPostConfirmation(context, ctrl);
   }
 
@@ -308,8 +312,7 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
                   key: const Key('PersonMode_backToCenter'),
                   icon: const Icon(Icons.home),
                   label: const Text('Zpět na centrum'),
-                  onPressed: () =>
-                      Navigator.of(context).popUntil((r) => r.isFirst),
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
                 OutlinedButton.icon(
                   key: const Key('PersonMode_newPrint'),

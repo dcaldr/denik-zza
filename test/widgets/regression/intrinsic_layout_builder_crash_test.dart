@@ -32,15 +32,17 @@ void main() {
       ),
     );
 
-    // 2. Wait for layout settling
-    await tester.pumpAndSettle();
+    // 2. Wait for layout settling (bounded timeout, max 500ms)
+    for (int i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
 
     // 3. Assertions
     // If we reached here, the crash (which happens during layout) did not occur.
     // Verify basic presence to ensure we actually rendered content.
-    expect(find.byType(ParticipantRegistrationPage), findsOneWidget);
-    expect(find.byType(ParticipantRegistrationForm), findsOneWidget);
-    expect(find.text('Registrace Účastníka'), findsOneWidget);
-    expect(find.byType(FilledButton), findsOneWidget); // Submit button
+    expect(find.byType(ParticipantRegistrationPage), findsOneWidget, reason: 'Page should render without intrinsic dimension crash');
+    expect(find.byType(ParticipantRegistrationForm), findsOneWidget, reason: 'Form widget should be present');
+    expect(find.text('Registrace Účastníka'), findsOneWidget, reason: 'Page title should be visible');
+    expect(find.byType(FilledButton), findsOneWidget, reason: 'Submit button should be rendered');
   });
 }

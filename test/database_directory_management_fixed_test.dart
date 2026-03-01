@@ -86,8 +86,8 @@ void main() {
           if (path != null) {
             createdPaths.add(path);
           }
-          // Small delay to reduce timestamp collision chances on some filesystems
-          await Future.delayed(const Duration(milliseconds: 10));
+          // Small delay to ensure filesystem timestamp uniqueness (min 50ms for safety)
+          await Future.delayed(const Duration(milliseconds: 50));
         }
 
         // Close all databases first
@@ -187,7 +187,7 @@ void main() {
         for (int i = 0; i < 2; i++) {
           databases.add(
               DatabaseTestHelper.createTestDatabase(TestDatabaseType.file));
-          await Future.delayed(const Duration(milliseconds: 10));
+          await Future.delayed(const Duration(milliseconds: 50));
         }
 
         // Use the databases to ensure they're created
