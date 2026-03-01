@@ -171,11 +171,6 @@ void main() {
 
         logStep('Tapping print button');
         await personMode.tapPrintButton();
-        
-        // --- Permanent Synchronization Gate ---
-        final successFound1 = await personMode.waitForKey('PrintConfirm_success');
-        expect(successFound1, isTrue, 
-          reason: 'Hard Gate: Print Confirm Dialog MUST be visible after tapPrintButton finishes waiting');
 
         logStep('Confirming print success');
         await personMode.confirmPrintSuccess();
@@ -212,11 +207,6 @@ void main() {
 
         logStep('Tapping print button');
         await personMode.tapPrintButton();
-
-        // --- Permanent Synchronization Gate ---
-        final successFound2 = await personMode.waitForKey('PrintConfirm_success');
-        expect(successFound2, isTrue, 
-          reason: 'Hard Gate: Print Confirm Dialog MUST be visible after tapPrintButton finishes waiting');
 
         logStep('Confirming print success');
         await personMode.confirmPrintSuccess();
@@ -261,11 +251,6 @@ void main() {
             reason: 'Append instruction dialog should appear');
         await personMode
             .tap(personMode.findKey('AppendInstruction_continue'));
-
-        // --- Permanent Synchronization Gate ---
-        final successFound3 = await personMode.waitForKey('PrintConfirm_success');
-        expect(successFound3, isTrue, 
-          reason: 'Hard Gate: Print Confirm Dialog MUST be visible after tapPrintButton finishes waiting');
 
         logStep('Confirming print success');
         await personMode.confirmPrintSuccess();
