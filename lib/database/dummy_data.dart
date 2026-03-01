@@ -1,6 +1,7 @@
 // ignore_for_file: prefer_expression_function_bodies
 // ignore_for_file: lines_longer_than_80_chars
 //@formatter:off
+import 'package:denik_zza/utils/app_logger.dart';
 import 'in_memory_structures_tmp/memory_osoba.dart';
 import 'in_memory_structures_tmp/memory_zaznam.dart';
 /// Class holding dummy data for testing purposes.
@@ -88,7 +89,7 @@ List<MemoryOsoba> mergeAndRemoveDuplicates([List<List<MemoryOsoba>> lists = cons
     lists = [osobnostiGpt, osobnostiBard];
   }
 
-  print('Number of lists: ${lists.length}');
+  AppLogger.l.d('Number of lists: ${lists.length}');
 
   var allOsobnosti = <MemoryOsoba>[];
   for (var list in lists) {
@@ -96,7 +97,7 @@ List<MemoryOsoba> mergeAndRemoveDuplicates([List<List<MemoryOsoba>> lists = cons
   }
 
   var uniqueOsobnosti = <MemoryOsoba>{};
-  print ('Length of allOsobnosti: ${allOsobnosti.length}');
+  AppLogger.l.d('Length of allOsobnosti: ${allOsobnosti.length}');
 
   for (var osoba in allOsobnosti) {
     var duplicate = uniqueOsobnosti.firstWhere(
@@ -109,7 +110,7 @@ List<MemoryOsoba> mergeAndRemoveDuplicates([List<List<MemoryOsoba>> lists = cons
     }
   }
 
-  print('Length of resulting list: ${uniqueOsobnosti.length}');
+  AppLogger.l.d('Length of resulting list: ${uniqueOsobnosti.length}');
 
   return uniqueOsobnosti.toList();
 }
@@ -119,7 +120,7 @@ List<MemoryOsoba> mergeAndRemoveDuplicates([List<List<MemoryOsoba>> lists = cons
     for (var osoba in list) {
       var fullName = '${osoba.jmeno} ${osoba.prijmeni}';
       if (!uniqueNames.add(fullName)) {
-        print('Duplicate detected: $fullName');
+        AppLogger.l.d('Duplicate detected: $fullName');
       }
     }
   }

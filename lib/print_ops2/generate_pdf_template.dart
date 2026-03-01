@@ -93,7 +93,7 @@ class GeneratePdfTemplate {
     List<MemoryLek>? lekList,
     List<MemoryZaznam>? zaznamList,
   }) async {
-    print('=== DEBUG PDF GEN: getPdfPages START for ${osoba.id} ===');
+    AppLogger.l.d('PDF GEN: getPdfPages START for ${osoba.id}');
     // Use new abstractions - header includes restrictions for person
     final headerSection = PersonPdfHeaderSection(osoba,
         omezeniList: omezeniList, lekList: lekList);
@@ -101,7 +101,7 @@ class GeneratePdfTemplate {
 
     // Convert MemoryZaznam to PersonPdfRecordRow
     final recordRows = zaznamList?.map((z) => PersonPdfRecordRow(z)).toList();
-    print('=== DEBUG PDF GEN: getPdfPages mapped ${recordRows?.length ?? 0} rows ===');
+    AppLogger.l.d('PDF GEN: getPdfPages mapped ${recordRows?.length ?? 0} rows');
 
     return [
       pw.MultiPage(
@@ -144,7 +144,7 @@ class GeneratePdfTemplate {
     List<MemoryLek>? lekList,
     List<MemoryZaznam>? zaznamList,
   }) async {
-    print('=== DEBUG PDF GEN: analyzeAndBuildAppend START for ${osoba.id} ===');
+    AppLogger.l.d('PDF GEN: analyzeAndBuildAppend START for ${osoba.id}');
     if (zaznamList == null || zaznamList.isEmpty) {
       _logger.w('analyzeAndBuildAppend called with empty records list');
       // Generate as first print
@@ -210,7 +210,7 @@ class GeneratePdfTemplate {
       finalPages: 0, // Will be updated below
     );
 
-    print('=== DEBUG PDF GEN: analyzeAndBuildAppend generating BASE PDF... ===');
+    AppLogger.l.d('PDF GEN: analyzeAndBuildAppend generating BASE PDF...');
     final finalResult = await _generateBasePdf(
       theme: theme,
       osoba: osoba,
@@ -229,7 +229,7 @@ class GeneratePdfTemplate {
     );
 
     _logger.d('Final analysis: $finalAnalysis');
-    print('=== DEBUG PDF GEN: analyzeAndBuildAppend DONE. Yielding Analysis. ===');
+    AppLogger.l.d('PDF GEN: analyzeAndBuildAppend DONE. Yielding Analysis.');
 
     return AppendBuildResult(
       analysis: finalAnalysis,

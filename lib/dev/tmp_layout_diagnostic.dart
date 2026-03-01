@@ -1,3 +1,4 @@
+// ignore_for_file: avoid_print
 // tmp_layout_diagnostic.dart
 // Diagnostic script to trace constraint flow through the entire widget tree
 // Run with: flutter run -t lib/dev/tmp_layout_diagnostic.dart

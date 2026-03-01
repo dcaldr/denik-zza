@@ -8,6 +8,7 @@ import 'package:denik_zza/shared/czech_test_data.dart';
 import 'package:drift/drift.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 
 /// Development environment configuration and test data generator.
 class DevEnvironment {
@@ -85,7 +86,7 @@ class DevEnvironment {
 
       return database;
     } catch (e) {
-      print('❌ Error setting up dev environment: $e');
+      AppLogger.l.e('❌ Error setting up dev environment: $e');
       rethrow;
     }
   }

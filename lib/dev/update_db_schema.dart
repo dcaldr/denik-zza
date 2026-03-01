@@ -1,3 +1,4 @@
+// ignore_for_file: avoid_print
 // One-time script to add printerPage1OnTop column to existing databases
 // Run: flutter run -t lib/dev/update_db_schema.dart -d windows
 
