@@ -44,19 +44,14 @@ Future<void> pumpUntilFound(
   final end = DateTime.now().add(timeout);
   bool found = finder.evaluate().isNotEmpty;
 
-  int iter = 0;
   while (!found && DateTime.now().isBefore(end)) {
-    iter++;
-    if (iter % 10 == 0) {
-      print('[VERBOSE] pumpUntilFound (${finder.toString()}): iter $iter, fake_time: ${DateTime.now()} (waiting for isolate stream)');
-    }
     // Drift Streams cross isolate/asynchronous boundaries. We MUST yield to the real 
     // Dart event loop to prevent FakeAsync from starving the database read operations!
     await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 10)));
     await tester.pump(const Duration(milliseconds: 50));
     found = finder.evaluate().isNotEmpty;
   }
-  print('[VERBOSE] pumpUntilFound finished. found: $found, iter: $iter');
+
 
   if (!found) {
     throw TestFailure('Timed out waiting for ${finder.toString()} to appear');

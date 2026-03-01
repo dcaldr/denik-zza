@@ -43,14 +43,11 @@ void main() {
     // Wait robustly for the Drift Database stream to emit participants and UI to rebuild
     await pumpUntilFound(tester, find.text('Antonín Dvořák'), timeout: const Duration(seconds: 15));
     
-    print('--- Stage 1 Initial ---');
-    print('Participants loaded: ${controller.participants.length}');
 
     // Karel is #7 on the alphabetical list, placing him outside the default 
     // 800x600 test screen bounds. We must explicitly drag the list up.
     final karelFinder = find.text('Karel Čapek');
     
-    print('[VERBOSE] Dragging to find Karel Čapek...');
     await dragUntilVisibleRobustly(
       tester,
       finder: karelFinder,
@@ -61,7 +58,6 @@ void main() {
     expect(karelFinder, findsWidgets, reason: 'Karel Čapek should be visible after scrolling');
 
     // 2. Select first person (Karel)
-    print('\nSelecting Karel...');
     await tester.tap(karelFinder.first);
     
     // Give it a moment to render the details (PdfPreview spins a CircularProgressIndicator)
@@ -69,7 +65,6 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     
     // 3. Confirm simulation (Stage 3)
-    print('\nSimulating print success...');
     
     // Wrap the SQLite database write in runAsync to break out of the FakeAsync zone. 
     // This allows the real Dart event loop to process microtasks and gracefully settle 
@@ -83,39 +78,31 @@ void main() {
 
     if (!controller.simulatedPrinted) fail('Simulated print did not occur');
 
-    print('SimulatedPrinted: ${controller.simulatedPrinted}');
     
     // 4. Reset flow (Nový tisk)
-    print('\nResetting flow (Nový tisk)...');
     controller.resetFlow();
     
     // Wait robustly for the state machine to reconstruct the UI and show the fresh list
     await pumpUntilFound(tester, find.text('Karel Čapek'), timeout: const Duration(seconds: 15));
 
-    print('\n--- Stage 1 After Reset ---');
-    print('Participants loaded: ${controller.participants.length}');
 
     // 5. Try to find Antonín (who should be #1 on the fresh list, so we might need to scroll UP)
     final nextPersonFinder = find.text('Antonín Dvořák');
     
-    print('[VERBOSE] Dragging to find Antonín Dvořák...');
     await dragUntilVisibleRobustly(
       tester,
       finder: nextPersonFinder,
       dragOffset: const Offset(0, 300),
     );
 
-    print('\nFinder found Antonín: ${nextPersonFinder.evaluate().length} widgets');
 
     if (nextPersonFinder.evaluate().isEmpty) {
       fail('Antonín not found - State machine failed to reconstruct UI selection correctly');
     } else {
-      print('\n[SUCCESS] Antonín found! Tapping...');
       await tester.tap(nextPersonFinder.first);
       
       // Explicit pump to bypass PdfPreview spinner hang
       await tester.pump(const Duration(seconds: 1));
-      print('Selected: ${controller.selected?.jmeno} ${controller.selected?.prijmeni}');
     }
   });
 }
