@@ -121,7 +121,19 @@ class PersonModeFlowRobot extends BaseRobot {
     await tap(findKey('PersonMode_newPrint'));
   }
 
-  Future<void> confirmPrintSuccess() async {
+  Future<void> confirmPrintSuccess({
+    Duration timeout = const Duration(seconds: 10),
+  }) async {
+    final successFound = await waitForKey(
+      'PrintConfirm_success',
+      timeout: timeout,
+    );
+    if (!successFound) {
+      debugDumpApp();
+      throw TestFailure(
+        'Print confirmation dialog did not appear in time (key: PrintConfirm_success).',
+      );
+    }
     await tap(findKey('PrintConfirm_success'));
   }
 
