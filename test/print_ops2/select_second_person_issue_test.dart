@@ -50,18 +50,12 @@ void main() {
     // 800x600 test screen bounds. We must explicitly drag the list up.
     final karelFinder = find.text('Karel Čapek');
     
-    // Custom robust scroll loop targeting the actual ListView, as there may be
-    // multiple Scrollables in the scaffold.
-    print('[VERBOSE] Starting drag loop to find Karel Čapek...');
-    for (int i = 0; i < 10; i++) {
-      final found = karelFinder.evaluate().isNotEmpty;
-      print('[VERBOSE] Drag loop $i to find Karel. found=$found');
-      if (found) break;
-      // Drag strongly upwards (scroll down) on the generic Scrollable
-      await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-    print('[VERBOSE] Drag loop for Karel finished.');
+    print('[VERBOSE] Dragging to find Karel Čapek...');
+    await dragUntilVisibleRobustly(
+      tester,
+      finder: karelFinder,
+      dragOffset: const Offset(0, -300),
+    );
 
     // Verify Karel Čapek is there after scrolling
     expect(karelFinder, findsWidgets, reason: 'Karel Čapek should be visible after scrolling');
@@ -104,17 +98,12 @@ void main() {
     // 5. Try to find Antonín (who should be #1 on the fresh list, so we might need to scroll UP)
     final nextPersonFinder = find.text('Antonín Dvořák');
     
-    // Custom robust scroll loop UPWARDS (scroll list down to top)
-    print('[VERBOSE] Starting drag loop to find Antonín Dvořák...');
-    for (int i = 0; i < 10; i++) {
-      final found = nextPersonFinder.evaluate().isNotEmpty;
-      print('[VERBOSE] Drag loop $i to find Antonín. found=$found');
-      if (found) break;
-      // Drag strongly downwards (scroll up) on the generic Scrollable
-      await tester.drag(find.byType(Scrollable).first, const Offset(0, 300));
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-    print('[VERBOSE] Drag loop for Antonín finished.');
+    print('[VERBOSE] Dragging to find Antonín Dvořák...');
+    await dragUntilVisibleRobustly(
+      tester,
+      finder: nextPersonFinder,
+      dragOffset: const Offset(0, 300),
+    );
 
     print('\nFinder found Antonín: ${nextPersonFinder.evaluate().length} widgets');
 

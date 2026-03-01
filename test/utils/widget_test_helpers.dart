@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Pumps frames until the widget defined by [finder] is no longer present in the widget tree.
@@ -103,4 +104,33 @@ Future<void> applyPdfPreviewSurfaceWorkaround(WidgetTester tester) async {
   // 1280x720 is the standard Flutter desktop `run` default. We define it once 
   // here to prevent scattering magic numbers across the codebase.
   await tester.binding.setSurfaceSize(const Size(1280, 720));
+}
+
+/// Systematically drags a [Scrollable] until the [finder] is visible on screen.
+///
+/// Replaces the brittle `scrollUntilVisible` which fails on lazy-loaded lists
+/// or complex sliver-based layouts.
+Future<void> dragUntilVisibleRobustly(
+  WidgetTester tester, {
+  required Finder finder,
+  required Offset dragOffset,
+  int maxIterations = 10,
+  Duration pumpDuration = const Duration(milliseconds: 100),
+}) async {
+  for (int i = 0; i < maxIterations; i++) {
+    if (finder.evaluate().isNotEmpty) {
+      return;
+    }
+    // Try to find the first scrollable to drag. 
+    // Usually there is only one relevant scrollable in the main view.
+    final scrollable = find.byType(Scrollable).first;
+    if (scrollable.evaluate().isEmpty) {
+      throw TestFailure('No Scrollable found to drag');
+    }
+    await tester.drag(scrollable, dragOffset);
+    await tester.pump(pumpDuration);
+  }
+  if (finder.evaluate().isEmpty) {
+    throw TestFailure('Failed to find ${finder.toString()} after $maxIterations drags.');
+  }
 }
