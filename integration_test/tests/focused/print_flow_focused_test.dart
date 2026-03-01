@@ -101,9 +101,6 @@ void main() {
       LiveTestWidgetsFlutterBindingFramePolicy.fullyLive;
 
   void logStep(String message) {
-    print('\n======================================================');
-    print('>>> TEST STEP: $message <<<');
-    print('======================================================\n');
     AppLogger.l.i('🧪 [Focused/PrintFlow] $message');
   }
 
@@ -126,7 +123,6 @@ void main() {
     tearDown(() async {
       await DatabaseWrapper.dispose();
       // Force all microtasks to clear so we don't hold the test runner hostage
-      print('=== DEBUG TEARDOWN: Forcing final pump to clear modal barriers ===');
       // We cannot call pump on tester easily without passing it, but `pumpAndSettle` is done
       // manually if needed. At least the DB is disposed.
     });

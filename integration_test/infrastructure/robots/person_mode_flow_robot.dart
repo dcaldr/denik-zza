@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 import 'base_robot.dart';
 
 /// Robot for the person print flow (select person -> mode -> preview -> confirm).
@@ -50,7 +51,6 @@ class PersonModeFlowRobot extends BaseRobot {
     // but the test name is fine if we use scrollUntilVisible properly.
     final itemFinder = find.text(fullName);
 
-    print('=== DEBUG ROBOT: Scrolling to find "$fullName" ===');
     try {
       await tester.scrollUntilVisible(
         itemFinder,
@@ -59,7 +59,6 @@ class PersonModeFlowRobot extends BaseRobot {
         maxScrolls: 50,
       );
     } catch (e) {
-      print('=== DEBUG ROBOT: scrollUntilVisible failed, dumping tree! ===');
       debugDumpApp();
       rethrow;
     }
@@ -69,7 +68,6 @@ class PersonModeFlowRobot extends BaseRobot {
       throw TestFailure('Participant "$fullName" not found in list (even after scroll)');
     }
     
-    print('=== DEBUG ROBOT: Found "$fullName", tapping... ===');
     await _tapAndPump(itemFinder.first);
   }
 
@@ -82,7 +80,6 @@ class PersonModeFlowRobot extends BaseRobot {
   }
 
   Future<void> tapPrintButton() async {
-    print('=== DEBUG ROBOT: Attempting to tap Print Button ===');
     
     // Step 1: Wait for Enablement
     int ticks = 0;
@@ -101,16 +98,12 @@ class PersonModeFlowRobot extends BaseRobot {
       
       final buttonWidget = tester.widget<FilledButton>(buttonFinder);
       if (buttonWidget.onPressed != null) {
-        print('=== DEBUG ROBOT: Print button ENABLED after $ticks ticks (${ticks * 100}ms) ===');
         break;
       }
       
-      if (ticks % 10 == 0) {
-        print('=== DEBUG ROBOT: Still waiting for Print button to enable (Tick $ticks)... ===');
-      }
       
       if (ticks > 150) { // 15 seconds
-        print('=== DEBUG ROBOT: Timeout! Print button remained disabled. Dumping App State: ===');
+        AppLogger.l.e('Timeout! Print button remained disabled.');
         debugDumpApp();
         throw TestFailure("Print button remained disabled. PDF generation likely failed or took too long.");
       }
