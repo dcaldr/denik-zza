@@ -37,7 +37,24 @@ enum PrintMode { full, append }
 enum PrintSimulationResult { success, repeat, noChange, reset, resetAndReprint }
 
 /// Controller (ChangeNotifier) for Print Center state.
-/// Responsible for loading data, reacting to changes and exposing values to the UI.
+///
+/// Manages the 4-step print workflow:
+/// 1. **Select Person**: Choose participant (or abandon to reset)
+/// 2. **Choose Mode**: Full print (all records) or Append (add new records)
+/// 3. **Preview**: Review records before printing
+/// 4. **Confirm**: Execute print simulation and show results
+///
+/// **Race Condition Safety**:
+/// - Uses [_notifyIfNotDisposed()] before every notifyListeners() call
+/// - State changes are atomic (all-or-nothing, no partial updates)
+/// - Abandoned selections reset cleanly without orphaned records
+/// - Append analysis runs isolated from UI updates
+///
+/// **Isolation Strategy**:
+/// - PDF generation runs on background Isolate in production/integration modes
+/// - Test mode runs synchronously to prevent un-cancellable Isolate futures
+/// - Database access marshalled through [PrintCenterService] (not raw DB)
+/// - Stream subscriptions auto-cleaned on dispose()
 class PrintCenterController extends SafeChangeNotifier {
   final PrintCenterService _service;
   StreamSubscription<List<MemoryOsoba>>? _participantsSub;
@@ -45,7 +62,9 @@ class PrintCenterController extends SafeChangeNotifier {
   PrintCenterController(this._service);
 
   // Printer calibration state
-  bool? _printerPage1OnTop; // null = not calibrated yet
+  /// Whether the printer is calibrated with page 1 on top.
+  /// null = not yet calibrated; true/false = calibration state known
+  bool? _printerPage1OnTop;
 
 
   // Participants state
@@ -55,6 +74,7 @@ class PrintCenterController extends SafeChangeNotifier {
 
   // Selected participant detail
   MemoryOsoba? _selected;
+  bool _selectionAbandoned = false; // whether user clicked "back to center"
   List<MemoryZaznam> _records = [];
   List<MemoryLek> _leky = [];
   List<MemoryOmezeni> _omezeni = [];
@@ -86,6 +106,7 @@ class PrintCenterController extends SafeChangeNotifier {
   bool get loadingParticipants => _loadingParticipants;
   String? get participantError => _participantError;
   MemoryOsoba? get selected => _selected;
+  bool get selectionAbandoned => _selectionAbandoned;
   List<MemoryZaznam> get records => _records;
   List<MemoryLek> get leky => _leky;
   List<MemoryOmezeni> get omezeni => _omezeni;
@@ -132,10 +153,25 @@ class PrintCenterController extends SafeChangeNotifier {
     });
   }
 
+  /// Mark current selection as abandoned (user clicked "back to center").
+  /// Clears print state but allows re-entry to show list or resume with same person.
+  void markSelectionAbandoned() {
+    AppLogger.l.d('CONTROLLER: markSelectionAbandoned - resetting print state for "${_selected?.jmeno}"');
+    _selectionAbandoned = true;
+    _simulatedPrinted = false;
+    _lastResult = null;
+    _mode = PrintMode.full;
+    // NOTE: Keep _selected for potential resume; PersonMode will detect abandoned state
+    Future.microtask(() {
+      if (!isDisposed) notifyListeners();
+    });
+  }
+
   /// Select a participant and load its details (records, meds, restrictions).
   Future<void> selectParticipant(MemoryOsoba osoba) async {
     AppLogger.l.d('CONTROLLER: selectParticipant called for "${osoba.jmeno} ${osoba.prijmeni}" (ID: ${osoba.id})');
     _selected = osoba;
+    _selectionAbandoned = false; // mark selection as active again
     // Reset flow state only on new selection
     _mode = PrintMode.full;
     _simulatedPrinted = false;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/design_system/tokens/app_radii.dart';
+import 'package:denik_zza/design_system/tokens/app_breakpoints.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 
 import 'package:denik_zza/print_ops2/models/person_print_state.dart';
@@ -187,32 +188,81 @@ class _PersonPrintStateCardState extends State<PersonPrintStateCard> {
   }
 
   Widget _buildRecordsList(BuildContext context, PersonPrintState s) {
-    return Column(
-      children: [
-        const Divider(height: 1),
-        ...List.generate(s.records.length, (i) {
-          final record = s.records[i];
-
-          // Can mark as printed only if all earlier records are printed (Strict Mode)
-          bool canMark = true;
-          if (!record.isPrinted) {
-            for (int j = 0; j < i; j++) {
-              if (!s.records[j].isPrinted) {
-                canMark = false;
-                break;
-              }
-            }
-          }
-
-          return RecordPrintToggleRow(
-            key: Key('PrintState_record_${record.idZaznamu}'),
-            record: record,
-            cascadeCount: 0, // No cascades known to UI anymore
-            canMarkPrinted: canMark,
-            onToggle: () => _handleRecordToggle(context, s, record),
-          );
-        }),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final screenHeight = MediaQuery.sizeOf(context).height;
+        
+        /// Responsive max height calculation prevents ListView overflow.
+        /// 
+        /// Ratios by breakpoint (conservatively low to leave room for controls):
+        /// - Desktop (≥900px):  40% screen height (max 500px)
+        /// - Tablet (600-899px): 35% screen height (max 400px)  
+        /// - Mobile (<600px):    30% screen height (max 300px)
+        /// 
+        /// Lower ratios on mobile because:
+        /// 1. Screen real estate is limited
+        /// 2. User needs room to scroll the parent page
+        /// 3. Prevents nested scroll jank when both lists need scrolling
+        /// 4. Safe during cascade mode when many cards are expanded
+        /// 
+        /// Clamped behavior:
+        /// - Minimum: 3 items visible (AppBreakpoints.getItemHeight * 3)
+        /// - Maximum: Absolute ceiling per device class
+        /// 
+        /// This ensures:
+        /// - Never shows <3 items (useless for interaction)
+        /// - Never causes viewport overflow on any device
+        /// - Cascade mode (multiple cards expanded) remains usable
+        final maxHeightRatio = AppBreakpoints.isDesktop(width) ? 0.4
+            : AppBreakpoints.isTablet(width) ? 0.35
+            : 0.3;
+        final absoluteMax = AppBreakpoints.isDesktop(width) ? 500.0
+            : AppBreakpoints.isTablet(width) ? 400.0
+            : 300.0;
+        
+        // Calculate max height: responsive ratio, clamped to min 3 items and absolute max
+        final minHeight = AppBreakpoints.getItemHeight(context, dense: true) * 3;
+        final maxHeight = (screenHeight * maxHeightRatio).clamp(minHeight, absoluteMax);
+        
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Divider(height: 1),
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: maxHeight),
+              child: ListView.builder(
+                key: Key('PersonCard_records_${s.person.id}'),
+                shrinkWrap: true,
+                physics: const AlwaysScrollableScrollPhysics(),
+                itemCount: s.records.length,
+                itemBuilder: (context, i) {
+                  final record = s.records[i];
+                  
+                  // Can mark as printed only if all earlier records are printed (Strict Mode)
+                  bool canMark = true;
+                  if (!record.isPrinted) {
+                    for (int j = 0; j < i; j++) {
+                      if (!s.records[j].isPrinted) {
+                        canMark = false;
+                        break;
+                      }
+                    }
+                  }
+                  
+                  return RecordPrintToggleRow(
+                    key: Key('PrintState_record_${record.idZaznamu}'),
+                    record: record,
+                    cascadeCount: 0, // No cascades known to UI anymore
+                    canMarkPrinted: canMark,
+                    onToggle: () => _handleRecordToggle(context, s, record),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

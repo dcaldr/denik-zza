@@ -13,7 +13,24 @@ import 'package:denik_zza/shared/safe_change_notifier.dart';
 ///
 /// Allows users to manually toggle isPrinted/wasPrinted flags
 /// as a fallback when automatic tracking produces incorrect state.
-/// Maintains the contiguous-prefix invariant via cascade logic.
+///
+/// **Cascade Constraint (Critical for Append Mode)**:
+/// The database enforces: `wasPrinted[person] ⇒ isPrinted[all records]`
+///
+/// When person.wasPrinted = false:
+/// - All records MUST also have isPrinted = false
+/// - Why? Append printing assumes person was initially printed (header exists)
+/// - If person has no printed header, appending new records breaks the layout
+///
+/// When toggling person to unprinted:
+/// 1. Person flag is set to false
+/// 2. **Cascade**: All records are automatically set to false
+/// 3. This prevents orphaned printed records without a parent header
+///
+/// Maintenance:
+/// - This invariant is critical for PDF append correctness
+/// - Do not remove the cascade logic - it prevents print output corruption
+/// - Tests verify this constraint via cascade impact analysis
 class PrintStateController extends SafeChangeNotifier {
   final PrintCenterService _service;
 
@@ -40,15 +57,32 @@ class PrintStateController extends SafeChangeNotifier {
           .watchCurrentEventParticipants()
           .first;
 
+      AppLogger.l.i('[PrintState] loadParticipants: START - loaded ${participants.length} raw participants from stream');
+      for (var p in participants) {
+        final displayNameTest = '${p.jmeno} ${p.prijmeni}';
+        AppLogger.l.i('[PrintState] RAW[${p.id}]: jmeno="${p.jmeno}" (len=${p.jmeno.length}), prijmeni="${p.prijmeni}" (len=${p.prijmeni.length}), displayName="$displayNameTest"');
+        if (p.prijmeni.isEmpty) {
+          AppLogger.l.w('[PrintState] EMPTY SURNAME DETECTED for ${p.jmeno} (ID: ${p.id})');
+        }
+      }
+
       final states = <PersonPrintState>[];
       for (final person in participants) {
         final records = await _service.getRecords(person.id);
         sortRecordsByTime(records);
-        sortRecordsByTime(records);
-        states.add(_buildPersonState(person, records));
+        final state = _buildPersonState(person, records);
+        states.add(state);
+        
+        final displayCheck = state.displayName;
+        AppLogger.l.i('[PrintState] STATE[${person.id}]: displayName="$displayCheck" (test: "jmeno=${person.jmeno}", "prijmeni=${person.prijmeni}"), records=$records.length');
       }
 
       _personStates = states;
+      AppLogger.l.i('[PrintState] loadParticipants: COMPLETE - total personStates=$_personStates.length');
+      for (int i = 0; i < _personStates.length; i++) {
+        final s = _personStates[i];
+        AppLogger.l.i('[PrintState] FINAL[$i]: displayName="${s.displayName}" (ID: ${s.person.id})');
+      }
     } catch (e) {
       AppLogger.l.e('Failed to load participants for print state management', error: e);
       _error = 'Nepodařilo se načíst účastníky: $e';

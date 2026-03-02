@@ -10,9 +10,33 @@ import 'package:denik_zza/print_ops2/widgets/print_confirm_dialog.dart';
 import 'package:denik_zza/print_ops2/widgets/append_instruction_dialog.dart';
 import 'package:denik_zza/print_ops2/print_center_controller.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 
 // -----------------------------------------------------------------------------
 // FLOW: OSOBNÍ TISK (VÝBĚR OSOBY -> REŽIM -> NÁHLED -> POTVRZENÍ)
+// GUIDED 4-STEP PERSON PRINT WORKFLOW WITH ABANDONMENT DETECTION
+// 
+// Step 1: User selects participant from list
+// Step 2: User chooses print mode (Full or Append)
+// Step 3: User reviews records before printing
+// Step 4: User confirms, print simulates, results shown
+//
+// Special Feature: "Back to Center" Button
+// - Allows clean exit without orphaned state
+// - Sets selectionAbandoned flag in controller
+// - Resets flow to person selection (Step 1)
+// - Used when user wants to change participant without full reset
+// 
+// State Safety:
+// - selectionAbandoned flag detects back button presses
+// - Prevents partial state from affecting next selection
+// - Ensures clean transitions between person selections
+// 
+// Required Keys (for testing):
+// - select-person: Person list container
+// - mode-full, mode-append: Mode selection buttons
+// - confirm-button, cancel-button: Confirmation controls
+// 
 // -----------------------------------------------------------------------------
 
 class PersonAndModeFlowPage extends StatefulWidget {
@@ -86,12 +110,16 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
   }
 
   Widget _buildStage(BuildContext context, PrintCenterController ctrl) {
-    if (ctrl.selected == null) {
+    // Show list if no selection OR if selection was abandoned (user went back)
+    if (ctrl.selected == null || ctrl.selectionAbandoned) {
+      AppLogger.l.d('PersonMode._buildStage: showing list (selected=${ctrl.selected == null ? "null" : ctrl.selected!.jmeno}, abandoned=${ctrl.selectionAbandoned})');
       return _buildSelectPerson(context, ctrl);
     }
     if (!ctrl.simulatedPrinted) {
+      AppLogger.l.d('PersonMode._buildStage: showing mode/preview for ${ctrl.selected!.jmeno}');
       return _buildModeAndPreview(context, ctrl);
     }
+    AppLogger.l.d('PersonMode._buildStage: showing post-confirmation');
     return _buildPostConfirmation(context, ctrl);
   }
 
@@ -312,7 +340,10 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
                   key: const Key('PersonMode_backToCenter'),
                   icon: const Icon(Icons.home),
                   label: const Text('Zpět na centrum'),
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () {
+                    ctrl.markSelectionAbandoned();
+                    Navigator.of(context).pop();
+                  },
                 ),
                 OutlinedButton.icon(
                   key: const Key('PersonMode_newPrint'),
@@ -439,6 +470,15 @@ class _AppendHintBox extends StatelessWidget {
 
 // --------------------------- Info Box ----------------------------------------
 
+/// Informational box displaying mode-related hints and warnings.
+///
+/// Used to show append constraints, mode descriptions, and status messages
+/// in a consistent styled container with icon and colored background.
+/// 
+/// Parameters:
+/// - [color]: Background color (typically from AppColors)
+/// - [icon]: Leading icon (typically from Icons)
+/// - [text]: Message text (typically Czech)
 class ModeFlowInfoBox extends StatelessWidget {
   final Color color;
   final IconData icon;
