@@ -40,7 +40,13 @@ void main() {
     }
 
     AppLogger.l.d('Pumping frames after launch');
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+    // Wait for app to be ready - pumpAndSettle waits for animations/microtasks
+    final addButtonKey = find.byKey(const Key('EventList_add_button'));
+    await tester.pumpAndSettle();
+    if (addButtonKey.evaluate().isEmpty) {
+      throw TestFailure('App did not launch - EventList_add_button not found after 5s');
+    }
     AppLogger.l.d('App Pumped');
 
     // 4. Verify Title "Všechny akce"

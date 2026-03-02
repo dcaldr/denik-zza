@@ -18,7 +18,7 @@ import '../../infrastructure/data/models/test_participant.dart';
 import '../../infrastructure/data/models/test_medication.dart';
 import '../../infrastructure/data/models/test_restriction.dart';
 import '../../infrastructure/data/shared_infrastructure.dart';
-import '../../infrastructure/robots/dashboard_robot.dart';
+import '../../infrastructure/robots/event_list_robot.dart';
 import '../../infrastructure/robots/event_detail_robot.dart';
 import '../../infrastructure/robots/participant_editor_robot.dart';
 import '../../infrastructure/helpers/db_verification_helpers.dart';
@@ -101,7 +101,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   void logStep(String message) {
-    AppLogger.l.i('🧪 [Focused/Ema] $message');
+    AppLogger.l.i('[Focused/Ema] $message');
   }
 
   group('Focused - Ema restrictions', () {
@@ -127,7 +127,7 @@ void main() {
     });
 
     testWidgets('Ema Destinnová restrictions add via UI', (tester) async {
-      final dashboard = DashboardRobot(tester);
+      final dashboard = EventListRobot(tester);
       final eventDetail = EventDetailRobot(tester);
       final participantEditor = ParticipantEditorRobot(tester);
       final dbHelpers = DbVerificationHelpers(DatabaseWrapper.getDatabase());
@@ -138,8 +138,7 @@ void main() {
 
       logStep('Launching app');
       app.main();
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
 
       logStep('Waiting for event on dashboard');
       final eventFound = await dashboard.waitForText(

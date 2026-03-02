@@ -5,7 +5,7 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 
-import '../../infrastructure/robots/dashboard_robot.dart';
+import '../../infrastructure/robots/event_list_robot.dart';
 import '../../infrastructure/robots/event_editor_robot.dart';
 
 void main() {
@@ -21,10 +21,11 @@ void main() {
     // 2. Get DB and launch app
     DatabaseWrapper.getDatabase();
     app.main();
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+    
+    final dashboard = EventListRobot(tester);
+    await dashboard.waitForKey('EventList_add_button', timeout: const Duration(seconds: 5));
     AppLogger.l.d('App Launched');
-
-    final dashboard = DashboardRobot(tester);
     final eventEditor = EventEditorRobot(tester);
 
     // 3. Verify Dashboard

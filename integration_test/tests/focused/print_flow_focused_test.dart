@@ -15,7 +15,7 @@ import 'package:denik_zza/services/system/system_interface.dart';
 
 import '../../infrastructure/data/datasets/jursky_park_data.dart';
 import '../../infrastructure/data/shared_infrastructure.dart';
-import '../../infrastructure/robots/dashboard_robot.dart';
+import '../../infrastructure/robots/event_list_robot.dart';
 import '../../infrastructure/robots/print_center_robot.dart';
 import '../../infrastructure/robots/person_mode_flow_robot.dart';
 import '../../infrastructure/helpers/db_verification_helpers.dart';
@@ -101,7 +101,7 @@ void main() {
       LiveTestWidgetsFlutterBindingFramePolicy.fullyLive;
 
   void logStep(String message) {
-    AppLogger.l.i('🧪 [Focused/PrintFlow] $message');
+    AppLogger.l.i('[Focused/PrintFlow] $message');
   }
 
   group('Focused - Print Flow', () {
@@ -130,7 +130,7 @@ void main() {
     testWidgets(
       'Full print (Karel) + Full & Append print (Milada)',
       (tester) async {
-        final dashboard = DashboardRobot(tester);
+        final dashboard = EventListRobot(tester);
         final printCenter = PrintCenterRobot(tester);
         final personMode = PersonModeFlowRobot(tester);
         final dbHelpers =
@@ -140,8 +140,7 @@ void main() {
 
         logStep('Launching app');
         app.main();
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pumpAndSettle();
 
         logStep('Waiting for event on dashboard');
         final eventFound = await dashboard.waitForText(
@@ -174,9 +173,8 @@ void main() {
 
         logStep('Confirming print success');
         await personMode.confirmPrintSuccess();
-        // Crucial: Wait for the background `confirmPrintResult` to finish.
-        // `pump` guarantees we wait for all microtasks without hanging on infinite animations.
-        await tester.pump(const Duration(milliseconds: 500));
+        // Wait for DB writes to complete before verifying
+        await tester.pumpAndSettle();
 
         logStep('Verifying DB: Karel printed');
         await dbHelpers.verifyParticipantPrinted('Karel', 'Čapek', true);
@@ -210,9 +208,8 @@ void main() {
 
         logStep('Confirming print success');
         await personMode.confirmPrintSuccess();
-        // Crucial: Wait for the background `confirmPrintResult` to finish its DB writes
-        // before proceeding, as dialog pop makes pumpAndSettle return instantly.
-        await tester.pump(const Duration(milliseconds: 500));
+        // Wait for DB writes to complete before verifying
+        await tester.pumpAndSettle();
 
         await dbHelpers.verifyParticipantPrinted(
             'Milada', 'Horáková', true);
@@ -254,8 +251,8 @@ void main() {
 
         logStep('Confirming print success');
         await personMode.confirmPrintSuccess();
-        // Crucial: Wait for the background `confirmPrintResult` to finish its DB writes.
-        await tester.pump(const Duration(milliseconds: 500));
+        // Wait for background DB writes and state updates
+        await tester.pumpAndSettle();
 
         logStep('Verifying DB: Milada records all printed');
         final miladaId =
@@ -276,9 +273,7 @@ void main() {
         final backToCenterBtn = find.text('Zpět na centrum');
         if (backToCenterBtn.evaluate().isNotEmpty) {
           await tester.tap(backToCenterBtn);
-          await tester.pump(const Duration(milliseconds: 500));
-        } else {
-          await tester.pump(const Duration(milliseconds: 100)); // Just 1 pump
+          await tester.pumpAndSettle();
         }
       },
       // Give enough time for the 3 test portions (approx 20 seconds total execution time on slow devices)

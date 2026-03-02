@@ -15,7 +15,7 @@ import 'package:denik_zza/services/system/system_interface.dart';
 
 import '../../infrastructure/data/datasets/jursky_park_data.dart';
 import '../../infrastructure/data/shared_infrastructure.dart';
-import '../../infrastructure/robots/dashboard_robot.dart';
+import '../../infrastructure/robots/event_list_robot.dart';
 import '../../infrastructure/robots/print_center_robot.dart';
 import '../../infrastructure/robots/person_mode_flow_robot.dart';
 import '../../infrastructure/helpers/db_verification_helpers.dart';
@@ -88,7 +88,7 @@ void main() {
       LiveTestWidgetsFlutterBindingFramePolicy.fullyLive;
 
   void logStep(String message) {
-    AppLogger.l.i('🧪 [Focused/PrintParticipantSelection] $message');
+    AppLogger.l.i('[Focused/PrintParticipantSelection] $message');
   }
 
   // Track whether we've already seeded data to avoid duplicate constraints
@@ -101,7 +101,7 @@ void main() {
       );
       logStep('ModeCoordinator integration-test mode ready');
 
-      if (seedingComplete) {
+      if (!seedingComplete) {
         final fmConfig = FileManager().getConfigSummary();
         logStep('FileManager config: $fmConfig');
 
@@ -115,6 +115,7 @@ void main() {
 
     tearDown(() async {
       logStep('Test completed');
+      seedingComplete = false; // Reset for next test run
       // Keep DB alive for next test
     });
 
@@ -126,7 +127,7 @@ void main() {
     testWidgets(
       'Select participant from long list (reproduces ensureVisible edge case)',
       (tester) async {
-        final dashboard = DashboardRobot(tester);
+        final dashboard = EventListRobot(tester);
         final printCenter = PrintCenterRobot(tester);
         final personMode = PersonModeFlowRobot(tester);
         final dbHelpers =
@@ -137,7 +138,7 @@ void main() {
         logStep('Launching app');
         app.main();
         await tester.pump();
-        await tester.pump(const Duration(milliseconds: 500));
+        await dashboard.waitForKey('EventList_add_button', timeout: const Duration(seconds: 5));
 
         logStep('Waiting for event on dashboard');
         final eventFound = await dashboard.waitForText(
@@ -193,7 +194,7 @@ void main() {
       'Select first and last participant from long list (both should work)',
       (tester) async {
         
-        final dashboard = DashboardRobot(tester);
+        final dashboard = EventListRobot(tester);
         final printCenter = PrintCenterRobot(tester);
         final personMode = PersonModeFlowRobot(tester);
         final capture = CapturingSystemInterface.forCurrentTest();
@@ -202,7 +203,7 @@ void main() {
         logStep('Launching app');
         app.main();
         await tester.pump();
-        await tester.pump(const Duration(milliseconds: 500));
+        await dashboard.waitForKey('EventList_add_button', timeout: const Duration(seconds: 5));
 
         logStep('Waiting for event on dashboard');
         final eventFound = await dashboard.waitForText(
