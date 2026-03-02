@@ -42,32 +42,96 @@ class PersonModeFlowRobot extends BaseRobot {
   }
 
   Future<void> selectParticipant(String fullName, {int participantId = 1}) async {
-    // We use the new, robust semantic key if possible, falling back to text.
+    // Wait for the participant list to be loaded/rendered
+    debugPrint('[selectParticipant] START: Looking for "$fullName"');
+    final listKeyFound = await waitForKey(
+      'select-person',
+      timeout: const Duration(seconds: 5),
+    );
+    if (!listKeyFound) {
+      debugPrint('[selectParticipant] ERROR: List key not found - participants not loaded');
+      throw TestFailure('Participant list did not load (key: select-person)');
+    }
+    
+    // Scope all finders to the list container to avoid hitting offstage/snapshot widgets
     final listFinder = find.byKey(const Key('select-person'));
     
-    // Instead of scrolling blindly for unrendered text, we find the ListTile's specific Key
-    // Using a known fallback order. We don't have ID reliably from just name in test,
-    // but the test name is fine if we use scrollUntilVisible properly.
-    final itemFinder = find.text(fullName);
+    // Find text within the list only (not global search)
+    final itemTextFinder = find.descendant(
+      of: listFinder,
+      matching: find.text(fullName),
+    );
+
+    // Debug: Check preconditions
+    debugPrint('[selectParticipant] List finder matches: ${listFinder.evaluate().length}');
+    debugPrint('[selectParticipant] Item text finder matches (before scroll): ${itemTextFinder.evaluate().length}');
 
     try {
       await tester.scrollUntilVisible(
-        itemFinder,
+        itemTextFinder,
         100.0,
         scrollable: find.descendant(of: listFinder, matching: find.byType(Scrollable)),
         maxScrolls: 50,
       );
+      debugPrint('[selectParticipant] Scroll completed');
     } catch (e) {
+      debugPrint('[selectParticipant] ERROR: Scroll failed - $e');
       debugDumpApp();
       rethrow;
     }
 
-    final found = await waitForText(fullName, timeout: const Duration(seconds: 5));
-    if (!found) {
+    // Debug: Check state after scroll (BEFORE settling)
+    debugPrint('[selectParticipant] After scroll, text finder matches: ${itemTextFinder.evaluate().length}');
+    debugPrint('[selectParticipant] About to pumpAndSettle...');
+
+    // Wait for any route transition animations to complete (avoid hitting snapshot widgets)
+    await pumpAndSettle();
+
+    // Debug: Check state after setlle (AFTER settling)
+    debugPrint('[selectParticipant] After pumpAndSettle, text finder matches: ${itemTextFinder.evaluate().length}');
+
+    // Find the ListTile ancestor of the text (larger, more reliable tap target)
+    final listTileFinder = find.ancestor(
+      of: itemTextFinder,
+      matching: find.byType(ListTile),
+    );
+    
+    debugPrint('[selectParticipant] ListTile ancestor finder matches: ${listTileFinder.evaluate().length}');
+
+    if (itemTextFinder.evaluate().isEmpty) {
+      final listMatches = listFinder.evaluate().length;
+      final listTileMatches = listTileFinder.evaluate().length;
+      debugPrint('[selectParticipant] ERROR: Could not find participant text. List: $listMatches, ListTile ancestors: $listTileMatches');
       throw TestFailure('Participant "$fullName" not found in list (even after scroll)');
     }
     
-    await _tapAndPump(itemFinder.first);
+    if (listTileFinder.evaluate().isEmpty) {
+      debugPrint('[selectParticipant] ERROR: Text found but ListTile ancestor not found - unexpected UI structure');
+      throw TestFailure('ListTile ancestor not found for "$fullName"');
+    }
+
+    // Tap the ListTile (larger target, more reliable)
+    debugPrint('[selectParticipant] Tapping ListTile for "$fullName"');
+    await _tapAndPump(listTileFinder.first);
+
+    debugPrint('[selectParticipant] Tap completed, checking transition...');
+
+    // Fast-fail assertion: verify mode selection stage appeared
+    final modeStageAppeared = await waitForKey(
+      'PersonMode_fullPrint',
+      timeout: const Duration(seconds: 5),
+    );
+    
+    if (!modeStageAppeared) {
+      debugPrint('[selectParticipant] ERROR: Mode stage never appeared - selection may have failed');
+      debugDumpApp();
+      throw TestFailure(
+        'Mode selection stage did not appear after selecting "$fullName". '
+        'Selection may have failed or UI transition is broken.',
+      );
+    }
+    
+    debugPrint('[selectParticipant] SUCCESS: Mode stage appeared');
   }
 
   Future<void> selectFullPrintMode() async {

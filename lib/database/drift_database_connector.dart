@@ -4,6 +4,7 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart'
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:drift/drift.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 import '../input/file_manager.dart';
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
@@ -452,9 +453,21 @@ class DriftDatabaseConnector implements DatabaseInterface {
     return _driftDatabase
         .watchParticipantsByAction(idAction)
         .asyncMap((participants) async {
+      AppLogger.l.i(
+          '[WatchParticipants] event=$idAction rawCount=${participants.length}');
+      for (final p in participants) {
+        AppLogger.l.i(
+            '[WatchParticipants] RAW participant id=${p.id} first="${p.firstName}" last="${p.lastName}" insuranceFK=${p.insuranceCompanyFK}');
+      }
+
       List<MemoryOsoba> memoryParticipants = [];
       for (Participant p in participants) {
         memoryParticipants.add(await _toMemoryOsoba(p));
+      }
+
+      for (final p in memoryParticipants) {
+        AppLogger.l.i(
+            '[WatchParticipants] MAPPED participant id=${p.id} jmeno="${p.jmeno}" prijmeni="${p.prijmeni}" display="${p.jmeno} ${p.prijmeni}" insurance="${p.zdravotniPojistovna}"');
       }
       return memoryParticipants;
     });
@@ -472,9 +485,13 @@ class DriftDatabaseConnector implements DatabaseInterface {
         .watchSingleOrNull()
         .asyncExpand((cache) {
       final currentEvent = cache?.currentActionID;
+      AppLogger.l.i(
+          '[WatchParticipants] currentEvent from cache=$currentEvent');
       if (currentEvent != null) {
         return watchParticipantsByEvent(currentEvent);
       } else {
+        AppLogger.l.w(
+            '[WatchParticipants] currentEvent is null, emitting empty participants list');
         return Stream.value(<MemoryOsoba>[]);
       }
     });
@@ -593,6 +610,11 @@ class DriftDatabaseConnector implements DatabaseInterface {
     if (insCompFK != null) {
       ic = await _driftDatabase.getInsuranceCompanyByID(insCompFK);
       insCompName = ic?.name;
+    }
+
+    if (p.lastName.trim().isEmpty) {
+      AppLogger.l.w(
+          '[WatchParticipants] EMPTY LAST NAME detected during mapping: id=${p.id}, first="${p.firstName}", rawLast="${p.lastName}"');
     }
 
     return MemoryOsoba.fullNamed(

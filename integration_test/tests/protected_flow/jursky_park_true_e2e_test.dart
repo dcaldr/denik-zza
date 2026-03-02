@@ -10,7 +10,7 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/services/system/system_interface.dart';
 
 import '../../infrastructure/data/datasets/jursky_park_data.dart';
-import '../../infrastructure/robots/dashboard_robot.dart';
+import '../../infrastructure/robots/event_list_robot.dart';
 import '../../infrastructure/robots/event_editor_robot.dart';
 import '../../infrastructure/robots/event_detail_robot.dart';
 import '../../infrastructure/robots/participant_editor_robot.dart';
@@ -64,9 +64,16 @@ void main() {
       );
       // Initialize silent logger (buffers logs, prints only on failure)
       TestStepLogger.initialize();
+      
+      // Make hit-test warnings fatal - catch tap misses immediately
+      WidgetController.hitTestWarningShouldBeFatal = true;
     });
 
     tearDown(() async {
+      // Drain pending microtasks to prevent ConnectionClosedException
+      // when FileManager's stream callbacks fire after database disposal
+      await Future.delayed(const Duration(milliseconds: 50));
+      
       await DatabaseWrapper.dispose();
       // Restore default logger behavior
       TestStepLogger.dispose();
@@ -86,6 +93,9 @@ void main() {
       });
 
       tearDown(() async {
+        // Drain pending microtasks to prevent ConnectionClosedException
+        await Future.delayed(const Duration(milliseconds: 50));
+        
         await DatabaseWrapper.dispose();
         TestStepLogger.dispose();
       });
@@ -102,9 +112,9 @@ void main() {
         await logger.step('Launch App & Navigate', () async {
           app.main();
           await tester.pump();
-          await tester.pump(const Duration(milliseconds: 500));
           
-          final dashboard = DashboardRobot(tester);
+          final dashboard = EventListRobot(tester);
+          await dashboard.waitForKey('EventList_add_button', timeout: const Duration(seconds: 5));
           final eventDetail = EventDetailRobot(tester); 
           final participantEditor = ParticipantEditorRobot(tester);
           final dbHelpers = DbVerificationHelpers(DatabaseWrapper.getDatabase());
@@ -159,11 +169,11 @@ void main() {
           // Surpasses widget test: Tests real app launch, not isolated widget
           app.main();
           await tester.pump();
-          await tester.pump(const Duration(milliseconds: 500));
 
-          final dashboard = DashboardRobot(tester);
+          final dashboard = EventListRobot(tester);
+          await dashboard.waitForKey('EventList_add_button', timeout: const Duration(seconds: 5));
           await dashboard.openDrawer();
-          await tester.pump(const Duration(milliseconds: 300));
+          await tester.pump(const Duration(milliseconds: 500));
 
           // DOCUMENTED EXPECTATION: These items should be disabled
           // Uncomment assertions when fix is implemented:
@@ -180,7 +190,9 @@ void main() {
           // Surpasses widget test: Navigates through real app
           app.main();
           await tester.pump();
-          await tester.pump(const Duration(milliseconds: 500));
+          
+          final dashboard = EventListRobot(tester);
+          await dashboard.waitForKey('EventList_add_button', timeout: const Duration(seconds: 5));
 
           // Note: Can't navigate to PrintCenter without event (drawer disabled)
           // This documents expected behavior - PrintCenter should handle empty gracefully
@@ -193,7 +205,9 @@ void main() {
           // Surpasses widget test: Tests in integrated form context
           app.main();
           await tester.pump();
-          await tester.pump(const Duration(milliseconds: 500));
+          
+          final dashboard = EventListRobot(tester);
+          await dashboard.waitForKey('EventList_add_button', timeout: const Duration(seconds: 5));
 
           // Without participants, autocomplete should show empty - no ghost entries
         });
@@ -256,7 +270,7 @@ void main() {
           (tester) async {
         
         // Initialize all robots and helpers (lazy-loaded by step usually, but defined here for scope)
-        final dashboard = DashboardRobot(tester);
+        final dashboard = EventListRobot(tester);
         final eventEditor = EventEditorRobot(tester);
         final eventDetail = EventDetailRobot(tester);
         final participantEditor = ParticipantEditorRobot(tester);
@@ -276,7 +290,7 @@ void main() {
         await logger.step('Launch App', () async {
           app.main();
           await tester.pump();
-          await tester.pump(const Duration(milliseconds: 500));
+          await dashboard.waitForKey('EventList_add_button', timeout: const Duration(seconds: 5));
         });
 
         await logger.step('Verify Clean DB State', () async {
@@ -603,6 +617,15 @@ void main() {
           // PersonAndModeFlowPage auto-selects participant + full mode via initState.
           // Just wait for the page and tap print.
           await personMode.verifyPageShown();
+          
+          // Fast-fail: verify mode stage is ready (auto-selection succeeded)
+          final autoSelectReady = await personMode.waitForKey(
+            'PersonMode_printButton',
+            timeout: const Duration(seconds: 5),
+          );
+          expect(autoSelectReady, isTrue,
+              reason: 'Print button should appear after auto-selection');
+          
           await personMode.tapPrintButton();
           await personMode.confirmPrintSuccess();
 
@@ -630,7 +653,12 @@ void main() {
         await logger.step('Baseline Full Print for Milada', () async {
           await printCenter.tapPersonModeCard();
           await personMode.verifyPageShown();
+          
+          // Debug print (conditional - remove after validation)
+          debugPrint('[${DateTime.now()}] Selecting Milada for baseline...');
           await personMode.selectParticipant('${milada.jmeno} ${milada.prijmeni}');
+          debugPrint('[${DateTime.now()}] Selection complete, expecting mode stage...');
+          
           await personMode.selectFullPrintMode();
           await personMode.tapPrintButton();
           await personMode.confirmPrintSuccess();
@@ -709,13 +737,36 @@ void main() {
               reason: 'Kafka PDF should have at least 1 page');
 
           await personMode.tap(personMode.findKey('PersonMode_backToCenter'));
+          debugPrint('[E2E] Back to PrintCenter - verifying...');
           await printCenter.verifyPageShown();
+          debugPrint('[E2E] PrintCenter verified');
         });
 
         await logger.step('Append Print: Milada Horáková', () async {
+          debugPrint('[E2E] Append: Tapping PersonMode card...');
           await printCenter.tapPersonModeCard();
+          debugPrint('[E2E] Append: Verifying PersonMode page shown...');
           await personMode.verifyPageShown();
+          debugPrint('[E2E] Append: PersonMode page verified, permitting settle...');
+          
+          // Allow all animations and transitions to complete
+          await tester.pump(const Duration(milliseconds: 500));
+          debugPrint('[E2E] Append: After settle, participant list should be loaded...');
+          
+          // Explicit wait to ensure participant list loads after navigation
+          debugPrint('[E2E] Append: Waiting for participant list to render (extended timeout)...');
+          final listReady = await personMode.waitForKey(
+            'select-person',
+            timeout: const Duration(seconds: 10),
+          );
+          if (!listReady) {
+            debugPrint('[E2E] ERROR: List key never appeared - page state may not have updated');
+            throw TestFailure('Participant list did not load when re-entering PersonMode');
+          }
+          debugPrint('[E2E] Append: Participant list ready, selecting Milada...');
+          
           await personMode.selectParticipant('${milada.jmeno} ${milada.prijmeni}');
+          debugPrint('[E2E] Append: Milada selected');
           await personMode.selectAppendPrintMode();
           await personMode.tapPrintButton();
 
@@ -793,26 +844,86 @@ void main() {
         });
 
         await logger.step('Print State: Reset + Cascade Test', () async {
+          debugPrint('[E2E-PrintState] === ENTERING PRINT STATE MANAGEMENT PAGE ===');
+          
+          // Log all 15 participants from database BEFORE entering PrintState
+          debugPrint('[E2E-PrintState] PRE-ENTRY: Verifying all participants in database...');
+          final allParticipants = await dbHelpers.db.getParticipantsByCurrentEvent();
+          debugPrint('[E2E-PrintState] PRE-ENTRY: Found ${allParticipants.length} participants in database');
+          for (int i = 0; i < allParticipants.length; i++) {
+            final p = allParticipants[i];
+            debugPrint('[E2E-PrintState] PRE-ENTRY: [$i] ID=${p.id} jmeno="${p.jmeno}" prijmeni="${p.prijmeni}" displayName="${p.jmeno} ${p.prijmeni}"');
+          }
+
+          debugPrint('[E2E-PrintState] PRE-ENTRY STREAM SNAPSHOT: watchParticipantsByCurrentEvent.first ...');
+          final preEntryStreamParticipants =
+              await dbHelpers.db.watchParticipantsByCurrentEvent().first;
+          debugPrint('[E2E-PrintState] PRE-ENTRY STREAM SNAPSHOT: Found ${preEntryStreamParticipants.length} participants');
+          for (int i = 0; i < preEntryStreamParticipants.length; i++) {
+            final p = preEntryStreamParticipants[i];
+            debugPrint('[E2E-PrintState] PRE-ENTRY STREAM: [$i] ID=${p.id} jmeno="${p.jmeno}" prijmeni="${p.prijmeni}" displayName="${p.jmeno} ${p.prijmeni}"');
+          }
+          
           await printCenter.tapStateManagementCard();
           await printState.verifyPageShown();
+          debugPrint('[E2E-PrintState] PrintState page shown, about to pumpAndSettle...');
+          
+          // Wait for Milada to load in the printState page (was just selected for append)
+          await tester.pump(const Duration(milliseconds: 500));
+          debugPrint('[E2E-PrintState] After pumpAndSettle, waiting for print-state list key...');
+          final listReady = await printState.waitForKey(
+            'PrintStateManagement_list',
+            timeout: const Duration(seconds: 5),
+          );
+          expect(listReady, isTrue,
+              reason: 'PrintState list should be visible after entering state management');
 
           final kafkaId = await dbHelpers.getParticipantId(
             kafka.jmeno,
             kafka.prijmeni,
           );
+          
+          debugPrint('[E2E-PrintState] POST-ENTRY: Verifying Milada still has surname in DB...');
+          try {
+            final miladaId = await dbHelpers.getParticipantId('Milada', 'Horáková');
+            debugPrint('[E2E-PrintState] ✅ VERIFIED: Milada has correct surname in database (ID=$miladaId)');
+          } catch (e) {
+            debugPrint('[E2E-PrintState] ❌ ERROR: Milada not found with surname in database!');
+            debugPrint('[E2E-PrintState] Exception: $e');
+            rethrow;
+          }
+
+          debugPrint('[E2E-PrintState] POST-ENTRY STREAM SNAPSHOT: watchParticipantsByCurrentEvent.first ...');
+          final postEntryStreamParticipants =
+              await dbHelpers.db.watchParticipantsByCurrentEvent().first;
+          debugPrint('[E2E-PrintState] POST-ENTRY STREAM SNAPSHOT: Found ${postEntryStreamParticipants.length} participants');
+          for (int i = 0; i < postEntryStreamParticipants.length; i++) {
+            final p = postEntryStreamParticipants[i];
+            debugPrint('[E2E-PrintState] POST-ENTRY STREAM: [$i] ID=${p.id} jmeno="${p.jmeno}" prijmeni="${p.prijmeni}" displayName="${p.jmeno} ${p.prijmeni}"');
+          }
 
           // --- Verify initial state: Kafka fully printed ---
           await printState.expandPerson('Franz Kafka');
           await printState.verifyPersonPrintedBadge('Franz Kafka', true);
 
+          // Collapse Franz before searching for Milada to avoid nested-scroll capture
+          await printState.expandPerson('Franz Kafka');
+          await tester.pump();
+
           // Also verify Milada is printed (from Phase 4+5)
-          await printState.ensureVisible(printState.findText('Milada Horáková'));
+          // expandPerson handles scrolling to find the person
           await printState.expandPerson('Milada Horáková');
           await printState.verifyPersonPrintedBadge('Milada Horáková', true);
 
+          // Collapse Milada and re-open Franz for subsequent record-level actions
+          await printState.expandPerson('Milada Horáková');
+          await tester.pump();
+          await printState.expandPerson('Franz Kafka');
+          await tester.pump();
+
           // --- Step 1: Reset all Kafka records → all unprinted ---
           await printState.tapResetAll(kafkaId);
-          await tester.pump(const Duration(milliseconds: 500));
+          await tester.pump();
 
           await printState.verifyPersonPrintedBadge('Franz Kafka', false);
           await printState.verifyRecordPrintedBadge(0, false);
@@ -820,20 +931,20 @@ void main() {
 
           // --- Step 2: Try toggle record 2 ON → BLOCKED (records 0,1 unprinted) ---
           await printState.toggleRecordPrinted(2);
-          await tester.pump(const Duration(milliseconds: 500));
+          await tester.pump();
           await printState.verifyRecordPrintedBadge(2, false); // Unchanged
 
           // --- Step 3: Toggle records 0,1,2 ON sequentially (contiguous prefix) ---
           await printState.toggleRecordPrinted(0);
-          await tester.pump(const Duration(milliseconds: 500));
+          await tester.pump();
           await printState.verifyRecordPrintedBadge(0, true);
 
           await printState.toggleRecordPrinted(1);
-          await tester.pump(const Duration(milliseconds: 500));
+          await tester.pump();
           await printState.verifyRecordPrintedBadge(1, true);
 
           await printState.toggleRecordPrinted(2);
-          await tester.pump(const Duration(milliseconds: 500));
+          await tester.pump();
           await printState.verifyRecordPrintedBadge(2, true);
 
           // Verify contiguous prefix: records 0-2 printed, 3+ unprinted
@@ -841,7 +952,7 @@ void main() {
 
           // --- Step 4: Mark all printed ---
           await printState.tapMarkAll(kafkaId);
-          await tester.pump(const Duration(milliseconds: 500));
+          await tester.pump();
 
           await printState.verifyPersonPrintedBadge('Franz Kafka', true);
           await dbHelpers.verifyAllRecordsPrinted(kafkaId, true);
