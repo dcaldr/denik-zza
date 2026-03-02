@@ -152,27 +152,21 @@ class PrintStateRobot extends BaseRobot {
   }
 
   Future<void> tapMarkAll(int personId) async {
-    debugPrint('[tapMarkAll] START: personId=$personId');
     final button = markAllButton(personId);
     if (button.evaluate().isEmpty) {
-      debugPrint('[tapMarkAll] ERROR: Mark all button not found');
       throw TestFailure('Mark all button not found for person $personId');
     }
     await _scrollToFinder(button);
     await tap(button);
-    debugPrint('[tapMarkAll] SUCCESS');
   }
 
   Future<void> tapResetAll(int personId) async {
-    debugPrint('[tapResetAll] START: personId=$personId');
     final button = resetAllButton(personId);
     if (button.evaluate().isEmpty) {
-      debugPrint('[tapResetAll] ERROR: Reset all button not found');
       throw TestFailure('Reset all button not found for person $personId');
     }
     await _scrollToFinder(button);
     await tap(button);
-    debugPrint('[tapResetAll] SUCCESS');
   }
 
   Future<void> verifyPersonPrintedBadge(String fullName, bool expected) async {

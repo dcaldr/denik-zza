@@ -653,12 +653,9 @@ void main() {
         await logger.step('Baseline Full Print for Milada', () async {
           await printCenter.tapPersonModeCard();
           await personMode.verifyPageShown();
-          
-          // Debug print (conditional - remove after validation)
-          debugPrint('[${DateTime.now()}] Selecting Milada for baseline...');
+
           await personMode.selectParticipant('${milada.jmeno} ${milada.prijmeni}');
-          debugPrint('[${DateTime.now()}] Selection complete, expecting mode stage...');
-          
+
           await personMode.selectFullPrintMode();
           await personMode.tapPrintButton();
           await personMode.confirmPrintSuccess();
@@ -737,36 +734,26 @@ void main() {
               reason: 'Kafka PDF should have at least 1 page');
 
           await personMode.tap(personMode.findKey('PersonMode_backToCenter'));
-          debugPrint('[E2E] Back to PrintCenter - verifying...');
           await printCenter.verifyPageShown();
-          debugPrint('[E2E] PrintCenter verified');
         });
 
         await logger.step('Append Print: Milada Horáková', () async {
-          debugPrint('[E2E] Append: Tapping PersonMode card...');
           await printCenter.tapPersonModeCard();
-          debugPrint('[E2E] Append: Verifying PersonMode page shown...');
           await personMode.verifyPageShown();
-          debugPrint('[E2E] Append: PersonMode page verified, permitting settle...');
           
           // Allow all animations and transitions to complete
           await tester.pump(const Duration(milliseconds: 500));
-          debugPrint('[E2E] Append: After settle, participant list should be loaded...');
           
           // Explicit wait to ensure participant list loads after navigation
-          debugPrint('[E2E] Append: Waiting for participant list to render (extended timeout)...');
           final listReady = await personMode.waitForKey(
             'select-person',
             timeout: const Duration(seconds: 10),
           );
           if (!listReady) {
-            debugPrint('[E2E] ERROR: List key never appeared - page state may not have updated');
             throw TestFailure('Participant list did not load when re-entering PersonMode');
           }
-          debugPrint('[E2E] Append: Participant list ready, selecting Milada...');
           
           await personMode.selectParticipant('${milada.jmeno} ${milada.prijmeni}');
-          debugPrint('[E2E] Append: Milada selected');
           await personMode.selectAppendPrintMode();
           await personMode.tapPrintButton();
 
@@ -844,33 +831,11 @@ void main() {
         });
 
         await logger.step('Print State: Reset + Cascade Test', () async {
-          debugPrint('[E2E-PrintState] === ENTERING PRINT STATE MANAGEMENT PAGE ===');
-          
-          // Log all 15 participants from database BEFORE entering PrintState
-          debugPrint('[E2E-PrintState] PRE-ENTRY: Verifying all participants in database...');
-          final allParticipants = await dbHelpers.db.getParticipantsByCurrentEvent();
-          debugPrint('[E2E-PrintState] PRE-ENTRY: Found ${allParticipants.length} participants in database');
-          for (int i = 0; i < allParticipants.length; i++) {
-            final p = allParticipants[i];
-            debugPrint('[E2E-PrintState] PRE-ENTRY: [$i] ID=${p.id} jmeno="${p.jmeno}" prijmeni="${p.prijmeni}" displayName="${p.jmeno} ${p.prijmeni}"');
-          }
-
-          debugPrint('[E2E-PrintState] PRE-ENTRY STREAM SNAPSHOT: watchParticipantsByCurrentEvent.first ...');
-          final preEntryStreamParticipants =
-              await dbHelpers.db.watchParticipantsByCurrentEvent().first;
-          debugPrint('[E2E-PrintState] PRE-ENTRY STREAM SNAPSHOT: Found ${preEntryStreamParticipants.length} participants');
-          for (int i = 0; i < preEntryStreamParticipants.length; i++) {
-            final p = preEntryStreamParticipants[i];
-            debugPrint('[E2E-PrintState] PRE-ENTRY STREAM: [$i] ID=${p.id} jmeno="${p.jmeno}" prijmeni="${p.prijmeni}" displayName="${p.jmeno} ${p.prijmeni}"');
-          }
-          
           await printCenter.tapStateManagementCard();
           await printState.verifyPageShown();
-          debugPrint('[E2E-PrintState] PrintState page shown, about to pumpAndSettle...');
           
           // Wait for Milada to load in the printState page (was just selected for append)
           await tester.pump(const Duration(milliseconds: 500));
-          debugPrint('[E2E-PrintState] After pumpAndSettle, waiting for print-state list key...');
           final listReady = await printState.waitForKey(
             'PrintStateManagement_list',
             timeout: const Duration(seconds: 5),
@@ -882,25 +847,8 @@ void main() {
             kafka.jmeno,
             kafka.prijmeni,
           );
-          
-          debugPrint('[E2E-PrintState] POST-ENTRY: Verifying Milada still has surname in DB...');
-          try {
-            final miladaId = await dbHelpers.getParticipantId('Milada', 'Horáková');
-            debugPrint('[E2E-PrintState] ✅ VERIFIED: Milada has correct surname in database (ID=$miladaId)');
-          } catch (e) {
-            debugPrint('[E2E-PrintState] ❌ ERROR: Milada not found with surname in database!');
-            debugPrint('[E2E-PrintState] Exception: $e');
-            rethrow;
-          }
 
-          debugPrint('[E2E-PrintState] POST-ENTRY STREAM SNAPSHOT: watchParticipantsByCurrentEvent.first ...');
-          final postEntryStreamParticipants =
-              await dbHelpers.db.watchParticipantsByCurrentEvent().first;
-          debugPrint('[E2E-PrintState] POST-ENTRY STREAM SNAPSHOT: Found ${postEntryStreamParticipants.length} participants');
-          for (int i = 0; i < postEntryStreamParticipants.length; i++) {
-            final p = postEntryStreamParticipants[i];
-            debugPrint('[E2E-PrintState] POST-ENTRY STREAM: [$i] ID=${p.id} jmeno="${p.jmeno}" prijmeni="${p.prijmeni}" displayName="${p.jmeno} ${p.prijmeni}"');
-          }
+          await dbHelpers.getParticipantId('Milada', 'Horáková');
 
           // --- Verify initial state: Kafka fully printed ---
           await printState.expandPerson('Franz Kafka');
