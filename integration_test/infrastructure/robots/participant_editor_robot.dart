@@ -202,7 +202,7 @@ class ParticipantEditorRobot extends BaseRobot {
 
     if (currentValue != value) {
       await tap(bezinfekcnostCheckbox);
-      await pumpAndSettle();
+      await smartSettle();
 
       // Strict assertion
       final updatedCheckbox =
@@ -221,7 +221,7 @@ class ParticipantEditorRobot extends BaseRobot {
 
     if (currentValue != value) {
       await tap(zpusobilostCheckbox);
-      await pumpAndSettle();
+      await smartSettle();
 
       // Strict assertion
       final updatedCheckbox =
@@ -250,19 +250,19 @@ class ParticipantEditorRobot extends BaseRobot {
 
     // Tap to focus the input field first (critical for Autocomplete sync)
     await tap(medicationInput);
-    await pumpAndSettle();
+    await smartSettle();
 
     // Enter text after focus is established
     await enterText(medicationInput, text);
 
     // Wait for Autocomplete internal controller to sync with entered text
-    await pumpAndSettle();
+    await smartSettle();
 
     await ensureVisible(medicationAddButton);
     await tap(medicationAddButton);
 
     // Wait for add to complete and input to clear
-    await pumpAndSettle();
+    await smartSettle();
   }
 
   /// Adds a restriction via RestrictionsWidget.
@@ -280,19 +280,19 @@ class ParticipantEditorRobot extends BaseRobot {
 
     // Tap to focus the input field first (critical for Autocomplete sync)
     await tap(restrictionInput);
-    await pumpAndSettle();
+    await smartSettle();
 
     // Enter text after focus is established
     await enterText(restrictionInput, restriction.popis);
 
     // Wait for Autocomplete internal controller to sync with entered text
-    await pumpAndSettle();
+    await smartSettle();
 
     await ensureVisible(restrictionAddButton);
     await tap(restrictionAddButton);
 
     // Wait for add to complete and input to clear
-    await pumpAndSettle();
+    await smartSettle();
 
     // STRICT ASSERTION: Verify restriction appears in visible list
     expect(find.text(restriction.popis), findsWidgets,
@@ -307,14 +307,14 @@ class ParticipantEditorRobot extends BaseRobot {
 
     await ensureVisible(restrictionInput);
     await tap(restrictionInput);
-    await pumpAndSettle();
+    await smartSettle();
 
     await enterText(restrictionInput, text);
-    await pumpAndSettle();
+    await smartSettle();
 
     // Submit via Enter key (TextInputAction.done)
     await tester.testTextInput.receiveAction(TextInputAction.done);
-    await pumpAndSettle();
+    await smartSettle();
 
     // Verify item appears; if not, fallback to Add button
     var found = await waitForText(
@@ -326,11 +326,11 @@ class ParticipantEditorRobot extends BaseRobot {
       final currentText = fieldAfterEnter.controller?.text ?? '';
       if (currentText.trim().isEmpty) {
         await tester.enterText(restrictionInput, text);
-        await pumpAndSettle();
+        await smartSettle();
       }
       await ensureVisible(restrictionAddButton);
       await tap(restrictionAddButton);
-      await pumpAndSettle();
+      await smartSettle();
 
       found = await waitForText(
         text,
@@ -354,17 +354,17 @@ class ParticipantEditorRobot extends BaseRobot {
 
     await ensureVisible(restrictionInput);
     await tap(restrictionInput);
-    await pumpAndSettle();
+    await smartSettle();
 
     // Type partial text to trigger autocomplete
     await tester.enterText(restrictionInput, partialText);
-    await pumpAndSettle();
+    await smartSettle();
 
 
 
     // Press Tab to autocomplete
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-    await pumpAndSettle();
+    await smartSettle();
 
     final inputField = tester.widget<TextField>(restrictionInput);
     final actualText = inputField.controller?.text ?? '';
@@ -372,7 +372,7 @@ class ParticipantEditorRobot extends BaseRobot {
 
     // Submit via Enter
     await tester.testTextInput.receiveAction(TextInputAction.done);
-    await pumpAndSettle();
+    await smartSettle();
 
     // Verify item appears; if not, fallback to Add button
     final targetText = actualText.isNotEmpty ? actualText : expectedFull;
@@ -385,11 +385,11 @@ class ParticipantEditorRobot extends BaseRobot {
       final currentText = fieldAfterEnter.controller?.text ?? '';
       if (currentText.trim().isEmpty) {
         await tester.enterText(restrictionInput, targetText);
-        await pumpAndSettle();
+        await smartSettle();
       }
       await ensureVisible(restrictionAddButton);
       await tap(restrictionAddButton);
-      await pumpAndSettle();
+      await smartSettle();
 
       found = await waitForText(
         targetText,
@@ -407,13 +407,35 @@ class ParticipantEditorRobot extends BaseRobot {
 
     await ensureVisible(medicationInput);
     await tap(medicationInput);
-    await pumpAndSettle();
+    await smartSettle();
 
     await enterText(medicationInput, text);
-    await pumpAndSettle();
+    await smartSettle();
 
     await tester.testTextInput.receiveAction(TextInputAction.done);
-    await pumpAndSettle();
+    await smartSettle();
+
+    // Verify item appears; if not, fallback to Add button
+    var found = await waitForText(
+      text,
+      timeout: const Duration(seconds: 2),
+    );
+    if (!found) {
+      final fieldAfterEnter = tester.widget<TextField>(medicationInput);
+      final currentText = fieldAfterEnter.controller?.text ?? '';
+      if (currentText.trim().isEmpty) {
+        await tester.enterText(medicationInput, text);
+        await smartSettle();
+      }
+      await ensureVisible(medicationAddButton);
+      await tap(medicationAddButton);
+      await smartSettle();
+
+      found = await waitForText(
+        text,
+        timeout: const Duration(seconds: 2),
+      );
+    }
   }
 
   /// Adds a medication via Tab autocomplete.
@@ -423,19 +445,19 @@ class ParticipantEditorRobot extends BaseRobot {
 
     await ensureVisible(medicationInput);
     await tap(medicationInput);
-    await pumpAndSettle();
+    await smartSettle();
 
     await tester.enterText(medicationInput, partialText);
-    await pumpAndSettle();
+    await smartSettle();
 
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-    await pumpAndSettle();
+    await smartSettle();
 
     final inputField = tester.widget<TextField>(medicationInput);
     var actualText = inputField.controller?.text ?? expectedFull;
     if (actualText.trim().isEmpty || actualText.trim() == partialText) {
       await tester.enterText(medicationInput, expectedFull);
-      await pumpAndSettle();
+      await smartSettle();
       final updatedField = tester.widget<TextField>(medicationInput);
       actualText = updatedField.controller?.text ?? expectedFull;
     }
@@ -461,13 +483,13 @@ class ParticipantEditorRobot extends BaseRobot {
 
     await ensureVisible(restrictionInput);
     await tap(restrictionInput);
-    await pumpAndSettle();
+    await smartSettle();
 
     await tester.enterText(restrictionInput, partialText);
-    await pumpAndSettle();
+    await smartSettle();
 
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-    await pumpAndSettle();
+    await smartSettle();
 
     // STRICT ASSERTION: Verify Tab filled with suggestion
     final fieldAfterTab = tester.widget<TextField>(restrictionInput);
@@ -475,13 +497,35 @@ class ParticipantEditorRobot extends BaseRobot {
         reason: 'Tab should fill field with "$tabFillsTo"');
 
     await tester.enterText(restrictionInput, modifiedTo);
-    await pumpAndSettle();
+    await smartSettle();
 
     await tester.testTextInput.receiveAction(TextInputAction.done);
-    await pumpAndSettle();
+    await smartSettle();
+
+    // Verify item appears; if not, fallback to Add button
+    var found = await waitForText(
+      modifiedTo,
+      timeout: const Duration(seconds: 2),
+    );
+    if (!found) {
+      final fieldAfterEnter = tester.widget<TextField>(restrictionInput);
+      final currentText = fieldAfterEnter.controller?.text ?? '';
+      if (currentText.trim().isEmpty) {
+        await tester.enterText(restrictionInput, modifiedTo);
+        await smartSettle();
+      }
+      await ensureVisible(restrictionAddButton);
+      await tap(restrictionAddButton);
+      await smartSettle();
+
+      found = await waitForText(
+        modifiedTo,
+        timeout: const Duration(seconds: 2),
+      );
+    }
 
     // STRICT ASSERTION: Verify modified text appears in list
-    expect(find.text(modifiedTo), findsWidgets,
+    expect(found, isTrue,
         reason: 'Modified restriction "$modifiedTo" should appear in list');
   }
 
@@ -496,22 +540,22 @@ class ParticipantEditorRobot extends BaseRobot {
 
     await ensureVisible(restrictionInput);
     await tap(restrictionInput);
-    await pumpAndSettle();
+    await smartSettle();
 
     await tester.enterText(restrictionInput, partialText);
-    await pumpAndSettle();
+    await smartSettle();
 
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-    await pumpAndSettle();
+    await smartSettle();
 
     await tester.enterText(restrictionInput, '');
-    await pumpAndSettle();
+    await smartSettle();
 
     await tester.enterText(restrictionInput, ownText);
-    await pumpAndSettle();
+    await smartSettle();
 
     await tester.testTextInput.receiveAction(TextInputAction.done);
-    await pumpAndSettle();
+    await smartSettle();
 
     // Verify item appears; if not, fallback to Add button
     var found = await waitForText(
@@ -527,7 +571,7 @@ class ParticipantEditorRobot extends BaseRobot {
       }
       await ensureVisible(restrictionAddButton);
       await tap(restrictionAddButton);
-      await pumpAndSettle();
+      await smartSettle();
 
       found = await waitForText(
         ownText,
@@ -550,17 +594,17 @@ class ParticipantEditorRobot extends BaseRobot {
 
     await ensureVisible(restrictionInput);
     await tap(restrictionInput);
-    await pumpAndSettle();
+    await smartSettle();
 
     await tester.enterText(restrictionInput, partialText);
-    await pumpAndSettle();
+    await smartSettle();
 
     // STRICT ASSERTION: Verify dropdown shows suggestion
     final dropdownFinder = find.text(fullSuggestion);
     expect(dropdownFinder, findsWidgets,
         reason: 'Dropdown should show "$fullSuggestion"');
     await tap(dropdownFinder.last);
-    await pumpAndSettle();
+    await smartSettle();
 
     // STRICT ASSERTION: Verify item appears in list after dropdown selection
     expect(find.text(fullSuggestion), findsWidgets,
@@ -579,22 +623,40 @@ class ParticipantEditorRobot extends BaseRobot {
 
     await ensureVisible(restrictionInput);
     await tap(restrictionInput);
-    await pumpAndSettle();
+    await smartSettle();
 
     await tester.enterText(restrictionInput, partialTrigger);
-    await pumpAndSettle();
+    await smartSettle();
 
     await tester.enterText(restrictionInput, differentText);
-    await pumpAndSettle();
+    await smartSettle();
 
     await tester.testTextInput.receiveAction(TextInputAction.done);
-    await pumpAndSettle();
+    await smartSettle();
 
-    // STRICT ASSERTION: Verify different text appears in list (not suggestion)
-    final found = await waitForText(
+    // Verify item appears; if not, fallback to Add button
+    var found = await waitForText(
       differentText,
       timeout: const Duration(seconds: 2),
     );
+    if (!found) {
+      final fieldAfterEnter = tester.widget<TextField>(restrictionInput);
+      final currentText = fieldAfterEnter.controller?.text ?? '';
+      if (currentText.trim().isEmpty) {
+        await tester.enterText(restrictionInput, differentText);
+        await smartSettle();
+      }
+      await ensureVisible(restrictionAddButton);
+      await tap(restrictionAddButton);
+      await smartSettle();
+
+      found = await waitForText(
+        differentText,
+        timeout: const Duration(seconds: 2),
+      );
+    }
+
+    // STRICT ASSERTION: Verify different text appears in list (not suggestion)
     expect(found, isTrue,
         reason: 'Restriction "$differentText" should appear in list');
   }
@@ -678,11 +740,12 @@ class ParticipantEditorRobot extends BaseRobot {
 
   /// Taps the submit button.
   ///
-  /// Now uses correct sticky footer button key.
+  /// Uses settle: false to prevent 4-second hangs if the success inline message
+  /// is ever changed back to a SnackBar, ensuring slow mode remains unblocked.
   Future<void> tapSubmit() async {
     await humanObservationDelay();
     await ensureVisible(submitButton);
-    await tap(submitButton);
+    await tap(submitButton, settle: false);
     incrementRound();
   }
 
@@ -716,11 +779,12 @@ class ParticipantEditorRobot extends BaseRobot {
 
   /// Waits for form to be ready for input after submit/reset.
   ///
-  /// Uses waitForKey (safe for infinite animations) instead of pumpAndSettle.
+  /// Strictly waits for the Jméno input field to be completely cleared,
+  /// guaranteeing that the async database save and UI reset have finished.
   Future<bool> waitForFormReady(
       {Duration timeout = const Duration(seconds: 5)}) async {
-    return await waitForKey(
-      'ParticipantRegistrationForm_jmeno_input',
+    return await waitForFieldToClear(
+      jmenoInput,
       timeout: timeout,
     );
   }

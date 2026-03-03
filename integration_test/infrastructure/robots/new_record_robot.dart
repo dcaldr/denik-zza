@@ -57,26 +57,12 @@ class NewRecordRobot extends BaseRobot {
 
   /// Selects a participant by name via autocomplete.
   ///
-  /// Types the full name into the autocomplete field and taps the
-  /// matching suggestion from the dropdown.
+  /// Calls the unified BaseRobot method to handle typing, dropdown polling,
+  /// and tapping the matching suggestion.
   ///
   /// [fullName] should be in format "Jméno Příjmení" (e.g., "Karel Čapek")
   Future<void> selectParticipant(String fullName) async {
-    // Enter text into autocomplete field
-    await enterText(participantAutocomplete, fullName);
-    await pump();
-
-    final found = await waitForAnyText(fullName,
-        timeout: const Duration(seconds: 5));
-    if (!found) {
-      throw TestFailure('Autocomplete suggestion "$fullName" not found');
-    }
-
-    // Wait for dropdown to appear and tap matching suggestion
-    // Find text in the overlay dropdown, use .first if name appears multiple times
-    final suggestion = find.text(fullName).last;
-    await tester.tap(suggestion);
-    await pumpAndSettle();
+    await selectAutocompleteItem(participantAutocomplete, fullName);
   }
 
   /// Enters text into the title field.
@@ -95,15 +81,17 @@ class NewRecordRobot extends BaseRobot {
   }
 
   /// Taps the save button.
+  /// Uses settle: false to prevent 4-second hangs on the success SnackBar
+  /// during slow mode, and to maintain consistency in fast mode.
   Future<void> tapSave() async {
     await humanObservationDelay();
-    await tap(saveButton);
+    await tap(saveButton, settle: false);
     incrementRound();
   }
 
   /// Taps the cancel button.
   Future<void> tapCancel() async {
-    await tap(cancelButton);
+    await tap(cancelButton, settle: false);
   }
 
   /// Taps the full print button.
@@ -143,5 +131,20 @@ class NewRecordRobot extends BaseRobot {
     }
 
     await tapSave();
+  }
+
+  /// Waits for form to be ready for input after submit/cancel.
+  ///
+  /// Strictly waits for the Title field to be completely cleared.
+  /// Note: We do not wait for the Autocomplete field to clear because
+  /// NewRecordPage intentionally preserves the selected participant
+  /// after saving to allow entering multiple records rapidly.
+  Future<bool> waitForFormReady({
+    Duration timeout = const Duration(seconds: 5),
+  }) async {
+    return await waitForFieldToClear(
+      titleInput,
+      timeout: timeout,
+    );
   }
 }

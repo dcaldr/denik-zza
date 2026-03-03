@@ -44,13 +44,25 @@ class BaseRobot {
     await tester.pump(duration);
   }
 
+  /// Helper that uses pumpAndSettle in normal mode and pump in fast mode.
+  /// Use this to replace hardcoded explicit pumpAndSettle() calls.
+  Future<void> smartSettle() async {
+    if (isFastMode) {
+      await pump();
+    } else {
+      await pumpAndSettle();
+    }
+  }
+
   /// Taps a widget found by [finder] and waits for animations.
+  /// If [settle] is not provided, defaults to `!isFastMode`.
   /// Set [settle] to false if tapping triggers an infinite animation (e.g., a loading spinner)
   /// to prevent pumpAndSettle from hanging indefinitely.
-  Future<void> tap(Finder finder, {bool settle = true}) async {
+  Future<void> tap(Finder finder, {bool? settle}) async {
     // print('tapping $finder'); // Optional debug logging
+    final shouldSettle = settle ?? !isFastMode;
     await tester.tap(finder);
-    if (settle) {
+    if (shouldSettle) {
       await pumpAndSettle();
     } else {
       await pump();
@@ -58,14 +70,86 @@ class BaseRobot {
   }
 
   /// Enters text into a widget found by [finder] and waits.
+  /// If [settle] is not provided, defaults to `!isFastMode`.
   /// Set [settle] to false if typing triggers an infinite animation.
-  Future<void> enterText(Finder finder, String text, {bool settle = true}) async {
+  Future<void> enterText(Finder finder, String text, {bool? settle}) async {
+    final shouldSettle = settle ?? !isFastMode;
     await tester.enterText(finder, text);
-    if (settle) {
+    if (shouldSettle) {
       await pumpAndSettle();
     } else {
       await pump();
     }
+  }
+
+  /// Waits for a text field to be completely cleared after an async save operation.
+  /// 
+  /// This is critical for repeating forms (like Intake or New Record) that 
+  /// clear controllers in-place instead of popping the route. Otherwise, 
+  /// robot loops race the async form clearing.
+  Future<bool> waitForFieldToClear(
+    Finder finder, {
+    Duration timeout = const Duration(seconds: 5),
+    Duration pollInterval = const Duration(milliseconds: 100),
+  }) async {
+    final stopwatch = Stopwatch()..start();
+    while (stopwatch.elapsed < timeout) {
+      final widgets = finder.evaluate();
+      if (widgets.isNotEmpty) {
+        final widget = widgets.first.widget;
+        if (widget is TextField) {
+          if ((widget.controller?.text ?? '').isEmpty) return true;
+        } else if (widget is TextFormField) {
+          if ((widget.controller?.text ?? '').isEmpty) return true;
+        }
+      }
+      await pump(pollInterval);
+    }
+    return false;
+  }
+
+  /// Unified method for selecting an item from an autocomplete dropdown.
+  /// 
+  /// [inputField] The finder for the text field.
+  /// [searchText] The text to type into the field to trigger the dropdown.
+  /// [selectionText] The exact text of the dropdown option to tap. Defaults to [searchText].
+  Future<void> selectAutocompleteItem(
+    Finder inputField, 
+    String searchText, 
+    {String? selectionText}
+  ) async {
+    final targetText = selectionText ?? searchText;
+    
+    await tap(inputField, settle: false);
+    
+    // Use the smart enterText wrapper (with settle: false) to respect human observation speed
+    await enterText(inputField, searchText, settle: false);
+
+    var dropdownFound = await waitForAnyText(
+      targetText,
+      timeout: const Duration(seconds: 3),
+      pollInterval: const Duration(milliseconds: 50),
+    );
+
+    if (!dropdownFound) {
+      await enterText(inputField, '', settle: false);
+      await pump(const Duration(milliseconds: 50));
+      dropdownFound = await waitForAnyText(
+        targetText,
+        timeout: const Duration(seconds: 5),
+        pollInterval: const Duration(milliseconds: 50),
+      );
+    }
+
+    if (!dropdownFound) {
+      throw StateError('BaseRobot: No autocomplete suggestion found for "$targetText"');
+    }
+
+    // Tap the suggestion (use .last to get dropdown, not any input echo).
+    await tester.tap(find.text(targetText).last);
+    
+    // Wait for dropdown to close and value to populate
+    await smartSettle();
   }
 
   /// Scrolls to make a widget visible before interaction.

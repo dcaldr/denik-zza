@@ -445,6 +445,7 @@ void main() {
                 );
                 await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: true);
                 await dbHelpers.verifyNote(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedNote: 'Intake note');
+                await intake.waitForFormReady();
                 break;
                 
               case 2: // P3 Jan Hus - Add Restriction during intake
@@ -459,6 +460,7 @@ void main() {
                   expectedArrived: true,
                 );
                 await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: true);
+                await intake.waitForFormReady();
                 break;
                 
               case 3: // P4 Tomáš - Save only (NOT marked arrived)
@@ -470,10 +472,12 @@ void main() {
                   expectedArrived: false,
                 );
                 await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: false);
+                await intake.waitForFormReady();
                 break;
                 
               case 6: // P7 Milada - Cancel then retry
                 await intake.tapCancel();
+                await intake.waitForFormReady();
                 await intake.selectParticipant('${p.jmeno} ${p.prijmeni}');
                 await intake.tapSaveAndArrived();
                 // Hard Gate: wait for persisted DB state after retry save.
@@ -483,6 +487,7 @@ void main() {
                   expectedArrived: true,
                 );
                 await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: true);
+                await intake.waitForFormReady();
                 break;
                 
               default: // Basic flow
@@ -494,6 +499,7 @@ void main() {
                   expectedArrived: true,
                 );
                 await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: true);
+                await intake.waitForFormReady();
             }
           });
         }
@@ -535,18 +541,19 @@ void main() {
           }
         }
 
-        // Helper to create a batch of records
         Future<void> createRecordBatch(
           List<MapEntry<TestParticipant, TestRecord>> records,
         ) async {
           for (final entry in records) {
             final p = entry.key;
             final record = entry.value;
+            print('DEBUG_TIME [${DateTime.now().toIso8601String()}] createRecordBatch -> Start Loop: ${p.jmeno}');
             await newRecord.createRecordFromTestData(
               '${p.jmeno} ${p.prijmeni}',
               record,
             );
-            await newRecord.waitForKey('NewRecordPage_save_button');
+            await newRecord.waitForFormReady();
+            print('DEBUG_TIME [${DateTime.now().toIso8601String()}] createRecordBatch -> Loop End: ${p.jmeno}');
           }
         }
 
@@ -694,7 +701,7 @@ void main() {
           );
 
           await newRecord.createRecordFromTestData('${milada.jmeno} ${milada.prijmeni}', appendRecord);
-          await newRecord.waitForKey('NewRecordPage_save_button');
+          await newRecord.waitForFormReady();
 
            final miladaId = await dbHelpers.getParticipantId(milada.jmeno, milada.prijmeni);
           await dbHelpers.verifyRecords(participantId: miladaId, expectedRecords: [...milada.zaznamy, appendRecord]);

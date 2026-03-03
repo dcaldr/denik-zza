@@ -82,36 +82,12 @@ class IntakeRobot extends BaseRobot {
         ? '$firstName ${parts[1][0]}'  // e.g., "Jan H"
         : firstName;
 
-    // Tap and type into the search field
-    final searchField = personSearchInput;
-    await tap(searchField, settle: false);
-    await tester.enterText(searchField, searchQuery);
-
-    // Wait for dropdown suggestion — event-based, not fixed delay.
-    var dropdownFound = await waitForAnyText(
-      fullName,
-      timeout: const Duration(seconds: 3),
-      pollInterval: const Duration(milliseconds: 50),
+    // Use the unified BaseRobot helper to type, poll, and select
+    await selectAutocompleteItem(
+      personSearchInput,
+      searchQuery,
+      selectionText: fullName,
     );
-
-    // Retry once: cancel/reset can refresh availablePersons asynchronously.
-    // Re-focus with empty query (shows all options when data is ready), then retry.
-    if (!dropdownFound) {
-      await tester.enterText(searchField, '');
-      await pump(const Duration(milliseconds: 50));
-      dropdownFound = await waitForAnyText(
-        fullName,
-        timeout: const Duration(seconds: 5),
-        pollInterval: const Duration(milliseconds: 50),
-      );
-    }
-
-    if (!dropdownFound) {
-      throw StateError('IntakeRobot: No dropdown suggestion found for "$fullName"');
-    }
-
-    // Tap the suggestion (use .last to get dropdown, not any input echo).
-    await tester.tap(find.text(fullName).last);
 
     // Wait for form to populate with selected person's data (event-based).
     final lastName = parts.length > 1 ? parts.last : firstName;
@@ -127,5 +103,17 @@ class IntakeRobot extends BaseRobot {
   /// Used for testing note modification during intake.
   Future<void> modifyNote(String note) async {
     await enterText(findKey('ParticipantRegistrationForm_poznamka_input'), note);
+  }
+
+  /// Waits for form to be ready for input after cancel.
+  ///
+  /// Strictly waits for the personSearch_input field to be completely cleared.
+  Future<bool> waitForFormReady({
+    Duration timeout = const Duration(seconds: 5),
+  }) async {
+    return await waitForFieldToClear(
+      personSearchInput,
+      timeout: timeout,
+    );
   }
 }
