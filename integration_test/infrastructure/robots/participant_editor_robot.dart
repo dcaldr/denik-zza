@@ -680,8 +680,10 @@ class ParticipantEditorRobot extends BaseRobot {
   ///
   /// Now uses correct sticky footer button key.
   Future<void> tapSubmit() async {
+    await humanObservationDelay();
     await ensureVisible(submitButton);
     await tap(submitButton);
+    incrementRound();
   }
 
   /// Taps the reset/refresh button in AppBar to clear the form.

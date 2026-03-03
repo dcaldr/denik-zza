@@ -35,14 +35,18 @@ class IntakeRobot extends BaseRobot {
   /// (~1.2s) that blocks pumpAndSettle unnecessarily. Callers must
   /// follow with waitForKey() for synchronization.
   Future<void> tapSaveAndArrived() async {
+    await humanObservationDelay();
     await tap(saveAndArrivedButton, settle: false);
+    incrementRound();
   }
 
   /// Taps "uložit" button (save only).
   ///
   /// Uses settle:false — same rationale as [tapSaveAndArrived].
   Future<void> tapSave() async {
+    await humanObservationDelay();
     await tap(saveButton, settle: false);
+    incrementRound();
   }
 
   /// Taps "neukládat" button (cancel).

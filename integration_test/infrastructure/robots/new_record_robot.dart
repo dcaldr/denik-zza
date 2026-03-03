@@ -96,7 +96,9 @@ class NewRecordRobot extends BaseRobot {
 
   /// Taps the save button.
   Future<void> tapSave() async {
+    await humanObservationDelay();
     await tap(saveButton);
+    incrementRound();
   }
 
   /// Taps the cancel button.

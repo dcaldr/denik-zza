@@ -7,6 +7,26 @@ import 'package:flutter_test/flutter_test.dart';
 class BaseRobot {
   final WidgetTester tester;
 
+  // --- Speed Control ---
+  int _interactionRound = 0;
+  
+  /// Number of rounds to run at human-observable speed before switching to fast mode.
+  int get slowRounds => 2;
+  
+  /// Returns whether the robot should interact at machine speed now.
+  bool get isFastMode => _interactionRound >= slowRounds;
+  
+  /// Call this when a repetitive transaction/form submission completes.
+  void incrementRound() => _interactionRound++;
+  
+  /// Injects a human-observable delay ONLY if not in fast mode.
+  Future<void> humanObservationDelay() async {
+    if (!isFastMode) {
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+  }
+  // --------------------
+
   BaseRobot(this.tester);
 
   /// Helper to wait for animations to complete.
