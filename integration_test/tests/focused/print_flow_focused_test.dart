@@ -140,7 +140,7 @@ void main() {
 
         logStep('Launching app');
         app.main();
-        await tester.pumpAndSettle();
+        await dashboard.pumpAndSettle();
 
         logStep('Waiting for event on dashboard');
         final eventFound = await dashboard.waitForText(
@@ -174,7 +174,7 @@ void main() {
         logStep('Confirming print success');
         await personMode.confirmPrintSuccess();
         // Wait for DB writes to complete before verifying
-        await tester.pumpAndSettle();
+        await personMode.pumpAndSettle();
 
         logStep('Verifying DB: Karel printed');
         await dbHelpers.verifyParticipantPrinted('Karel', 'Čapek', true);
@@ -209,7 +209,7 @@ void main() {
         logStep('Confirming print success');
         await personMode.confirmPrintSuccess();
         // Wait for DB writes to complete before verifying
-        await tester.pumpAndSettle();
+        await personMode.pumpAndSettle();
 
         await dbHelpers.verifyParticipantPrinted(
             'Milada', 'Horáková', true);
@@ -252,7 +252,7 @@ void main() {
         logStep('Confirming print success');
         await personMode.confirmPrintSuccess();
         // Wait for background DB writes and state updates
-        await tester.pumpAndSettle();
+        await personMode.pumpAndSettle();
 
         logStep('Verifying DB: Milada records all printed');
         final miladaId =
@@ -273,7 +273,7 @@ void main() {
         final backToCenterBtn = find.text('Zpět na centrum');
         if (backToCenterBtn.evaluate().isNotEmpty) {
           await tester.tap(backToCenterBtn);
-          await tester.pumpAndSettle();
+          await personMode.pumpAndSettle();
         }
       },
       // Give enough time for the 3 test portions (approx 20 seconds total execution time on slow devices)

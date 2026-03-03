@@ -138,7 +138,7 @@ void main() {
 
       logStep('Launching app');
       app.main();
-      await tester.pumpAndSettle();
+      await dashboard.pumpAndSettle();
 
       logStep('Waiting for event on dashboard');
       final eventFound = await dashboard.waitForText(
