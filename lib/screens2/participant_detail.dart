@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:denik_zza/screens2/services/participant_service.dart';
-import 'package:denik_zza/print_ops/confirm_print.dart';
-import 'package:denik_zza/print_ops/printer_woodoo.dart';
+import 'package:denik_zza/print_ops2/person_mode_flow_page.dart';
+import 'package:denik_zza/print_ops2/print_center_controller.dart';
+import 'package:denik_zza/print_ops2/print_center_service.dart';
 
 import 'package:denik_zza/screens2/new_record/new_record_page.dart';
 import 'participant_edit_page.dart';
@@ -158,13 +160,22 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
                   key: const Key('ParticipantDetail_print_button'),
                   onPressed: _isParticipantValid
                       ? () async {
-                          // TODO: This should be moved to a service/controller
-                          final woodoo = PrinterWoodoo();
-                          final packedPdf =
-                              await woodoo.printSelected([widget.participant]);
+                          // Navigate to modern print system
+                          final service = PrintCenterService();
+                          final controller = PrintCenterController(service);
+                          controller.init();
                           if (context.mounted) {
-                            ConfirmPrint()
-                                .showConfirmPrintDialog(context, packedPdf);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ChangeNotifierProvider.value(
+                                  value: controller,
+                                  child: PersonAndModeFlowPage(
+                                    initialParticipant: widget.participant,
+                                  ),
+                                ),
+                              ),
+                            );
                           }
                         }
                       : null,
