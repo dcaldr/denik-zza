@@ -73,5 +73,70 @@ void main() {
       expect(robot.newRecordButton, findsOneWidget);
       expect(robot.printButton, findsOneWidget);
     });
+    testWidgets('verifyPageShown and verifyParticipantName succeed', (tester) async {
+      final participant = await loadTestParticipant();
+      await tester.pumpWidget(
+        BaseTestWidget(
+          child: ParticipantDetailPage(participant: participant),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final robot = ParticipantDetailRobot(tester);
+      await robot.verifyPageShown();
+      await robot.verifyParticipantName('${participant.jmeno} ${participant.prijmeni}');
+    });
+
+    testWidgets('tapEdit interacts successfully', (tester) async {
+      final participant = await loadTestParticipant();
+      await tester.pumpWidget(
+        BaseTestWidget(
+          child: ParticipantDetailPage(participant: participant),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final robot = ParticipantDetailRobot(tester);
+      await robot.tapEdit();
+      await tester.pumpAndSettle(); 
+    });
+
+    testWidgets('tapNewRecord interacts successfully', (tester) async {
+      final participant = await loadTestParticipant();
+      await tester.pumpWidget(
+        BaseTestWidget(
+          child: ParticipantDetailPage(participant: participant),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Scroll to bottom
+      final listFinder = find.byType(ListView).first;
+      await tester.drag(listFinder, const Offset(0, -500));
+      await tester.pumpAndSettle();
+
+      final robot = ParticipantDetailRobot(tester);
+      await robot.tapNewRecord();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('tapPrint interacts successfully', (tester) async {
+      final participant = await loadTestParticipant();
+      await tester.pumpWidget(
+        BaseTestWidget(
+          child: ParticipantDetailPage(participant: participant),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Scroll to bottom
+      final listFinder = find.byType(ListView).first;
+      await tester.drag(listFinder, const Offset(0, -500));
+      await tester.pumpAndSettle();
+
+      final robot = ParticipantDetailRobot(tester);
+      await robot.tapPrint();
+      await tester.pumpAndSettle();
+    });
   });
 }

@@ -541,19 +541,18 @@ void main() {
           }
         }
 
+        // Helper to create a batch of records
         Future<void> createRecordBatch(
           List<MapEntry<TestParticipant, TestRecord>> records,
         ) async {
           for (final entry in records) {
             final p = entry.key;
             final record = entry.value;
-            print('DEBUG_TIME [${DateTime.now().toIso8601String()}] createRecordBatch -> Start Loop: ${p.jmeno}');
             await newRecord.createRecordFromTestData(
               '${p.jmeno} ${p.prijmeni}',
               record,
             );
             await newRecord.waitForFormReady();
-            print('DEBUG_TIME [${DateTime.now().toIso8601String()}] createRecordBatch -> Loop End: ${p.jmeno}');
           }
         }
 

@@ -25,7 +25,7 @@ class ParticipantDetailRobot extends BaseRobot {
   Future<void> verifyPageShown() async {
     await pumpAndSettle();
     // The page title shows participant name, check for common section text
-    expect(find.text('Informace o účastníkovi'), findsOneWidget);
+    expect(find.text('Osobní údaje'), findsOneWidget);
   }
 
   /// Verifies participant name is displayed.
