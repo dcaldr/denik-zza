@@ -10,6 +10,8 @@ import 'test_restriction.dart';
 /// Used by both database seeders and UI robots. All datasets (Jurský Park,
 /// Medium, Generated) use this same format for consistency.
 ///
+/// Supports `copyWith()` for creating mutated copies in [ExpectedWorldState].
+///
 /// ## Usage:
 /// ```dart
 /// // Hardcoded data
@@ -27,6 +29,9 @@ import 'test_restriction.dart';
 ///
 /// // Robot usage
 /// await robot.fillParticipantForm(participant);
+///
+/// // Mutated copy for ExpectedWorldState
+/// final arrived = participant.copyWith(prisel: true);
 /// ```
 class TestParticipant {
   /// First name (required)
@@ -74,6 +79,15 @@ class TestParticipant {
   /// Fitness certificate (způsobilost)
   final bool zpusobilost;
 
+  /// Arrival confirmation — set during intake phase
+  final bool prisel;
+
+  /// Note (poznámka) — set/modified during intake phase
+  final String? poznamka;
+
+  /// Print status — set after printing
+  final bool wasPrinted;
+
   const TestParticipant({
     required this.jmeno,
     required this.prijmeni,
@@ -90,7 +104,57 @@ class TestParticipant {
     this.zaznamy = const [],
     this.bezinfekcnost = false,
     this.zpusobilost = false,
+    this.prisel = false,
+    this.poznamka,
+    this.wasPrinted = false,
   });
+
+  /// Creates a copy with selected fields overridden.
+  ///
+  /// Used by [ExpectedWorldState] to evolve test data across phases.
+  /// Nullable fields use `?? this.field` — we never need to reset to `null`
+  /// in the E2E flow.
+  TestParticipant copyWith({
+    String? jmeno,
+    String? prijmeni,
+    int? pohlavi,
+    String? datumNarozeni,
+    String? rodneCislo,
+    String? adresa,
+    String? telefonRodice,
+    String? emailRodice,
+    String? jmenoRodice,
+    String? pojistovna,
+    List<TestMedication>? leky,
+    List<TestRestriction>? omezeni,
+    List<TestRecord>? zaznamy,
+    bool? bezinfekcnost,
+    bool? zpusobilost,
+    bool? prisel,
+    String? poznamka,
+    bool? wasPrinted,
+  }) {
+    return TestParticipant(
+      jmeno: jmeno ?? this.jmeno,
+      prijmeni: prijmeni ?? this.prijmeni,
+      pohlavi: pohlavi ?? this.pohlavi,
+      datumNarozeni: datumNarozeni ?? this.datumNarozeni,
+      rodneCislo: rodneCislo ?? this.rodneCislo,
+      adresa: adresa ?? this.adresa,
+      telefonRodice: telefonRodice ?? this.telefonRodice,
+      emailRodice: emailRodice ?? this.emailRodice,
+      jmenoRodice: jmenoRodice ?? this.jmenoRodice,
+      pojistovna: pojistovna ?? this.pojistovna,
+      leky: leky ?? this.leky,
+      omezeni: omezeni ?? this.omezeni,
+      zaznamy: zaznamy ?? this.zaznamy,
+      bezinfekcnost: bezinfekcnost ?? this.bezinfekcnost,
+      zpusobilost: zpusobilost ?? this.zpusobilost,
+      prisel: prisel ?? this.prisel,
+      poznamka: poznamka ?? this.poznamka,
+      wasPrinted: wasPrinted ?? this.wasPrinted,
+    );
+  }
 
   /// Parse birthdate string to DateTime
   DateTime get birthDateTime => DateTime.parse(datumNarozeni);
@@ -116,8 +180,9 @@ class TestParticipant {
       zzaActionFK: Value(eventId),
       eligibleConfirmation: Value(zpusobilost),
       nonInfectiousConfirmation: Value(bezinfekcnost),
-      arrivedConfirmation: const Value(true),
-      wasPrinted: const Value(false),
+      arrivedConfirmation: Value(prisel),
+      wasPrinted: Value(wasPrinted),
+      note: poznamka != null ? Value(poznamka) : const Value(null),
     );
   }
 

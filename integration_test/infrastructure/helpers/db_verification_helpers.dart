@@ -311,7 +311,9 @@ class DbVerificationHelpers {
 
   /// Verifies complete participant with all related data.
   ///
-  /// Convenience method that verifies basic data + medications + restrictions.
+  /// Checks ALL fields from [TestParticipant] against DB: basic data,
+  /// prisel, poznamka, wasPrinted, medications, restrictions, and records.
+  /// Used by [ExpectedWorldState.verifyAll] for phase-boundary integrity.
   Future<MemoryOsoba> verifyCompleteParticipant(
       TestParticipant testData) async {
     final name = '${testData.jmeno} ${testData.prijmeni}';
@@ -328,6 +330,9 @@ class DbVerificationHelpers {
       emailRodice: testData.emailRodice,
       bezinfekcnost: testData.bezinfekcnost,
       zpusobilost: testData.zpusobilost,
+      prisel: testData.prisel,
+      poznamka: testData.poznamka,
+      wasPrinted: testData.wasPrinted,
     );
 
     // Verify medications if present
@@ -345,6 +350,14 @@ class DbVerificationHelpers {
         participantId: p.id,
         expectedRestrictions: testData.omezeni,
         participantName: name,
+      );
+    }
+
+    // Verify records if present
+    if (testData.zaznamy.isNotEmpty) {
+      await verifyRecords(
+        participantId: p.id,
+        expectedRecords: testData.zaznamy,
       );
     }
 

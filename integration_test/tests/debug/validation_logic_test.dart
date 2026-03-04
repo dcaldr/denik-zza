@@ -78,34 +78,9 @@ Future<void> _seedValidationTestData(AppDatabase database) async {
 }
 
 TestParticipant _withFullInsuranceName(TestParticipant participant) {
-  const insuranceShortNames = {
-    'VZP': 'Všeobecná zdravotní pojišťovna',
-    'OZP': 'Oborová zdravotní pojišťovna',
-    'ČPZP': 'Česká průmyslová zdravotní pojišťovna',
-    'ZPŠ': 'Zaměstnanecká pojišťovna Škoda',
-    'FAKE': 'Neexistující Pojišťovna s.r.o.',
-  };
-
-  final normalizedInsurance =
+  final fullName =
       insuranceShortNames[participant.pojistovna] ?? participant.pojistovna;
-
-  return TestParticipant(
-    jmeno: participant.jmeno,
-    prijmeni: participant.prijmeni,
-    pohlavi: participant.pohlavi,
-    datumNarozeni: participant.datumNarozeni,
-    rodneCislo: participant.rodneCislo,
-    adresa: participant.adresa,
-    telefonRodice: participant.telefonRodice,
-    emailRodice: participant.emailRodice,
-    jmenoRodice: participant.jmenoRodice,
-    pojistovna: normalizedInsurance,
-    leky: participant.leky,
-    omezeni: participant.omezeni,
-    zaznamy: participant.zaznamy,
-    bezinfekcnost: participant.bezinfekcnost,
-    zpusobilost: participant.zpusobilost,
-  );
+  return participant.copyWith(pojistovna: fullName);
 }
 
 Future<void> _ensureValidationDataSeeded(DriftDatabaseConnector db) async {

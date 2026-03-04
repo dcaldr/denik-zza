@@ -97,6 +97,7 @@ void main() {
       ],
       bezinfekcnost: false,
       zpusobilost: true,
+      prisel: true,
     );
 
     await helpers.verifyCompleteParticipant(testData);
@@ -140,6 +141,7 @@ void main() {
       pojistovna: 'OZP',
       bezinfekcnost: true,
       zpusobilost: true,
+      prisel: true,
     );
 
     await expectLater(
@@ -196,6 +198,7 @@ void main() {
       ],
       bezinfekcnost: false,
       zpusobilost: true,
+      prisel: true,
     );
 
     await expectLater(
