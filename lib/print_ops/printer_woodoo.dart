@@ -42,14 +42,13 @@ return _convertor([osoba]);
 
 }
 Future<PrintPack> _convertor (List<MemoryOsoba> seznamOsob) async {
-  final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
+  // Unused font download removed to fix test errors
+  // final mSafeFont = await PdfGoogleFonts.nunitoExtraLight();
 
   final pdf = pw.Document(
     //TODO:add metadata
     //TODO: refactor to PDF-style class
     theme: pw.ThemeData.withFont(
-      // base: mSafeFont,
-      // fontFallback: [mSafeFont],
       base: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Regular.ttf')),
       bold: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Bold.ttf')),
       italic: pw.Font.ttf(await rootBundle.load('fonts/CourierPrime-Italic.ttf')),

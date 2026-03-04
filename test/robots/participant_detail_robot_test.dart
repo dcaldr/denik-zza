@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:denik_zza/screens2/participant_detail.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
+import 'package:denik_zza/services/system/system_interface.dart';
 import '../utils/base_test_widget.dart';
 import '../../integration_test/infrastructure/robots/participant_detail_robot.dart';
 import '../setup_templates/hardcoded_setup.dart';
@@ -121,6 +122,7 @@ void main() {
     });
 
     testWidgets('tapPrint interacts successfully', (tester) async {
+      SystemInterface.registerWith(TestSystemInterface());
       final participant = await loadTestParticipant();
       await tester.pumpWidget(
         BaseTestWidget(
