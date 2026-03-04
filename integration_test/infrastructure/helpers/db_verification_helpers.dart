@@ -312,10 +312,15 @@ class DbVerificationHelpers {
   /// Verifies complete participant with all related data.
   ///
   /// Checks ALL fields from [TestParticipant] against DB: basic data,
-  /// prisel, poznamka, wasPrinted, medications, restrictions, and records.
-  /// Used by [ExpectedWorldState.verifyAll] for phase-boundary integrity.
+  /// prisel, poznamka, wasPrinted, medications, and restrictions.
+  ///
+  /// [checkRecords] — set to `true` only when records have already been
+  /// created in the DB (Phase 3+). Defaults to `false` because records exist
+  /// in the dataset as future truth but aren't inserted until Phase 3.
   Future<MemoryOsoba> verifyCompleteParticipant(
-      TestParticipant testData) async {
+    TestParticipant testData, {
+    bool checkRecords = false,
+  }) async {
     final name = '${testData.jmeno} ${testData.prijmeni}';
     final p = await verifyParticipantExists(
       jmeno: testData.jmeno,
@@ -353,8 +358,8 @@ class DbVerificationHelpers {
       );
     }
 
-    // Verify records if present
-    if (testData.zaznamy.isNotEmpty) {
+    // Verify records only when they exist in DB (Phase 3+)
+    if (checkRecords && testData.zaznamy.isNotEmpty) {
       await verifyRecords(
         participantId: p.id,
         expectedRecords: testData.zaznamy,

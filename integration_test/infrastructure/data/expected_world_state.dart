@@ -79,11 +79,16 @@ class ExpectedWorldState {
 
   /// One-liner integrity check — verifies ALL participants against DB.
   ///
-  /// Calls [DbVerificationHelpers.verifyCompleteParticipant] per participant,
-  /// which checks all fields, medications, restrictions, and records.
-  Future<void> verifyAll(DbVerificationHelpers dbHelpers) async {
+  /// Calls [DbVerificationHelpers.verifyCompleteParticipant] per participant.
+  ///
+  /// [checkRecords] — pass `true` only after Phase 3 record creation.
+  /// Defaults to `false` (records not yet in DB at Phase 1/2 boundaries).
+  Future<void> verifyAll(
+    DbVerificationHelpers dbHelpers, {
+    bool checkRecords = false,
+  }) async {
     for (final p in participants) {
-      await dbHelpers.verifyCompleteParticipant(p);
+      await dbHelpers.verifyCompleteParticipant(p, checkRecords: checkRecords);
     }
   }
 

@@ -23,6 +23,7 @@ import '../../infrastructure/helpers/db_verification_helpers.dart';
 import '../../infrastructure/data/models/test_record.dart';
 import '../../infrastructure/data/models/test_restriction.dart';
 import '../../infrastructure/data/models/test_participant.dart';
+import '../../infrastructure/data/expected_world_state.dart';
 import '../../infrastructure/helpers/test_step_logger.dart';
 import '../../../test/setup_templates/hardcoded_setup.dart';
 import '../../../test/utils/capturing_system_interface.dart';
@@ -281,6 +282,11 @@ void main() {
         final printState = PrintStateRobot(tester);
         final db = DatabaseWrapper.getDatabase();
         final dbHelpers = DbVerificationHelpers(db);
+        final world = ExpectedWorldState(jurskyParkParticipants);
+
+        // Enable soft mode to collect all failures throughout the E2E flow
+        // instead of stopping at the first failing step.
+        logger.enableSoftMode();
 
         // ============================================================
         // PHASE 1: PreEvent - Create Event & Participants
@@ -507,6 +513,25 @@ void main() {
         await logger.step('Verify Arrived Count', () async {
           // 14 arrived (P4 Tomáš used save-only)
           await dbHelpers.verifyArrivedCount(14);
+        });
+
+        // ── Phase 2 Boundary: declare expected mutations ──
+        // Decoupled from robot actions — independent truth declaration.
+        await logger.step('Phase 2 Integrity Check (ExpectedWorldState)', () async {
+          // All participants arrived except P4 Tomáš (index 3)
+          for (int i = 0; i < jurskyParkParticipants.length; i++) {
+            if (i == 3) continue; // Tomáš: save-only
+            world.markArrived(i);
+          }
+          // P2 Božena (index 1): note added during intake
+          world.setNote(1, 'Intake note: Arrived on time');
+          // P3 Jan Hus (index 2): restriction added during intake
+          world.addRestriction(
+            2,
+            TestRestriction.omezeni('Kontrola slunečního krému provedena'),
+          );
+
+          await world.verifyAll(dbHelpers);
         });
 
         // ============================================================
@@ -943,6 +968,9 @@ void main() {
         // FINAL SUMMARY
         // ============================================================
         logger.section('✅✅✅ FULL E2E WORKFLOW COMPLETE ✅✅✅');
+        
+        // Flush and rethrow any errors collected during the soft-mode run
+        logger.finalize();
       });
     });
   });
