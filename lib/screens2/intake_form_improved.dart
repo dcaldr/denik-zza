@@ -91,6 +91,10 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
       onRefresh: _refreshPage,
       enableStickyFooter:
           true, // Hide internal button (handled by IntakeBottomRow)
+      // Inject shared logic instances so restrictions added in the UI
+      // are saved when IntakeController.saveData() calls update().
+      omezeniLogic: _controller.omezeniLogic,
+      lekLogic: _controller.lekLogic,
     );
   }
 

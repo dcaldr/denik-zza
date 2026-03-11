@@ -25,6 +25,11 @@ class ParticipantRegistrationForm extends StatefulWidget {
   final Function(MemoryOsoba)? onOsobaEdited;
   final VoidCallback? onRefresh;
 
+  /// Optional: inject shared logic instances so the caller controls saving.
+  /// When null the form creates its own instances (standalone page behaviour).
+  final MemoryOmezeniLogic? omezeniLogic;
+  final MemoryLekLogic? lekLogic;
+
   const ParticipantRegistrationForm({
     super.key,
     this.osoba,
@@ -33,6 +38,8 @@ class ParticipantRegistrationForm extends StatefulWidget {
     this.onRefresh,
     this.enableStickyFooter = false,
     this.bypassLayoutBuilder = false,
+    this.omezeniLogic,
+    this.lekLogic,
   });
 
   @override
@@ -78,8 +85,9 @@ class ParticipantRegistrationFormState
   bool _bezinfekcnost = false;
 
   // Restrictions and medications logic
-  final MemoryOmezeniLogic _omezeniLogic = MemoryOmezeniLogic();
-  final MemoryLekLogic _lekLogic = MemoryLekLogic();
+  // Lazily assigned in initState — may be injected by parent.
+  late final MemoryOmezeniLogic _omezeniLogic;
+  late final MemoryLekLogic _lekLogic;
   final ParticipantRegistrationService _participantService =
       ParticipantRegistrationService();
 
@@ -88,6 +96,11 @@ class ParticipantRegistrationFormState
   @override
   void initState() {
     super.initState();
+    // Use injected logic instances when provided (e.g. from intake form),
+    // otherwise create standalone instances for the registration page.
+    _omezeniLogic = widget.omezeniLogic ?? MemoryOmezeniLogic();
+    _lekLogic = widget.lekLogic ?? MemoryLekLogic();
+
     if (widget.osoba == null ||
         (widget.osoba!.id == -1 &&
             widget.osoba!.jmeno.isEmpty &&
@@ -97,7 +110,11 @@ class ParticipantRegistrationFormState
     } else {
       // Populate fields for existing person
       _populateFields(widget.osoba!);
-      _loadRestrictionsForExistingPerson();
+      // Only load from DB when using own instances; injected instances are
+      // already loaded by the parent (IntakeController.selectPerson).
+      if (widget.omezeniLogic == null) {
+        _loadRestrictionsForExistingPerson();
+      }
     }
     _controllers['cisloPojisteni']!.addListener(() {
       setState(() {

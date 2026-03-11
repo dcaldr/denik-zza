@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
-import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/screens2/services/participant_registration_service.dart';
+import 'package:denik_zza/screens2/widgets/memory_restriction_widget.dart';
 import 'package:denik_zza/design_system/tokens/app_breakpoints.dart';
 
 class ParticipantEditPage extends StatefulWidget {
@@ -23,6 +24,13 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
   bool Function()? _validateFunction;
   MemoryOsoba? _editedParticipant;
 
+  // Owned logic instances — injected into the form so that edits made in
+  // RestrictionsWidget are available here when _handleSave is called.
+  final MemoryOmezeniLogic _omezeniLogic = MemoryOmezeniLogic();
+  final MemoryLekLogic _lekLogic = MemoryLekLogic();
+  final ParticipantRegistrationService _participantService =
+      ParticipantRegistrationService();
+
   @override
   void initState() {
     super.initState();
@@ -35,6 +43,9 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
       onValidate: (validate) => _validateFunction = validate,
       onOsobaEdited: (osoba) => _editedParticipant = osoba,
       onRefresh: null, // Not needed for edit mode
+      // Inject shared instances so RestrictionsWidget edits reach _handleSave.
+      omezeniLogic: _omezeniLogic,
+      lekLogic: _lekLogic,
     );
   }
 
@@ -42,15 +53,20 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
     if (_validateFunction?.call() ?? false) {
       if (_editedParticipant != null) {
         try {
-          final updateResult = await DatabaseWrapper.getDatabase()
-              .updateParticipant(osoba: _editedParticipant!);
+          // Delegate to service so restrictions/meds are saved alongside
+          // basic participant data — fixes the silent-drop bug.
+          final result =
+              await _participantService.saveParticipantWithRestrictions(
+            osoba: _editedParticipant!,
+            omezeniLogic: _omezeniLogic,
+            lekLogic: _lekLogic,
+          );
 
           if (mounted) {
-            if (updateResult > 0) {
+            if (result != null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Účastník byl úspěšně upraven')),
               );
-              // Return true to indicate success
               Navigator.of(context).pop(true);
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
