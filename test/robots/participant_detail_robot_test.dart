@@ -66,7 +66,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll to bottom to reveal action buttons
-      final listFinder = find.byType(ListView).first;
+      final listFinder = find.byKey(
+        const Key('ParticipantDetail_scroll_list'),
+      );
       await tester.drag(listFinder, const Offset(0, -300));
       await tester.pumpAndSettle();
 
@@ -112,7 +114,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll to bottom
-      final listFinder = find.byType(ListView).first;
+      final listFinder = find.byKey(
+        const Key('ParticipantDetail_scroll_list'),
+      );
       await tester.drag(listFinder, const Offset(0, -500));
       await tester.pumpAndSettle();
 
@@ -137,17 +141,18 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll to bottom
-      final listFinder = find.byType(ListView).first;
+      final listFinder = find.byKey(
+        const Key('ParticipantDetail_scroll_list'),
+      );
       await tester.drag(listFinder, const Offset(0, -500));
       await tester.pumpAndSettle();
 
       final robot = ParticipantDetailRobot(tester);
       // Verify print button is present and enabled
       expect(robot.printButton, findsOneWidget);
-      
-      // Note: Tapping the button navigates to PersonAndModeFlowPage which is tested separately.
-      // We verify the button exists and is interactive.
-      expect(find.byType(FilledButton), findsWidgets);
+
+      // Use stable assertions (key/text) instead of widget internals.
+      expect(find.text('Tisknout záznamy'), findsOneWidget);
     });
   });
 }

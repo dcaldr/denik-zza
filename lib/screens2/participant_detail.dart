@@ -104,6 +104,7 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
       body: Padding(
         padding: AppSpacing.screenPadding,
         child: ListView(
+          key: const Key('ParticipantDetail_scroll_list'),
           children: [
             _buildInfoCard('Osobní údaje', [
               _buildInfoRow('Datum narození:',

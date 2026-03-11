@@ -43,6 +43,10 @@ void main() {
     expect(find.byType(ParticipantRegistrationPage), findsOneWidget, reason: 'Page should render without intrinsic dimension crash');
     expect(find.byType(ParticipantRegistrationForm), findsOneWidget, reason: 'Form widget should be present');
     expect(find.text('Registrace Účastníka'), findsOneWidget, reason: 'Page title should be visible');
-    expect(find.byType(FilledButton), findsOneWidget, reason: 'Submit button should be rendered');
+    expect(
+      find.byKey(const Key('ParticipantRegistrationPage_submit_button')),
+      findsOneWidget,
+      reason: 'Submit button should be rendered',
+    );
   });
 }

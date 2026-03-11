@@ -99,7 +99,6 @@ void main() {
 
       // Then: Should show retry button with Czech text
       expect(find.text('Zkusit znovu'), findsOneWidget);
-      expect(find.byType(ElevatedButton), findsOneWidget);
     }, timeout: Timeout(Duration(seconds: 10)));
 
     testWidgets('shows error for empty path update via didUpdateWidget',

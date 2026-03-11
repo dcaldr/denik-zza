@@ -54,7 +54,11 @@ void main() {
     expect(find.byIcon(Icons.keyboard_arrow_up), findsNothing);
 
     // Scroll down
-    await tester.drag(find.byType(ListView), const Offset(0, -100));
+    final restrictionsList = find.descendant(
+      of: find.byType(RestrictionsWidget),
+      matching: find.byType(ListView),
+    );
+    await tester.drag(restrictionsList, const Offset(0, -100));
     await tester.pumpAndSettle();
 
     // Verify scrolled state: Both arrows should be visible (if not at bottom)
