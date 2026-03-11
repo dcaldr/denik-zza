@@ -436,13 +436,20 @@ class ParticipantEditorRobot extends BaseRobot {
         timeout: const Duration(seconds: 2),
       );
     }
+
+    expect(found, isTrue,
+        reason: 'Medication "$text" should appear in list after Enter submit');
   }
 
-  /// Adds a medication via Tab autocomplete.
+  /// Adds a medication via Tab autocomplete, then enters full text with dosage.
+  ///
+  /// Medication autocomplete (_names) contains only nazev (no dosage), so Tab fills
+  /// just the name. This method verifies Tab triggered autocomplete (field changed),
+  /// then enters expectedFull (including dosage) to ensure correct DB storage.
+  ///
+  /// Flow: Type partial → Tab fills name → assert Tab worked → enter full text → Add
   Future<void> addMedicationViaTab(
       String partialText, String expectedFull) async {
-    // Print only on error (see expect below)
-
     await ensureVisible(medicationInput);
     await tap(medicationInput);
     await smartSettle();
@@ -453,24 +460,30 @@ class ParticipantEditorRobot extends BaseRobot {
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await smartSettle();
 
-    final inputField = tester.widget<TextField>(medicationInput);
-    var actualText = inputField.controller?.text ?? expectedFull;
-    if (actualText.trim().isEmpty || actualText.trim() == partialText) {
-      await tester.enterText(medicationInput, expectedFull);
-      await smartSettle();
-      final updatedField = tester.widget<TextField>(medicationInput);
-      actualText = updatedField.controller?.text ?? expectedFull;
-    }
+    // Verify Tab triggered autocomplete: field must differ from the partial input.
+    // Note: _names only stores nazev (e.g. "Ibalgin 400mg"), not full dosage text.
+    final fieldAfterTab = tester.widget<TextField>(medicationInput);
+    final tabText = fieldAfterTab.controller?.text ?? '';
+    expect(
+      tabText.isNotEmpty && tabText.trim() != partialText,
+      isTrue,
+      reason: 'Tab should fill medication field with autocomplete suggestion '
+          '(typed: "$partialText", got: "$tabText")',
+    );
+
+    // Enter full text (with dosage) so _parseMedicationInput stores complete info.
+    await tester.enterText(medicationInput, expectedFull);
+    await smartSettle();
 
     await ensureVisible(medicationAddButton);
     await tap(medicationAddButton);
 
     final found = await waitForText(
-      actualText,
+      expectedFull,
       timeout: const Duration(seconds: 2),
     );
     expect(found, isTrue,
-        reason: 'Medication "$actualText" should appear in list');
+        reason: 'Medication "$expectedFull" should appear in list');
   }
 
   /// Adds a restriction via Tab autocomplete, then modifies text before submitting.

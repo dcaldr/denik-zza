@@ -144,6 +144,11 @@ void main() {
           // 4. Submit
           await participantEditor.tapSubmit();
 
+          await dbHelpers.waitForParticipantPersisted(
+            jmeno: 'Auto',
+            prijmeni: 'Test',
+          );
+
           // 5. Verify DB Persistence
           await dbHelpers.verifyParticipantExists(
             jmeno: 'Auto',
@@ -362,7 +367,14 @@ void main() {
             // Medication Tests
             for (int j = 0; j < p.leky.length; j++) {
               final med = p.leky[j];
-              final medText = '${med.nazev} (${med.davkovani ?? ''}, ${med.kdy ?? ''})';
+              // Build the same formatted string that addMedication() uses, to keep
+              // addMedicationViaEnter in sync with what _parseMedicationInput expects.
+              final _medParts = <String>[];
+              if (med.davkovani != null) _medParts.add(med.davkovani!);
+              if (med.kdy != null) _medParts.add(med.kdy!);
+              final medText = _medParts.isEmpty
+                  ? med.nazev
+                  : '${med.nazev} (${_medParts.join(', ')})';
 
               if (i == 5 && j == 0) {
                  await participantEditor.addMedicationViaEnter(medText);
@@ -379,7 +391,8 @@ void main() {
               if (i == 2 && j == 0) {
                 await participantEditor.addRestrictionViaEnter(r.popis);
               } else if (i == 6 && j == 0) {
-                await participantEditor.addRestrictionViaTab('Alergie na m', 'Alergie na malířské látky (barvy, ředidla)');
+                // Milada is the FIRST participant with this latex allergy — no DB entry to Tab-complete yet.
+                // Autocomplete of this entry is tested via i==7 TabThenModify (Seifert, after Milada is saved).
                 await participantEditor.addRestriction(r);
               } else if (i == 7 && j == 0) {
                 await participantEditor.addRestrictionViaTabThenModify('Alergie na l', 'Alergie na latex (používat nitrilové rukavice)', r.popis);
@@ -400,9 +413,16 @@ void main() {
             await participantEditor.tapSubmit();
             await participantEditor.waitForFormReady();
 
+            await dbHelpers.waitForParticipantPersisted(
+              jmeno: p.jmeno,
+              prijmeni: p.prijmeni,
+            );
+
             // ✅ DB VERIFICATION (Immediate)
-            // verifyCompleteParticipant now checks bezinfekcnost/zpusobilost too
-            final verified = await dbHelpers.verifyCompleteParticipant(p);
+            // Use world.participants[i] — not the const dataset — to stay consistent
+            // with the tracker pattern. (At Phase 1 both are identical; this ensures
+            // we don’t silently diverge if a Phase 1 mutation is ever added.)
+            final verified = await dbHelpers.verifyCompleteParticipant(world.participants[i]);
             
             // Explicit sanity checks for our new test cases
             if (i == 2) { // P3 Jan Hus
@@ -420,6 +440,11 @@ void main() {
           await dbHelpers.verifyParticipantCount(15);
         });
 
+        // ── Phase 1 Boundary: world.verifyAll() ensures no data leakage after registration ──
+        await logger.step('Phase 1 Integrity Check (ExpectedWorldState)', () async {
+          await world.verifyAll(dbHelpers);
+        });
+
         // ============================================================
         // PHASE 2: Intake - Process Arrivals (All 15 Participants)
         // ============================================================
@@ -429,6 +454,22 @@ void main() {
           await dashboard.navigateToIntakeForm();
           await intake.waitForKey('IntakeForm_saveAndArrived_button');
         });
+
+        // Local helper: post-save verification common to all intake scenarios.
+        // Avoids duplicating the same 3-line wait+assert+ready block in every case.
+        Future<void> verifyIntakeSave(TestParticipant p, bool expectedArrived) async {
+          await dbHelpers.waitForArrivalStatusPersisted(
+            jmeno: p.jmeno,
+            prijmeni: p.prijmeni,
+            expectedArrived: expectedArrived,
+          );
+          await dbHelpers.verifyArrivalStatus(
+            jmeno: p.jmeno,
+            prijmeni: p.prijmeni,
+            expectedArrived: expectedArrived,
+          );
+          await intake.waitForFormReady();
+        }
 
         // Process all 15 participants with various scenarios
         for (int i = 0; i < jurskyParkParticipants.length; i++) {
@@ -443,15 +484,13 @@ void main() {
               case 1: // P2 Božena - Modify Note
                 await intake.modifyNote('Intake note: Arrived on time');
                 await intake.tapSaveAndArrived();
-                // Hard Gate: wait for persisted DB state, not static button key.
-                await dbHelpers.waitForArrivalStatusPersisted(
+                await dbHelpers.waitForNotePersisted(
                   jmeno: p.jmeno,
                   prijmeni: p.prijmeni,
-                  expectedArrived: true,
+                  expectedNote: 'Intake note',
                 );
-                await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: true);
                 await dbHelpers.verifyNote(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedNote: 'Intake note');
-                await intake.waitForFormReady();
+                await verifyIntakeSave(p, true);
                 break;
                 
               case 2: // P3 Jan Hus - Add Restriction during intake
@@ -460,25 +499,12 @@ void main() {
                 );
                 await intake.tapSaveAndArrived();
                 // Hard Gate: Jan Hus path is slower (restriction update + save).
-                await dbHelpers.waitForArrivalStatusPersisted(
-                  jmeno: p.jmeno,
-                  prijmeni: p.prijmeni,
-                  expectedArrived: true,
-                );
-                await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: true);
-                await intake.waitForFormReady();
+                await verifyIntakeSave(p, true);
                 break;
                 
               case 3: // P4 Tomáš - Save only (NOT marked arrived)
                 await intake.tapSave();
-                // Hard Gate: save-only must persist as not-arrived.
-                await dbHelpers.waitForArrivalStatusPersisted(
-                  jmeno: p.jmeno,
-                  prijmeni: p.prijmeni,
-                  expectedArrived: false,
-                );
-                await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: false);
-                await intake.waitForFormReady();
+                await verifyIntakeSave(p, false);
                 break;
                 
               case 6: // P7 Milada - Cancel then retry
@@ -487,25 +513,12 @@ void main() {
                 await intake.selectParticipant('${p.jmeno} ${p.prijmeni}');
                 await intake.tapSaveAndArrived();
                 // Hard Gate: wait for persisted DB state after retry save.
-                await dbHelpers.waitForArrivalStatusPersisted(
-                  jmeno: p.jmeno,
-                  prijmeni: p.prijmeni,
-                  expectedArrived: true,
-                );
-                await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: true);
-                await intake.waitForFormReady();
+                await verifyIntakeSave(p, true);
                 break;
                 
               default: // Basic flow
                 await intake.tapSaveAndArrived();
-                // Hard Gate: wait for persisted DB state, not static button key.
-                await dbHelpers.waitForArrivalStatusPersisted(
-                  jmeno: p.jmeno,
-                  prijmeni: p.prijmeni,
-                  expectedArrived: true,
-                );
-                await dbHelpers.verifyArrivalStatus(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedArrived: true);
-                await intake.waitForFormReady();
+                await verifyIntakeSave(p, true);
             }
           });
         }
@@ -660,6 +673,29 @@ void main() {
           await personMode.tapPrintButton();
           await personMode.confirmPrintSuccess();
 
+          final printTargetId = await dbHelpers.getParticipantId(
+            printTarget.jmeno,
+            printTarget.prijmeni,
+          );
+          await dbHelpers.waitForParticipantPrintedPersisted(
+            jmeno: printTarget.jmeno,
+            prijmeni: printTarget.prijmeni,
+            expected: true,
+          );
+          await dbHelpers.waitForAllRecordsPrintedPersisted(
+            participantId: printTargetId,
+            expected: true,
+          );
+          await dbHelpers.verifyParticipantPrinted(
+            printTarget.jmeno,
+            printTarget.prijmeni,
+            true,
+          );
+          await dbHelpers.verifyAllRecordsPrinted(printTargetId, true);
+
+          // Track print in world — Karel has been printed
+          world.markPrinted(0); // Index 0 = Karel Čapek
+
           // "Back to Center" uses popUntil(isFirst) → pops ALL routes to Dashboard
           await personMode.tap(personMode.findKey('PersonMode_backToCenter'));
           await dashboard.pumpAndSettle();
@@ -695,12 +731,24 @@ void main() {
             milada.jmeno,
             milada.prijmeni,
           );
+          await dbHelpers.waitForParticipantPrintedPersisted(
+            jmeno: milada.jmeno,
+            prijmeni: milada.prijmeni,
+            expected: true,
+          );
+          await dbHelpers.waitForAllRecordsPrintedPersisted(
+            participantId: miladaId,
+            expected: true,
+          );
           await dbHelpers.verifyParticipantPrinted(
             milada.jmeno,
             milada.prijmeni,
             true,
           );
           await dbHelpers.verifyAllRecordsPrinted(miladaId, true);
+
+          // Track print in world — Milada has been baseline-printed
+          world.markPrinted(6); // Index 6 = Milada Horáková
 
           await personMode.tap(personMode.findKey('PersonMode_backToCenter'));
           await printCenter.verifyPageShown();
@@ -727,8 +775,18 @@ void main() {
           await newRecord.createRecordFromTestData('${milada.jmeno} ${milada.prijmeni}', appendRecord);
           await newRecord.waitForFormReady();
 
-           final miladaId = await dbHelpers.getParticipantId(milada.jmeno, milada.prijmeni);
-          await dbHelpers.verifyRecords(participantId: miladaId, expectedRecords: [...milada.zaznamy, appendRecord]);
+          final miladaId = await dbHelpers.getParticipantId(milada.jmeno, milada.prijmeni);
+          final expectedRecordCount = world.participants[6].zaznamy.length + 1;
+          await dbHelpers.waitForRecordsCountPersisted(
+            participantId: miladaId,
+            expectedCount: expectedRecordCount,
+          );
+
+          // Track append record in world — Milada now has one extra record
+          world.addRecord(6, appendRecord); // Index 6 = Milada Horáková
+
+          // Use world.participants[6].zaznamy so the append record is included automatically
+          await dbHelpers.verifyRecords(participantId: miladaId, expectedRecords: world.participants[6].zaznamy);
         });
 
         // ============================================================
@@ -751,6 +809,15 @@ void main() {
             kafka.jmeno,
             kafka.prijmeni,
           );
+          await dbHelpers.waitForParticipantPrintedPersisted(
+            jmeno: kafka.jmeno,
+            prijmeni: kafka.prijmeni,
+            expected: true,
+          );
+          await dbHelpers.waitForAllRecordsPrintedPersisted(
+            participantId: kafkaId,
+            expected: true,
+          );
           await dbHelpers.verifyParticipantPrinted(
             kafka.jmeno,
             kafka.prijmeni,
@@ -771,9 +838,7 @@ void main() {
         await logger.step('Append Print: Milada Horáková', () async {
           await printCenter.tapPersonModeCard();
           await personMode.verifyPageShown();
-          
-          // Allow all animations and transitions to complete
-          await tester.pump(const Duration(milliseconds: 500));
+          await tester.pumpAndSettle();
           
           // Explicit wait to ensure participant list loads after navigation
           final listReady = await personMode.waitForKey(
@@ -800,6 +865,15 @@ void main() {
           final miladaId = await dbHelpers.getParticipantId(
             milada.jmeno,
             milada.prijmeni,
+          );
+          await dbHelpers.waitForParticipantPrintedPersisted(
+            jmeno: milada.jmeno,
+            prijmeni: milada.prijmeni,
+            expected: true,
+          );
+          await dbHelpers.waitForAllRecordsPrintedPersisted(
+            participantId: miladaId,
+            expected: true,
           );
           await dbHelpers.verifyParticipantPrinted(
             milada.jmeno,

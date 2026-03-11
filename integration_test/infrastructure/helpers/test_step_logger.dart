@@ -57,9 +57,12 @@ class TestStepLogger extends LogOutput {
         final firstError = _collectedErrors.first;
         debugPrint('\n❌❌❌ FINALIZATION FAILED: ${firstError.stepName} ❌❌❌');
         debugPrint('Collected ${_collectedErrors.length} errors in soft mode.');
+        if (firstError.phaseName != null) {
+          _currentPhase = firstError.phaseName;
+        }
         _flushBuffer(firstError.stepName, firstError.error, firstError.stack, firstError.bufferedLogs);
         _collectedErrors.clear(); // Clear after flushing
-        throw firstError.error; // Rethrow the original error
+        Error.throwWithStackTrace(firstError.error, firstError.stack);
       }
       AppLogger.l.i('✅ TestStepLogger soft mode finalized with no errors.');
     }
@@ -80,7 +83,12 @@ class TestStepLogger extends LogOutput {
     } catch (e, stack) {
       if (_softMode) {
         // In soft mode, collect the error and continue
-        _collectedErrors.add(_SoftError(name, e, stack, List.of(_buffer)));
+        _collectedErrors.add(
+          _SoftError(name, _currentPhase, e, stack, List.of(_buffer)),
+        );
+        debugPrint(
+          '⚠️ FIRST FAILURE CANDIDATE: step="$name" phase="${_currentPhase ?? 'n/a'}"',
+        );
         AppLogger.l.e('⚠️ [STEP FAILED - SOFT MODE] "$name" - Error collected.', error: e, stackTrace: stack);
         // Return a default value. This might need to be handled carefully by the caller
         // if T is non-nullable and there's no sensible default.
@@ -122,9 +130,10 @@ class TestStepLogger extends LogOutput {
 /// Private class to hold error details when in soft mode.
 class _SoftError {
   final String stepName;
+  final String? phaseName;
   final Object error;
   final StackTrace stack;
   final List<OutputEvent> bufferedLogs;
 
-  _SoftError(this.stepName, this.error, this.stack, this.bufferedLogs);
+  _SoftError(this.stepName, this.phaseName, this.error, this.stack, this.bufferedLogs);
 }
