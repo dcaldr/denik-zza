@@ -96,9 +96,6 @@ class IntakeController extends SafeChangeNotifier {
       return false;
     }
     if (selectedPerson != null) {
-        await _omezeniLogic.update();
-        await _lekLogic.update();
-
         final filePath = selectedPerson?.potvrzeniPath;
         if (filePath != null && filePath.isNotEmpty) {
           selectedPerson?.potvrzeniPath = filePath;
@@ -112,13 +109,21 @@ class IntakeController extends SafeChangeNotifier {
         bool success = false;
         // Distinguish between new and existing persons
         if (selectedPerson!.id == -1) {
-          // New person - use addOsoba
-          success = await DatabaseWrapper.getDatabase().addOsoba(selectedPerson!);
+          // New person: create first to get real ID, then patch logics before persisting
+          final newId = await DatabaseWrapper.getDatabase().addOsobaAndReturnId(selectedPerson!);
+          if (newId == null) return false;
+          selectedPerson!.id = newId;
+          _omezeniLogic.updateParticipantId(newId);
+          _lekLogic.updateParticipantId(newId);
+          success = true;
         } else {
           // Existing person - use updateParticipant
           final updateResult = await DatabaseWrapper.getDatabase().updateParticipant(osoba: selectedPerson!);
           success = updateResult > 0;
         }
+
+        await _omezeniLogic.update();
+        await _lekLogic.update();
         
         // If successful, automatically reset state for next person
         if (success) {
