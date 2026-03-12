@@ -189,7 +189,7 @@ void main() {
       ) async {
         await dashboard.tapCreateNewEvent();
         await eventEditor.enterEventName(title);
-        await eventEditor.enterDescription('E2E first-use scenario event');
+        await eventEditor.enterDescription('První použití – scénář E2E');
         await eventEditor.enterDates(
           DateTime.now().add(const Duration(days: 1)),
           DateTime.now().add(const Duration(days: 3)),
@@ -425,7 +425,7 @@ void main() {
           final newRecord = NewRecordRobot(tester);
           final personMode = PersonModeFlowRobot(tester);
           final dbHelpers = DbVerificationHelpers(DatabaseWrapper.getDatabase());
-          const eventName = 'E2E NewRecord Print Route';
+          const eventName = 'Tisk nového záznamu (E2E)';
           final p = jurskyParkParticipants.first;
 
           await _createEvent(tester, dashboard, eventEditor, eventName);
@@ -453,7 +453,7 @@ void main() {
           final dashboard = await _launchFreshApp(tester);
           final eventEditor = EventEditorRobot(tester);
           final eventDetail = EventDetailRobot(tester);
-          const eventName = 'E2E EventDetail Add Route';
+          const eventName = 'Přidání účastníka v detailu akce (E2E)';
 
           await _createEvent(tester, dashboard, eventEditor, eventName);
           await dashboard.tapEvent(eventName);
