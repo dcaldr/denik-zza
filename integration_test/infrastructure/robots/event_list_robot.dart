@@ -14,7 +14,8 @@ class EventListRobot extends BaseRobot {
 
   Future<void> verifyPageShown() async {
     await pumpAndSettle();
-    expect(find.text('Všechny akce'), findsOneWidget);
+    expect(find.text('Všechny akce'), findsOneWidget,
+      reason: 'EventList screen must show "Všechny akce" header — hints at missing Scaffold or wrong route');
   }
 
   Future<void> verifyEventPresent(String eventName) async {

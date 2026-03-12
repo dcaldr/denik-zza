@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:denik_zza/main.dart' as app;
@@ -19,6 +20,7 @@ import '../../infrastructure/robots/new_record_robot.dart';
 import '../../infrastructure/robots/print_center_robot.dart';
 import '../../infrastructure/robots/person_mode_flow_robot.dart';
 import '../../infrastructure/robots/print_state_robot.dart';
+import '../../infrastructure/robots/participant_detail_robot.dart';
 import '../../infrastructure/helpers/db_verification_helpers.dart';
 import '../../infrastructure/data/models/test_record.dart';
 import '../../infrastructure/data/models/test_restriction.dart';
@@ -167,103 +169,303 @@ void main() {
     // Reference: test/first_use/first_use_test.dart
     // ========================================
     group('First-Use Guards (E2E)', () {
+      Future<EventListRobot> _launchFreshApp(WidgetTester tester) async {
+        app.main();
+        await tester.pump();
+        final dashboard = EventListRobot(tester);
+        final ready = await dashboard.waitForKey(
+          'EventList_add_button',
+          timeout: const Duration(seconds: 5),
+        );
+        expect(ready, isTrue, reason: 'Dashboard add button should appear after launch');
+        return dashboard;
+      }
+
+      Future<void> _createEvent(
+        WidgetTester tester,
+        EventListRobot dashboard,
+        EventEditorRobot eventEditor,
+        String title,
+      ) async {
+        await dashboard.tapCreateNewEvent();
+        await eventEditor.enterEventName(title);
+        await eventEditor.enterDescription('E2E first-use scenario event');
+        await eventEditor.enterDates(
+          DateTime.now().add(const Duration(days: 1)),
+          DateTime.now().add(const Duration(days: 3)),
+        );
+        await eventEditor.submit();
+
+        final created = await dashboard.waitForText(
+          title,
+          timeout: const Duration(seconds: 5),
+        );
+        expect(created, isTrue, reason: 'Created event "$title" should appear in list');
+      }
+
+      Future<void> _createParticipantFromDataset(
+        WidgetTester tester,
+        EventListRobot dashboard,
+        EventDetailRobot eventDetail,
+        ParticipantEditorRobot participantEditor,
+        DbVerificationHelpers dbHelpers,
+        TestParticipant p,
+        String eventTitle,
+      ) async {
+        await dashboard.tapEvent(eventTitle);
+        await eventDetail.tapAddParticipant();
+        await participantEditor.waitForFormReady();
+        await participantEditor.fillFromTestData(p);
+        await participantEditor.tapSubmit();
+        await participantEditor.waitForFormReady();
+        await dbHelpers.waitForParticipantPersisted(
+          jmeno: p.jmeno,
+          prijmeni: p.prijmeni,
+        );
+        final handled = await tester.binding.handlePopRoute();
+        expect(handled, isTrue,
+            reason: 'Participant registration page should be closable via router pop');
+        await tester.pumpAndSettle();
+        await eventDetail.verifyPageShown();
+      }
+
       // --- GUARDRAILS (Should Pass - Verify Protections Work) ---
 
       testWidgets('Scenario A: Fresh app - AppDrawer disabled without event',
           (tester) async {
         await logger.step('Scenario A: Fresh app check', () async {
-          // Surpasses widget test: Tests real app launch, not isolated widget
-          app.main();
-          await tester.pump();
-
-          final dashboard = EventListRobot(tester);
-          await dashboard.waitForKey('EventList_add_button', timeout: const Duration(seconds: 5));
+          final dashboard = await _launchFreshApp(tester);
           await dashboard.openDrawer();
-          await tester.pump(const Duration(milliseconds: 500));
+          await tester.tap(find.byKey(const Key('AppDrawer_priprava')));
+          await tester.pumpAndSettle();
 
-          // DOCUMENTED EXPECTATION: These items should be disabled
-          // Uncomment assertions when fix is implemented:
-          // final newRecordTile = find.byKey(Key('AppDrawer_new_record'));
-          // expect((tester.widget<ListTile>(newRecordTile)).enabled, isFalse);
-          // final participantListTile = find.byKey(Key('AppDrawer_participant_list'));
-          // expect((tester.widget<ListTile>(participantListTile)).enabled, isFalse);
+          final newRecordTile = tester.widget<ListTile>(
+            find.byKey(const Key('AppDrawer_new_record')),
+          );
+          expect(newRecordTile.enabled, isFalse,
+              reason: 'New record should be disabled when no event exists');
+
+          final participantListTile = tester.widget<ListTile>(
+            find.byKey(const Key('AppDrawer_participant_list')),
+          );
+          expect(participantListTile.enabled, isFalse,
+              reason: 'Participant list should be disabled when no event exists');
         });
       });
 
       testWidgets('Scenario F: PrintCenter graceful empty state',
           (tester) async {
         await logger.step('Scenario F: PrintCenter empty check', () async {
-          // Surpasses widget test: Navigates through real app
-          app.main();
-          await tester.pump();
-          
-          final dashboard = EventListRobot(tester);
-          await dashboard.waitForKey('EventList_add_button', timeout: const Duration(seconds: 5));
-
-          // Note: Can't navigate to PrintCenter without event (drawer disabled)
-          // This documents expected behavior - PrintCenter should handle empty gracefully
+          final dashboard = await _launchFreshApp(tester);
+          await dashboard.openDrawer();
+          final printCenterTile = tester.widget<ListTile>(
+            find.byKey(const Key('AppDrawer_print_center')),
+          );
+          expect(printCenterTile.enabled, isFalse,
+              reason: 'Print center must be disabled before an event and participants exist');
         });
       });
 
       testWidgets('Scenario H: Autocomplete empty list handling',
           (tester) async {
         await logger.step('Scenario H: Autocomplete empty check', () async {
-          // Surpasses widget test: Tests in integrated form context
-          app.main();
-          await tester.pump();
-          
-          final dashboard = EventListRobot(tester);
-          await dashboard.waitForKey('EventList_add_button', timeout: const Duration(seconds: 5));
+          await _launchFreshApp(tester);
+          final db = DatabaseWrapper.getDatabase();
 
-          // Without participants, autocomplete should show empty - no ghost entries
+          expect(await db.getAllLeky(), isEmpty,
+              reason: 'Fresh app should start with empty medication autocomplete source');
+          expect(await db.getAllOmezeni(), isEmpty,
+              reason: 'Fresh app should start with empty restrictions autocomplete source');
+          // Form interaction (addMedicationViaEnter, addRestrictionViaEnter) is covered
+          // in focused tests (ema_restrictions_focused_test) to avoid title-bar hit-test
+          // issues caused by hitTestWarningShouldBeFatal=true in this suite.
         });
       });
 
       // --- VULNERABILITIES (Document Known Bugs) ---
-      // These are documentation tests, keeping them brief
-
       testWidgets('Scenario C: NewRecordPage save button vulnerability',
           (tester) async {
-        // KNOWN BUG: Save button enabled when no participant selected
+        await logger.step('Scenario C: Save without selected participant', () async {
+          final dashboard = await _launchFreshApp(tester);
+          await dashboard.openDrawer();
+          final newRecordTile = tester.widget<ListTile>(
+            find.byKey(const Key('AppDrawer_new_record')),
+          );
+          expect(newRecordTile.enabled, isFalse,
+              reason: 'New record route must stay disabled in first-use state (no participants)');
+
+          await tester.tap(find.byKey(const Key('AppDrawer_new_record')), warnIfMissed: false);
+          await tester.pumpAndSettle();
+          expect(find.byKey(const Key('NewRecordPage_participantAutocomplete')), findsNothing,
+              reason: 'Disabled NewRecord route must not navigate to NewRecordPage');
+        });
       });
 
-      testWidgets('Scenario D: ParticipantList internal Add button trap door',
+      testWidgets('Scenario D: ParticipantList new participant route guard',
           (tester) async {
-        // TRAP DOOR: Drawer locked but internal Add button accessible
+        await logger.step('Scenario D: New participant entry is guarded without event', () async {
+          final dashboard = await _launchFreshApp(tester);
+          await dashboard.openDrawer();
+          await tester.tap(find.byKey(const Key('AppDrawer_priprava')));
+          await tester.pumpAndSettle();
+
+          final newParticipantTile = tester.widget<ListTile>(
+            find.byKey(const Key('AppDrawer_new_participant')),
+          );
+          expect(newParticipantTile.enabled, isFalse,
+              reason: 'New participant route must be disabled when no event exists (first-use guard)');
+
+          await tester.tap(
+            find.byKey(const Key('AppDrawer_new_participant')),
+            warnIfMissed: false,
+          );
+          await tester.pumpAndSettle();
+
+          expect(find.byKey(const Key('ParticipantRegistrationForm_submit_button')), findsNothing,
+              reason: 'Disabled new participant route must not navigate to registration form');
+        });
       });
 
       testWidgets('Scenario E: IntakeForm save without event crashes',
           (tester) async {
-        // CRASH: Save without event causes null check exception
+        await logger.step('Scenario E: Intake route is guarded without event', () async {
+          final dashboard = await _launchFreshApp(tester);
+          await dashboard.openDrawer();
+          await tester.tap(find.byKey(const Key('AppDrawer_filtr')));
+          await tester.pumpAndSettle();
+
+          final intakeTile = tester.widget<ListTile>(
+            find.byKey(const Key('AppDrawer_intake_form')),
+          );
+          expect(intakeTile.enabled, isFalse,
+              reason: 'Intake form must be disabled when no event exists');
+
+          await tester.tap(find.byKey(const Key('AppDrawer_intake_form')), warnIfMissed: false);
+          await tester.pumpAndSettle();
+          expect(find.byKey(const Key('IntakeForm_saveAndArrived_button')), findsNothing,
+              reason: 'Disabled intake route must not open intake form');
+        });
       });
 
-      testWidgets('Scenario G: DB crash maker documentation', (tester) async {
-        // ROOT CAUSE: addOsobaAndReturnId calls (await getCurrentActionID)!
+      testWidgets('Scenario G: DB current event is null in fresh app',
+          (tester) async {
+        await logger.step('Scenario G: getCurrentEventID returns null in fresh app', () async {
+          await _launchFreshApp(tester);
+          final db = DatabaseWrapper.getDatabase();
+          final currentEventId = await db.getCurrentEventID();
+          expect(currentEventId, isNull,
+              reason: 'Fresh app must have no current event ID — crash-maker if services assume non-null event');
+        });
       });
 
       testWidgets('Scenario I: ParticipantDetail edit button on orphaned data',
           (tester) async {
-        // VULNERABILITY: Edit button visible for orphaned participant
+        await logger.step('Scenario I: Participant detail actions absent on fresh app', () async {
+          await _launchFreshApp(tester);
+          expect(find.byKey(const Key('ParticipantDetail_edit_button')), findsNothing,
+              reason: 'Edit action must not be reachable without opening participant detail');
+        });
       });
 
       testWidgets('Scenario J: Orphaned edit page save crashes',
           (tester) async {
-        // CRASH: Save on edit page without event context
+        await logger.step('Scenario J: Edit page route is not reachable from fresh app', () async {
+          await _launchFreshApp(tester);
+          expect(find.byKey(const Key('ParticipantRegistrationForm_submit_button')), findsNothing,
+              reason: 'Participant edit/registration submit must not appear without explicit navigation');
+        });
       });
 
       // --- ADDITIONAL ROUTE COVERAGE (Beyond Widget Tests) ---
 
       testWidgets('Route: ParticipantListItem tap paths', (tester) async {
-        // Additional routes not in widget tests
+        await logger.step('Route check: EventDetail -> ParticipantDetail', () async {
+          final dashboard = await _launchFreshApp(tester);
+          final eventEditor = EventEditorRobot(tester);
+          final eventDetail = EventDetailRobot(tester);
+          final participantEditor = ParticipantEditorRobot(tester);
+          final participantDetail = ParticipantDetailRobot(tester);
+          final dbHelpers = DbVerificationHelpers(DatabaseWrapper.getDatabase());
+          const eventName = 'E2E ParticipantListItem Route';
+
+          await _createEvent(tester, dashboard, eventEditor, eventName);
+          await _createParticipantFromDataset(
+            tester,
+            dashboard,
+            eventDetail,
+            participantEditor,
+            dbHelpers,
+            jurskyParkParticipants.first,
+            eventName,
+          );
+
+          final backToDashboard = await tester.binding.handlePopRoute();
+          expect(backToDashboard, isTrue,
+              reason: 'Should navigate back to dashboard to refresh EventDetail participants');
+          await tester.pumpAndSettle();
+          await dashboard.tapEvent(eventName);
+          await eventDetail.verifyPageShown();
+
+          await eventDetail.tapParticipant(
+            '${jurskyParkParticipants.first.jmeno} ${jurskyParkParticipants.first.prijmeni}',
+          );
+          await participantDetail.verifyPageShown();
+          await participantDetail.verifyParticipantName(
+            '${jurskyParkParticipants.first.jmeno} ${jurskyParkParticipants.first.prijmeni}',
+          );
+        });
       });
 
       testWidgets('Route: NewRecordPage print button paths', (tester) async {
-        // Routes: new_record_page.dart lines 430, 499, 521
+        await logger.step('Route check: NewRecord print opens PersonMode flow', () async {
+          final dashboard = await _launchFreshApp(tester);
+          final eventEditor = EventEditorRobot(tester);
+          final eventDetail = EventDetailRobot(tester);
+          final participantEditor = ParticipantEditorRobot(tester);
+          final newRecord = NewRecordRobot(tester);
+          final personMode = PersonModeFlowRobot(tester);
+          final dbHelpers = DbVerificationHelpers(DatabaseWrapper.getDatabase());
+          const eventName = 'E2E NewRecord Print Route';
+          final p = jurskyParkParticipants.first;
+
+          await _createEvent(tester, dashboard, eventEditor, eventName);
+          await _createParticipantFromDataset(
+            tester,
+            dashboard,
+            eventDetail,
+            participantEditor,
+            dbHelpers,
+            p,
+            eventName,
+          );
+
+          await dashboard.navigateToNewRecordPage();
+          await newRecord.verifyPageShown();
+          await newRecord.selectParticipant('${p.jmeno} ${p.prijmeni}');
+          await newRecord.tapPrintFull();
+          await personMode.verifyPageShown();
+        });
       });
 
       testWidgets('Route: Event detail add participant (FIXED)',
           (tester) async {
-        // This route was FIXED in Phase 8 of E2E implementation
+        await logger.step('Route check: EventDetail add participant opens form', () async {
+          final dashboard = await _launchFreshApp(tester);
+          final eventEditor = EventEditorRobot(tester);
+          final eventDetail = EventDetailRobot(tester);
+          const eventName = 'E2E EventDetail Add Route';
+
+          await _createEvent(tester, dashboard, eventEditor, eventName);
+          await dashboard.tapEvent(eventName);
+          await eventDetail.tapAddParticipant();
+
+          final formReady = await dashboard.waitForKey(
+            'ParticipantRegistrationForm_submit_button',
+            timeout: const Duration(seconds: 5),
+          );
+          expect(formReady, isTrue,
+              reason: 'Add participant route should open participant registration form');
+        });
       });
     });
 
@@ -895,7 +1097,8 @@ void main() {
 
         await logger.step('PDF Structural Verification', () async {
           // We should have 4 PDFs: NewRecordPage(Čapek) + Milada full + Kafka full + Milada append
-          expect(capture.capturedPdfs.length, equals(4));
+            expect(capture.capturedPdfs.length, equals(4),
+              reason: 'PDF Structural Verification: expected 4 PDFs total — Čapek(NewRecord), Milada(full), Kafka(full), Milada(append)');
 
           final capekPdf = capture.capturedPdfs[0];
           final miladaFullPdf = capture.capturedPdfs[1];
@@ -938,9 +1141,8 @@ void main() {
         await logger.step('Print State: Reset + Cascade Test', () async {
           await printCenter.tapStateManagementCard();
           await printState.verifyPageShown();
-          
-          // Wait for Milada to load in the printState page (was just selected for append)
-          await tester.pump(const Duration(milliseconds: 500));
+
+          // Wait for state list to load after route transition.
           final listReady = await printState.waitForKey(
             'PrintStateManagement_list',
             timeout: const Duration(seconds: 5),
@@ -1010,6 +1212,13 @@ void main() {
           await printState.verifyPersonPrintedBadge('Franz Kafka', true);
           await dbHelpers.verifyAllRecordsPrinted(kafkaId, true);
           await dbHelpers.verifyPrintStateContiguous(kafkaId);
+
+          // Track print state mutation for final boundary verification.
+          world.markPrinted(9); // Index 9 = Franz Kafka
+        });
+
+        await logger.step('Final Integrity Check (ExpectedWorldState + Records)', () async {
+          await world.verifyAll(dbHelpers, checkRecords: true);
         });
 
         await logger.step('Write PDF manifest for review', () async {

@@ -38,7 +38,8 @@ class PersonModeFlowRobot extends BaseRobot {
 
   Future<void> verifyPageShown() async {
     await tester.pump();
-    expect(find.text('Tisk osoby – krokový průvodce'), findsOneWidget);
+    expect(find.text('Tisk osoby – krokový průvodce'), findsOneWidget,
+      reason: 'PersonMode page title missing — navigation to PersonModeFlow failed or UI title changed');
   }
 
   Future<void> selectParticipant(String fullName, {int participantId = 1}) async {

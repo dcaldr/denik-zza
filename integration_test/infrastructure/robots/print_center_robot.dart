@@ -19,11 +19,16 @@ class PrintCenterRobot extends BaseRobot {
 
   Future<void> verifyPageShown() async {
     await pumpAndSettle();
-    expect(find.text('Tisk Centrum – Nové'), findsOneWidget);
-    expect(personModeCard, findsOneWidget);
-    expect(aggregatedCard, findsOneWidget);
-    expect(firstPrintCard, findsOneWidget);
-    expect(stateManagementCard, findsOneWidget);
+    expect(find.text('Tisk Centrum – Nové'), findsOneWidget,
+      reason: 'Print Center title missing — wrong page or navigation failed');
+    expect(personModeCard, findsOneWidget,
+      reason: 'PrintCenter_personMode card missing — check key in print_center.dart');
+    expect(aggregatedCard, findsOneWidget,
+      reason: 'PrintCenter_aggregated card missing — check key in print_center.dart');
+    expect(firstPrintCard, findsOneWidget,
+      reason: 'PrintCenter_firstPrint card missing — check key in print_center.dart');
+    expect(stateManagementCard, findsOneWidget,
+      reason: 'PrintCenter_stateManagement card missing — check key in print_center.dart');
   }
 
   Future<void> tapPersonModeCard() async {
