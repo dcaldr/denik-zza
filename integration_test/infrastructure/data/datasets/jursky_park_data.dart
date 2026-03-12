@@ -594,6 +594,23 @@ const jurskyParkParticipants = [
           hoursAgo: 15),
     ],
   ),
+
+  // 16. Jára Cimrman - 15, Male, added during Intake
+  TestParticipant(
+    jmeno: 'Jára',
+    prijmeni: 'Cimrman',
+    pohlavi: 1,
+    datumNarozeni: '2012-02-29', // Leap year
+    rodneCislo: '120229/0000',
+    adresa: 'Liptákov 1, Jizerské hory',
+    pojistovna: 'VZP',
+    zpusobilost: true,
+    bezinfekcnost: true,
+    omezeni: [
+      TestRestriction.alergie('Alergie na neúspěch a diletantství'),
+    ],
+    zaznamy: [], // Records can be added later if needed
+  ),
 ];
 
 /// Jurský Park event definition

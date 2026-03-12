@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'base_robot.dart';
 
@@ -24,6 +25,17 @@ class ParticipantDetailRobot extends BaseRobot {
   /// Verifies the page is shown with participant info section.
   Future<void> verifyPageShown() async {
     await pumpAndSettle();
+    final osobniUdajeCount = find.text('Osobní údaje').evaluate().length;
+    final hasDetailScroll =
+      findKey('ParticipantDetail_scroll_list').evaluate().isNotEmpty;
+    final hasEventDetailAdd =
+      findKey('EventDetail_addButton').evaluate().isNotEmpty;
+    final scaffoldCount = find.byType(Scaffold).evaluate().length;
+    print('[DIAG][ParticipantDetailRobot.verifyPageShown] '
+      'osobniUdajeCount=$osobniUdajeCount '
+      'hasDetailScroll=$hasDetailScroll '
+      'hasEventDetailAdd=$hasEventDetailAdd '
+      'scaffoldCount=$scaffoldCount');
     // The page title shows participant name, check for common section text
     expect(find.text('Osobní údaje'), findsOneWidget);
   }

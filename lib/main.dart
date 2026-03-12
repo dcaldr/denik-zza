@@ -1,5 +1,6 @@
 import 'package:denik_zza/design_system/zza_app_config.dart';
 import 'package:denik_zza/screens2/event_list.dart';
+import 'package:denik_zza/shared/navigation/app_route_observer.dart';
 import 'package:flutter/material.dart';
 import '../input/file_manager.dart';
 
@@ -23,6 +24,7 @@ class MyApp extends StatelessWidget {
       title: ZzaAppConfig.appTitle,
       theme: ZzaAppConfig.theme,
       builder: ZzaAppConfig.responsiveBuilder,
+      navigatorObservers: [appRouteObserver],
       home: EventList(),
       locale: ZzaAppConfig.supportedLocales.first,
       supportedLocales: ZzaAppConfig.supportedLocales,

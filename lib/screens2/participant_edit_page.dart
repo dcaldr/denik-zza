@@ -50,36 +50,39 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
   }
 
   Future<void> _handleSave() async {
+    print('[DIAG][ParticipantEditPage._handleSave] called '
+        'participantId=${widget.participant.id}');
     if (_validateFunction?.call() ?? false) {
-      if (_editedParticipant != null) {
-        try {
-          // Delegate to service so restrictions/meds are saved alongside
-          // basic participant data — fixes the silent-drop bug.
-          final result =
-              await _participantService.saveParticipantWithRestrictions(
-            osoba: _editedParticipant!,
-            omezeniLogic: _omezeniLogic,
-            lekLogic: _lekLogic,
-          );
+      try {
+        final participantToSave = _editedParticipant ?? widget.participant;
 
-          if (mounted) {
-            if (result != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Účastník byl úspěšně upraven')),
-              );
-              Navigator.of(context).pop(true);
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Chyba při ukládání změn')),
-              );
-            }
-          }
-        } catch (e) {
-          if (mounted) {
+        // Delegate to service so restrictions/meds are saved alongside
+        // basic participant data — fixes the silent-drop bug.
+        final result = await _participantService.saveParticipantWithRestrictions(
+          osoba: participantToSave,
+          omezeniLogic: _omezeniLogic,
+          lekLogic: _lekLogic,
+        );
+
+        print('[DIAG][ParticipantEditPage._handleSave] result=$result');
+        if (mounted) {
+          if (result != null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Chyba: $e')),
+              const SnackBar(content: Text('Účastník byl úspěšně upraven')),
+            );
+            print('[DIAG][ParticipantEditPage._handleSave] popping true');
+            Navigator.of(context).pop(true);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Chyba při ukládání změn')),
             );
           }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Chyba: $e')),
+          );
         }
       }
     } else {
@@ -143,6 +146,7 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
                           child: const Text('Zrušit'),
                         ),
                         FilledButton(
+                          key: const Key('ParticipantEditPage_submit_button'),
                           onPressed: _handleSave,
                           child: const Text('Uložit změny'),
                         ),

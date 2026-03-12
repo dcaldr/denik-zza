@@ -41,6 +41,11 @@ class ExpectedWorldState {
 
   // ==================== Mutation Methods ====================
 
+  /// Add a brand new participant dynamically mid-test (e.g. from Intake).
+  void addNewParticipant(TestParticipant p) {
+    participants.add(p.copyWith());
+  }
+
   /// Mark participant as arrived (prisel: true)
   void markArrived(int index) =>
       participants[index] = participants[index].copyWith(prisel: true);

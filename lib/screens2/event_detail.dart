@@ -1,7 +1,9 @@
 // FIXME: Right now it "just works" but needs to be heavily refactored
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
+import 'package:denik_zza/screens2/widgets/app_drawer.dart';
 import 'package:denik_zza/screens2/widgets/participant_list_item.dart';
+import 'package:denik_zza/shared/navigation/app_route_observer.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +24,7 @@ class ActionDetail extends StatefulWidget {
   State<ActionDetail> createState() => _ActionDetailState();
 }
 
-class _ActionDetailState extends State<ActionDetail> {
+class _ActionDetailState extends State<ActionDetail> with RouteAware {
   late final DatabaseInterface database;
   final Logger _logger = AppLogger.l;
 
@@ -43,10 +45,27 @@ class _ActionDetailState extends State<ActionDetail> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      appRouteObserver.subscribe(this, route);
+    }
+  }
+
+  @override
   void dispose() {
+    appRouteObserver.unsubscribe(this);
     _searchController.dispose();
     _searchFocusNode.dispose(); // Dispose focus node
     super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    // When returning from routes pushed above EventDetail (e.g. IntakeForm),
+    // refresh participant list so newly created entries are visible.
+    _loadParticipants();
   }
 
   /// Load participants once in initState, not in build()
@@ -55,6 +74,12 @@ class _ActionDetailState extends State<ActionDetail> {
     try {
       final participants =
           await database.getParticipantsByEvent(widget.action.idAkce!);
+      print('[DIAG][EventDetail._loadParticipants] eventId=${widget.action.idAkce} '
+          'loaded=${participants.length}');
+      for (final p in participants) {
+        print('[DIAG][EventDetail._loadParticipants] participant '
+            'id=${p.id} name=${p.jmeno} ${p.prijmeni} prisel=${p.prisel}');
+      }
       if (!mounted) return;
       setState(() {
         _allParticipants = participants;
@@ -76,16 +101,26 @@ class _ActionDetailState extends State<ActionDetail> {
     if (_searchQuery.isEmpty) return participants;
 
     final query = _searchQuery.toLowerCase();
-    return participants.where((person) {
+    final filtered = participants.where((person) {
+      final fullName = '${person.jmeno} ${person.prijmeni}'.toLowerCase();
       return person.jmeno.toLowerCase().contains(query) ||
           person.prijmeni.toLowerCase().contains(query) ||
+          fullName.contains(query) ||
           (person.cisloPojisteni?.toLowerCase().contains(query) ?? false);
     }).toList();
+    print('[DIAG][EventDetail._filterParticipants] query="$_searchQuery" '
+        'result=${filtered.length}/${participants.length}');
+    for (final p in filtered) {
+      print('[DIAG][EventDetail._filterParticipants] match '
+          'id=${p.id} name=${p.jmeno} ${p.prijmeni}');
+    }
+    return filtered;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: Text('Detail Akce: ${widget.action.nadpis}'),
         actions: const [

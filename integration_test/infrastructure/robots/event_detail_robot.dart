@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'base_robot.dart';
 
@@ -40,16 +41,24 @@ class EventDetailRobot extends BaseRobot {
   }
 
   Future<void> tapParticipantDetailButtonByIndex(int index) async {
-    await tap(findKey('ParticipantListItem_${index}_detailButton'));
+    final buttonKey = 'ParticipantListItem_${index}_detailButton';
+    final buttonFinder = findKey(buttonKey);
+    print('[DIAG][EventDetailRobot.tapParticipantDetailButtonByIndex] '
+      'before tap: key=$buttonKey count=${buttonFinder.evaluate().length}');
+    await tap(buttonFinder);
+    final hasDetailScroll =
+      findKey('ParticipantDetail_scroll_list').evaluate().isNotEmpty;
+    final hasEventDetailAdd =
+      findKey('EventDetail_addButton').evaluate().isNotEmpty;
+    final personalInfoTextCount = find.text('Osobní údaje').evaluate().length;
+    print('[DIAG][EventDetailRobot.tapParticipantDetailButtonByIndex] '
+      'after tap: hasParticipantDetailScroll=$hasDetailScroll '
+      'hasEventDetailAdd=$hasEventDetailAdd '
+      'osobniUdajeTextCount=$personalInfoTextCount');
   }
 
   Finder get addParticipantButton => findKey('EventDetail_addButton');
 
-  /// Taps the add participant button.
-  ///
-  /// Waits for button to appear first, then ensures visible and taps.
-  /// This handles cases where the button may not be ready immediately
-  /// after navigation or page rebuilds.
   Future<void> tapAddParticipant() async {
     // Wait for button to exist in widget tree
     final found = await waitForKey('EventDetail_addButton',
@@ -59,5 +68,46 @@ class EventDetailRobot extends BaseRobot {
     }
     await ensureVisible(addParticipantButton);
     await tap(addParticipantButton);
+  }
+
+  /// Searches for a participant by typing in the search field.
+  Future<void> searchParticipant(String query) async {
+    final searchField = findKey('EventDetail_searchField');
+    await waitForKey('EventDetail_searchField', timeout: const Duration(seconds: 3));
+    await enterText(searchField, query, settle: false);
+    // Wait until the search input reflects the query and one frame processes filtering.
+    await waitForFieldText('EventDetail_searchField', query);
+    await pump();
+  }
+
+  /// Clears the search field.
+  Future<void> clearSearch() async {
+    final searchField = findKey('EventDetail_searchField');
+    await enterText(searchField, '', settle: false);
+    await waitForFieldText('EventDetail_searchField', '');
+    await pump();
+  }
+
+  /// Verifies empty-state label rendered by EventDetail search filtering.
+  Future<void> verifyNoSearchResults(String query) async {
+    final label = 'Žádné výsledky pro "${query}"';
+    final found = await waitForText(label, timeout: const Duration(seconds: 3));
+    expect(found, isTrue, reason: 'Expected EventDetail empty state for query "$query"');
+  }
+
+  Future<void> waitForFieldText(String fieldKey, String expectedText,
+      {Duration timeout = const Duration(seconds: 3)}) async {
+    final fieldFinder = findKey(fieldKey);
+    final sw = Stopwatch()..start();
+    while (sw.elapsed < timeout) {
+      if (fieldFinder.evaluate().isNotEmpty) {
+        final widget = fieldFinder.evaluate().first.widget;
+        if (widget is TextField && (widget.controller?.text ?? '') == expectedText) {
+          return;
+        }
+      }
+      await pump(const Duration(milliseconds: 50));
+    }
+    throw TestFailure('Field "$fieldKey" did not reach expected text "$expectedText" within timeout');
   }
 }

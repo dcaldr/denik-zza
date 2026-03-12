@@ -67,15 +67,22 @@ class ParticipantEditorRobot extends BaseRobot {
   Finder get poznamkaInput =>
       findKey('ParticipantRegistrationForm_poznamka_input');
 
-  // Submit button (sticky footer in page mode)
-  // Submit button (sticky footer in page mode OR inline in form mode)
-  // Submit button (sticky footer in page mode OR inline in form mode)
+  // Submit button target depends on host page:
+  // - ParticipantEditPage uses its own footer button
+  // - Registration page/form use existing submit keys
   Finder get submitButton {
-    return find.byWidgetPredicate((widget) {
-      if (widget.key == const Key('ParticipantRegistrationForm_submit_button')) return true;
-      if (widget.key == const Key('ParticipantRegistrationPage_submit_button')) return true;
-      return false;
-    });
+    final editPageSubmit = findKey('ParticipantEditPage_submit_button');
+    if (editPageSubmit.evaluate().isNotEmpty) {
+      return editPageSubmit;
+    }
+
+    final registrationPageSubmit =
+        findKey('ParticipantRegistrationPage_submit_button');
+    if (registrationPageSubmit.evaluate().isNotEmpty) {
+      return registrationPageSubmit;
+    }
+
+    return findKey('ParticipantRegistrationForm_submit_button');
   }
 
   // RestrictionsWidget fields (added Phase 1)
@@ -99,11 +106,15 @@ class ParticipantEditorRobot extends BaseRobot {
       findKey('ParticipantRegistrationPage_refresh_button');
 
   /// Verifies the page is shown with key form elements.
-  Future<void> verifyPageShown() async {
+  /// If [checkSubmitButton] is false, it skips verifying the submit button 
+  /// (useful when the form is embedded in Intake and uses an external save button).
+  Future<void> verifyPageShown({bool checkSubmitButton = true}) async {
     await pumpAndSettle();
     expect(jmenoInput, findsOneWidget);
     expect(prijmeniInput, findsOneWidget);
-    expect(submitButton, findsOneWidget);
+    if (checkSubmitButton) {
+      expect(submitButton, findsOneWidget);
+    }
   }
 
   /// Enters first name and verifies it was set.
@@ -197,10 +208,13 @@ class ParticipantEditorRobot extends BaseRobot {
   ///
   /// Only taps if current value differs from desired value to avoid flipping twice.
   Future<void> setBezinfekcnost(bool value) async {
+    await ensureVisible(bezinfekcnostCheckbox);
+    await pump();
     final checkbox = tester.widget<CheckboxListTile>(bezinfekcnostCheckbox);
     final currentValue = checkbox.value ?? false;
 
     if (currentValue != value) {
+      await ensureVisible(bezinfekcnostCheckbox);
       await tap(bezinfekcnostCheckbox);
       await smartSettle();
 
@@ -216,10 +230,13 @@ class ParticipantEditorRobot extends BaseRobot {
   ///
   /// Only taps if current value differs from desired value to avoid flipping twice.
   Future<void> setZpusobilost(bool value) async {
+    await ensureVisible(zpusobilostCheckbox);
+    await pump();
     final checkbox = tester.widget<CheckboxListTile>(zpusobilostCheckbox);
     final currentValue = checkbox.value ?? false;
 
     if (currentValue != value) {
+      await ensureVisible(zpusobilostCheckbox);
       await tap(zpusobilostCheckbox);
       await smartSettle();
 
@@ -697,7 +714,9 @@ class ParticipantEditorRobot extends BaseRobot {
   Future<void> fillFromTestData(TestParticipant participant, {
     bool skipDatumNarozeni = false,
     bool skipPohlavi = false,
+    bool checkSubmitButton = true,
   }) async {
+    await verifyPageShown(checkSubmitButton: checkSubmitButton);
     await enterJmeno(participant.jmeno);
     await enterPrijmeni(participant.prijmeni);
     await enterCisloPojisteni(participant.rodneCislo);
@@ -730,6 +749,9 @@ class ParticipantEditorRobot extends BaseRobot {
       await enterEmailRodice(participant.emailRodice!);
     }
 
+    // Give embedded intake form one frame to complete any rebuilds before toggling checkboxes.
+    await pump();
+
     // Set checkboxes
     await setBezinfekcnost(participant.bezinfekcnost);
     await setZpusobilost(participant.zpusobilost);
@@ -757,7 +779,23 @@ class ParticipantEditorRobot extends BaseRobot {
   /// is ever changed back to a SnackBar, ensuring slow mode remains unblocked.
   Future<void> tapSubmit() async {
     await humanObservationDelay();
+    final hasEditPageSubmit =
+        findKey('ParticipantEditPage_submit_button').evaluate().isNotEmpty;
+    final hasRegistrationPageSubmit =
+        findKey('ParticipantRegistrationPage_submit_button')
+            .evaluate()
+            .isNotEmpty;
+    final hasRegistrationFormSubmit =
+        findKey('ParticipantRegistrationForm_submit_button')
+            .evaluate()
+            .isNotEmpty;
+    print('[DIAG][ParticipantEditorRobot.tapSubmit] '
+        'hasEditPageSubmit=$hasEditPageSubmit '
+        'hasRegistrationPageSubmit=$hasRegistrationPageSubmit '
+        'hasRegistrationFormSubmit=$hasRegistrationFormSubmit');
     await ensureVisible(submitButton);
+    print('[DIAG][ParticipantEditorRobot.tapSubmit] '
+        'targetCount=${submitButton.evaluate().length}');
     await tap(submitButton, settle: false);
     incrementRound();
   }

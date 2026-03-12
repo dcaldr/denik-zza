@@ -8,7 +8,9 @@ import 'package:integration_test/integration_test.dart';
 import 'package:denik_zza/main.dart' as app;
 import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 import 'package:denik_zza/services/system/system_interface.dart';
+import 'package:denik_zza/screens2/participant_detail.dart';
 
 import '../../infrastructure/data/datasets/jursky_park_data.dart';
 import '../../infrastructure/robots/event_list_robot.dart';
@@ -32,12 +34,14 @@ import '../../../test/utils/capturing_system_interface.dart';
 
 /// TRUE E2E TEST: Jurský Park Full Workflow
 ///
-/// This test creates ALL 15 Jurský Park participants via UI interactions,
+/// This test creates 15 initial Jurský Park participants in PreEvent,
+/// then creates 1 additional participant (Jára Cimrman) from Intake flow,
 /// following the complete user story workflow:
 ///   PreEvent → Intake → Event → Print → Append
 ///
 /// ## Key Requirements (NON-NEGOTIABLE):
-/// - ALL 15 participants created via UI (not database seeding)
+/// - 15 initial participants created via UI in PreEvent (not database seeding)
+/// - 1 participant created during Intake flow (new-person path)
 /// - COMPLETE data: name, RC, birth date, gender, insurance, address, phone
 /// - ALL medications where present
 /// - ALL restrictions where present
@@ -467,6 +471,76 @@ void main() {
               reason: 'Add participant route should open participant registration form');
         });
       });
+      testWidgets('Route: Search Filter and Event Isolation', (tester) async {
+        final dashboard = await _launchFreshApp(tester);
+        final eventEditor = EventEditorRobot(tester);
+        final eventDetail = EventDetailRobot(tester);
+        final participantEditor = ParticipantEditorRobot(tester);
+        final dbHelpers = DbVerificationHelpers(DatabaseWrapper.getDatabase());
+
+        const eventA = 'Letní tábor (E2E)';
+        const eventB = 'Zimní tábor (E2E)';
+        final pA = jurskyParkParticipants[0]; // Karel Čapek
+        final pB = jurskyParkParticipants[1]; // Božena Němcová
+
+        await logger.step('Event Isolation: Create Letní tábor & Participant A', () async {
+          await _createEvent(tester, dashboard, eventEditor, eventA);
+          await _createParticipantFromDataset(
+            tester, dashboard, eventDetail, participantEditor, dbHelpers, pA, eventA,
+          );
+          
+          final backToDashboard1 = await tester.binding.handlePopRoute();
+          expect(backToDashboard1, isTrue);
+          await tester.pumpAndSettle();
+        });
+
+        await logger.step('Event Isolation: Create Zimní tábor & Participant B', () async {
+          await _createEvent(tester, dashboard, eventEditor, eventB);
+          await _createParticipantFromDataset(
+            tester, dashboard, eventDetail, participantEditor, dbHelpers, pB, eventB,
+          );
+
+          final backToDashboard2 = await tester.binding.handlePopRoute();
+          expect(backToDashboard2, isTrue);
+          await tester.pumpAndSettle();
+        });
+
+        await logger.step('Event Isolation: Verify participants in Event A', () async {
+          await dashboard.tapEvent(eventA);
+          await eventDetail.verifyPageShown();
+          
+          await eventDetail.verifyParticipantPresent('${pA.jmeno} ${pA.prijmeni}');
+          expect(find.text('${pB.jmeno} ${pB.prijmeni}'), findsNothing, 
+            reason: 'Participant B should not be listed in Event A');
+        });
+
+        await logger.step('Search Filter: Verify filtering in Event A', () async {
+          await eventDetail.searchParticipant(pA.jmeno);
+          await eventDetail.verifyParticipantPresent('${pA.jmeno} ${pA.prijmeni}');
+          
+          const missingQuery = 'Gibberish123XYZ';
+          await eventDetail.searchParticipant(missingQuery);
+          expect(find.text('${pA.jmeno} ${pA.prijmeni}'), findsNothing, 
+            reason: 'Empty state should hide participants');
+          await eventDetail.verifyNoSearchResults(missingQuery);
+          
+          await eventDetail.clearSearch();
+          await eventDetail.verifyParticipantPresent('${pA.jmeno} ${pA.prijmeni}');
+        });
+
+        await logger.step('Event Isolation: Verify participants in Event B', () async {
+          final backToDashboard3 = await tester.binding.handlePopRoute();
+          expect(backToDashboard3, isTrue);
+          await tester.pumpAndSettle();
+
+          await dashboard.tapEvent(eventB);
+          await eventDetail.verifyPageShown();
+
+          await eventDetail.verifyParticipantPresent('${pB.jmeno} ${pB.prijmeni}');
+          expect(find.text('${pA.jmeno} ${pA.prijmeni}'), findsNothing, 
+            reason: 'Participant A should not be listed in Event B');
+        });
+      });
     });
 
     // ========================================
@@ -474,6 +548,12 @@ void main() {
     // All phases in one test for data persistence
     // ========================================
     group('Complete Workflow', () {
+      setUp(() async {
+        await ModeCoordinator.setIntegrationTestMode(
+          testName: 'jursky_park_complete_workflow',
+        );
+      });
+
       testWidgets('Full Jurský Park E2E: Create → Intake → Records → Append',
           (tester) async {
         
@@ -482,6 +562,7 @@ void main() {
         final eventEditor = EventEditorRobot(tester);
         final eventDetail = EventDetailRobot(tester);
         final participantEditor = ParticipantEditorRobot(tester);
+        final participantDetail = ParticipantDetailRobot(tester);
         final intake = IntakeRobot(tester);
         final newRecord = NewRecordRobot(tester);
         final printCenter = PrintCenterRobot(tester);
@@ -489,11 +570,13 @@ void main() {
         final printState = PrintStateRobot(tester);
         final db = DatabaseWrapper.getDatabase();
         final dbHelpers = DbVerificationHelpers(db);
-        final world = ExpectedWorldState(jurskyParkParticipants);
+        final world = ExpectedWorldState(jurskyParkParticipants.sublist(0, 15));
+        int? jaraWorldIndex;
+        const int jaraDatasetIndex = 15;
+        const int jaraIntakePosition = 8; // Not first/last in intake processing order
 
-        // Enable soft mode to collect all failures throughout the E2E flow
-        // instead of stopping at the first failing step.
-        logger.enableSoftMode();
+        // Soft mode disabled: fail-fast on first issue for diagnosis.
+        // logger.enableSoftMode();
 
         // ============================================================
         // PHASE 1: PreEvent - Create Event & Participants
@@ -540,8 +623,8 @@ void main() {
 
 
 
-        // CREATE ALL 15 PARTICIPANTS
-        for (int i = 0; i < jurskyParkParticipants.length; i++) {
+        // CREATE ALL 15 INITIAL PARTICIPANTS (Skip the 16th, Jára Cimrman, who is created in Intake)
+        for (int i = 0; i < jurskyParkParticipants.length - 1; i++) {
           final p = jurskyParkParticipants[i];
           
           await logger.step('Add Participant ${i + 1}/15: ${p.jmeno} ${p.prijmeni}', () async {
@@ -648,11 +731,19 @@ void main() {
         });
 
         // ============================================================
-        // PHASE 2: Intake - Process Arrivals (All 15 Participants)
+        // PHASE 2: Intake - Process Arrivals (16 participants total)
         // ============================================================
         logger.section('PHASE 2: Intake - Process Arrivals');
 
         await logger.step('Navigate to Intake', () async {
+          // Phase 1 ends on ParticipantRegistrationPage (form clears in-place after each
+          // tapSubmit, never pops). A real user would press Back before switching to Intake.
+          // Pop back to EventDetail so ensureDrawerAvailable() finds the right drawer.
+          final popped = await tester.binding.handlePopRoute();
+          expect(popped, isTrue, reason: 'Should be able to pop back from ParticipantRegistrationPage to EventDetail');
+          await tester.pumpAndSettle();
+          await eventDetail.verifyPageShown();
+
           await dashboard.navigateToIntakeForm();
           await intake.waitForKey('IntakeForm_saveAndArrived_button');
         });
@@ -673,12 +764,62 @@ void main() {
           await intake.waitForFormReady();
         }
 
-        // Process all 15 participants with various scenarios
-        for (int i = 0; i < jurskyParkParticipants.length; i++) {
+        Future<void> fillParticipantInIntakeForm(TestParticipant p) async {
+          await participantEditor.fillFromTestData(
+            p,
+            skipDatumNarozeni: false,
+            skipPohlavi: false,
+            checkSubmitButton: false,
+          );
+          for (final med in p.leky) {
+            await participantEditor.addMedication(med);
+          }
+          for (final r in p.omezeni) {
+            await participantEditor.addRestriction(r);
+          }
+        }
+
+        final intakeOrder = List<int>.generate(
+          jurskyParkParticipants.length,
+          (idx) => idx,
+        )
+          ..remove(jaraDatasetIndex)
+          ..insert(jaraIntakePosition, jaraDatasetIndex);
+
+        // Process all 16 participants with various scenarios
+        for (int turn = 0; turn < intakeOrder.length; turn++) {
+          final i = intakeOrder[turn];
           final p = jurskyParkParticipants[i];
           
-          await logger.step('Intake ${i + 1}/15: ${p.jmeno} ${p.prijmeni}', () async {
-            // Always select participant first
+          await logger.step('Intake ${turn + 1}/${jurskyParkParticipants.length}: ${p.jmeno} ${p.prijmeni}', () async {
+            
+            if (i == jaraDatasetIndex) { // Jára Cimrman - Create during Intake
+               // --- TEST CANCEL FLOW ---
+               await fillParticipantInIntakeForm(p);
+               
+               await intake.tapCancel();
+               await intake.waitForFormReady();
+               
+               // Verify DB didn't save anything
+               await dbHelpers.verifyParticipantDoesNotExist(jmeno: p.jmeno, prijmeni: p.prijmeni);
+
+               // --- NOW CREATE FOR REAL ---
+               await fillParticipantInIntakeForm(p);
+               
+               await intake.tapSaveAndArrived();
+               
+               await dbHelpers.waitForParticipantPersisted(jmeno: p.jmeno, prijmeni: p.prijmeni);
+               await dbHelpers.verifyCompleteParticipant(p.copyWith(prisel: true));
+               await verifyIntakeSave(p, true);
+               
+               // Update ExpectedWorldState so subsequent checks pass
+               world.addNewParticipant(p);
+               jaraWorldIndex = world.participants.length - 1;
+               world.markArrived(jaraWorldIndex!);
+               return; // Skip the rest of the loop for this participant
+            }
+
+            // Always select existing participant first
             await intake.selectParticipant('${p.jmeno} ${p.prijmeni}');
             
             // Different scenarios based on participant index
@@ -726,8 +867,8 @@ void main() {
         }
 
         await logger.step('Verify Arrived Count', () async {
-          // 14 arrived (P4 Tomáš used save-only)
-          await dbHelpers.verifyArrivedCount(14);
+          // 15 arrived (P4 Tomáš used save-only, all others arrived incl. Jára)
+          await dbHelpers.verifyArrivedCount(15);
         });
 
         // ── Phase 2 Boundary: declare expected mutations ──
@@ -747,6 +888,162 @@ void main() {
           );
 
           await world.verifyAll(dbHelpers);
+        });
+
+        // ============================================================
+        // PHASE 2.5: JÁRA CIMRMAN EDIT FLOW
+        // ============================================================
+        logger.section('PHASE 2.5: JÁRA CIMRMAN EDIT FLOW');
+        
+        await logger.step('Navigate to Jára Cimrman Detail and Edit', () async {
+          final jara = jurskyParkParticipants[15];
+          expect(jaraWorldIndex, isNotNull,
+              reason: 'Jára should be added to ExpectedWorldState during Phase 2 intake');
+
+          // DEBUG: snapshot the widget tree BEFORE the pop
+          final hasIntakeBtn  = find.byKey(const Key('IntakeForm_saveAndArrived_button')).evaluate().isNotEmpty;
+          final hasDetailBtn  = find.byKey(const Key('EventDetail_addButton')).evaluate().isNotEmpty;
+          final hasListBtn    = find.byKey(const Key('EventList_add_button')).evaluate().isNotEmpty;
+          final hasRegForm    = find.byKey(const Key('ParticipantRegistrationForm_jmeno_input')).evaluate().isNotEmpty;
+          debugPrint('[DEBUG Phase2.5] BEFORE pop: hasIntakeForm=$hasIntakeBtn hasEventDetail=$hasDetailBtn hasEventList=$hasListBtn hasParticipantRegistration=$hasRegForm');
+          debugPrint('[DEBUG Phase2.5] Scaffolds on tree: ${find.byType(Scaffold).evaluate().length}');
+          for (final el in find.byType(Scaffold).evaluate()) {
+            final w = el.widget as Scaffold;
+            debugPrint('[DEBUG Phase2.5]   Scaffold: drawer=${w.drawer != null} appBar=${w.appBar != null}');
+          }
+
+          // Navigation stack after Phase 2:
+          //   EventList → EventDetail → NewIntakeFormImproved
+          // EventDetail now has a drawer, so ensureDrawerAvailable() no longer pops it.
+          // A single pop brings us back to EventDetail.
+          final handled = await tester.binding.handlePopRoute();
+          expect(handled, isTrue, reason: 'IntakeForm should be closable via pop');
+          await tester.pumpAndSettle();
+
+          // DEBUG: snapshot the widget tree AFTER the pop
+          final hasIntakeBtn2  = find.byKey(const Key('IntakeForm_saveAndArrived_button')).evaluate().isNotEmpty;
+          final hasDetailBtn2  = find.byKey(const Key('EventDetail_addButton')).evaluate().isNotEmpty;
+          final hasListBtn2    = find.byKey(const Key('EventList_add_button')).evaluate().isNotEmpty;
+          final hasRegForm2    = find.byKey(const Key('ParticipantRegistrationForm_jmeno_input')).evaluate().isNotEmpty;
+          debugPrint('[DEBUG Phase2.5] AFTER pop: hasIntakeForm=$hasIntakeBtn2 hasEventDetail=$hasDetailBtn2 hasEventList=$hasListBtn2 hasParticipantRegistration=$hasRegForm2');
+          debugPrint('[DEBUG Phase2.5] Scaffolds on tree: ${find.byType(Scaffold).evaluate().length}');
+          for (final el in find.byType(Scaffold).evaluate()) {
+            final w = el.widget as Scaffold;
+            debugPrint('[DEBUG Phase2.5]   Scaffold: drawer=${w.drawer != null} appBar=${w.appBar != null}');
+          }
+
+          await eventDetail.verifyPageShown();
+
+            // DIAG: prove DB truth before UI search truth
+            final participantsInCurrentEvent =
+              await db.getParticipantsByCurrentEvent();
+            debugPrint('[DIAG Phase2.5] DB getParticipantsByCurrentEvent count: '
+              '${participantsInCurrentEvent.length}');
+            for (final p in participantsInCurrentEvent) {
+            debugPrint('[DIAG Phase2.5] DB participant: '
+              'id=${p.id} name=${p.jmeno} ${p.prijmeni} prisel=${p.prisel}');
+            }
+            final jaraInDb = participantsInCurrentEvent.where((p) =>
+              p.jmeno == jara.jmeno && p.prijmeni == jara.prijmeni);
+            debugPrint('[DIAG Phase2.5] Jara in DB before search: '
+              '${jaraInDb.isNotEmpty}');
+
+          // Find Jára Cimrman and navigate to his detail
+          await eventDetail.searchParticipant('${jara.jmeno} ${jara.prijmeni}');
+          final hasFilteredDetailButton = await eventDetail.waitForKey(
+            'ParticipantListItem_0_detailButton',
+            timeout: const Duration(seconds: 8),
+          );
+          if (!hasFilteredDetailButton) {
+            final participantItemCount =
+                find.byKey(const Key('ParticipantListItem_0')).evaluate().length;
+            debugPrint('[DEBUG Phase2.5] Missing ParticipantListItem_0_detailButton after search for Jara');
+            debugPrint('[DEBUG Phase2.5] ParticipantListItem_0 count: $participantItemCount');
+            debugPrint('[DEBUG Phase2.5] search query used: ${jara.jmeno} ${jara.prijmeni}');
+          }
+          expect(hasFilteredDetailButton, isTrue,
+              reason:
+                  'Filtered participant row should render with ParticipantListItem_0_detailButton for Jára');
+          
+          // DETAILED LOGGING: Before tap
+          debugPrint('[DETAILED Phase2.5] BEFORE TAP: Widget tree snapshot');
+          final allKeysBeforeTap = find.byType(Text).evaluate().toList();
+          debugPrint('[DETAILED Phase2.5] All Text widgets before tap: ${allKeysBeforeTap.length}');
+          for (final widget in allKeysBeforeTap.take(10)) {
+            final t = widget.widget as Text;
+            debugPrint('[DETAILED Phase2.5]   Text: "${t.data}"');
+          }
+          final scaffoldCountBefore = find.byType(Scaffold).evaluate().length;
+          final routesBeforeTap = 
+            find.byType(MaterialPageRoute).evaluate().length;
+          debugPrint('[DETAILED Phase2.5] Scaffolds before: $scaffoldCountBefore');
+          debugPrint('[DETAILED Phase2.5] MaterialPageRoutes before: $routesBeforeTap');
+          
+          await eventDetail.tapParticipantDetailButtonByIndex(0);
+          
+          // DETAILED LOGGING: After tap, before settle
+          debugPrint('[DETAILED Phase2.5] AFTER TAP (before settle): Widget tree snapshot');
+          final scaffoldCountAfterTap = find.byType(Scaffold).evaluate().length;
+          final routesAfterTap = 
+            find.byType(MaterialPageRoute).evaluate().length;
+          debugPrint('[DETAILED Phase2.5] Scaffolds after tap: $scaffoldCountAfterTap');
+          debugPrint('[DETAILED Phase2.5] MaterialPageRoutes after tap: $routesAfterTap');
+          final allKeysAfterTap = find.byType(Text).evaluate().toList();
+          debugPrint('[DETAILED Phase2.5] Text widgets after tap: ${allKeysAfterTap.length}');
+          
+          await tester.pumpAndSettle();
+          
+          // DETAILED LOGGING: After settle
+          debugPrint('[DETAILED Phase2.5] AFTER SETTLE: Widget tree snapshot');
+          final scaffoldCountAfterSettle = find.byType(Scaffold).evaluate().length;
+          final participantDetailPageCount =
+            find.byType(ParticipantDetailPage).evaluate().length;
+          final osobniUdajeBeforeVerify =
+            find.text('Osobní údaje').evaluate().length;
+          final jaraNameBefore = 
+            find.text('Jára Cimrman').evaluate().length;
+          debugPrint('[DETAILED Phase2.5] Scaffolds after settle: $scaffoldCountAfterSettle');
+          debugPrint('[DETAILED Phase2.5] ParticipantDetailPage widgets: $participantDetailPageCount');
+          debugPrint('[DETAILED Phase2.5] "Osobní údaje" text found: $osobniUdajeBeforeVerify');
+          debugPrint('[DETAILED Phase2.5] "Jára Cimrman" text found: $jaraNameBefore');
+          
+          final allKeysAfterSettle = find.byType(Text).evaluate().toList();
+          debugPrint('[DETAILED Phase2.5] All Text widgets after settle: ${allKeysAfterSettle.length}');
+          for (final widget in allKeysAfterSettle.skip(0).take(20)) {
+            final t = widget.widget as Text;
+            debugPrint('[DETAILED Phase2.5]   Text: "${t.data}"');
+          }
+          
+          await participantDetail.verifyPageShown();
+          await participantDetail.verifyParticipantName('${jara.jmeno} ${jara.prijmeni}');
+          
+          // Tap Edit
+          await participantDetail.tapEdit(); 
+          
+          await participantEditor.waitForFormReady();
+          
+          // Add a new restriction
+          final newRestriction = TestRestriction.omezeni('Dopsané omezení po editaci');
+          await participantEditor.addRestriction(newRestriction);
+          await participantEditor.tapSubmit();
+          
+          await participantDetail.verifyPageShown();
+          await participantDetail.verifyParticipantName('${jara.jmeno} ${jara.prijmeni}');
+          await dbHelpers.waitForParticipantPersisted(jmeno: jara.jmeno, prijmeni: jara.prijmeni);
+
+          // Update ExpectedWorldState
+          world.addRestriction(jaraWorldIndex!, newRestriction);
+          
+          // Verify
+          final pId = await dbHelpers.getParticipantId(jara.jmeno, jara.prijmeni);
+          final rList = await db.getOmezeniByParticipantID(pId);
+          expect(rList.any((r) => r.omezeni == newRestriction.popis), isTrue, 
+             reason: 'New restriction should be saved to DB');
+
+          // Pop back to EventDetail
+          final backToDetail = await tester.binding.handlePopRoute();
+          expect(backToDetail, isTrue, reason: 'Edit form should be closable via pop');
+          await tester.pumpAndSettle();
         });
 
         // ============================================================
@@ -1251,6 +1548,24 @@ void main() {
         // FINAL SUMMARY
         // ============================================================
         logger.section('✅✅✅ FULL E2E WORKFLOW COMPLETE ✅✅✅');
+        
+        // Database Sanity Check: Verify no orphaned FK keys (-1)
+        await logger.step('Database Sanity: Verify no orphaned FK=-1 keys', () async {
+          // Check restrictions for orphaned idOsoby
+          final allRestrictions = await db.getAllOmezeni();
+          final orphanedRestrictions = allRestrictions.where((r) => r.idOsoby == -1).toList();
+          expect(orphanedRestrictions, isEmpty,
+              reason: 'Found ${orphanedRestrictions.length} orphaned restrictions with idOsoby=-1');
+          
+          // Check medications for orphaned idOsoby
+          final allMeds = await db.getAllLeky();
+          final orphanedMeds = allMeds.where((m) => m.idOsoby == -1).toList();
+          expect(orphanedMeds, isEmpty,
+              reason: 'Found ${orphanedMeds.length} orphaned medications with idOsoby=-1');
+          
+          // Summary
+          AppLogger.l.i('✅ Database integrity verified: 0 orphaned FKs found');
+        });
         
         // Flush and rethrow any errors collected during the soft-mode run
         logger.finalize();

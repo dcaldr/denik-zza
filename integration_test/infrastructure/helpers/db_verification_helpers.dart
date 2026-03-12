@@ -161,6 +161,19 @@ class DbVerificationHelpers {
     return p;
   }
 
+  /// Verifies participant does NOT exist in the database.
+  Future<void> verifyParticipantDoesNotExist({
+    required String jmeno,
+    required String prijmeni,
+  }) async {
+    final participants = await db.getParticipantsByCurrentEvent();
+    final found = participants.where(
+      (p) => p.jmeno == jmeno && p.prijmeni == prijmeni,
+    );
+    expect(found.isEmpty, isTrue,
+        reason: 'Participant "$jmeno $prijmeni" should NOT exist in database');
+  }
+
   // ==================== MEDICATION VERIFICATION ====================
 
   /// Verifies medications for a participant.
