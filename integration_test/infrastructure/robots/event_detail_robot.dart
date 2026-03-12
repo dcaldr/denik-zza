@@ -43,18 +43,7 @@ class EventDetailRobot extends BaseRobot {
   Future<void> tapParticipantDetailButtonByIndex(int index) async {
     final buttonKey = 'ParticipantListItem_${index}_detailButton';
     final buttonFinder = findKey(buttonKey);
-    print('[DIAG][EventDetailRobot.tapParticipantDetailButtonByIndex] '
-      'before tap: key=$buttonKey count=${buttonFinder.evaluate().length}');
     await tap(buttonFinder);
-    final hasDetailScroll =
-      findKey('ParticipantDetail_scroll_list').evaluate().isNotEmpty;
-    final hasEventDetailAdd =
-      findKey('EventDetail_addButton').evaluate().isNotEmpty;
-    final personalInfoTextCount = find.text('Osobní údaje').evaluate().length;
-    print('[DIAG][EventDetailRobot.tapParticipantDetailButtonByIndex] '
-      'after tap: hasParticipantDetailScroll=$hasDetailScroll '
-      'hasEventDetailAdd=$hasEventDetailAdd '
-      'osobniUdajeTextCount=$personalInfoTextCount');
   }
 
   Finder get addParticipantButton => findKey('EventDetail_addButton');
@@ -90,7 +79,7 @@ class EventDetailRobot extends BaseRobot {
 
   /// Verifies empty-state label rendered by EventDetail search filtering.
   Future<void> verifyNoSearchResults(String query) async {
-    final label = 'Žádné výsledky pro "${query}"';
+    final label = 'Žádné výsledky pro "$query"';
     final found = await waitForText(label, timeout: const Duration(seconds: 3));
     expect(found, isTrue, reason: 'Expected EventDetail empty state for query "$query"');
   }

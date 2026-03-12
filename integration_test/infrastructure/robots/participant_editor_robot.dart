@@ -597,7 +597,7 @@ class ParticipantEditorRobot extends BaseRobot {
       final currentText = fieldAfterEnter.controller?.text ?? '';
       if (currentText.trim().isEmpty) {
         await tester.enterText(restrictionInput, ownText);
-        await pump(const Duration(milliseconds: 200));
+        await pump();
       }
       await ensureVisible(restrictionAddButton);
       await tap(restrictionAddButton);
@@ -779,23 +779,7 @@ class ParticipantEditorRobot extends BaseRobot {
   /// is ever changed back to a SnackBar, ensuring slow mode remains unblocked.
   Future<void> tapSubmit() async {
     await humanObservationDelay();
-    final hasEditPageSubmit =
-        findKey('ParticipantEditPage_submit_button').evaluate().isNotEmpty;
-    final hasRegistrationPageSubmit =
-        findKey('ParticipantRegistrationPage_submit_button')
-            .evaluate()
-            .isNotEmpty;
-    final hasRegistrationFormSubmit =
-        findKey('ParticipantRegistrationForm_submit_button')
-            .evaluate()
-            .isNotEmpty;
-    print('[DIAG][ParticipantEditorRobot.tapSubmit] '
-        'hasEditPageSubmit=$hasEditPageSubmit '
-        'hasRegistrationPageSubmit=$hasRegistrationPageSubmit '
-        'hasRegistrationFormSubmit=$hasRegistrationFormSubmit');
     await ensureVisible(submitButton);
-    print('[DIAG][ParticipantEditorRobot.tapSubmit] '
-        'targetCount=${submitButton.evaluate().length}');
     await tap(submitButton, settle: false);
     incrementRound();
   }

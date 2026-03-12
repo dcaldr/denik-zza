@@ -105,6 +105,35 @@ class IntakeRobot extends BaseRobot {
     await enterText(findKey('ParticipantRegistrationForm_poznamka_input'), note);
   }
 
+  /// Types a name into the intake search field to exercise the "new person" path.
+  ///
+  /// Used when a camp leader looks up someone's name but gets no autocomplete
+  /// match because the person doesn't exist yet. With no match selected, the
+  /// form stays in new-person mode (controller keeps id=-1).
+  ///
+  /// Call this BEFORE filling the intake form for participants not yet in
+  /// the database. [fullName] format: "Jméno Příjmení" (e.g., "Jára Cimrman")
+  Future<void> searchForNewPerson(String fullName) async {
+    final searchReady = await waitForKey(
+      'IntakeForm_personSearch_input',
+      timeout: const Duration(seconds: 5),
+    );
+    if (!searchReady) {
+      throw StateError('IntakeRobot: Search field not found within timeout');
+    }
+
+    // Type the full name — no autocomplete match will appear for a new person.
+    await enterText(personSearchInput, fullName, settle: false);
+      await smartSettle();
+
+    // Verify we're still on the intake form (no navigation / selection happened).
+    final formStillActive =
+        findKey('IntakeForm_saveAndArrived_button').evaluate().isNotEmpty;
+    expect(formStillActive, isTrue,
+        reason: 'Intake form should still be active after typing new person name '
+            '(no autocomplete item should have been selected for "$fullName")');
+  }
+
   /// Waits for form to be ready for input after cancel.
   ///
   /// Strictly waits for the personSearch_input field to be completely cleared.

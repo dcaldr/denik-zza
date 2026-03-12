@@ -112,14 +112,9 @@ class IntakeController extends SafeChangeNotifier {
           // New person: create first to get real ID, then patch logics before persisting
           final newId = await DatabaseWrapper.getDatabase().addOsobaAndReturnId(selectedPerson!);
           if (newId == null) {
-            print('[DIAG][IntakeController.saveData] addOsobaAndReturnId returned null '
-                'for ${selectedPerson!.jmeno} ${selectedPerson!.prijmeni}');
             return false;
           }
           selectedPerson!.id = newId;
-          print('[DIAG][IntakeController.saveData] created participant '
-              '${selectedPerson!.jmeno} ${selectedPerson!.prijmeni} '
-              'id=$newId markAsArrived=$markAsArrived');
           _omezeniLogic.updateParticipantId(newId);
           _lekLogic.updateParticipantId(newId);
           success = true;
@@ -127,16 +122,10 @@ class IntakeController extends SafeChangeNotifier {
           // Existing person - use updateParticipant
           final updateResult = await DatabaseWrapper.getDatabase().updateParticipant(osoba: selectedPerson!);
           success = updateResult > 0;
-          print('[DIAG][IntakeController.saveData] updated participant '
-              '${selectedPerson!.jmeno} ${selectedPerson!.prijmeni} '
-              'id=${selectedPerson!.id} updatedRows=$updateResult markAsArrived=$markAsArrived');
         }
 
         await _omezeniLogic.update();
         await _lekLogic.update();
-        print('[DIAG][IntakeController.saveData] post-update complete '
-            'for ${selectedPerson!.jmeno} ${selectedPerson!.prijmeni} '
-            'id=${selectedPerson!.id} success=$success');
         
         // If successful, automatically reset state for next person
         if (success) {

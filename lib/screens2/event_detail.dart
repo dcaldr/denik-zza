@@ -74,12 +74,6 @@ class _ActionDetailState extends State<ActionDetail> with RouteAware {
     try {
       final participants =
           await database.getParticipantsByEvent(widget.action.idAkce!);
-      print('[DIAG][EventDetail._loadParticipants] eventId=${widget.action.idAkce} '
-          'loaded=${participants.length}');
-      for (final p in participants) {
-        print('[DIAG][EventDetail._loadParticipants] participant '
-            'id=${p.id} name=${p.jmeno} ${p.prijmeni} prisel=${p.prisel}');
-      }
       if (!mounted) return;
       setState(() {
         _allParticipants = participants;
@@ -108,12 +102,6 @@ class _ActionDetailState extends State<ActionDetail> with RouteAware {
           fullName.contains(query) ||
           (person.cisloPojisteni?.toLowerCase().contains(query) ?? false);
     }).toList();
-    print('[DIAG][EventDetail._filterParticipants] query="$_searchQuery" '
-        'result=${filtered.length}/${participants.length}');
-    for (final p in filtered) {
-      print('[DIAG][EventDetail._filterParticipants] match '
-          'id=${p.id} name=${p.jmeno} ${p.prijmeni}');
-    }
     return filtered;
   }
 

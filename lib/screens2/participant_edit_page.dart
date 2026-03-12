@@ -50,8 +50,6 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
   }
 
   Future<void> _handleSave() async {
-    print('[DIAG][ParticipantEditPage._handleSave] called '
-        'participantId=${widget.participant.id}');
     if (_validateFunction?.call() ?? false) {
       try {
         final participantToSave = _editedParticipant ?? widget.participant;
@@ -64,13 +62,11 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
           lekLogic: _lekLogic,
         );
 
-        print('[DIAG][ParticipantEditPage._handleSave] result=$result');
         if (mounted) {
           if (result != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Účastník byl úspěšně upraven')),
             );
-            print('[DIAG][ParticipantEditPage._handleSave] popping true');
             Navigator.of(context).pop(true);
           } else {
             ScaffoldMessenger.of(context).showSnackBar(

@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -10,7 +9,6 @@ import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:denik_zza/services/system/system_interface.dart';
-import 'package:denik_zza/screens2/participant_detail.dart';
 
 import '../../infrastructure/data/datasets/jursky_park_data.dart';
 import '../../infrastructure/robots/event_list_robot.dart';
@@ -173,7 +171,7 @@ void main() {
     // Reference: test/first_use/first_use_test.dart
     // ========================================
     group('First-Use Guards (E2E)', () {
-      Future<EventListRobot> _launchFreshApp(WidgetTester tester) async {
+      Future<EventListRobot> launchFreshApp(WidgetTester tester) async {
         app.main();
         await tester.pump();
         final dashboard = EventListRobot(tester);
@@ -185,7 +183,7 @@ void main() {
         return dashboard;
       }
 
-      Future<void> _createEvent(
+      Future<void> createEvent(
         WidgetTester tester,
         EventListRobot dashboard,
         EventEditorRobot eventEditor,
@@ -207,7 +205,7 @@ void main() {
         expect(created, isTrue, reason: 'Created event "$title" should appear in list');
       }
 
-      Future<void> _createParticipantFromDataset(
+      Future<void> createParticipantFromDataset(
         WidgetTester tester,
         EventListRobot dashboard,
         EventDetailRobot eventDetail,
@@ -238,7 +236,7 @@ void main() {
       testWidgets('Scenario A: Fresh app - AppDrawer disabled without event',
           (tester) async {
         await logger.step('Scenario A: Fresh app check', () async {
-          final dashboard = await _launchFreshApp(tester);
+          final dashboard = await launchFreshApp(tester);
           await dashboard.openDrawer();
           await tester.tap(find.byKey(const Key('AppDrawer_priprava')));
           await tester.pumpAndSettle();
@@ -260,7 +258,7 @@ void main() {
       testWidgets('Scenario F: PrintCenter graceful empty state',
           (tester) async {
         await logger.step('Scenario F: PrintCenter empty check', () async {
-          final dashboard = await _launchFreshApp(tester);
+          final dashboard = await launchFreshApp(tester);
           await dashboard.openDrawer();
           final printCenterTile = tester.widget<ListTile>(
             find.byKey(const Key('AppDrawer_print_center')),
@@ -273,7 +271,7 @@ void main() {
       testWidgets('Scenario H: Autocomplete empty list handling',
           (tester) async {
         await logger.step('Scenario H: Autocomplete empty check', () async {
-          await _launchFreshApp(tester);
+          await launchFreshApp(tester);
           final db = DatabaseWrapper.getDatabase();
 
           expect(await db.getAllLeky(), isEmpty,
@@ -290,7 +288,7 @@ void main() {
       testWidgets('Scenario C: NewRecordPage save button vulnerability',
           (tester) async {
         await logger.step('Scenario C: Save without selected participant', () async {
-          final dashboard = await _launchFreshApp(tester);
+          final dashboard = await launchFreshApp(tester);
           await dashboard.openDrawer();
           final newRecordTile = tester.widget<ListTile>(
             find.byKey(const Key('AppDrawer_new_record')),
@@ -308,7 +306,7 @@ void main() {
       testWidgets('Scenario D: ParticipantList new participant route guard',
           (tester) async {
         await logger.step('Scenario D: New participant entry is guarded without event', () async {
-          final dashboard = await _launchFreshApp(tester);
+          final dashboard = await launchFreshApp(tester);
           await dashboard.openDrawer();
           await tester.tap(find.byKey(const Key('AppDrawer_priprava')));
           await tester.pumpAndSettle();
@@ -333,7 +331,7 @@ void main() {
       testWidgets('Scenario E: IntakeForm save without event crashes',
           (tester) async {
         await logger.step('Scenario E: Intake route is guarded without event', () async {
-          final dashboard = await _launchFreshApp(tester);
+          final dashboard = await launchFreshApp(tester);
           await dashboard.openDrawer();
           await tester.tap(find.byKey(const Key('AppDrawer_filtr')));
           await tester.pumpAndSettle();
@@ -354,7 +352,7 @@ void main() {
       testWidgets('Scenario G: DB current event is null in fresh app',
           (tester) async {
         await logger.step('Scenario G: getCurrentEventID returns null in fresh app', () async {
-          await _launchFreshApp(tester);
+          await launchFreshApp(tester);
           final db = DatabaseWrapper.getDatabase();
           final currentEventId = await db.getCurrentEventID();
           expect(currentEventId, isNull,
@@ -365,7 +363,7 @@ void main() {
       testWidgets('Scenario I: ParticipantDetail edit button on orphaned data',
           (tester) async {
         await logger.step('Scenario I: Participant detail actions absent on fresh app', () async {
-          await _launchFreshApp(tester);
+          await launchFreshApp(tester);
           expect(find.byKey(const Key('ParticipantDetail_edit_button')), findsNothing,
               reason: 'Edit action must not be reachable without opening participant detail');
         });
@@ -374,7 +372,7 @@ void main() {
       testWidgets('Scenario J: Orphaned edit page save crashes',
           (tester) async {
         await logger.step('Scenario J: Edit page route is not reachable from fresh app', () async {
-          await _launchFreshApp(tester);
+          await launchFreshApp(tester);
           expect(find.byKey(const Key('ParticipantRegistrationForm_submit_button')), findsNothing,
               reason: 'Participant edit/registration submit must not appear without explicit navigation');
         });
@@ -384,7 +382,7 @@ void main() {
 
       testWidgets('Route: ParticipantListItem tap paths', (tester) async {
         await logger.step('Route check: EventDetail -> ParticipantDetail', () async {
-          final dashboard = await _launchFreshApp(tester);
+          final dashboard = await launchFreshApp(tester);
           final eventEditor = EventEditorRobot(tester);
           final eventDetail = EventDetailRobot(tester);
           final participantEditor = ParticipantEditorRobot(tester);
@@ -392,8 +390,8 @@ void main() {
           final dbHelpers = DbVerificationHelpers(DatabaseWrapper.getDatabase());
           const eventName = 'E2E ParticipantListItem Route';
 
-          await _createEvent(tester, dashboard, eventEditor, eventName);
-          await _createParticipantFromDataset(
+          await createEvent(tester, dashboard, eventEditor, eventName);
+          await createParticipantFromDataset(
             tester,
             dashboard,
             eventDetail,
@@ -422,7 +420,7 @@ void main() {
 
       testWidgets('Route: NewRecordPage print button paths', (tester) async {
         await logger.step('Route check: NewRecord print opens PersonMode flow', () async {
-          final dashboard = await _launchFreshApp(tester);
+          final dashboard = await launchFreshApp(tester);
           final eventEditor = EventEditorRobot(tester);
           final eventDetail = EventDetailRobot(tester);
           final participantEditor = ParticipantEditorRobot(tester);
@@ -432,8 +430,8 @@ void main() {
           const eventName = 'Tisk nového záznamu (E2E)';
           final p = jurskyParkParticipants.first;
 
-          await _createEvent(tester, dashboard, eventEditor, eventName);
-          await _createParticipantFromDataset(
+          await createEvent(tester, dashboard, eventEditor, eventName);
+          await createParticipantFromDataset(
             tester,
             dashboard,
             eventDetail,
@@ -454,12 +452,12 @@ void main() {
       testWidgets('Route: Event detail add participant (FIXED)',
           (tester) async {
         await logger.step('Route check: EventDetail add participant opens form', () async {
-          final dashboard = await _launchFreshApp(tester);
+          final dashboard = await launchFreshApp(tester);
           final eventEditor = EventEditorRobot(tester);
           final eventDetail = EventDetailRobot(tester);
           const eventName = 'Přidání účastníka v detailu akce (E2E)';
 
-          await _createEvent(tester, dashboard, eventEditor, eventName);
+          await createEvent(tester, dashboard, eventEditor, eventName);
           await dashboard.tapEvent(eventName);
           await eventDetail.tapAddParticipant();
 
@@ -472,7 +470,7 @@ void main() {
         });
       });
       testWidgets('Route: Search Filter and Event Isolation', (tester) async {
-        final dashboard = await _launchFreshApp(tester);
+        final dashboard = await launchFreshApp(tester);
         final eventEditor = EventEditorRobot(tester);
         final eventDetail = EventDetailRobot(tester);
         final participantEditor = ParticipantEditorRobot(tester);
@@ -484,8 +482,8 @@ void main() {
         final pB = jurskyParkParticipants[1]; // Božena Němcová
 
         await logger.step('Event Isolation: Create Letní tábor & Participant A', () async {
-          await _createEvent(tester, dashboard, eventEditor, eventA);
-          await _createParticipantFromDataset(
+          await createEvent(tester, dashboard, eventEditor, eventA);
+          await createParticipantFromDataset(
             tester, dashboard, eventDetail, participantEditor, dbHelpers, pA, eventA,
           );
           
@@ -495,8 +493,8 @@ void main() {
         });
 
         await logger.step('Event Isolation: Create Zimní tábor & Participant B', () async {
-          await _createEvent(tester, dashboard, eventEditor, eventB);
-          await _createParticipantFromDataset(
+          await createEvent(tester, dashboard, eventEditor, eventB);
+          await createParticipantFromDataset(
             tester, dashboard, eventDetail, participantEditor, dbHelpers, pB, eventB,
           );
 
@@ -654,12 +652,12 @@ void main() {
               final med = p.leky[j];
               // Build the same formatted string that addMedication() uses, to keep
               // addMedicationViaEnter in sync with what _parseMedicationInput expects.
-              final _medParts = <String>[];
-              if (med.davkovani != null) _medParts.add(med.davkovani!);
-              if (med.kdy != null) _medParts.add(med.kdy!);
-              final medText = _medParts.isEmpty
+              final medParts = <String>[];
+              if (med.davkovani != null) medParts.add(med.davkovani!);
+              if (med.kdy != null) medParts.add(med.kdy!);
+              final medText = medParts.isEmpty
                   ? med.nazev
-                  : '${med.nazev} (${_medParts.join(', ')})';
+                  : '${med.nazev} (${medParts.join(', ')})';
 
               if (i == 5 && j == 0) {
                  await participantEditor.addMedicationViaEnter(medText);
@@ -794,6 +792,11 @@ void main() {
           await logger.step('Intake ${turn + 1}/${jurskyParkParticipants.length}: ${p.jmeno} ${p.prijmeni}', () async {
             
             if (i == jaraDatasetIndex) { // Jára Cimrman - Create during Intake
+               // Exercise the "new person via intake search" route:
+               // Type name → no autocomplete match → form stays in new-person mode (id=-1).
+               // This is the route that was previously untested/forgotten.
+               await intake.searchForNewPerson('${p.jmeno} ${p.prijmeni}');
+
                // --- TEST CANCEL FLOW ---
                await fillParticipantInIntakeForm(p);
                
@@ -901,52 +904,13 @@ void main() {
               reason: 'Jára should be added to ExpectedWorldState during Phase 2 intake');
 
           // DEBUG: snapshot the widget tree BEFORE the pop
-          final hasIntakeBtn  = find.byKey(const Key('IntakeForm_saveAndArrived_button')).evaluate().isNotEmpty;
-          final hasDetailBtn  = find.byKey(const Key('EventDetail_addButton')).evaluate().isNotEmpty;
-          final hasListBtn    = find.byKey(const Key('EventList_add_button')).evaluate().isNotEmpty;
-          final hasRegForm    = find.byKey(const Key('ParticipantRegistrationForm_jmeno_input')).evaluate().isNotEmpty;
-          debugPrint('[DEBUG Phase2.5] BEFORE pop: hasIntakeForm=$hasIntakeBtn hasEventDetail=$hasDetailBtn hasEventList=$hasListBtn hasParticipantRegistration=$hasRegForm');
-          debugPrint('[DEBUG Phase2.5] Scaffolds on tree: ${find.byType(Scaffold).evaluate().length}');
-          for (final el in find.byType(Scaffold).evaluate()) {
-            final w = el.widget as Scaffold;
-            debugPrint('[DEBUG Phase2.5]   Scaffold: drawer=${w.drawer != null} appBar=${w.appBar != null}');
-          }
-
-          // Navigation stack after Phase 2:
-          //   EventList → EventDetail → NewIntakeFormImproved
-          // EventDetail now has a drawer, so ensureDrawerAvailable() no longer pops it.
-          // A single pop brings us back to EventDetail.
+          // Pop back to EventDetail from IntakeForm.
+          // Navigation stack after Phase 2: EventList → EventDetail → NewIntakeFormImproved
           final handled = await tester.binding.handlePopRoute();
           expect(handled, isTrue, reason: 'IntakeForm should be closable via pop');
           await tester.pumpAndSettle();
 
-          // DEBUG: snapshot the widget tree AFTER the pop
-          final hasIntakeBtn2  = find.byKey(const Key('IntakeForm_saveAndArrived_button')).evaluate().isNotEmpty;
-          final hasDetailBtn2  = find.byKey(const Key('EventDetail_addButton')).evaluate().isNotEmpty;
-          final hasListBtn2    = find.byKey(const Key('EventList_add_button')).evaluate().isNotEmpty;
-          final hasRegForm2    = find.byKey(const Key('ParticipantRegistrationForm_jmeno_input')).evaluate().isNotEmpty;
-          debugPrint('[DEBUG Phase2.5] AFTER pop: hasIntakeForm=$hasIntakeBtn2 hasEventDetail=$hasDetailBtn2 hasEventList=$hasListBtn2 hasParticipantRegistration=$hasRegForm2');
-          debugPrint('[DEBUG Phase2.5] Scaffolds on tree: ${find.byType(Scaffold).evaluate().length}');
-          for (final el in find.byType(Scaffold).evaluate()) {
-            final w = el.widget as Scaffold;
-            debugPrint('[DEBUG Phase2.5]   Scaffold: drawer=${w.drawer != null} appBar=${w.appBar != null}');
-          }
-
           await eventDetail.verifyPageShown();
-
-            // DIAG: prove DB truth before UI search truth
-            final participantsInCurrentEvent =
-              await db.getParticipantsByCurrentEvent();
-            debugPrint('[DIAG Phase2.5] DB getParticipantsByCurrentEvent count: '
-              '${participantsInCurrentEvent.length}');
-            for (final p in participantsInCurrentEvent) {
-            debugPrint('[DIAG Phase2.5] DB participant: '
-              'id=${p.id} name=${p.jmeno} ${p.prijmeni} prisel=${p.prisel}');
-            }
-            final jaraInDb = participantsInCurrentEvent.where((p) =>
-              p.jmeno == jara.jmeno && p.prijmeni == jara.prijmeni);
-            debugPrint('[DIAG Phase2.5] Jara in DB before search: '
-              '${jaraInDb.isNotEmpty}');
 
           // Find Jára Cimrman and navigate to his detail
           await eventDetail.searchParticipant('${jara.jmeno} ${jara.prijmeni}');
@@ -954,65 +918,13 @@ void main() {
             'ParticipantListItem_0_detailButton',
             timeout: const Duration(seconds: 8),
           );
-          if (!hasFilteredDetailButton) {
-            final participantItemCount =
-                find.byKey(const Key('ParticipantListItem_0')).evaluate().length;
-            debugPrint('[DEBUG Phase2.5] Missing ParticipantListItem_0_detailButton after search for Jara');
-            debugPrint('[DEBUG Phase2.5] ParticipantListItem_0 count: $participantItemCount');
-            debugPrint('[DEBUG Phase2.5] search query used: ${jara.jmeno} ${jara.prijmeni}');
-          }
           expect(hasFilteredDetailButton, isTrue,
               reason:
                   'Filtered participant row should render with ParticipantListItem_0_detailButton for Jára');
           
-          // DETAILED LOGGING: Before tap
-          debugPrint('[DETAILED Phase2.5] BEFORE TAP: Widget tree snapshot');
-          final allKeysBeforeTap = find.byType(Text).evaluate().toList();
-          debugPrint('[DETAILED Phase2.5] All Text widgets before tap: ${allKeysBeforeTap.length}');
-          for (final widget in allKeysBeforeTap.take(10)) {
-            final t = widget.widget as Text;
-            debugPrint('[DETAILED Phase2.5]   Text: "${t.data}"');
-          }
-          final scaffoldCountBefore = find.byType(Scaffold).evaluate().length;
-          final routesBeforeTap = 
-            find.byType(MaterialPageRoute).evaluate().length;
-          debugPrint('[DETAILED Phase2.5] Scaffolds before: $scaffoldCountBefore');
-          debugPrint('[DETAILED Phase2.5] MaterialPageRoutes before: $routesBeforeTap');
-          
           await eventDetail.tapParticipantDetailButtonByIndex(0);
           
-          // DETAILED LOGGING: After tap, before settle
-          debugPrint('[DETAILED Phase2.5] AFTER TAP (before settle): Widget tree snapshot');
-          final scaffoldCountAfterTap = find.byType(Scaffold).evaluate().length;
-          final routesAfterTap = 
-            find.byType(MaterialPageRoute).evaluate().length;
-          debugPrint('[DETAILED Phase2.5] Scaffolds after tap: $scaffoldCountAfterTap');
-          debugPrint('[DETAILED Phase2.5] MaterialPageRoutes after tap: $routesAfterTap');
-          final allKeysAfterTap = find.byType(Text).evaluate().toList();
-          debugPrint('[DETAILED Phase2.5] Text widgets after tap: ${allKeysAfterTap.length}');
-          
           await tester.pumpAndSettle();
-          
-          // DETAILED LOGGING: After settle
-          debugPrint('[DETAILED Phase2.5] AFTER SETTLE: Widget tree snapshot');
-          final scaffoldCountAfterSettle = find.byType(Scaffold).evaluate().length;
-          final participantDetailPageCount =
-            find.byType(ParticipantDetailPage).evaluate().length;
-          final osobniUdajeBeforeVerify =
-            find.text('Osobní údaje').evaluate().length;
-          final jaraNameBefore = 
-            find.text('Jára Cimrman').evaluate().length;
-          debugPrint('[DETAILED Phase2.5] Scaffolds after settle: $scaffoldCountAfterSettle');
-          debugPrint('[DETAILED Phase2.5] ParticipantDetailPage widgets: $participantDetailPageCount');
-          debugPrint('[DETAILED Phase2.5] "Osobní údaje" text found: $osobniUdajeBeforeVerify');
-          debugPrint('[DETAILED Phase2.5] "Jára Cimrman" text found: $jaraNameBefore');
-          
-          final allKeysAfterSettle = find.byType(Text).evaluate().toList();
-          debugPrint('[DETAILED Phase2.5] All Text widgets after settle: ${allKeysAfterSettle.length}');
-          for (final widget in allKeysAfterSettle.skip(0).take(20)) {
-            final t = widget.widget as Text;
-            debugPrint('[DETAILED Phase2.5]   Text: "${t.data}"');
-          }
           
           await participantDetail.verifyPageShown();
           await participantDetail.verifyParticipantName('${jara.jmeno} ${jara.prijmeni}');
@@ -1573,4 +1485,5 @@ void main() {
     });
   });
 }
+
 

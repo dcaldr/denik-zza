@@ -30,37 +30,17 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
   @override
   void initState() {
     super.initState();
-    print('[DIAG][ParticipantDetailPage.initState] participant '
-        'id=${widget.participant.id} '
-        'name=${widget.participant.jmeno} ${widget.participant.prijmeni}');
-    debugPrint('[DETAILED][ParticipantDetailPage.initState] START - widget created');
     // Validate participant exists in current event before allowing actions
     _validateParticipantInCurrentEvent();
   }
 
   Future<void> _validateParticipantInCurrentEvent() async {
-    debugPrint('[DETAILED][ParticipantDetailPage._validateParticipantInCurrentEvent] START');
     try {
       final db = DatabaseWrapper.getDatabase();
       final participants = await db.getParticipantsByCurrentEvent();
-      debugPrint('[DETAILED][ParticipantDetailPage._validateParticipantInCurrentEvent] '
-          'DB query returned ${participants.length} participants');
-      print('[DIAG][ParticipantDetailPage._validateParticipantInCurrentEvent] '
-          'currentEventParticipants=${participants.length} '
-          'targetId=${widget.participant.id}');
       final isValid = participants
           .any((participant) => participant.id == widget.participant.id);
-      debugPrint('[DETAILED][ParticipantDetailPage._validateParticipantInCurrentEvent] '
-          'isValid=$isValid');
-      print('[DIAG][ParticipantDetailPage._validateParticipantInCurrentEvent] '
-          'isValid=$isValid');
-      if (!mounted) {
-        debugPrint('[DETAILED][ParticipantDetailPage._validateParticipantInCurrentEvent] '
-            'NOT MOUNTED - returning early');
-        return;
-      }
-      debugPrint('[DETAILED][ParticipantDetailPage._validateParticipantInCurrentEvent] '
-          'MOUNTED - calling setState with isValid=$isValid');
+      if (!mounted) return;
       setState(() {
         _isParticipantValid = isValid;
       });
@@ -68,10 +48,6 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
         _fetchRecords();
       }
     } catch (e) {
-      debugPrint('[DETAILED][ParticipantDetailPage._validateParticipantInCurrentEvent] '
-          'EXCEPTION: $e');
-      print('[DIAG][ParticipantDetailPage._validateParticipantInCurrentEvent] '
-          'exception while validating participant');
       if (!mounted) return;
       setState(() {
         _isParticipantValid = false;
@@ -101,14 +77,6 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('[DETAILED][ParticipantDetailPage.build] START - '
-        'participant=${widget.participant.jmeno} ${widget.participant.prijmeni}');
-    print('[DIAG][ParticipantDetailPage.build] '
-        'participantId=${widget.participant.id} '
-        'isParticipantValid=$_isParticipantValid '
-        'isLoading=$_isLoading '
-        'recordsCount=${_records.length}');
-    
     final scaffold = Scaffold(
       appBar: AppBar(
         title:
@@ -221,7 +189,6 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
         ),
       ),
     );
-    debugPrint('[DETAILED][ParticipantDetailPage.build] END - returning scaffold');
     return scaffold;
   }
 

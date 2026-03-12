@@ -225,8 +225,6 @@ class ParticipantRegistrationFormState
       if (participantId != null) {
         if (widget.osoba == null) {
           // Success for NEW participant -> Inline Message
-          print('[DIAG][ParticipantRegistrationForm._submitForm] NEW flow '
-              'participantId=$participantId name=${osoba.jmeno} ${osoba.prijmeni}');
           final addedName = "${osoba.jmeno} ${osoba.prijmeni}";
           // Update the osoba with the new ID if it was a new participant
           if (osoba.id == -1) {
@@ -239,8 +237,6 @@ class ParticipantRegistrationFormState
           });
         } else {
           // Success for EDIT -> SnackBar (keep existing behavior for edits)
-          print('[DIAG][ParticipantRegistrationForm._submitForm] EDIT flow '
-              'participantId=$participantId name=${osoba.jmeno} ${osoba.prijmeni}');
           _showSnackBar('Účastník aktualizován');
         }
       } else {
