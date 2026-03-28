@@ -18,6 +18,7 @@ import '../../infrastructure/robots/participant_editor_robot.dart';
 import '../../infrastructure/robots/intake_robot.dart';
 import '../../infrastructure/robots/new_record_robot.dart';
 import '../../infrastructure/robots/print_center_robot.dart';
+import '../../infrastructure/robots/first_print_robot.dart';
 import '../../infrastructure/robots/person_mode_flow_robot.dart';
 import '../../infrastructure/robots/print_state_robot.dart';
 import '../../infrastructure/robots/participant_detail_robot.dart';
@@ -564,6 +565,7 @@ void main() {
         final intake = IntakeRobot(tester);
         final newRecord = NewRecordRobot(tester);
         final printCenter = PrintCenterRobot(tester);
+        final firstPrint = FirstPrintRobot(tester);
         final personMode = PersonModeFlowRobot(tester);
         final printState = PrintStateRobot(tester);
         final db = DatabaseWrapper.getDatabase();
@@ -959,6 +961,56 @@ void main() {
         });
 
         // ============================================================
+        // PHASE 2.7: First Print Setup (Printer Calibration)
+        // ============================================================
+        logger.section('PHASE 2.7: First Print Setup (Printer Calibration)');
+
+        // Register CapturingSystemInterface BEFORE any prints
+        // so all PDFs (including Phase 2.7 calibration, NewRecordPage print, etc.) are captured.
+        // It replaces the original `SystemInterface` with a mocked one.
+        final capture = CapturingSystemInterface.forCurrentTest();
+        SystemInterface.registerWith(capture);
+
+        await logger.step('Navigate to Print Center and Start Setup', () async {
+          await dashboard.navigateToPrintCenter();
+          await printCenter.verifyPageShown();
+          await printCenter.tapFirstPrintCard();
+          
+          await firstPrint.verifyPageShown();
+
+          // Step 0: Explanation
+          await firstPrint.tapNext();
+
+          // Step 1: Prepare
+          await firstPrint.tapNext();
+          
+          // Step 2: Initial Print (captures 1st PDF)
+          await firstPrint.tapInitialPrint();
+          
+          expect(capture.capturedPdfs.length, equals(1), reason: 'Expected 1 PDF from initial calibration print');
+
+          // Step 3: Evaluation
+          await firstPrint.tapPage1OnTop();
+          await firstPrint.tapNext();
+
+          // Step 4: Reinsert
+          await firstPrint.tapNext();
+
+          // Step 5: Append Test (captures 2nd PDF)
+          await firstPrint.tapAppendPrint();
+          await firstPrint.confirmAppendInstruction();
+          await firstPrint.confirmPrintDialogSuccess();
+
+          expect(capture.capturedPdfs.length, equals(2), reason: 'Expected 2 PDFs total after append test print');
+
+          // Step 6: Confirmation
+          await firstPrint.tapComplete();
+          
+          // Wizard finishes and automatically pops back to Print Center
+          await printCenter.verifyPageShown();
+        });
+
+        // ============================================================
         // PHASE 3: Event - Medical Records & Print
         // ============================================================
         logger.section('PHASE 3: Event - Medical Records & Print');
@@ -1054,11 +1106,6 @@ void main() {
           }
         });
 
-        // Register CapturingSystemInterface BEFORE any prints
-        // so all PDFs (including NewRecordPage print + Phase 4 baseline) are captured.
-        final capture = CapturingSystemInterface.forCurrentTest();
-        SystemInterface.registerWith(capture);
-
         // Exercise the NewRecordPage → PersonAndModeFlowPage print path.
         // This path is NEVER tested via PrintCenter — it's a separate Navigator.push.
         await logger.step('Print from NewRecordPage (Karel Čapek)', () async {
@@ -1112,8 +1159,8 @@ void main() {
           await dashboard.pumpAndSettle();
 
           // Verify PDF was captured
-          expect(capture.capturedPdfs.length, equals(1),
-              reason: 'Expected 1 captured PDF after NewRecordPage print');
+          expect(capture.capturedPdfs.length, equals(3),
+              reason: 'Expected 3 captured PDFs (2 calibration + 1 NewRecordPage print)');
           expect(capture.capturedPdfs.last.name, contains('Osoba_'),
               reason: 'PDF name should contain participant ID pattern');
         });
@@ -1165,8 +1212,8 @@ void main() {
           await printCenter.verifyPageShown();
 
           // Verify PDF was captured for Phase 4 baseline print
-          expect(capture.capturedPdfs.length, equals(2),
-              reason: 'Expected 2 captured PDFs (NewRecordPage print + Milada baseline)');
+          expect(capture.capturedPdfs.length, equals(4),
+              reason: 'Expected 4 captured PDFs (2 calib + NewRecordPage print + Milada baseline)');
         });
 
         // ============================================================
@@ -1236,9 +1283,9 @@ void main() {
           );
           await dbHelpers.verifyAllRecordsPrinted(kafkaId, true);
 
-          expect(capture.capturedPdfs.length, equals(3),
-              reason: 'Expected 3 captured PDFs (NewRecordPage + Milada baseline + Kafka full)');
-          final kafkaPdf = capture.capturedPdfs[2]; // Index 2: after Čapek[0] and Milada baseline[1]
+          expect(capture.capturedPdfs.length, equals(5),
+              reason: 'Expected 5 captured PDFs (2 calib + NewRecord + Milada baseline + Kafka full)');
+          final kafkaPdf = capture.capturedPdfs[4]; // Index 4: after 2 calib, Čapek[2] and Milada baseline[3]
           expect(kafkaPdf.pageCount, greaterThan(0),
               reason: 'Kafka PDF should have at least 1 page');
 
@@ -1294,8 +1341,8 @@ void main() {
           await dbHelpers.verifyAllRecordsPrinted(miladaId, true);
           await dbHelpers.verifyPrintStateContiguous(miladaId);
 
-          expect(capture.capturedPdfs.length, equals(4),
-              reason: 'Expected 4 captured PDFs (NewRecordPage + Milada baseline + Kafka full + Milada append)');
+          expect(capture.capturedPdfs.length, equals(6),
+              reason: 'Expected 6 captured PDFs (2 calib + NewRecordPage + Milada baseline + Kafka full + Milada append)');
           final miladaPdf = capture.capturedPdfs.last;
           expect(miladaPdf.pageCount, greaterThan(0),
               reason: 'Milada PDF should have at least 1 page');
@@ -1305,14 +1352,14 @@ void main() {
         });
 
         await logger.step('PDF Structural Verification', () async {
-          // We should have 4 PDFs: NewRecordPage(Čapek) + Milada full + Kafka full + Milada append
-            expect(capture.capturedPdfs.length, equals(4),
-              reason: 'PDF Structural Verification: expected 4 PDFs total — Čapek(NewRecord), Milada(full), Kafka(full), Milada(append)');
+          // We should have 6 PDFs: 2 calib + NewRecordPage(Čapek) + Milada full + Kafka full + Milada append
+            expect(capture.capturedPdfs.length, equals(6),
+              reason: 'PDF Structural Verification: expected 6 PDFs total — 2 calib, Čapek(NewRecord), Milada(full), Kafka(full), Milada(append)');
 
-          final capekPdf = capture.capturedPdfs[0];
-          final miladaFullPdf = capture.capturedPdfs[1];
-          final kafkaFullPdf = capture.capturedPdfs[2];
-          final miladaAppendPdf = capture.capturedPdfs[3];
+          final capekPdf = capture.capturedPdfs[2];
+          final miladaFullPdf = capture.capturedPdfs[3];
+          final kafkaFullPdf = capture.capturedPdfs[4];
+          final miladaAppendPdf = capture.capturedPdfs[5];
 
           // Name verification — each PDF name should contain participant DB ID
           final capekId = await dbHelpers.getParticipantId('Karel', 'Čapek');

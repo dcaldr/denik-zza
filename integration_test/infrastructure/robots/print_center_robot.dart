@@ -36,6 +36,10 @@ class PrintCenterRobot extends BaseRobot {
     await tap(personModeCard);
   }
 
+  Future<void> tapFirstPrintCard() async {
+    await waitForCardEnabled('PrintCenter_firstPrint');
+    await tap(firstPrintCard);
+  }
 
 
   Future<void> tapStateManagementCard() async {
