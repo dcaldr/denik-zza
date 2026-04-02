@@ -144,6 +144,7 @@ class PrintCenterController extends SafeChangeNotifier {
         if (!isDisposed) notifyListeners();
       });
     }, onError: (e) {
+      if (isDisposed) return;
       AppLogger.l.d('PrintCenterController: Error loading participants: $e');
       _participantError = 'Chyba při načítání účastníků: $e';
       _loadingParticipants = false;
@@ -286,7 +287,7 @@ class PrintCenterController extends SafeChangeNotifier {
     } catch (e) {
       _pdfGenerationError = "Chyba generování PDF: $e";
       // We notify on error so UI can show it, but only on error
-      notifyListeners();
+      if (!isDisposed) notifyListeners();
       rethrow;
     }
   }
@@ -350,34 +351,58 @@ class PrintCenterController extends SafeChangeNotifier {
       });
     } catch (e) {
       _pdfGenerationError = "Chyba generování hromadného PDF: $e";
-      notifyListeners();
+      if (!isDisposed) notifyListeners();
       rethrow;
     } finally {
       _generatingPdf = false;
-      notifyListeners();
+      if (!isDisposed) notifyListeners();
     }
   }
 
   /// Confirm aggregated print success.
-  /// Mark all selected participants and their records as printed.
-  Future<void> confirmAggregatedPrint(List<int> ids) async {
-    for (final pid in ids) {
-      // 1. Mark Person
-      await _service.setParticipantPrintedFlag(pid, true);
+  /// Marks selected participants and their records as printed.
+  ///
+  /// Returns IDs of participants that could not be fully persisted.
+  Future<List<int>> confirmAggregatedPrint(List<int> ids) async {
+    final failedParticipantIds = <int>[];
 
-      // 2. Mark Records (we need to fetch them to get IDs)
-      // This is slightly inefficient but safe.
+    for (final pid in ids) {
       try {
+        // 1. Mark person and verify write result.
+        final personUpdated = await _service.setParticipantPrintedFlag(pid, true);
+        if (!personUpdated) {
+          AppLogger.l.w('confirmAggregatedPrint: participant write returned false for id=$pid');
+          failedParticipantIds.add(pid);
+          continue;
+        }
+
+        // 2. Mark all records for this person and verify per-record results.
         final records = await _service.getRecords(pid);
         final recIds = records.map((r) => r.idZaznamu).toList();
         if (recIds.isNotEmpty) {
-          await _service.setMultipleRecordPrintedFlags(recIds, true);
+          final recordResults =
+              await _service.setMultipleRecordPrintedFlags(recIds, true);
+          final hasRecordFailure = recordResults.any((ok) => !ok);
+          if (hasRecordFailure) {
+            AppLogger.l.w(
+              'confirmAggregatedPrint: record update failures for participant id=$pid',
+            );
+            failedParticipantIds.add(pid);
+          }
         }
-      } catch (e) {
-        // Log error but continue with others
-        AppLogger.l.e('Error confirming print for person $pid', error: e);
+      } catch (e, st) {
+        AppLogger.l.e('Error confirming print for person $pid', error: e, stackTrace: st);
+        failedParticipantIds.add(pid);
       }
     }
+
+    if (failedParticipantIds.isNotEmpty) {
+      AppLogger.l.e(
+        'confirmAggregatedPrint partial failure: failed participants=${failedParticipantIds.join(',')}',
+      );
+    }
+
+    return failedParticipantIds;
   }
 
   /// Confirm result of actual printing.

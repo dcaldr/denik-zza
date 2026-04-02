@@ -161,18 +161,32 @@ class _EventPrintFlowPageState extends State<SelectedAggregatedPrintPage> {
           FilledButton(
             onPressed: () async {
               Navigator.pop(c);
-              await ctrl.confirmAggregatedPrint(_selectedIds.toList());
+              final selected = _selectedIds.toList();
+              final failedIds = await ctrl.confirmAggregatedPrint(selected);
               if (mounted) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Hromadný tisk potvrzen a uložen.')),
-                  );
+                  if (failedIds.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Hromadný tisk potvrzen a uložen.')),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Tisk byl potvrzen, ale nepodařilo se uložit ${failedIds.length} účastníků. Zkuste znovu.',
+                        ),
+                        backgroundColor: AppColors.orangeText,
+                      ),
+                    );
+                  }
                 }
-                // Optional: Clear selection or stay
-                setState(() {
-                  _selectedIds.clear();
-                });
+                // Clear selection only when all DB writes succeeded.
+                if (failedIds.isEmpty) {
+                  setState(() {
+                    _selectedIds.clear();
+                  });
+                }
               }
             },
             child: const Text('Potvrdit úspěšný tisk'),
