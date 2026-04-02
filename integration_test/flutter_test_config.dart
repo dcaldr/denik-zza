@@ -15,6 +15,7 @@ import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'package:path/path.dart' as path;
 
 import '../test/utils/capturing_system_interface.dart';
+import 'infrastructure/helpers/teardown_registry.dart';
 
 FutureOr<void> testExecutable(FutureOr<void> Function() testMain) async {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -44,15 +45,43 @@ FutureOr<void> testExecutable(FutureOr<void> Function() testMain) async {
 
   // Global tearDown - ensures no database leaks between tests
   tearDown(() async {
-    await DatabaseWrapper.dispose();
+    try {
+      // Guard database disposal with ownership check
+      if (TeardownRegistry.instance.claimOwnership('database', TeardownScope.suiteLevel)) {
+        try {
+          await DatabaseWrapper.dispose().timeout(const Duration(seconds: 10));
+        } on TimeoutException {
+          TeardownRegistry.instance.recordPhase('database_dispose_timeout', 'failed');
+        }
+      }
+    } catch (error) {
+      TeardownRegistry.instance.recordPhase('database_dispose_error', 'failed');
+      rethrow;
+    }
+
     final testDir = ModeCoordinator.currentTestDirectory;
     if (testDir != null) {
-      final artifactsDir = path.join(testDir.path, 'pdf_artifacts');
-      await CapturingSystemInterface.cleanupOldFiles(
-        baseDir: artifactsDir,
-        keepLast: 5,
-      );
+      // Guard PDF artifacts cleanup with ownership check
+      if (TeardownRegistry.instance.claimOwnership('pdf_artifacts', TeardownScope.suiteLevel)) {
+        final artifactsDir = path.join(testDir.path, 'pdf_artifacts');
+        try {
+          try {
+            await CapturingSystemInterface.cleanupOldFiles(
+              baseDir: artifactsDir,
+              keepLast: 5,
+            ).timeout(const Duration(seconds: 10));
+          } on TimeoutException {
+            TeardownRegistry.instance.recordPhase('pdf_artifacts_cleanup_timeout', 'failed');
+          }
+        } catch (error) {
+          TeardownRegistry.instance.recordPhase('pdf_artifacts_cleanup_error', 'failed');
+          rethrow;
+        }
+      }
     }
+
+    // Reset teardown registry for next test
+    await TeardownRegistry.instance.reset().timeout(const Duration(seconds: 3));
   });
 
   return testMain();

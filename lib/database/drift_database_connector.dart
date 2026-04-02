@@ -5,6 +5,7 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_zaznam.dart';
 import 'package:drift/drift.dart';
 import 'package:denik_zza/utils/app_logger.dart';
+import 'package:denik_zza/database/database_wrapper.dart';
 import '../input/file_manager.dart';
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
@@ -453,6 +454,10 @@ class DriftDatabaseConnector implements DatabaseInterface {
     return _driftDatabase
         .watchParticipantsByAction(idAction)
         .asyncMap((participants) async {
+      if (DatabaseWrapper.isShuttingDown()) {
+        return <MemoryOsoba>[];
+      }
+
       AppLogger.l.i(
           '[WatchParticipants] event=$idAction rawCount=${participants.length}');
       for (final p in participants) {
@@ -462,6 +467,9 @@ class DriftDatabaseConnector implements DatabaseInterface {
 
       List<MemoryOsoba> memoryParticipants = [];
       for (Participant p in participants) {
+        if (DatabaseWrapper.isShuttingDown()) {
+          return <MemoryOsoba>[];
+        }
         memoryParticipants.add(await _toMemoryOsoba(p));
       }
 
@@ -504,6 +512,11 @@ class DriftDatabaseConnector implements DatabaseInterface {
         .select(_driftDatabase.cache)
         .watchSingleOrNull()
         .asyncExpand((cache) {
+      if (DatabaseWrapper.isShuttingDown()) {
+        return Stream.value(
+            <({MemoryOsoba person, List<MemoryZaznam> records})>[]);
+      }
+
       final currentEventId = cache?.currentActionID;
       if (currentEventId == null) {
         return Stream.value(
@@ -522,10 +535,18 @@ class DriftDatabaseConnector implements DatabaseInterface {
       query.orderBy([OrderingTerm(expression: _driftDatabase.participants.lastName), OrderingTerm(expression: _driftDatabase.participants.firstName)]);
 
       return query.watch().asyncMap((rows) async {
+        if (DatabaseWrapper.isShuttingDown()) {
+          return <({MemoryOsoba person, List<MemoryZaznam> records})>[];
+        }
+
         final grouped = <int,
             ({MemoryOsoba person, List<MemoryZaznam> records})>{};
 
         for (final row in rows) {
+          if (DatabaseWrapper.isShuttingDown()) {
+            return <({MemoryOsoba person, List<MemoryZaznam> records})>[];
+          }
+
           final participant = row.readTable(_driftDatabase.participants);
           final record = row.readTableOrNull(_driftDatabase.records);
 
@@ -669,11 +690,27 @@ class DriftDatabaseConnector implements DatabaseInterface {
   }
 
   MedicationsCompanion _toMedicationCompanion(MemoryLek lek) {
+    final details = lek.popisDavkovani?.trim();
+    String? dosage;
+    String? dosageTiming;
+
+    if (details != null && details.isNotEmpty) {
+      final commaIndex = details.indexOf(',');
+      if (commaIndex >= 0) {
+        dosage = details.substring(0, commaIndex).trim();
+        dosageTiming = details.substring(commaIndex + 1).trim();
+        if (dosageTiming.isEmpty) {
+          dosageTiming = null;
+        }
+      } else {
+        dosage = details;
+      }
+    }
+
     return MedicationsCompanion(
       name: Value(lek.nazev),
-      dosage:
-          Value(lek.popisDavkovani ?? ""), // Provide a default value if null
-      dosageTiming: Value(lek.popisDavkovani ?? ""),
+      dosage: dosage != null ? Value(dosage) : const Value(null),
+      dosageTiming: dosageTiming != null ? Value(dosageTiming) : const Value(null),
       wasPrinted: Value(lek.wasPrinted),
       participantFK: Value(lek.idOsoby),
     );
@@ -690,10 +727,20 @@ class DriftDatabaseConnector implements DatabaseInterface {
   }
 
   MemoryLek _toMemoryLek(Medication lek) {
+    final details = <String>[];
+    final dosage = lek.dosage?.trim();
+    final dosageTiming = lek.dosageTiming?.trim();
+    if (dosage != null && dosage.isNotEmpty) {
+      details.add(dosage);
+    }
+    if (dosageTiming != null && dosageTiming.isNotEmpty) {
+      details.add(dosageTiming);
+    }
+
     return MemoryLek.fullNamed(
       id: lek.id,
       nazev: lek.name,
-      popisDavkovani: lek.dosage,
+      popisDavkovani: details.isEmpty ? null : details.join(', '),
       idOsoby: lek.participantFK,
 
       wasPrinted: lek.wasPrinted,

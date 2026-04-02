@@ -53,6 +53,9 @@ class DatabaseWrapper {
   /// Database mode selection (safer than int-based selection)
   static DatabaseMode _databaseMode = DatabaseMode.production;
 
+  /// True while global database disposal is running.
+  static bool _shutdownSignalActive = false;
+
   /// Path to the integration test database file.
   /// Only used when [_databaseMode] is [DatabaseMode.integrationTest].
   static String? _integrationTestDbPath;
@@ -94,6 +97,11 @@ class DatabaseWrapper {
   /// Get current database mode (for debugging/testing purposes)
   static DatabaseMode getCurrentMode() {
     return _databaseMode;
+  }
+
+  /// Check whether shutdown/disposal of DB resources is in progress.
+  static bool isShuttingDown() {
+    return _shutdownSignalActive;
   }
 
   /// Check if the app is currently using persistent storage.
@@ -170,6 +178,17 @@ class DatabaseWrapper {
   ///
   /// Call this method in the global `tearDown` to ensure no test pollution.
   static Future<void> dispose() async {
+    _shutdownSignalActive = true;
+
+    // Idempotent fast-path: teardown may call dispose multiple times
+    // (global + local hooks). Avoid double close/reset work.
+    if (_databaseMode == DatabaseMode.production &&
+        _injectedTestDb == null &&
+        _cachedImplicitTestDb == null) {
+      _shutdownSignalActive = false;
+      return;
+    }
+
     if (_injectedTestDb != null) {
       await _injectedTestDb!.close();
       _injectedTestDb = null;
@@ -187,6 +206,7 @@ class DatabaseWrapper {
     // Clear integration test path
     _integrationTestDbPath = null;
     _databaseMode = DatabaseMode.production;
+    _shutdownSignalActive = false;
   }
 
   /// Validates that the current configuration is safe for production use.
