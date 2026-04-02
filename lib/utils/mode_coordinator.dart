@@ -4,6 +4,7 @@ import 'package:denik_zza/services/system/system_interface.dart';
 import 'package:logger/logger.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import 'package:intl/intl.dart';
 import 'dart:io';
 
@@ -111,7 +112,7 @@ class ModeCoordinator {
     _currentTestDirectory = testDir;
 
     // Set file-based database for inspection and debugging
-    final dbPath = '${testDir.path}/db.sqlite';
+    final dbPath = path.join(testDir.path, 'db.sqlite');
     DatabaseWrapper.setIntegrationTestMode(dbPath);
 
     // Use real file system in isolated per-test directory
@@ -139,7 +140,7 @@ class ModeCoordinator {
     // Use 'canary' subfolder for backward compatibility
     final testDir = await _getTestDirectory('canary', currentRunId, testName);
     _currentTestDirectory = testDir;
-    final dbPath = '${testDir.path}/db.sqlite';
+    final dbPath = path.join(testDir.path, 'db.sqlite');
     DatabaseWrapper.setIntegrationTestMode(dbPath);
     FileManager().setPersistentTestMode(testDir.path);
     SystemInterface.registerWith(TestSystemInterface());
@@ -194,7 +195,7 @@ class ModeCoordinator {
   ) async {
     final docs = await getApplicationDocumentsDirectory();
     final testDir = Directory(
-      '${docs.path}/DenikZZA/test_outputs/$category/run_$runId/$testName',
+      path.join(docs.path, 'DenikZZA', 'test_outputs', category, 'run_$runId', testName),
     );
 
     if (!await testDir.exists()) {
@@ -209,8 +210,8 @@ class ModeCoordinator {
   static Future<void> cleanupIntegrationTestOutputs() async {
     try {
       final docs = await getApplicationDocumentsDirectory();
-      final integrationDir =
-          Directory('${docs.path}/DenikZZA/integration_test_output');
+        final integrationDir =
+          Directory(path.join(docs.path, 'DenikZZA', 'integration_test_output'));
 
       if (await integrationDir.exists()) {
         await integrationDir.delete(recursive: true);
@@ -230,7 +231,7 @@ class ModeCoordinator {
 
       for (final category in ['integration', 'canary']) {
         final categoryDir = Directory(
-          '${docs.path}/DenikZZA/test_outputs/$category',
+          path.join(docs.path, 'DenikZZA', 'test_outputs', category),
         );
 
         if (!await categoryDir.exists()) continue;

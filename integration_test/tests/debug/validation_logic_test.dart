@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:path/path.dart' as path;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -27,14 +28,14 @@ Future<void> _seedValidationTestData(AppDatabase database) async {
   final testOutputPath = fmConfig['testOutputPath'] as String?;
   final basePath = testOutputPath ?? '';
   final eventPath = basePath.isNotEmpty
-      ? '$basePath/${jurskyParkEvent.homeDirectory}'
+      ? path.join(basePath, jurskyParkEvent.homeDirectory)
       : jurskyParkEvent.homeDirectory;
 
   if (basePath.isNotEmpty) {
     final eventDir = Directory(eventPath);
     await eventDir.create(recursive: true);
     for (final sub in const ['backup', 'zpusobilosti', 'vysetreni']) {
-      await Directory('${eventDir.path}/$sub').create(recursive: true);
+      await Directory(path.join(eventDir.path, sub)).create(recursive: true);
     }
   }
 

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:path/path.dart' as path;
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_akce.dart';
 import 'package:denik_zza/database/database_interface.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
@@ -169,7 +170,7 @@ class FileManager {
       return homeDir;
     }
     final directory = await getApplicationDocumentsDirectory();
-    final thisDir = Directory('${directory.path}/$homeFolderName');
+    final thisDir = Directory(path.join(directory.path, homeFolderName));
     try {
       await thisDir.create(recursive: true);
     } catch (e) {
@@ -193,7 +194,7 @@ class FileManager {
       logger.e('Error creating event directory: $eventFolderName');
       return null;
     }
-    Directory eventDirCandidate = Directory('${currentDir.path}/$newName');
+    Directory eventDirCandidate = Directory(path.join(currentDir.path, newName));
     try {
       await eventDirCandidate.create(recursive: true);
     } catch (e) {
@@ -220,7 +221,7 @@ class FileManager {
     if (_mode == FileManagerMode.inMemory) return null; // Backward compatible
 
     for (var subFolder in subFolders) {
-      Directory subDir = Directory('${baseDir.path}/$subFolder');
+      Directory subDir = Directory(path.join(baseDir.path, subFolder));
       try {
         await subDir.create(recursive: true);
       } catch (e) {
@@ -238,7 +239,7 @@ class FileManager {
       logger.e('Base directory does not exist: ${base.path}');
       return null;
     }
-    final entityPath = '${base.path}/$inName';
+    final entityPath = path.join(base.path, inName);
     final entityType = await FileSystemEntity.type(entityPath);
     if (entityType == FileSystemEntityType.notFound) {
       logger.i('No collision: $inName');
@@ -252,7 +253,7 @@ class FileManager {
       do {
         newName = '${baseName}_${counter.toString().padLeft(3, '0')}$extension';
         FileSystemEntityType newType =
-            await FileSystemEntity.type('${base.path}/$newName');
+          await FileSystemEntity.type(path.join(base.path, newName));
         if (newType == FileSystemEntityType.notFound) {
           logger.i('New name is available: $newName');
           return newName;
@@ -405,8 +406,9 @@ class FileManager {
   /// Simple backup of the database to event directory
   Future<void> backupDB() async {
     if (eventDir == null) {
-      if (_mode != FileManagerMode.inMemory)
+      if (_mode != FileManagerMode.inMemory) {
         logger.e('Event directory is null');
+      }
       return;
     }
 
@@ -421,14 +423,14 @@ class FileManager {
         logger.e('Database file not found for backup: ${dbFile.path}');
         return;
       }
-      final backupDir = Directory('${eventDir!.path}/backup');
+      final backupDir = Directory(path.join(eventDir!.path, 'backup'));
       await backupDir.create(recursive: true);
       final newName = await nameCollisionSolver(backupDir, 'db_backup.sqlite');
       if (newName == null) {
         logger.e('Error resolving name collision for backup file');
         return;
       }
-      final backupFile = File('${backupDir.path}/$newName');
+      final backupFile = File(path.join(backupDir.path, newName));
       await dbFile.copy(backupFile.path);
       logger.i('Backup created: ${backupFile.path}');
     } catch (e) {
@@ -453,18 +455,19 @@ class FileManager {
       logger.i('FileManager mode: ${_mode.value}');
       return throw Exception('Event directory is null');
     }
-    return Directory('${eventDir!.path}/zpusobilosti');
+    return Directory(path.join(eventDir!.path, 'zpusobilosti'));
   }
 
   Future<String?> putZpusobilost(File pickedFile) async {
     if (eventDir == null) {
-      if (_mode != FileManagerMode.inMemory)
+      if (_mode != FileManagerMode.inMemory) {
         logger.e('Event directory is null');
+      }
       return null;
     }
 
     try {
-      final zpusobilostDir = Directory('${eventDir!.path}/zpusobilosti');
+      final zpusobilostDir = Directory(path.join(eventDir!.path, 'zpusobilosti'));
       await zpusobilostDir.create(recursive: true);
 
       final newName = await nameCollisionSolver(
@@ -474,7 +477,7 @@ class FileManager {
         return null;
       }
 
-      final destinationFile = File('${zpusobilostDir.path}/$newName');
+      final destinationFile = File(path.join(zpusobilostDir.path, newName));
       await pickedFile.copy(destinationFile.path);
       logger.i('File uploaded to: ${destinationFile.path}');
       //return destinationFile.path;
@@ -495,7 +498,7 @@ class FileManager {
     if (osoba.potvrzeniPath == null) {
       return true; // Not an error - file is optional
     }
-    final expectedFile = File('${zpusobilostDir.path}/${osoba.potvrzeniPath}');
+    final expectedFile = File(path.join(zpusobilostDir.path, osoba.potvrzeniPath!));
     if (await expectedFile.exists()) {
       try {
         await expectedFile.openRead().first;
@@ -519,7 +522,7 @@ class FileManager {
 
   Future<void> _validateSubfolders(Directory candidate) async {
     for (var subFolder in subFolders) {
-      Directory subDir = Directory('${candidate.path}/$subFolder');
+      Directory subDir = Directory(path.join(candidate.path, subFolder));
       if (!await subDir.exists()) {
         logger.e('Subfolder not found: $subFolder');
         throw FileSystemException(
@@ -530,7 +533,7 @@ class FileManager {
 
   /// Quick IO sanity check: create/write/read/delete a tiny probe file in [dir].
   Future<bool> verifyWritableReadable(Directory dir) async {
-    final probe = File('${dir.path}/.io_probe');
+    final probe = File(path.join(dir.path, '.io_probe'));
     try {
       await probe.writeAsString('probe');
       final content = await probe.readAsString();
@@ -576,9 +579,9 @@ class FileManager {
       case FileManagerMode.persist:
         // Write to test outputs for debugging
         final String basePath = _testOutputPath ?? 'test/test_outputs';
-        final Directory tempDir = Directory('$basePath/temp');
+        final Directory tempDir = Directory(path.join(basePath, 'temp'));
         await tempDir.create(recursive: true);
-        final File target = File('${tempDir.path}/$resolvedName');
+        final File target = File(path.join(tempDir.path, resolvedName));
         await target.writeAsBytes(bytes, flush: true);
         logger.d('Temp CSV written (persist): ${target.path}');
         return target.path;
@@ -586,7 +589,7 @@ class FileManager {
       case FileManagerMode.production:
         // Use path_provider
         final Directory tempDir = await getTemporaryDirectory();
-        final File target = File('${tempDir.path}/$resolvedName');
+        final File target = File(path.join(tempDir.path, resolvedName));
         await target.writeAsBytes(bytes, flush: true);
         logger.d('Temp CSV written (production): ${target.path}');
         return target.path;
