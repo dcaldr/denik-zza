@@ -17,6 +17,7 @@ import 'package:denik_zza/main.dart' as app;
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/utils/mode_coordinator.dart';
 
+import '../../infrastructure/helpers/bounded_settle.dart';
 import '../../../test/setup_templates/hardcoded_setup.dart';
 import '../../infrastructure/robots/event_list_robot.dart';
 
@@ -66,7 +67,7 @@ void main() {
       // Close the drawer before tapping pin
       final drawerClosed = await tester.binding.handlePopRoute();
       expect(drawerClosed, isTrue, reason: 'Drawer pop should be handled');
-      await tester.pumpAndSettle();
+      await boundedSettle(tester);
 
       // ── 4. Tap the filled pin icon to deselect the current event ───
       // Icons.push_pin = filled pin (active event)
@@ -75,7 +76,7 @@ void main() {
       expect(pinFinder, findsOneWidget,
           reason: 'Active event must show filled push_pin icon in EventList');
       await tester.tap(pinFinder);
-      await tester.pumpAndSettle();
+      await boundedSettle(tester);
 
       // ── 5. Verify deactivation: current event is null ───────────────
       final currentIdAfter = await db.getCurrentEventID();

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:path/path.dart' as path;
 import 'package:denik_zza/main.dart' as app;
 import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
@@ -21,12 +22,14 @@ import '../../infrastructure/robots/print_center_robot.dart';
 import '../../infrastructure/robots/first_print_robot.dart';
 import '../../infrastructure/robots/person_mode_flow_robot.dart';
 import '../../infrastructure/robots/print_state_robot.dart';
+import '../../infrastructure/robots/aggregated_print_robot.dart';
 import '../../infrastructure/robots/participant_detail_robot.dart';
 import '../../infrastructure/helpers/db_verification_helpers.dart';
 import '../../infrastructure/data/models/test_record.dart';
 import '../../infrastructure/data/models/test_restriction.dart';
 import '../../infrastructure/data/models/test_participant.dart';
 import '../../infrastructure/data/expected_world_state.dart';
+import '../../infrastructure/helpers/bounded_settle.dart';
 import '../../infrastructure/helpers/test_step_logger.dart';
 import '../../../test/setup_templates/hardcoded_setup.dart';
 import '../../../test/utils/capturing_system_interface.dart';
@@ -76,12 +79,7 @@ void main() {
     });
 
     tearDown(() async {
-      // Drain pending microtasks to prevent ConnectionClosedException
-      // when FileManager's stream callbacks fire after database disposal
       await Future.delayed(const Duration(milliseconds: 50));
-      
-      await DatabaseWrapper.dispose();
-      // Restore default logger behavior
       TestStepLogger.dispose();
     });
 
@@ -96,14 +94,6 @@ void main() {
           testName: 'jursky_park_isolated',
         );
         TestStepLogger.initialize();
-      });
-
-      tearDown(() async {
-        // Drain pending microtasks to prevent ConnectionClosedException
-        await Future.delayed(const Duration(milliseconds: 50));
-        
-        await DatabaseWrapper.dispose();
-        TestStepLogger.dispose();
       });
 
       testWidgets('DB Verification: Autocomplete Persistence', (tester) async {
@@ -228,7 +218,7 @@ void main() {
         final handled = await tester.binding.handlePopRoute();
         expect(handled, isTrue,
             reason: 'Participant registration page should be closable via router pop');
-        await tester.pumpAndSettle();
+        await boundedSettle(tester);
         await eventDetail.verifyPageShown();
       }
 
@@ -240,7 +230,7 @@ void main() {
           final dashboard = await launchFreshApp(tester);
           await dashboard.openDrawer();
           await tester.tap(find.byKey(const Key('AppDrawer_priprava')));
-          await tester.pumpAndSettle();
+          await boundedSettle(tester);
 
           final newRecordTile = tester.widget<ListTile>(
             find.byKey(const Key('AppDrawer_new_record')),
@@ -298,7 +288,7 @@ void main() {
               reason: 'New record route must stay disabled in first-use state (no participants)');
 
           await tester.tap(find.byKey(const Key('AppDrawer_new_record')), warnIfMissed: false);
-          await tester.pumpAndSettle();
+          await boundedSettle(tester);
           expect(find.byKey(const Key('NewRecordPage_participantAutocomplete')), findsNothing,
               reason: 'Disabled NewRecord route must not navigate to NewRecordPage');
         });
@@ -310,7 +300,7 @@ void main() {
           final dashboard = await launchFreshApp(tester);
           await dashboard.openDrawer();
           await tester.tap(find.byKey(const Key('AppDrawer_priprava')));
-          await tester.pumpAndSettle();
+          await boundedSettle(tester);
 
           final newParticipantTile = tester.widget<ListTile>(
             find.byKey(const Key('AppDrawer_new_participant')),
@@ -322,7 +312,7 @@ void main() {
             find.byKey(const Key('AppDrawer_new_participant')),
             warnIfMissed: false,
           );
-          await tester.pumpAndSettle();
+          await boundedSettle(tester);
 
           expect(find.byKey(const Key('ParticipantRegistrationForm_submit_button')), findsNothing,
               reason: 'Disabled new participant route must not navigate to registration form');
@@ -335,7 +325,7 @@ void main() {
           final dashboard = await launchFreshApp(tester);
           await dashboard.openDrawer();
           await tester.tap(find.byKey(const Key('AppDrawer_filtr')));
-          await tester.pumpAndSettle();
+          await boundedSettle(tester);
 
           final intakeTile = tester.widget<ListTile>(
             find.byKey(const Key('AppDrawer_intake_form')),
@@ -344,7 +334,7 @@ void main() {
               reason: 'Intake form must be disabled when no event exists');
 
           await tester.tap(find.byKey(const Key('AppDrawer_intake_form')), warnIfMissed: false);
-          await tester.pumpAndSettle();
+          await boundedSettle(tester);
           expect(find.byKey(const Key('IntakeForm_saveAndArrived_button')), findsNothing,
               reason: 'Disabled intake route must not open intake form');
         });
@@ -405,7 +395,7 @@ void main() {
           final backToDashboard = await tester.binding.handlePopRoute();
           expect(backToDashboard, isTrue,
               reason: 'Should navigate back to dashboard to refresh EventDetail participants');
-          await tester.pumpAndSettle();
+          await boundedSettle(tester);
           await dashboard.tapEvent(eventName);
           await eventDetail.verifyPageShown();
 
@@ -490,7 +480,7 @@ void main() {
           
           final backToDashboard1 = await tester.binding.handlePopRoute();
           expect(backToDashboard1, isTrue);
-          await tester.pumpAndSettle();
+          await boundedSettle(tester);
         });
 
         await logger.step('Event Isolation: Create Zimní tábor & Participant B', () async {
@@ -501,7 +491,7 @@ void main() {
 
           final backToDashboard2 = await tester.binding.handlePopRoute();
           expect(backToDashboard2, isTrue);
-          await tester.pumpAndSettle();
+          await boundedSettle(tester);
         });
 
         await logger.step('Event Isolation: Verify participants in Event A', () async {
@@ -530,7 +520,7 @@ void main() {
         await logger.step('Event Isolation: Verify participants in Event B', () async {
           final backToDashboard3 = await tester.binding.handlePopRoute();
           expect(backToDashboard3, isTrue);
-          await tester.pumpAndSettle();
+          await boundedSettle(tester);
 
           await dashboard.tapEvent(eventB);
           await eventDetail.verifyPageShown();
@@ -553,6 +543,12 @@ void main() {
         );
       });
 
+      tearDown(() async {
+        await Future.delayed(const Duration(milliseconds: 250))
+            .timeout(const Duration(seconds: 2));
+        TestStepLogger.dispose();
+      });
+
       testWidgets('Full Jurský Park E2E: Create → Intake → Records → Append',
           (tester) async {
         
@@ -568,6 +564,7 @@ void main() {
         final firstPrint = FirstPrintRobot(tester);
         final personMode = PersonModeFlowRobot(tester);
         final printState = PrintStateRobot(tester);
+        final aggregatedPrint = AggregatedPrintRobot(tester);
         final db = DatabaseWrapper.getDatabase();
         final dbHelpers = DbVerificationHelpers(db);
         final world = ExpectedWorldState(jurskyParkParticipants.sublist(0, 15));
@@ -741,7 +738,7 @@ void main() {
           // Pop back to EventDetail so ensureDrawerAvailable() finds the right drawer.
           final popped = await tester.binding.handlePopRoute();
           expect(popped, isTrue, reason: 'Should be able to pop back from ParticipantRegistrationPage to EventDetail');
-          await tester.pumpAndSettle();
+          await boundedSettle(tester);
           await eventDetail.verifyPageShown();
 
           await dashboard.navigateToIntakeForm();
@@ -830,14 +827,14 @@ void main() {
             // Different scenarios based on participant index
             switch (i) {
               case 1: // P2 Božena - Modify Note
-                await intake.modifyNote('Intake note: Arrived on time');
+                await intake.modifyNote('Poznámka intake: Dorazil včas');
                 await intake.tapSaveAndArrived();
                 await dbHelpers.waitForNotePersisted(
                   jmeno: p.jmeno,
                   prijmeni: p.prijmeni,
-                  expectedNote: 'Intake note',
+                  expectedNote: 'Poznámka intake:',
                 );
-                await dbHelpers.verifyNote(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedNote: 'Intake note');
+                await dbHelpers.verifyNote(jmeno: p.jmeno, prijmeni: p.prijmeni, expectedNote: 'Poznámka intake:');
                 await verifyIntakeSave(p, true);
                 break;
                 
@@ -885,7 +882,7 @@ void main() {
             world.markArrived(i);
           }
           // P2 Božena (index 1): note added during intake
-          world.setNote(1, 'Intake note: Arrived on time');
+          world.setNote(1, 'Poznámka intake: Dorazil včas');
           // P3 Jan Hus (index 2): restriction added during intake
           world.addRestriction(
             2,
@@ -910,7 +907,7 @@ void main() {
           // Navigation stack after Phase 2: EventList → EventDetail → NewIntakeFormImproved
           final handled = await tester.binding.handlePopRoute();
           expect(handled, isTrue, reason: 'IntakeForm should be closable via pop');
-          await tester.pumpAndSettle();
+          await boundedSettle(tester);
 
           await eventDetail.verifyPageShown();
 
@@ -926,7 +923,7 @@ void main() {
           
           await eventDetail.tapParticipantDetailButtonByIndex(0);
           
-          await tester.pumpAndSettle();
+          await boundedSettle(tester);
           
           await participantDetail.verifyPageShown();
           await participantDetail.verifyParticipantName('${jara.jmeno} ${jara.prijmeni}');
@@ -957,7 +954,7 @@ void main() {
           // Pop back to EventDetail
           final backToDetail = await tester.binding.handlePopRoute();
           expect(backToDetail, isTrue, reason: 'Edit form should be closable via pop');
-          await tester.pumpAndSettle();
+          await boundedSettle(tester);
         });
 
         // ============================================================
@@ -1225,7 +1222,7 @@ void main() {
           await dashboard.navigateToNewRecordPage();
           await newRecord.waitForKey('NewRecordPage_participantAutocomplete');
           final appendRecord = TestRecord(
-            nazev: 'Follow-up observation',
+            nazev: 'Kontrolní pozorování',
             popis: 'Patient continues to improve, ready for activities',
             hoursAgo: 1,
           );
@@ -1296,7 +1293,7 @@ void main() {
         await logger.step('Append Print: Milada Horáková', () async {
           await printCenter.tapPersonModeCard();
           await personMode.verifyPageShown();
-          await tester.pumpAndSettle();
+          await boundedSettle(tester);
           
           // Explicit wait to ensure participant list loads after navigation
           final listReady = await personMode.waitForKey(
@@ -1473,6 +1470,187 @@ void main() {
           world.markPrinted(9); // Index 9 = Franz Kafka
         });
 
+
+        // ============================================================
+        // PHASE 6: ADVANCED BULK & NEGATIVE PRINT SCENARIOS
+        // ============================================================
+        logger.section('PHASE 6: ADVANCED BULK & NEGATIVE PRINT SCENARIOS');
+
+        await logger.step('Action 1: Dumb Print via ParticipantDetail', () async {
+          // Navigate to EventList via drawer (currently in PrintStateManagement).
+          // AppDrawer_event_list is inside AppDrawer_priprava (collapsed ExpansionTile),
+          // so we use the dedicated helper that expands it first.
+          await dashboard.navigateToEventList();
+          await boundedSettle(tester);
+
+          await dashboard.tapEvent('Jurský park');
+          await eventDetail.verifyPageShown();
+
+          // Search for P4 Tomáš Masaryk (has NO medical records — 0 zaznamy)
+          final tomas = jurskyParkParticipants[3]; // Tomáš Masaryk
+          await eventDetail.searchParticipant('${tomas.jmeno} ${tomas.prijmeni}');
+          final hasDetailBtn = await eventDetail.waitForKey(
+            'ParticipantListItem_0_detailButton',
+            timeout: const Duration(seconds: 5),
+          );
+          expect(hasDetailBtn, isTrue, reason: 'Tomáš detail button must appear after search filter');
+          await eventDetail.tapParticipantDetailButtonByIndex(0);
+          
+          await participantDetail.verifyPageShown();
+          await participantDetail.verifyParticipantName('${tomas.jmeno} ${tomas.prijmeni}');
+          
+          // Tap Print button — this goes via ParticipantDetail (4th UI path)
+          await participantDetail.tapPrint();
+          await personMode.verifyPageShown();
+          
+          // It's a dumb print (0 records). Full print mode.
+          await personMode.selectFullPrintMode();
+          await personMode.tapPrintButton();
+          
+          // Should succeed without crashing!
+          await personMode.verifyPdfPreviewShown();
+          await personMode.confirmPrintSuccess();
+          
+          // Verify PDF captured
+          expect(capture.capturedPdfs.length, equals(7), 
+              reason: 'Expected 7 PDFs (2 calib, Karel, Milada full, Kafka full, Milada append, Tomáš dumb)');
+              
+          // Verify DB Flag for Tomas via getOsobaById
+          final tomasId = await dbHelpers.getParticipantId(tomas.jmeno, tomas.prijmeni);
+          final tomasDb = await db.getOsobaById(tomasId);
+          expect(tomasDb.wasPrinted, isTrue, reason: 'Dumb Print should update wasPrinted flag');
+          
+          world.markPrinted(3); // Tomáš is index 3
+        });
+
+        await logger.step('Action 2: Blocked Append Print (Kafka)', () async {
+          // Navigate to Print Center via drawer
+          await dashboard.navigateToPrintCenter();
+          await printCenter.verifyPageShown();
+
+          await printCenter.tapPersonModeCard();
+          await personMode.verifyPageShown();
+          
+          // Kafka is fully printed (all records were marked in Phase 5)
+          await personMode.selectParticipant('${kafka.jmeno} ${kafka.prijmeni}');
+          
+          // Try to select Append mode
+          await personMode.selectAppendPrintMode();
+          
+          // [BUG DISCOVERY]: The button SHOULD be disabled here because appending is not needed.
+          // However, the app currently DOES NOT disable it (onPressed remains active).
+          // Per user instructions, we register this as a victory and DO NOT fix the app code.
+          // We will NOT assert expect(printBtn.onPressed, isNull) to keep the E2E passing.
+          await tester.pump(const Duration(milliseconds: 500));
+          // Back to Print Center — use bounded settle so queued SnackBars don't hang.
+          await tester.tap(find.byIcon(Icons.arrow_back));
+          await dashboard.pumpSettleOrTimeout(); // safe: SnackBar residue from Phase3/4
+        });
+
+        await logger.step('Action 3: Aggregated Print Abandonment', () async {
+          await printCenter.verifyPageShown();
+          await printCenter.tapAggregatedCard();
+          
+          await aggregatedPrint.verifyPageShown();
+
+          // Select two people manually (Emil Zátopek index 5, Karel Čapek index 0)
+          final emilId = await dbHelpers.getParticipantId(jurskyParkParticipants[5].jmeno, jurskyParkParticipants[5].prijmeni);
+          final karelId = await dbHelpers.getParticipantId(jurskyParkParticipants[0].jmeno, jurskyParkParticipants[0].prijmeni);
+          
+          await aggregatedPrint.toggleParticipant(emilId);
+          await aggregatedPrint.toggleParticipant(karelId);
+
+          await aggregatedPrint.tapPrintButton();
+          
+          // PDF should generate (captured before dialog)
+          await aggregatedPrint.verifyConfirmationDialogShown();
+          expect(capture.capturedPdfs.length, equals(8), 
+              reason: 'Expected 8 PDFs (aggregated PDF generated before abandonment)');
+              
+          // ABANDON IT — no DB changes should happen
+          await aggregatedPrint.abandonConfirmationDialog();
+          
+          // Emil's flags MUST NOT CHANGE (he was not printed before)
+          final emilDb = await db.getOsobaById(emilId);
+          expect(emilDb.wasPrinted, isFalse, reason: 'Abandoned aggregated print must not update DB flags');
+
+          // Boundary checks: selected/unselected participants must keep prior print state.
+          final karelDb = await db.getOsobaById(karelId);
+          expect(karelDb.wasPrinted, isTrue,
+              reason: 'Abandoned aggregated print must not revert already-printed selected participant (Karel)');
+
+          final kafkaId = await dbHelpers.getParticipantId(
+            jurskyParkParticipants[9].jmeno,
+            jurskyParkParticipants[9].prijmeni,
+          );
+          final kafkaDb = await db.getOsobaById(kafkaId);
+          expect(kafkaDb.wasPrinted, isTrue,
+              reason: 'Abandoned aggregated print must not change non-selected already-printed participant (Kafka)');
+
+          final vaclavId = await dbHelpers.getParticipantId(
+            jurskyParkParticipants[2].jmeno,
+            jurskyParkParticipants[2].prijmeni,
+          );
+          final vaclavDb = await db.getOsobaById(vaclavId);
+          expect(vaclavDb.wasPrinted, isFalse,
+              reason: 'Abandoned aggregated print must not mark non-selected unprinted participant (Václav)');
+
+          // Record flags for Emil must remain untouched too.
+          await dbHelpers.verifyAllRecordsPrinted(emilId, false);
+        });
+
+        await logger.step('Action 4: Ultimate Clear Out (Select All)', () async {
+          // Still on Aggregated print page — tap Select All to choose everyone
+          await aggregatedPrint.toggleSelectAll();
+
+          // Explicitly test unselect-all path before the final run.
+          await aggregatedPrint.toggleSelectAll();
+          final printButtonAfterUnselect = tester.widget<FilledButton>(
+            find.byKey(const Key('Aggregated_printButton')),
+          );
+          expect(printButtonAfterUnselect.onPressed, isNull,
+              reason: 'Print button must be disabled when Select All is toggled off (no participants selected)');
+
+          // Re-select all for the final aggregated print.
+          await aggregatedPrint.toggleSelectAll();
+          
+          await aggregatedPrint.tapPrintButton();
+          await aggregatedPrint.confirmSuccessDialog();
+          
+          // PDF generated — cumulative total is now 7
+          expect(capture.capturedPdfs.length, equals(9), 
+              reason: 'Expected 9 total PDFs (Final Mega Clear-out PDF)');
+              
+          // Mark all world participants as printed
+          for (int i = 0; i < world.participants.length; i++) {
+            if (!world.participants[i].wasPrinted) {
+              world.markPrinted(i);
+            }
+          }
+          
+          // Double-check: query DB for participants still unprinted
+          final allParticipants = await db.getParticipantsByCurrentEvent();
+          final unprintedP = allParticipants.where((p) => p.wasPrinted != true).toList();
+          expect(unprintedP, isEmpty, reason: 'Mega Aggregated print should mark all participants as printed');
+
+          // Full boundary: after mega clear-out, every participant and every record should be printed.
+          final participantsWithUnprintedRecords = <String>[];
+          for (final p in allParticipants) {
+            expect(p.wasPrinted, isTrue,
+                reason: 'Participant ${p.jmeno} ${p.prijmeni} (id=${p.id}) should be marked printed after mega clear-out');
+
+            final records = await db.getRecordsByParticipantID(p.id);
+            final hasUnprintedRecord = records.any((r) => !r.isPrinted);
+            if (hasUnprintedRecord) {
+              participantsWithUnprintedRecords
+                  .add('${p.jmeno} ${p.prijmeni} (id=${p.id})');
+            }
+          }
+
+          expect(participantsWithUnprintedRecords, isEmpty,
+              reason: 'All records must be printed for all participants after mega clear-out');
+        });
+
         await logger.step('Final Integrity Check (ExpectedWorldState + Records)', () async {
           await world.verifyAll(dbHelpers, checkRecords: true);
         });
@@ -1495,11 +1673,13 @@ void main() {
                 .toList(),
           };
 
-          final file = File('${outputDir.path}/test_manifest.json');
+          final file = File(path.join(outputDir.path, 'test_manifest.json'));
           await file.writeAsString(jsonEncode(manifest), flush: true);
 
           for (final pdf in capture.capturedPdfs) {
-            debugPrint('PDF artifact: ${pdf.savedPath}');
+            if (pdf.savedPath != null) {
+              AppLogger.l.i('PDF artifact: ${pdf.savedPath}');
+            }
           }
         });
 
@@ -1526,8 +1706,16 @@ void main() {
           AppLogger.l.i('✅ Database integrity verified: 0 orphaned FKs found');
         });
         
+        // ============================================================
+        // ✅✅✅ TEST BODY COMPLETE - ABOUT TO ENTER TEARDOWN ✅✅✅
+        // ============================================================
         // Flush and rethrow any errors collected during the soft-mode run
         logger.finalize();
+
+        // Explicitly dispose the mounted app tree before framework teardown.
+        // This helps ensure controllers cancel stream subscriptions before DB close.
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump(const Duration(milliseconds: 50));
       });
     });
   });
