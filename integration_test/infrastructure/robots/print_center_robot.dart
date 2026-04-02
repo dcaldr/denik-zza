@@ -18,7 +18,8 @@ class PrintCenterRobot extends BaseRobot {
   Finder get stateManagementCard => findKey('PrintCenter_stateManagement');
 
   Future<void> verifyPageShown() async {
-    await pumpAndSettle();
+    // Bounded settle — SnackBars from record saves may still be animating.
+    await pumpSettleOrTimeout();
     expect(find.text('Tisk Centrum – Nové'), findsOneWidget,
       reason: 'Print Center title missing — wrong page or navigation failed');
     expect(personModeCard, findsOneWidget,
@@ -34,6 +35,11 @@ class PrintCenterRobot extends BaseRobot {
   Future<void> tapPersonModeCard() async {
     await waitForCardEnabled('PrintCenter_personMode');
     await tap(personModeCard);
+  }
+
+  Future<void> tapAggregatedCard() async {
+    await waitForCardEnabled('PrintCenter_aggregated');
+    await tap(aggregatedCard);
   }
 
   Future<void> tapFirstPrintCard() async {

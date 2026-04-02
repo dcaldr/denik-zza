@@ -69,7 +69,6 @@ class PersonModeFlowRobot extends BaseRobot {
         maxScrolls: 50,
       );
     } catch (e) {
-      debugDumpApp();
       rethrow;
     }
 
@@ -100,7 +99,6 @@ class PersonModeFlowRobot extends BaseRobot {
     );
     
     if (!modeStageAppeared) {
-      debugDumpApp();
       throw TestFailure(
         'Mode selection stage did not appear after selecting "$fullName". '
         'Selection may have failed or UI transition is broken.',
@@ -127,7 +125,6 @@ class PersonModeFlowRobot extends BaseRobot {
       final buttonFinder = find.byKey(const Key('PersonMode_printButton'));
       if (buttonFinder.evaluate().isEmpty) {
          if (ticks > 150) { 
-           debugDumpApp();
            throw TestFailure("Print button not found in UI after 15 seconds.");
          }
          continue;
@@ -140,7 +137,6 @@ class PersonModeFlowRobot extends BaseRobot {
       
       
       if (ticks > 150) { // 15 seconds
-        debugDumpApp();
         throw TestFailure("Print button remained disabled. PDF generation likely failed or took too long.");
       }
     }
@@ -165,7 +161,6 @@ class PersonModeFlowRobot extends BaseRobot {
       timeout: timeout,
     );
     if (!successFound) {
-      debugDumpApp();
       throw TestFailure(
         'Print confirmation dialog did not appear in time (key: PrintConfirm_success).',
       );
@@ -173,4 +168,18 @@ class PersonModeFlowRobot extends BaseRobot {
     await tap(findKey('PrintConfirm_success'));
   }
 
+  Future<void> abandonPrintDialog({
+    Duration timeout = const Duration(seconds: 10),
+  }) async {
+    final successFound = await waitForKey(
+      'PrintConfirm_noChange', // key for "Zrušit (nic neměnit)"
+      timeout: timeout,
+    );
+    if (!successFound) {
+      throw TestFailure(
+        'Print confirmation dialog did not appear in time (key: PrintConfirm_noChange).',
+      );
+    }
+    await tap(findKey('PrintConfirm_noChange'));
+  }
 }

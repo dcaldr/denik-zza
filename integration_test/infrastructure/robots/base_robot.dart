@@ -44,6 +44,24 @@ class BaseRobot {
     await tester.pump(duration);
   }
 
+  /// Bounded alternative to pumpAndSettle — safe when SnackBars or other
+  /// ongoing animations (toasts, loaders) are still active.
+  ///
+  /// Pumps frames every [step] until either no pending frames remain, or
+  /// [timeout] is reached. Unlike pumpAndSettle() it NEVER hangs.
+  ///
+  /// Use this after navigation steps where SnackBar residue from prior actions
+  /// may prevent settling (e.g., after saving records, after print confirmation).
+  Future<void> pumpSettleOrTimeout({
+    Duration timeout = const Duration(seconds: 4),
+    Duration step = const Duration(milliseconds: 100),
+  }) async {
+    final deadline = DateTime.now().add(timeout);
+    do {
+      await tester.pump(step);
+    } while (DateTime.now().isBefore(deadline) && tester.binding.hasScheduledFrame);
+  }
+
   /// Helper that uses pumpAndSettle in normal mode and pump in fast mode.
   /// Use this to replace hardcoded explicit pumpAndSettle() calls.
   Future<void> smartSettle() async {
@@ -59,7 +77,6 @@ class BaseRobot {
   /// Set [settle] to false if tapping triggers an infinite animation (e.g., a loading spinner)
   /// to prevent pumpAndSettle from hanging indefinitely.
   Future<void> tap(Finder finder, {bool? settle}) async {
-    // print('tapping $finder'); // Optional debug logging
     final shouldSettle = settle ?? !isFastMode;
     await tester.tap(finder);
     if (shouldSettle) {
@@ -281,35 +298,59 @@ class BaseRobot {
 
   // ==================== DRAWER NAVIGATION ====================
 
-  /// Opens the app drawer using ScaffoldState.
+  /// Opens the app drawer strictly on the currently active route.
   ///
-  /// Uses ScaffoldState.openDrawer() which is more reliable than finding
-  /// the menu icon, especially on wide screens where hamburger may be hidden.
+  /// Prevents opening drawers on inactive background routes which would lead
+  /// to hidden UI and stalled animations (robotic tests failing silently).
   Future<void> openDrawer() async {
-    final scaffoldFinder = find.byType(Scaffold);
-    expect(scaffoldFinder, findsWidgets,
-        reason: 'No Scaffold found to open drawer');
-    final ScaffoldState scaffold = tester.firstState(scaffoldFinder);
-    scaffold.openDrawer();
-    await pumpAndSettle();
+    final scaffoldElements = find.byType(Scaffold).evaluate().toList();
+    for (var element in scaffoldElements.reversed) {
+      final route = ModalRoute.of(element);
+      if (route != null && route.isCurrent) {
+        final scaffoldState = (element as StatefulElement).state as ScaffoldState;
+        scaffoldState.openDrawer();
+        await pumpAndSettle();
+        return;
+      }
+    }
+
+    // Fallback: tap menu icon if ScaffoldState approach fails
+    final menuIcon = find.byIcon(Icons.menu);
+    if (menuIcon.evaluate().isNotEmpty) {
+      await tester.tap(menuIcon.first);
+      await pumpAndSettle();
+      return;
+    }
+
+    throw TestFailure('No active topmost Scaffold found to open drawer');
   }
 
   /// Ensures a Drawer is available by popping routes if needed.
   ///
-  /// Some flows (e.g., Print Center) use screens without a Drawer.
-  /// This helper navigates back until a Drawer is found or fails after retries.
+  /// Some flows (e.g., Print Center) use sub-screens without a Drawer.
+  /// This navigates back until the *active top-most* Scaffold has a Drawer.
   Future<void> ensureDrawerAvailable({int maxBack = 3}) async {
     for (int i = 0; i < maxBack; i++) {
       final scaffoldFinder = find.byType(Scaffold);
       if (scaffoldFinder.evaluate().isNotEmpty) {
-        final hasDrawer = scaffoldFinder.evaluate().any((element) {
-          final widget = element.widget;
-          return widget is Scaffold && widget.drawer != null;
-        });
-        if (hasDrawer) {
+        // Only check if the TOPMOST ACTIVE route's Scaffold has a drawer
+        bool topHasDrawer = false;
+        for (var element in scaffoldFinder.evaluate().toList().reversed) {
+          final route = ModalRoute.of(element);
+          if (route != null && route.isCurrent) {
+            final widget = element.widget as Scaffold;
+            if (widget.drawer != null) {
+              topHasDrawer = true;
+            }
+            break; // Found the topmost scaffold, no need to look further
+          }
+        }
+        
+        if (topHasDrawer) {
           return;
         }
       }
+      
       try {
         await tester.pageBack();
       } catch (_) {
@@ -320,8 +361,22 @@ class BaseRobot {
       }
       await pumpAndSettle();
     }
-    if (find.byType(Drawer).evaluate().isEmpty) {
-      throw TestFailure('Drawer not available after navigating back');
+    
+    // Final check
+    final scaffolds = find.byType(Scaffold).evaluate().toList();
+    bool finalHasDrawer = false;
+    for (var element in scaffolds.reversed) {
+      final route = ModalRoute.of(element);
+      if (route != null && route.isCurrent) {
+        final widget = element.widget as Scaffold;
+        if (widget.drawer != null) {
+          finalHasDrawer = true;
+        }
+        break;
+      }
+    }
+    if (!finalHasDrawer) {
+      throw TestFailure('Drawer not available on active route after navigating back');
     }
   }
 
@@ -367,5 +422,17 @@ class BaseRobot {
     await ensureDrawerAvailable();
     await openDrawer();
     await tapDrawerPrintCenter();
+  }
+
+  /// Navigates to Event List via drawer.
+  ///
+  /// Expands the "PŘÍPRAVA AKCE" section first, then taps Event List.
+  Future<void> navigateToEventList() async {
+    await ensureDrawerAvailable();
+    await openDrawer();
+    // Expand the preparation section first (event list is inside this ExpansionTile)
+    await tap(findKey('AppDrawer_priprava'));
+    await pumpAndSettle();
+    await tap(findKey('AppDrawer_event_list'));
   }
 }
