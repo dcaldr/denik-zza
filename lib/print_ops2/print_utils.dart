@@ -30,5 +30,8 @@ bool canAppendPrint({
   if (!wasPrinted) return false;
   if (isPrintedFlags.isEmpty) return false;
 
+  final hasUnprintedRecords = isPrintedFlags.any((flag) => !flag);
+  if (!hasUnprintedRecords) return false;
+
   return isSequenceValid(isPrintedFlags);
 }

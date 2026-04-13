@@ -15,7 +15,7 @@ import 'package:denik_zza/utils/app_logger.dart';
 // -----------------------------------------------------------------------------
 // FLOW: OSOBNÍ TISK (VÝBĚR OSOBY -> REŽIM -> NÁHLED -> POTVRZENÍ)
 // GUIDED 4-STEP PERSON PRINT WORKFLOW WITH ABANDONMENT DETECTION
-// 
+//
 // Step 1: User selects participant from list
 // Step 2: User chooses print mode (Full or Append)
 // Step 3: User reviews records before printing
@@ -26,17 +26,17 @@ import 'package:denik_zza/utils/app_logger.dart';
 // - Sets selectionAbandoned flag in controller
 // - Resets flow to person selection (Step 1)
 // - Used when user wants to change participant without full reset
-// 
+//
 // State Safety:
 // - selectionAbandoned flag detects back button presses
 // - Prevents partial state from affecting next selection
 // - Ensures clean transitions between person selections
-// 
+//
 // Required Keys (for testing):
 // - select-person: Person list container
 // - mode-full, mode-append: Mode selection buttons
 // - confirm-button, cancel-button: Confirmation controls
-// 
+//
 // -----------------------------------------------------------------------------
 
 class PersonAndModeFlowPage extends StatefulWidget {
@@ -112,11 +112,13 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
   Widget _buildStage(BuildContext context, PrintCenterController ctrl) {
     // Show list if no selection OR if selection was abandoned (user went back)
     if (ctrl.selected == null || ctrl.selectionAbandoned) {
-      AppLogger.l.d('PersonMode._buildStage: showing list (selected=${ctrl.selected == null ? "null" : ctrl.selected!.jmeno}, abandoned=${ctrl.selectionAbandoned})');
+      AppLogger.l.d(
+          'PersonMode._buildStage: showing list (selected=${ctrl.selected == null ? "null" : ctrl.selected!.jmeno}, abandoned=${ctrl.selectionAbandoned})');
       return _buildSelectPerson(context, ctrl);
     }
     if (!ctrl.simulatedPrinted) {
-      AppLogger.l.d('PersonMode._buildStage: showing mode/preview for ${ctrl.selected!.jmeno}');
+      AppLogger.l.d(
+          'PersonMode._buildStage: showing mode/preview for ${ctrl.selected!.jmeno}');
       return _buildModeAndPreview(context, ctrl);
     }
     AppLogger.l.d('PersonMode._buildStage: showing post-confirmation');
@@ -127,7 +129,7 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
     if (ctrl.loadingParticipants) {
       return const Center(child: CircularProgressIndicator());
     }
-    
+
     if (ctrl.participants.isEmpty) {
       return ModeFlowInfoBox(
         color: AppColors.orangeBackground,
@@ -237,40 +239,45 @@ class _PersonAndModeFlowPageState extends State<PersonAndModeFlowPage> {
                     key: const Key('PersonMode_printButton'),
                     icon: const Icon(Icons.print),
                     label: const Text('Tisk'),
-                    onPressed: () async {
-                      Future<void> runPrintCycle() async {
-                        try {
-                          // Append Instruction Dialog
-                          if (ctrl.mode == PrintMode.append) {
-                            final proceed = await showDialog<bool>(
-                              context: context,
-                              barrierDismissible: false,
-                              builder: (context) =>
-                                  AppendInstructionDialog(controller: ctrl),
-                            );
+                    onPressed: (ctrl.mode == PrintMode.append &&
+                            ctrl.appendPossible != true)
+                        ? null
+                        : () async {
+                            Future<void> runPrintCycle() async {
+                              try {
+                                // Append Instruction Dialog
+                                if (ctrl.mode == PrintMode.append) {
+                                  final proceed = await showDialog<bool>(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (context) =>
+                                        AppendInstructionDialog(
+                                            controller: ctrl),
+                                  );
 
-                            if (proceed != true) return;
-                          }
+                                  if (proceed != true) return;
+                                }
 
-                          await SystemInterface.instance.printPdf(
-                            onLayout: (_) => ctrl.generateCurrentPdf(),
-                            name: 'Osoba_${ctrl.selected?.id ?? "export"}',
-                          );
-                          if (context.mounted) {
-                            await _showConfirmDialog(context, ctrl,
-                                onReprint: runPrintCycle);
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Chyba tisku: $e')),
-                            );
-                          }
-                        }
-                      }
+                                await SystemInterface.instance.printPdf(
+                                  onLayout: (_) => ctrl.generateCurrentPdf(),
+                                  name:
+                                      'Osoba_${ctrl.selected?.id ?? "export"}',
+                                );
+                                if (context.mounted) {
+                                  await _showConfirmDialog(context, ctrl,
+                                      onReprint: runPrintCycle);
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Chyba tisku: $e')),
+                                  );
+                                }
+                              }
+                            }
 
-                      await runPrintCycle();
-                    },
+                            await runPrintCycle();
+                          },
                   ),
                 ),
               ],
@@ -474,7 +481,7 @@ class _AppendHintBox extends StatelessWidget {
 ///
 /// Used to show append constraints, mode descriptions, and status messages
 /// in a consistent styled container with icon and colored background.
-/// 
+///
 /// Parameters:
 /// - [color]: Background color (typically from AppColors)
 /// - [icon]: Leading icon (typically from Icons)
