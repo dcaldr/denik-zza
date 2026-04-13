@@ -101,8 +101,9 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final isCompact =
-              AppBreakpoints.isCompactHeight(constraints.maxHeight);
+          final screenHeight = MediaQuery.sizeOf(context).height;
+          final isTouch = AppBreakpoints.useTouchMode(context);
+          final useCompactDensity = !isTouch && screenHeight < 750;
 
           return Center(
             child: ConstrainedBox(
@@ -116,18 +117,19 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
                     Expanded(
                       child: SingleChildScrollView(
                         child: Theme(
-                          data: isCompact
+                          data: useCompactDensity
                               ? Theme.of(context).copyWith(
                                   visualDensity: VisualDensity.compact,
                                   inputDecorationTheme: Theme.of(context)
                                       .inputDecorationTheme
                                       .copyWith(
-                                        isDense: true,
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 8,
-                                        ),
+                                        isDense: useCompactDensity,
+                                        contentPadding: useCompactDensity
+                                            ? const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 10,
+                                              )
+                                            : null,
                                       ),
                                 )
                               : Theme.of(context),
@@ -138,12 +140,13 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
                     ),
                     AppSpacing.mediumGap,
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         OutlinedButton(
                           onPressed: () => Navigator.of(context).pop(false),
                           child: const Text('Zrušit'),
                         ),
+                        const SizedBox(width: AppSpacing.m),
                         FilledButton(
                           key: const Key('ParticipantEditPage_submit_button'),
                           onPressed: _handleSave,
