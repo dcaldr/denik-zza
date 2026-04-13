@@ -105,58 +105,50 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
           final isTouch = AppBreakpoints.useTouchMode(context);
           final useCompactDensity = !isTouch && screenHeight < 750;
 
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: AppBreakpoints.formMaxWidth,
-              ),
-              child: Padding(
-                padding: AppSpacing.screenPadding,
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Theme(
-                          data: useCompactDensity
-                              ? Theme.of(context).copyWith(
-                                  visualDensity: VisualDensity.compact,
-                                  inputDecorationTheme: Theme.of(context)
-                                      .inputDecorationTheme
-                                      .copyWith(
-                                        isDense: useCompactDensity,
-                                        contentPadding: useCompactDensity
-                                            ? const EdgeInsets.symmetric(
-                                                horizontal: 8,
-                                                vertical: 10,
-                                              )
-                                            : null,
-                                      ),
-                                )
-                              : Theme.of(context),
-                          child: _participantRegistrationForm ??
-                              const SizedBox(),
-                        ),
-                      ),
+          return Padding(
+            padding: AppSpacing.screenPadding,
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Theme(
+                      data: useCompactDensity
+                          ? Theme.of(context).copyWith(
+                              visualDensity: VisualDensity.compact,
+                              inputDecorationTheme: Theme.of(context)
+                                  .inputDecorationTheme
+                                  .copyWith(
+                                    isDense: useCompactDensity,
+                                    contentPadding: useCompactDensity
+                                        ? const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 10,
+                                          )
+                                        : null,
+                                  ),
+                            )
+                          : Theme.of(context),
+                      child: _participantRegistrationForm ?? const SizedBox(),
                     ),
-                    AppSpacing.mediumGap,
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        OutlinedButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: const Text('Zrušit'),
-                        ),
-                        const SizedBox(width: AppSpacing.m),
-                        FilledButton(
-                          key: const Key('ParticipantEditPage_submit_button'),
-                          onPressed: _handleSave,
-                          child: const Text('Uložit změny'),
-                        ),
-                      ],
+                  ),
+                ),
+                AppSpacing.mediumGap,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text('Zrušit'),
+                    ),
+                    const SizedBox(width: AppSpacing.m),
+                    FilledButton(
+                      key: const Key('ParticipantEditPage_submit_button'),
+                      onPressed: _handleSave,
+                      child: const Text('Uložit změny'),
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
           );
         },
