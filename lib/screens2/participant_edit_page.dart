@@ -19,7 +19,6 @@ class ParticipantEditPage extends StatefulWidget {
 }
 
 class _ParticipantEditPageState extends State<ParticipantEditPage> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final GlobalKey<ParticipantRegistrationFormState> _formStateKey =
       GlobalKey<ParticipantRegistrationFormState>();
   ParticipantRegistrationForm? _participantRegistrationForm;
@@ -44,6 +43,7 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
       osoba: widget.participant,
       onValidate: (validate) => _validateFunction = validate,
       onRefresh: null, // Not needed for edit mode
+      enableStickyFooter: true,
       // Inject shared instances so RestrictionsWidget edits reach _handleSave.
       omezeniLogic: _omezeniLogic,
       lekLogic: _lekLogic,
@@ -106,7 +106,9 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
 
           return Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 800),
+              constraints: const BoxConstraints(
+                maxWidth: AppBreakpoints.formMaxWidth,
+              ),
               child: Padding(
                 padding: AppSpacing.screenPadding,
                 child: Column(
@@ -129,11 +131,8 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
                                       ),
                                 )
                               : Theme.of(context),
-                          child: Form(
-                            key: _formKey,
-                            child: _participantRegistrationForm ??
-                                const SizedBox(),
-                          ),
+                          child: _participantRegistrationForm ??
+                              const SizedBox(),
                         ),
                       ),
                     ),
