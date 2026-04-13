@@ -20,9 +20,10 @@ class ParticipantEditPage extends StatefulWidget {
 
 class _ParticipantEditPageState extends State<ParticipantEditPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final GlobalKey<ParticipantRegistrationFormState> _formStateKey =
+      GlobalKey<ParticipantRegistrationFormState>();
   ParticipantRegistrationForm? _participantRegistrationForm;
   bool Function()? _validateFunction;
-  MemoryOsoba? _editedParticipant;
 
   // Owned logic instances — injected into the form so that edits made in
   // RestrictionsWidget are available here when _handleSave is called.
@@ -39,9 +40,9 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
 
   void _initializeForm() {
     _participantRegistrationForm = ParticipantRegistrationForm(
+      key: _formStateKey,
       osoba: widget.participant,
       onValidate: (validate) => _validateFunction = validate,
-      onOsobaEdited: (osoba) => _editedParticipant = osoba,
       onRefresh: null, // Not needed for edit mode
       // Inject shared instances so RestrictionsWidget edits reach _handleSave.
       omezeniLogic: _omezeniLogic,
@@ -52,11 +53,14 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
   Future<void> _handleSave() async {
     if (_validateFunction?.call() ?? false) {
       try {
-        final participantToSave = _editedParticipant ?? widget.participant;
+        final participantToSave =
+            _formStateKey.currentState?.createMemoryOsoba() ??
+                widget.participant;
 
         // Delegate to service so restrictions/meds are saved alongside
         // basic participant data — fixes the silent-drop bug.
-        final result = await _participantService.saveParticipantWithRestrictions(
+        final result =
+            await _participantService.saveParticipantWithRestrictions(
           osoba: participantToSave,
           omezeniLogic: _omezeniLogic,
           lekLogic: _lekLogic,
