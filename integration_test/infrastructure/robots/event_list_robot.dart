@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'base_robot.dart';
 
@@ -15,7 +16,8 @@ class EventListRobot extends BaseRobot {
   Future<void> verifyPageShown() async {
     await pumpAndSettle();
     expect(find.text('Všechny akce'), findsOneWidget,
-      reason: 'EventList screen must show "Všechny akce" header — hints at missing Scaffold or wrong route');
+        reason:
+            'EventList screen must show "Všechny akce" header — hints at missing Scaffold or wrong route');
   }
 
   Future<void> verifyEventPresent(String eventName) async {
@@ -24,7 +26,12 @@ class EventListRobot extends BaseRobot {
   }
 
   Future<void> tapEvent(String name) async {
-    await tap(find.text(name));
+    final textFinder = find.text(name);
+    final listTileFinder = find.ancestor(
+      of: textFinder,
+      matching: find.byType(ListTile),
+    );
+    await tap(listTileFinder);
   }
 
   Future<void> tapCreateNewEvent() async {
