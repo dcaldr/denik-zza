@@ -51,6 +51,31 @@ void main() {
       await resetSurface(tester);
     });
 
+    testWidgets('keeps title and temperature on same row in narrow viewport',
+        (tester) async {
+      await pumpWithSize(
+        tester,
+        const Size(360, 640),
+        participant: participants.isNotEmpty ? participants.first : null,
+      );
+
+      final titleFinder = find.byKey(const Key('NewRecordPage_title_input'));
+      final temperatureFinder =
+          find.byKey(const Key('NewRecordPage_temperature_input'));
+
+      expect(titleFinder, findsOneWidget);
+      expect(temperatureFinder, findsOneWidget);
+
+      final titleTopLeft = tester.getTopLeft(titleFinder);
+      final temperatureTopLeft = tester.getTopLeft(temperatureFinder);
+
+      // They should remain in one row block on narrow layouts.
+      expect((titleTopLeft.dy - temperatureTopLeft.dy).abs(), lessThan(2.0));
+      expect(temperatureTopLeft.dx, greaterThan(titleTopLeft.dx));
+
+      await resetSurface(tester);
+    });
+
     testWidgets('renders on short height window', (tester) async {
       await pumpWithSize(
         tester,
