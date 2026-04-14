@@ -31,6 +31,7 @@ class NewRecordBodyLayout extends StatelessWidget {
   final GlobalKey formContainerKey;
   final GlobalKey<FormState> formKey;
   final TextEditingController titleController;
+  final TextEditingController temperatureController;
   final TextEditingController descriptionController;
   final TextEditingController poznamkaController;
   final String dateTimeLabel;
@@ -42,6 +43,7 @@ class NewRecordBodyLayout extends StatelessWidget {
   final Widget? zpusobilostButton;
   final VoidCallback? onShowPoznamka;
   final FormFieldValidator<String>? titleValidator;
+  final FormFieldValidator<String>? temperatureValidator;
   final FormFieldValidator<String>? descriptionValidator;
   final VoidCallback onRefresh;
   final ValueChanged<MemoryOsoba> onParticipantSelected;
@@ -71,6 +73,7 @@ class NewRecordBodyLayout extends StatelessWidget {
     required this.formContainerKey,
     required this.formKey,
     required this.titleController,
+    required this.temperatureController,
     required this.descriptionController,
     required this.poznamkaController,
     required this.dateTimeLabel,
@@ -82,6 +85,7 @@ class NewRecordBodyLayout extends StatelessWidget {
     required this.zpusobilostButton,
     required this.onShowPoznamka,
     required this.titleValidator,
+    required this.temperatureValidator,
     required this.descriptionValidator,
     required this.onRefresh,
     required this.onParticipantSelected,
@@ -97,6 +101,7 @@ class NewRecordBodyLayout extends StatelessWidget {
       isNarrow: isNarrow,
       isParticipantSelected: isParticipantSelected,
       titleController: titleController,
+      temperatureController: temperatureController,
       descriptionController: descriptionController,
       poznamkaController: poznamkaController,
       dateTimeLabel: dateTimeLabel,
@@ -108,6 +113,7 @@ class NewRecordBodyLayout extends StatelessWidget {
       zpusobilostButton: zpusobilostButton,
       onShowPoznamka: onShowPoznamka,
       titleValidator: titleValidator,
+      temperatureValidator: temperatureValidator,
       descriptionValidator: descriptionValidator,
     );
 

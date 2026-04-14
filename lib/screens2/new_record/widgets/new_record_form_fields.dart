@@ -8,6 +8,7 @@ class NewRecordFormFields extends StatelessWidget {
   final bool isNarrow;
   final bool isParticipantSelected;
   final TextEditingController titleController;
+  final TextEditingController temperatureController;
   final TextEditingController descriptionController;
   final TextEditingController poznamkaController;
   final String dateTimeLabel;
@@ -19,6 +20,7 @@ class NewRecordFormFields extends StatelessWidget {
   final Widget? zpusobilostButton;
   final VoidCallback? onShowPoznamka;
   final FormFieldValidator<String>? titleValidator;
+  final FormFieldValidator<String>? temperatureValidator;
   final FormFieldValidator<String>? descriptionValidator;
 
   const NewRecordFormFields({
@@ -27,6 +29,7 @@ class NewRecordFormFields extends StatelessWidget {
     required this.isNarrow,
     required this.isParticipantSelected,
     required this.titleController,
+    required this.temperatureController,
     required this.descriptionController,
     required this.poznamkaController,
     required this.dateTimeLabel,
@@ -38,6 +41,7 @@ class NewRecordFormFields extends StatelessWidget {
     required this.zpusobilostButton,
     required this.onShowPoznamka,
     required this.titleValidator,
+    required this.temperatureValidator,
     required this.descriptionValidator,
   });
 
@@ -53,6 +57,7 @@ class NewRecordFormFields extends StatelessWidget {
           isNarrow: isNarrow,
           isParticipantSelected: isParticipantSelected,
           titleController: titleController,
+          temperatureController: temperatureController,
           dateTimeLabel: dateTimeLabel,
           onSelectDateTime: onSelectDateTime,
           showDateTimeReset: showDateTimeReset,
@@ -61,6 +66,7 @@ class NewRecordFormFields extends StatelessWidget {
           onPrintAppend: onPrintAppend,
           zpusobilostButton: zpusobilostButton,
           titleValidator: titleValidator,
+          temperatureValidator: temperatureValidator,
         ),
         SizedBox(height: titleSpacing),
         NewRecordDescriptionArea(

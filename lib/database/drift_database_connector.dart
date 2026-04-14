@@ -609,6 +609,7 @@ class DriftDatabaseConnector implements DatabaseInterface {
       paramedicFK: Value(zaznam.idAuthor),
       participantFK: Value(zaznam.idPacient),
       note: Value(zaznam.poznamka),
+      temperature: Value(zaznam.teplota),
       picturePath: Value(zaznam.obrazekPath),
     );
   }

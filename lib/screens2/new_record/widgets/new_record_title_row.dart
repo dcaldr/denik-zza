@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
 import 'package:denik_zza/design_system/tokens/app_layout.dart';
@@ -11,6 +12,7 @@ class NewRecordTitleRow extends StatelessWidget {
   final bool isNarrow;
   final bool isParticipantSelected;
   final TextEditingController titleController;
+  final TextEditingController temperatureController;
   final String dateTimeLabel;
   final VoidCallback? onSelectDateTime;
   final bool showDateTimeReset;
@@ -19,6 +21,7 @@ class NewRecordTitleRow extends StatelessWidget {
   final VoidCallback? onPrintAppend;
   final Widget? zpusobilostButton;
   final FormFieldValidator<String>? titleValidator;
+  final FormFieldValidator<String>? temperatureValidator;
 
   const NewRecordTitleRow({
     super.key,
@@ -26,6 +29,7 @@ class NewRecordTitleRow extends StatelessWidget {
     required this.isNarrow,
     required this.isParticipantSelected,
     required this.titleController,
+    required this.temperatureController,
     required this.dateTimeLabel,
     required this.onSelectDateTime,
     required this.showDateTimeReset,
@@ -34,16 +38,28 @@ class NewRecordTitleRow extends StatelessWidget {
     required this.onPrintAppend,
     required this.zpusobilostButton,
     required this.titleValidator,
+    required this.temperatureValidator,
   });
 
   @override
   Widget build(BuildContext context) {
     final activeTextColor = AppColors.lightColorScheme.onSurface;
+    final titleAndTemperatureRow = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: _buildTitleField(activeTextColor),
+        ),
+        const SizedBox(width: AppSpacing.s),
+        _buildTemperatureField(activeTextColor),
+      ],
+    );
+
     if (isNarrow) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildTitleField(activeTextColor),
+          titleAndTemperatureRow,
           const SizedBox(height: AppSpacing.s),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -64,7 +80,7 @@ class NewRecordTitleRow extends StatelessWidget {
       children: [
         Expanded(
           flex: AppLayout.inputFlex,
-          child: _buildTitleField(activeTextColor),
+          child: titleAndTemperatureRow,
         ),
         SizedBox(width: AppSpacing.s),
         Padding(
@@ -160,6 +176,60 @@ class NewRecordTitleRow extends StatelessWidget {
         errorStyle: const TextStyle(fontSize: 11, height: 0.8),
       ),
       validator: titleValidator,
+    );
+  }
+
+  Widget _buildTemperatureField(Color activeTextColor) {
+    return SizedBox(
+      width: isCompact ? 84 : 96,
+      child: TextFormField(
+        key: const Key('NewRecordPage_temperature_input'),
+        controller: temperatureController,
+        enabled: isParticipantSelected,
+        maxLines: 1,
+        style: (isCompact
+                ? AppTypography.desktopTextTheme.bodyMedium
+                : AppTypography.desktopTextTheme.bodyLarge)
+            ?.copyWith(
+          fontWeight: FontWeight.w500,
+          color: activeTextColor,
+        ),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+        ],
+        textAlign: TextAlign.center,
+        decoration: InputDecoration(
+          labelText: 'Teplota',
+          hintText: '37.0',
+          filled: true,
+          fillColor: AppColors.lightColorScheme.surface,
+          border: OutlineInputBorder(
+            borderRadius: AppRadii.inputRadius,
+            borderSide: BorderSide(color: AppColors.blueBorder),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: AppRadii.inputRadius,
+            borderSide: BorderSide(color: AppColors.blueBorder),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: AppRadii.inputRadius,
+            borderSide: BorderSide(color: AppColors.blueText, width: 2),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: AppRadii.inputRadius,
+            borderSide:
+                BorderSide(color: AppColors.lightColorScheme.error, width: 2),
+          ),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: isCompact ? AppSpacing.s : AppSpacing.m,
+            vertical: isCompact ? AppSpacing.s : AppSpacing.m,
+          ),
+          errorMaxLines: 1,
+          errorStyle: const TextStyle(fontSize: 11, height: 0.8),
+        ),
+        validator: temperatureValidator,
+      ),
     );
   }
 

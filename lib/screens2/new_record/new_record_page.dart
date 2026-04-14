@@ -10,6 +10,7 @@ import 'package:denik_zza/design_system/tokens/app_breakpoints.dart';
 import 'package:denik_zza/design_system/tokens/app_colors.dart';
 import 'package:denik_zza/design_system/tokens/app_new_record_layout.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
+import 'package:denik_zza/input/temperature_input.dart';
 import 'package:denik_zza/print_ops2/print_center_controller.dart';
 import 'package:denik_zza/print_ops2/print_center_service.dart';
 import 'package:denik_zza/print_ops2/person_mode_flow_page.dart';
@@ -60,6 +61,7 @@ class NewRecordPage extends StatefulWidget {
 class NewRecordPageState extends State<NewRecordPage> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
+  final _temperatureController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _poznamkaController = TextEditingController();
   final _recordService = RecordService();
@@ -97,6 +99,7 @@ class NewRecordPageState extends State<NewRecordPage> {
 
     // Track unsaved changes
     _titleController.addListener(_trackChanges);
+    _temperatureController.addListener(_trackChanges);
     _descriptionController.addListener(_trackChanges);
     _poznamkaController.addListener(_trackChanges);
 
@@ -109,6 +112,7 @@ class NewRecordPageState extends State<NewRecordPage> {
   void _trackChanges() {
     setState(() {
       _hasUnsavedChanges = _titleController.text.trim().isNotEmpty ||
+          _temperatureController.text.trim().isNotEmpty ||
           _descriptionController.text.trim().isNotEmpty ||
           _poznamkaController.text.trim().isNotEmpty;
     });
@@ -144,6 +148,7 @@ class NewRecordPageState extends State<NewRecordPage> {
 
       // Clear form when switching participants
       _titleController.clear();
+      _temperatureController.clear();
       _descriptionController.clear();
 
       // Load participant's poznámka into the field
@@ -195,6 +200,7 @@ class NewRecordPageState extends State<NewRecordPage> {
   @override
   void dispose() {
     _titleController.dispose();
+    _temperatureController.dispose();
     _descriptionController.dispose();
     _poznamkaController.dispose();
     super.dispose();
@@ -390,7 +396,7 @@ class NewRecordPageState extends State<NewRecordPage> {
         isPrinted: false,
         idAuthor: 1, // Assuming a logged-in user with ID 1
         poznamka: null,
-        teplota: null,
+        teplota: TemperatureInput.parseOptional(_temperatureController.text),
         obrazekPath: null,
       );
 
@@ -411,6 +417,7 @@ class NewRecordPageState extends State<NewRecordPage> {
 
         // Clear the form after successful save, but keep custom timestamp as tests expect it preserved
         _titleController.clear();
+        _temperatureController.clear();
         _descriptionController.clear();
         // Don't clear poznámka - it stays with the participant
         setState(() {
@@ -538,6 +545,7 @@ class NewRecordPageState extends State<NewRecordPage> {
             formContainerKey: _formContainerKey,
             formKey: _formKey,
             titleController: _titleController,
+            temperatureController: _temperatureController,
             descriptionController: _descriptionController,
             poznamkaController: _poznamkaController,
             dateTimeLabel: NewRecordDateTimeHelper.formatSelectedDateTime(
@@ -570,6 +578,7 @@ class NewRecordPageState extends State<NewRecordPage> {
               }
               return null;
             },
+            temperatureValidator: TemperatureInput.validateOptional,
             descriptionValidator: (value) {
               if (value != null && value.length > 1024) {
                 return 'Popis nesmí být delší než 1024 znaků';
