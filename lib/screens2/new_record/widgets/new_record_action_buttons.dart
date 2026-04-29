@@ -31,6 +31,7 @@ class NewRecordActionButtons extends StatelessWidget {
       child: isNarrow
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min, // Fix for greedy column
               children: [
                 _buildSaveButton(context),
                 const SizedBox(height: AppSpacing.s),

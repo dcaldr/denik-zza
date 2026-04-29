@@ -61,15 +61,14 @@ class NewRecordTitleRow extends StatelessWidget {
         children: [
           titleAndTemperatureRow,
           const SizedBox(height: AppSpacing.s),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              _buildDateTimeChip(context),
-              SizedBox(width: AppSpacing.s),
-              _buildSubtleDivider(),
-              SizedBox(width: AppSpacing.s),
-              _buildPrintRow(context),
-            ],
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _buildDateTimeChip(context),
+          ),
+          const SizedBox(height: AppSpacing.s),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _buildPrintRow(context),
           ),
         ],
       );
