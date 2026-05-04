@@ -28,6 +28,7 @@ class NewRecordBodyLayout extends StatelessWidget {
   final int refreshCounter;
   final GlobalKey headerKey;
   final GlobalKey historyHeaderKey;
+  final double historyHeaderHeight;
   final GlobalKey formContainerKey;
   final GlobalKey<FormState> formKey;
   final TextEditingController titleController;
@@ -70,6 +71,7 @@ class NewRecordBodyLayout extends StatelessWidget {
     required this.refreshCounter,
     required this.headerKey,
     required this.historyHeaderKey,
+    required this.historyHeaderHeight,
     required this.formContainerKey,
     required this.formKey,
     required this.titleController,
@@ -151,6 +153,10 @@ class NewRecordBodyLayout extends StatelessWidget {
       isCompact: isCompact,
       recordCount: recordCount,
       historyHeaderKey: historyHeaderKey,
+      historyHeaderHeight: historyHeaderHeight,
+      historyMaxHeight: scrollMetrics.shouldUsePageScroll
+          ? scrollMetrics.historyHeightForScroll
+          : scrollMetrics.maxHistoryHeight,
       selectedParticipant: selectedParticipant,
       refreshCounter: refreshCounter,
       onRecordsLoaded: onRecordsLoaded,

@@ -542,6 +542,7 @@ class NewRecordPageState extends State<NewRecordPage> {
             refreshCounter: _refreshCounter,
             headerKey: _headerKey,
             historyHeaderKey: _historyHeaderKey,
+            historyHeaderHeight: historyHeaderHeight,
             formContainerKey: _formContainerKey,
             formKey: _formKey,
             titleController: _titleController,
