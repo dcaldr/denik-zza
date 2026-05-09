@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+
 
 import 'package:flutter/material.dart';
 
@@ -31,51 +31,34 @@ class NewRecordHistorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxHistoryListHeight = math.max(
-      0.0,
-      historyMaxHeight - historyHeaderHeight,
-    );
-    final shouldConstrainHistoryList =
-        selectedParticipant != null && recordCount > 2;
-
     final Widget historyList = selectedParticipant != null
-        ? shouldConstrainHistoryList
-            ? SizedBox(
-                height: maxHistoryListHeight,
-                child: RecordListWidget(
-                  key: ValueKey(refreshCounter),
-                  participant: selectedParticipant!,
-                  onRecordsLoaded: onRecordsLoaded,
-                ),
-              )
-            : RecordListWidget(
-                key: ValueKey(refreshCounter),
-                participant: selectedParticipant!,
-                onRecordsLoaded: onRecordsLoaded,
-              )
-        : SizedBox(
-            height: math.max(96.0, maxHistoryListHeight),
-            child: Container(
-              alignment: Alignment.center,
-              child: SingleChildScrollView(
-                physics: const NeverScrollableScrollPhysics(),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.person_search,
-                      size: 24,
-                      color: AppColors.greyTextLight,
+        ? RecordListWidget(
+            key: ValueKey(refreshCounter),
+            participant: selectedParticipant!,
+            onRecordsLoaded: onRecordsLoaded,
+          )
+        : Container(
+            alignment: Alignment.center,
+            child: SingleChildScrollView(
+              physics: const NeverScrollableScrollPhysics(),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.person_search,
+                    size: 24,
+                    color: AppColors.greyTextLight,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Nejprve vyberte účastníka',
+                    style: TextStyle(
+                      fontSize: isCompact ? 10 : 12,
+                      color: AppColors.greyText,
+                      fontWeight: FontWeight.w500,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Nejprve vyberte účastníka',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.greyText,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                  ),
+                  if (!isCompact) ...[
                     const SizedBox(height: 2),
                     Text(
                       'Po výběru účastníka se zde zobrazí\njejí historie úrazů',
@@ -86,7 +69,7 @@ class NewRecordHistorySection extends StatelessWidget {
                       ),
                     ),
                   ],
-                ),
+                ],
               ),
             ),
           );
@@ -133,7 +116,10 @@ class NewRecordHistorySection extends StatelessWidget {
               ],
             ),
           ),
-          historyList,
+          Flexible(
+            fit: FlexFit.loose,
+            child: historyList,
+          ),
         ],
       ),
     );
