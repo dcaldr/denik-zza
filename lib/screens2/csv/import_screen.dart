@@ -6,6 +6,7 @@ import 'package:denik_zza/services/csv_import_service.dart';
 import 'package:denik_zza/services/models/csv_import_payload.dart';
 import 'package:denik_zza/input/file_manager.dart';
 import 'package:denik_zza/utils/app_logger.dart';
+import 'package:denik_zza/utils/file_exceptions.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -334,8 +335,11 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
       _logger.e('$csvImportFlowLogTag: Failed to prepare CSV payload.',
           error: error, stackTrace: stackTrace);
       if (mounted) {
-        _showSnackBar(
-            'Soubor se nepodařilo připravit. Zkuste to prosím znovu.');
+        if (error is TempFileException || error is FileOperationException) {
+          _showSnackBar('Nepodařilo se uložit dočasný soubor. Zkuste to znovu.');
+        } else {
+          _showSnackBar('Soubor se nepodařilo připravit. Zkuste to prosím znovu.');
+        }
       }
       return null;
     }

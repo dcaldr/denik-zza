@@ -8,6 +8,9 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:logger/logger.dart';
 import 'package:denik_zza/utils/app_logger.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:denik_zza/utils/file_exceptions.dart';
+import 'package:denik_zza/utils/file_ops_atomic.dart';
+import 'package:denik_zza/utils/temp_file_helper.dart';
 
 /// File Manager Mode enumeration following DatabaseWrapper pattern
 enum FileManagerMode {
@@ -431,8 +434,13 @@ class FileManager {
         return;
       }
       final backupFile = File(path.join(backupDir.path, newName));
-      await dbFile.copy(backupFile.path);
-      logger.i('Backup created: ${backupFile.path}');
+      try {
+        await copyAtomic(dbFile, backupFile);
+        logger.i('Backup created: ${backupFile.path}');
+      } catch (e) {
+        logger.e('Error creating backup (atomic): $e');
+        throw FileOperationException('Backup failed', e);
+      }
     } catch (e) {
       logger.e('Error creating backup: $e');
     }
@@ -478,13 +486,17 @@ class FileManager {
       }
 
       final destinationFile = File(path.join(zpusobilostDir.path, newName));
-      await pickedFile.copy(destinationFile.path);
-      logger.i('File uploaded to: ${destinationFile.path}');
-      //return destinationFile.path;
-      return newName;
+      try {
+        await copyAtomic(pickedFile, destinationFile);
+        logger.i('File uploaded to: ${destinationFile.path}');
+        return newName;
+      } catch (e) {
+        logger.e('Error uploading file atomically: $e');
+        throw FileOperationException('Failed to upload file', e);
+      }
     } catch (e) {
       logger.e('Error uploading file: $e');
-      return null;
+      throw FileOperationException('Failed to upload file', e);
     }
   }
 
@@ -581,18 +593,30 @@ class FileManager {
         final String basePath = _testOutputPath ?? 'test/test_outputs';
         final Directory tempDir = Directory(path.join(basePath, 'temp'));
         await tempDir.create(recursive: true);
-        final File target = File(path.join(tempDir.path, resolvedName));
-        await target.writeAsBytes(bytes, flush: true);
-        logger.d('Temp CSV written (persist): ${target.path}');
-        return target.path;
+        final filename = uniqueTempName(resolvedName);
+        final File target = File(path.join(tempDir.path, filename));
+        try {
+          await writeBytesAtomic(target, bytes);
+          logger.d('Temp CSV written (persist): ${target.path}');
+          return target.path;
+        } catch (e) {
+          logger.e('Failed to write temp CSV (persist): $e');
+          throw TempFileException('Failed to write temp CSV', e);
+        }
 
       case FileManagerMode.production:
         // Use path_provider
         final Directory tempDir = await getTemporaryDirectory();
-        final File target = File(path.join(tempDir.path, resolvedName));
-        await target.writeAsBytes(bytes, flush: true);
-        logger.d('Temp CSV written (production): ${target.path}');
-        return target.path;
+        final filename = uniqueTempName(resolvedName);
+        final File target = File(path.join(tempDir.path, filename));
+        try {
+          await writeBytesAtomic(target, bytes);
+          logger.d('Temp CSV written (production): ${target.path}');
+          return target.path;
+        } catch (e) {
+          logger.e('Failed to write temp CSV (production): $e');
+          throw TempFileException('Failed to write temp CSV', e);
+        }
     }
   }
 
@@ -614,8 +638,9 @@ class FileManager {
         await file.delete();
         logger.d('Temp file deleted: $filePath');
       } catch (error) {
-        // Non-critical: log warning but don't throw
+        // Make temp deletion failures visible to caller for P0
         logger.w('Failed to delete temp file: $filePath', error: error);
+        throw TempFileException('Failed to delete temp file: $filePath', error);
       }
     } else {
       logger.d('Temp file does not exist (already cleaned?): $filePath');
