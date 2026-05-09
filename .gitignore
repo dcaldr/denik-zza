@@ -11,6 +11,8 @@ pubspec.lock
 *.testDB*.db
 /test/test_outputs/
 /test/.test_artifacts/
+# Manual verification PDF artifacts (developer-only, intentional, not auto-wiped)
+/test/.manual_artifacts/
 # generated files - build_runner
 # *.g.dart
 *.freezed.dart

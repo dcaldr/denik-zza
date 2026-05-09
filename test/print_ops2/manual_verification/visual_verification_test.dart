@@ -57,7 +57,7 @@ void main() {
     
     // Override output path
     final projectRoot = Directory.current.path;
-    final baseDir = Directory(p.join(projectRoot, 'test_outputs', 'visual_verification', timestamp));
+    final baseDir = Directory(p.join(projectRoot, 'test', '.manual_artifacts', 'visual_verification', timestamp));
     
     outputDir = baseDir;
     pdfDir = Directory(p.join(outputDir.path, 'generated_pdfs'));

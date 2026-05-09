@@ -39,7 +39,7 @@ void main() {
     theme = await PdfFonts.loadTheme();
     
     final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-').split('.').first;
-    outputDir = Directory(p.join(Directory.current.path, 'test_outputs', 'safety_net', timestamp));
+    outputDir = Directory(p.join(Directory.current.path, 'test', '.manual_artifacts', 'safety_net', timestamp));
     
     if (await outputDir.exists()) await outputDir.delete(recursive: true);
     await outputDir.create(recursive: true);

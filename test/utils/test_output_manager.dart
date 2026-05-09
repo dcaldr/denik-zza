@@ -23,16 +23,30 @@ class TestOutputManager {
     return path.join(dir, filename);
   }
 
-  /// Clean up all test artifacts.
-  /// Used by flutter_test_config.dart to auto-wipe at the start of a test run.
-  static Future<void> cleanup() async {
+  /// Clean up stale test artifacts.
+  ///
+  /// Only removes entries older than [maxAgeHours] (default: 1 hour).
+  /// This ensures the previous run's artifacts remain inspectable until
+  /// the next run's cleanup fires, rather than being destroyed immediately.
+  static Future<void> cleanup({int maxAgeHours = 1}) async {
     final testOutputsDir = Directory(getTestOutputsDir());
+    if (!testOutputsDir.existsSync()) return;
+
+    final cutoff = DateTime.now().subtract(Duration(hours: maxAgeHours));
+
     try {
-      if (await testOutputsDir.exists()) {
-        await testOutputsDir.delete(recursive: true);
+      await for (final entity in testOutputsDir.list(recursive: false)) {
+        final stat = await entity.stat();
+        if (stat.modified.isBefore(cutoff)) {
+          try {
+            await entity.delete(recursive: true);
+          } catch (_) {
+            // Ignore file-lock errors (parallel isolates)
+          }
+        }
       }
-    } catch (e) {
-      // Ignore concurrent deletion errors when flutter test runs in parallel isolates
+    } catch (_) {
+      // Directory may have been wiped by a concurrent isolate — ignore
     }
   }
 

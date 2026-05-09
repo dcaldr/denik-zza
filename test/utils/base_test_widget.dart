@@ -6,8 +6,10 @@ import 'package:flutter/material.dart';
 ///
 /// This widget:
 /// 1. Wraps your [child] in a [MaterialApp] and [Scaffold].
-/// 2. Ensures the database is in test mode.
-/// 3. Configures Czech localization defaults via [ZzaAppConfig].
+/// 2. Configures Czech localization defaults via [ZzaAppConfig].
+///
+/// Database test mode is handled globally by `flutter_test_config.dart`
+/// (via `ModeCoordinator.setTestingMode()`). No per-widget setup needed.
 ///
 /// Usage:
 /// ```dart
@@ -33,10 +35,6 @@ class BaseTestWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Ensure test mode is active whenever this widget is built.
-    // This acts as a "Zero-Config" safety net.
-    DatabaseWrapper.setTestMode();
-
     // Ensure localization data is ready using shared config
     ZzaAppConfig.initialize();
 
