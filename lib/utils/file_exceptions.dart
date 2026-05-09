@@ -8,9 +8,9 @@ class FileOperationException implements Exception {
 }
 
 class TempFileException extends FileOperationException {
-  TempFileException(String message, [Object? cause]) : super(message, cause);
+  TempFileException(super.message, [super.cause]);
 }
 
 class PermissionDeniedException extends FileOperationException {
-  PermissionDeniedException(String message, [Object? cause]) : super(message, cause);
+  PermissionDeniedException(super.message, [super.cause]);
 }

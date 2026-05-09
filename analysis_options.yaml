@@ -14,6 +14,7 @@ analyzer:
     - Rubbish/**
     - lib/screens/**
     - lib/print_ops/**
+    - lib/main_old.dart
 
 
 linter:

@@ -28,7 +28,7 @@ class AppDatabase extends _$AppDatabase {
   ///
   /// Use this for in-memory databases in tests as recommended by Drift docs,
   /// e.g. `AppDatabase.fromConnection(DatabaseConnection(NativeDatabase.memory(), closeStreamsSynchronously: true))`.
-  AppDatabase.fromConnection(DatabaseConnection connection) : super(connection);
+  AppDatabase.fromConnection(super.connection);
 
   /// Convenience: Create an in-memory database suitable for tests.
   ///

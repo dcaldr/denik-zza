@@ -1,7 +1,7 @@
-/// Helper utilities for handling Czech health insurance (pojišťovna) names.
-///
-/// This module centralizes the canonical insurer list and the mapping logic
-/// so other code (parsers, DB wiring) can reuse consistent logic.
+// Helper utilities for handling Czech health insurance (pojišťovna) names.
+//
+// This module centralizes the canonical insurer list and the mapping logic
+// so other code (parsers, DB wiring) can reuse consistent logic.
 import 'package:denik_zza/input/text_tools.dart';
 
 /// Internal representation of an insurer entry.
