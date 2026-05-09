@@ -287,6 +287,9 @@ class CsvReviewPrototypeController extends SafeChangeNotifier {
     try {
       final CsvImportSession loadedSession =
           await service.loadCsvFromPayload(payload);
+      if (isDisposed) {
+        return;
+      }
       Map<int, List<CsvDuplicateCandidate>> duplicates =
           <int, List<CsvDuplicateCandidate>>{};
       try {
@@ -299,6 +302,10 @@ class CsvReviewPrototypeController extends SafeChangeNotifier {
           error: error,
           stackTrace: stackTrace,
         );
+      }
+
+      if (isDisposed) {
+        return;
       }
 
       final List<CsvReviewRow> sessionRows =
@@ -323,6 +330,9 @@ class CsvReviewPrototypeController extends SafeChangeNotifier {
       _isFinalizing = false;
       notifyListeners();
     } catch (error, stackTrace) {
+      if (isDisposed) {
+        return;
+      }
       _logger.e(
         'Failed to load CSV review session for prototype.',
         error: error,
@@ -506,6 +516,9 @@ class CsvReviewPrototypeController extends SafeChangeNotifier {
 
     try {
       CsvReviewRow updatedRow = await service.reparseRow(updatedFields);
+      if (isDisposed) {
+        return null;
+      }
       if (updatedRow.originalIndex != row.originalIndex) {
         updatedRow = CsvReviewRow(
           originalIndex: row.originalIndex,
@@ -523,6 +536,9 @@ class CsvReviewPrototypeController extends SafeChangeNotifier {
       notifyListeners();
       return updatedRow;
     } catch (error, stackTrace) {
+      if (isDisposed) {
+        return null;
+      }
       _logger.e(
         'Failed to reparse CSV row $rowIndex during prototype edit.',
         error: error,
@@ -662,10 +678,16 @@ class CsvReviewPrototypeController extends SafeChangeNotifier {
         session: _session!,
         decisions: decisions,
       );
+      if (isDisposed) {
+        return result;
+      }
       _isFinalizing = false;
       notifyListeners();
       return result;
     } catch (error, stackTrace) {
+      if (isDisposed) {
+        return null;
+      }
       _logger.e(
         'Finalize import failed for CSV review prototype.',
         error: error,

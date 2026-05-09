@@ -56,6 +56,7 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
   }
 
   Future<void> _fetchRecords() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
     });
@@ -63,15 +64,21 @@ class _ParticipantDetailPageState extends State<ParticipantDetailPage> {
     try {
       final records = await _participantService
           .getParticipantRecords(widget.participant.id);
+      if (!mounted) return;
       setState(() {
         _records = records;
         _isLoading = false;
       });
     } catch (error) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
-      // Handle error if needed
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nepodařilo se načíst lékařské záznamy. Zkuste to znovu.'),
+        ),
+      );
     }
   }
 

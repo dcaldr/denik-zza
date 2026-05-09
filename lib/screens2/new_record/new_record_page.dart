@@ -403,11 +403,18 @@ class NewRecordPageState extends State<NewRecordPage> {
       try {
         await _recordService.addRecord(newRecord);
 
+        if (!mounted) {
+          return;
+        }
+
         // Update participant's poznámka if it changed
         if (_selectedParticipant!.poznamka != _poznamkaController.text.trim()) {
           _selectedParticipant!.poznamka = _poznamkaController.text.trim();
           final db = DatabaseWrapper.getDatabase();
           await db.updateParticipant(osoba: _selectedParticipant!);
+          if (!mounted) {
+            return;
+          }
         }
 
         // Refresh the record list by triggering a rebuild
@@ -434,13 +441,17 @@ class NewRecordPageState extends State<NewRecordPage> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Nepodařilo se uložit záznam úrazu: $e')),
+            const SnackBar(
+              content: Text('Nepodařilo se uložit záznam úrazu. Zkuste to znovu.'),
+            ),
           );
         }
       } finally {
-        setState(() {
-          _isSaving = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isSaving = false;
+          });
+        }
       }
     }
   }

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:path/path.dart' as p;
 import 'package:denik_zza/utils/file_exceptions.dart';
+import 'package:denik_zza/utils/temp_file_helper.dart';
 
 /// Write bytes atomically by writing to a temporary sibling file and renaming.
 Future<File> writeBytesAtomic(File target, Uint8List bytes) async {
@@ -9,20 +10,20 @@ Future<File> writeBytesAtomic(File target, Uint8List bytes) async {
   if (!await dir.exists()) {
     await dir.create(recursive: true);
   }
-  final tmp = File(p.join(dir.path, '.tmp_${DateTime.now().microsecondsSinceEpoch}_${p.basename(target.path)}'));
+  final tmp = File(p.join(dir.path, uniqueTempName(p.basename(target.path))));
   try {
     await tmp.writeAsBytes(bytes, flush: true);
     // Try rename (atomic on most platforms)
     try {
       return await tmp.rename(target.path);
     } catch (e) {
-      // Fallback: copy then delete
+      // Fallback: write directly to the final path, then remove the temp file.
       try {
-        final copied = await tmp.copy(target.path);
+        final written = await target.writeAsBytes(bytes, flush: true);
         try {
           await tmp.delete();
         } catch (_) {}
-        return copied;
+        return written;
       } catch (e2) {
         throw FileOperationException('Failed to move temp file to target', e2);
       }
@@ -42,14 +43,14 @@ Future<File> copyAtomic(File source, File destination) async {
   if (!await destDir.exists()) await destDir.create(recursive: true);
 
   // Copy to temp in destination directory, then rename
-  final tmp = File(p.join(destDir.path, '.tmp_copy_${DateTime.now().microsecondsSinceEpoch}_${p.basename(destination.path)}'));
+  final tmp = File(p.join(destDir.path, uniqueTempName('copy_${p.basename(destination.path)}')));
   try {
     await source.copy(tmp.path);
     try {
       return await tmp.rename(destination.path);
     } catch (e) {
-      // rename failed; try copy then delete
-      final copied = await tmp.copy(destination.path);
+      // rename failed; fall back to a direct copy from the source file.
+      final copied = await source.copy(destination.path);
       try {
         await tmp.delete();
       } catch (_) {}

@@ -357,10 +357,19 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
     }
 
     final List<int> buffer = <int>[];
-    await for (final List<int> chunk in stream) {
-      buffer.addAll(chunk);
+    try {
+      await for (final List<int> chunk in stream) {
+        buffer.addAll(chunk);
+      }
+      return Uint8List.fromList(buffer);
+    } catch (error, stackTrace) {
+      _logger.e(
+        '$csvImportFlowLogTag: Failed while reading CSV stream.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return null;
     }
-    return Uint8List.fromList(buffer);
   }
 
   Future<void> _cleanupTempFile() async {

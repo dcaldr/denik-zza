@@ -117,6 +117,9 @@ class ParticipantRegistrationFormState
       }
     }
     _controllers['cisloPojisteni']!.addListener(() {
+      if (!mounted) {
+        return;
+      }
       setState(() {
         guessAndFillFields(_controllers['cisloPojisteni']!.text);
       });
@@ -143,12 +146,21 @@ class ParticipantRegistrationFormState
   /// Load restrictions for an existing person
   Future<void> _loadRestrictionsForExistingPerson() async {
     if (widget.osoba != null && widget.osoba!.id > 0) {
-      await _participantService.loadRestrictionsForParticipant(
-        participantId: widget.osoba!.id,
-        omezeniLogic: _omezeniLogic,
-        lekLogic: _lekLogic,
-      );
-      setState(() {}); // Refresh UI after loading restrictions
+      try {
+        await _participantService.loadRestrictionsForParticipant(
+          participantId: widget.osoba!.id,
+          omezeniLogic: _omezeniLogic,
+          lekLogic: _lekLogic,
+        );
+        if (!mounted) {
+          return;
+        }
+        setState(() {}); // Refresh UI after loading restrictions
+      } catch (_) {
+        if (mounted) {
+          _showSnackBar('Nepodařilo se načíst omezení.');
+        }
+      }
     }
   }
 
@@ -203,44 +215,57 @@ class ParticipantRegistrationFormState
 
   // This method should only be called for standalone usage (not from intake form)
   void _submitForm() async {
-    final currentEventId =
-        await DatabaseWrapper.getDatabase().getCurrentEventID();
-    if (currentEventId == null) {
-      _showSnackBar('Nejprve vytvořte akci');
-      return;
-    }
+    try {
+      final currentEventId =
+          await DatabaseWrapper.getDatabase().getCurrentEventID();
+      if (!mounted) {
+        return;
+      }
+      if (currentEventId == null) {
+        _showSnackBar('Nejprve vytvořte akci');
+        return;
+      }
 
-    if (_formKey.currentState!.validate()) {
-      MemoryOsoba osoba = createMemoryOsoba();
-      widget.onOsobaEdited?.call(osoba); // Ensure callback is called
+      if (_formKey.currentState!.validate()) {
+        MemoryOsoba osoba = createMemoryOsoba();
+        widget.onOsobaEdited?.call(osoba); // Ensure callback is called
 
-      // Use the service to save participant with restrictions
-      final participantId =
-          await _participantService.saveParticipantWithRestrictions(
-        osoba: osoba,
-        omezeniLogic: _omezeniLogic,
-        lekLogic: _lekLogic,
-      );
+        // Use the service to save participant with restrictions
+        final participantId =
+            await _participantService.saveParticipantWithRestrictions(
+          osoba: osoba,
+          omezeniLogic: _omezeniLogic,
+          lekLogic: _lekLogic,
+        );
 
-      if (participantId != null) {
-        if (widget.osoba == null) {
-          // Success for NEW participant -> Inline Message
-          final addedName = "${osoba.jmeno} ${osoba.prijmeni}";
-          // Update the osoba with the new ID if it was a new participant
-          if (osoba.id == -1) {
-            osoba.id = participantId;
-            widget.onOsobaEdited?.call(osoba);
-          }
-          clearFields();
-          setState(() {
-            _lastAddedName = addedName;
-          });
-        } else {
-          // Success for EDIT -> SnackBar (keep existing behavior for edits)
-          _showSnackBar('Účastník aktualizován');
+        if (!mounted) {
+          return;
         }
-      } else {
-        _showSnackBar('Chyba při ukládání účastníka');
+
+        if (participantId != null) {
+          if (widget.osoba == null) {
+            // Success for NEW participant -> Inline Message
+            final addedName = "${osoba.jmeno} ${osoba.prijmeni}";
+            // Update the osoba with the new ID if it was a new participant
+            if (osoba.id == -1) {
+              osoba.id = participantId;
+              widget.onOsobaEdited?.call(osoba);
+            }
+            clearFields();
+            setState(() {
+              _lastAddedName = addedName;
+            });
+          } else {
+            // Success for EDIT -> SnackBar (keep existing behavior for edits)
+            _showSnackBar('Účastník aktualizován');
+          }
+        } else {
+          _showSnackBar('Chyba při ukládání účastníka');
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        _showSnackBar('Nepodařilo se uložit účastníka. Zkuste to znovu.');
       }
     }
   }

@@ -1,11 +1,17 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
 
+int _tempNameCounter = 0;
+
 String uniqueTempName(String baseName) {
   final ts = DateTime.now().toUtc().microsecondsSinceEpoch;
   final safe = baseName.replaceAll(RegExp(r'[^A-Za-z0-9_.-]'), '_');
-  return '.tmp_${ts}_$safe';
+  final pid = pidForCurrentProcess();
+  final counter = _tempNameCounter++;
+  return '.tmp_${ts}_${pid}_${counter}_$safe';
 }
+
+int pidForCurrentProcess() => pid;
 
 /// Delete temp files in [dir] with optional [prefix] older than [maxAgeDays].
 Future<void> cleanupOldTemps(Directory dir, {String prefix = '.tmp_', int maxAgeDays = 7}) async {

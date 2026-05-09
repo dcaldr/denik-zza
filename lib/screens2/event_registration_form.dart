@@ -49,67 +49,93 @@ class _EventRegistrationFormState extends State<EventRegistrationForm> {
   }
 
   void _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      final dateFormat = DateFormat('dd.MM.yyyy');
-      final directory = await FileManager()
-          .createNewEventDataDir(_controllers['nadpis']!.text);
-      final newAction = MemoryAction(
-        idAkce: widget.action?.idAkce,
-        nadpis: _controllers['nadpis']!.text,
-        popis: _controllers['popis']!.text,
-        odkdy: dateFormat.parseStrict(_controllers['odkdy']!.text),
-        dokdy: dateFormat.parseStrict(_controllers['dokdy']!.text),
-        domovskyAdresarPath: directory?.path,
-      );
+    try {
+      if (_formKey.currentState!.validate()) {
+        final dateFormat = DateFormat('dd.MM.yyyy');
+        final directory = await FileManager()
+            .createNewEventDataDir(_controllers['nadpis']!.text);
+        if (!mounted) {
+          return;
+        }
+        if (directory == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Nepodařilo se vytvořit složku akce. Zkuste to znovu.'),
+            ),
+          );
+          return;
+        }
+        final newAction = MemoryAction(
+          idAkce: widget.action?.idAkce,
+          nadpis: _controllers['nadpis']!.text,
+          popis: _controllers['popis']!.text,
+          odkdy: dateFormat.parseStrict(_controllers['odkdy']!.text),
+          dokdy: dateFormat.parseStrict(_controllers['dokdy']!.text),
+          domovskyAdresarPath: directory.path,
+        );
 
-      if (widget.action == null) {
-        final success = await DatabaseWrapper.getDatabase().addEvent(newAction);
-        if (!mounted) return;
-
-        final message =
-            success ? 'Akce úspěšně přidána' : 'Přidání Akce se nezdařilo';
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(message)));
-
-        if (success) {
-          //mark as selected event
-          //DatabaseWrapper.getDatabase().updateCurrentEvent(newAction.idAkce!);
-          //workaround
-          final actions =
-              await DatabaseWrapper.getDatabase().getAllZzaActions();
+        if (widget.action == null) {
+          final success = await DatabaseWrapper.getDatabase().addEvent(newAction);
           if (!mounted) return;
 
-          final lastAction = actions.last;
-          if (lastAction.nadpis == _controllers['nadpis']!.text &&
-              DateFormat('dd.MM.yyyy').format(lastAction.odkdy) ==
-                  _controllers['odkdy']!.text &&
-              DateFormat('dd.MM.yyyy').format(lastAction.dokdy) ==
-                  _controllers['dokdy']!.text) {
-            await DatabaseWrapper.getDatabase()
-                .updateCurrentEvent(lastAction.idAkce!);
-          } else {
-            _logger.e(
-                'Sanity check failed: Last action details do not match the form input.');
+          final message =
+              success ? 'Akce úspěšně přidána' : 'Přidání Akce se nezdařilo';
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(message)));
+
+          if (success) {
+            //mark as selected event
+            //DatabaseWrapper.getDatabase().updateCurrentEvent(newAction.idAkce!);
+            //workaround
+            final actions =
+                await DatabaseWrapper.getDatabase().getAllZzaActions();
+            if (!mounted) return;
+
+            final lastAction = actions.last;
+            if (lastAction.nadpis == _controllers['nadpis']!.text &&
+                DateFormat('dd.MM.yyyy').format(lastAction.odkdy) ==
+                    _controllers['odkdy']!.text &&
+                DateFormat('dd.MM.yyyy').format(lastAction.dokdy) ==
+                    _controllers['dokdy']!.text) {
+              await DatabaseWrapper.getDatabase()
+                  .updateCurrentEvent(lastAction.idAkce!);
+            } else {
+              _logger.e(
+                  'Sanity check failed: Last action details do not match the form input.');
+            }
+            if (!mounted) return;
+            Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (context) => EventList()));
           }
+        } else {
+          final updateResult =
+              await DatabaseWrapper.getDatabase().updateEvent(action: newAction);
           if (!mounted) return;
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => EventList()));
-        }
-      } else {
-        final updateResult =
-            await DatabaseWrapper.getDatabase().updateEvent(action: newAction);
-        if (!mounted) return;
 
-        final message = updateResult > 0
-            ? 'Akce úspěšně aktualizována'
-            : 'Aktualizace Akce se nezdařila';
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(message)));
+          final message = updateResult > 0
+              ? 'Akce úspěšně aktualizována'
+              : 'Aktualizace Akce se nezdařila';
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(message)));
 
-        if (updateResult > 0) {
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => EventList()));
+          if (updateResult > 0) {
+            Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (context) => EventList()));
+          }
         }
+      }
+    } catch (error, stackTrace) {
+      _logger.e(
+        'Event registration failed.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Nepodařilo se uložit akci. Zkuste to znovu.'),
+          ),
+        );
       }
     }
   }

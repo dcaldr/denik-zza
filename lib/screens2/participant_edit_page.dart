@@ -66,6 +66,10 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
           lekLogic: _lekLogic,
         );
 
+        if (!mounted) {
+          return;
+        }
+
         if (mounted) {
           if (result != null) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -81,14 +85,18 @@ class _ParticipantEditPageState extends State<ParticipantEditPage> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Chyba: $e')),
+            const SnackBar(
+              content: Text('Nepodařilo se uložit změny. Zkuste to znovu.'),
+            ),
           );
         }
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Prosím, opravte chyby ve formuláři')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Prosím, opravte chyby ve formuláři')),
+        );
+      }
     }
   }
 

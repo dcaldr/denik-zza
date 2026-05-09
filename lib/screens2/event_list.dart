@@ -98,8 +98,8 @@ class _EventListState extends State<EventList> {
       await database.updateCurrentEvent(event.idAkce);
     }
 
-    _refreshData();
     if (!mounted) return;
+    _refreshData();
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text(EventListConstants.pinChangedMessage),
     ));
