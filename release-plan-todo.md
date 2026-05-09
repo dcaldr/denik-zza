@@ -16,13 +16,13 @@ Ship a safe pre-1.0 release for:
 - [ ] **Android Package Name:** `com.github.denik_zza` ✓ CONFIRMED
 - [ ] **Internet Permission:** NOT needed (no backend/cloud) ✓ CONFIRMED
 - [ ] **Release Version:** Pick one:
-  - [ ] `0.99.0+1` (pre-release)
+  - [ ] `0.99.0+1` (pre-release) <-- picked 
   - [ ] `1.0.0+1` (full release)
 - [ ] **Android Distribution:** Pick one:
   - [ ] APK (single file, easier to test)
-  - [ ] AAB (App Bundle, Play Store preferred)
+  - [ ] AAB (App Bundle, Play Store preferred)  <-- picked
   - [ ] Both (test with APK, submit AAB)
-- [ ] **Windows Distribution:** Pick one:
+- [ ] **Windows Distribution:** Pick one: <-- multiple mainly msix 
   - [ ] MSIX (Windows Store, auto-updates)
   - [ ] Installer (.msi)
   - [ ] ZIP (portable, no install)
@@ -53,7 +53,7 @@ Once set, this applies to ALL platforms and future releases.
   - When you fix a bug, what changes? (e.g., `0.99.1+1`?)
   - When you add a feature, what changes? (e.g., `0.100.0+0`?)
   - When you do a major release, what changes? (e.g., `1.0.0+0`?)
-  - Document: _______________
+  - Document: ___Major.Minor.Patch apprach will be used major breaks compatibility , minor adds/changes noticable features patch fixes bugs, performace, or other basically invisible changes, the + part will be only to pass release requirements (maybe the number needs to be incremented each release? <-- dont care much for this)
 
 ---
 
@@ -81,7 +81,7 @@ grep "^version:" pubspec.yaml
 - [ ] Add/update release signing configuration (keystore setup):
   - Create keystore: `keytool -genkey -v -keystore ~/denik_zza.keystore -alias denik_zza -keyalg RSA -keysize 2048 -validity 10000`
   - Store keystore file outside repo (e.g., `~/denik_zza.keystore`)
-  - Add to gradle:
+  - Add to gradle: __fixme: planned password will be in plaintext maybe even in git - security problem!!__
     ```gradle
     signingConfigs {
       release {
@@ -141,10 +141,10 @@ grep -q "sqlite3: any" pubspec.yaml && echo "⚠ sqlite3 is unpinned, consider p
 ### Step 4: Guard lib/dev from Release
 **Files:** `analysis_options.yaml`, `pubspec.yaml`
 
-- [ ] Add to `analysis_options.yaml`:
+- --[SKIP PLEASE  ] Add to `analysis_options.yaml`:--
   ```yaml
   exclude:
-    - lib/dev/**
+    # - lib/dev/**
   ```
 - [ ] Add comment in `pubspec.yaml` near flutter section:
   ```yaml
