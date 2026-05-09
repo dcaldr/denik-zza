@@ -38,23 +38,43 @@ class _ParticipantListScreenState extends State<ParticipantListScreen> {
   }
 
   Future<void> _loadCurrentAction() async {
-    final action = await _database.getCurrentAction();
-    if (!mounted) return;
-    setState(() {
-      _currentAction = action;
-    });
+    try {
+      final action = await _database.getCurrentAction();
+      if (!mounted) return;
+      setState(() {
+        _currentAction = action;
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _currentAction = null;
+        });
+      }
+    }
   }
 
   Future<void> _loadParticipants() async {
-    final participants = await _database.getParticipantsByCurrentEvent();
-    if (!mounted) return;
-    setState(() {
-      _allParticipants = participants;
-      _displayedParticipants = participants;
-    });
+    try {
+      final participants = await _database.getParticipantsByCurrentEvent();
+      if (!mounted) return;
+      setState(() {
+        _allParticipants = participants;
+        _displayedParticipants = participants;
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _allParticipants = [];
+          _displayedParticipants = [];
+        });
+      }
+    }
   }
 
   void _handlePersonSelected(MemoryOsoba person) {
+    if (!mounted) {
+      return;
+    }
     // When person selected from dropdown, show only that person
     setState(() {
       _displayedParticipants = [person];

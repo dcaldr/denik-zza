@@ -18,16 +18,30 @@ class _FileViewerLogicState extends State<FileViewerLogic> {
   String? _filePath;
 
   Future<void> _pickFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles();
 
-    if (result != null && result.files.single.path != null) {
-      final pickedFile = File(result.files.single.path!);
-      setState(() {
-        _filePath = pickedFile.path;
-      });
-      final newFilePath = await FileManager().putZpusobilost(pickedFile);
-      if (newFilePath != null) {
-        widget.onFileUploaded(newFilePath);
+      if (result != null && result.files.single.path != null) {
+        final pickedFile = File(result.files.single.path!);
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _filePath = pickedFile.path;
+        });
+        final newFilePath = await FileManager().putZpusobilost(pickedFile);
+        if (!mounted) {
+          return;
+        }
+        if (newFilePath != null) {
+          widget.onFileUploaded(newFilePath);
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nepodařilo se nahrát soubor. Zkuste to znovu.')),
+        );
       }
     }
   }

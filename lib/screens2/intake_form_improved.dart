@@ -55,6 +55,9 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
 
   /// Called when controller state changes
   void _onControllerStateChanged() {
+    if (!mounted) {
+      return;
+    }
     setState(() {
       // Rebuild participant form when person changes (always show form)
       _participantRegistrationForm = _createParticipantForm();
@@ -71,11 +74,24 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
   }
 
   Future<void> _initializeController() async {
-    await _controller.initialize();
-    if (!mounted) return;
-    setState(() {
-      _isLoading = false;
-    });
+    try {
+      await _controller.initialize();
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+      CenterToast.show(
+        context,
+        'Nepodařilo se načíst data pro intake.',
+        icon: Icons.error_outline,
+        iconColor: Colors.red.shade600,
+      );
+    }
   }
 
   void _initializeWidgets() {
@@ -106,7 +122,18 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
   }
 
   void _onPersonSelected(MemoryOsoba person) async {
-    await _controller.selectPerson(person);
+    try {
+      await _controller.selectPerson(person);
+    } catch (_) {
+      if (mounted) {
+        CenterToast.show(
+          context,
+          'Nepodařilo se vybrat účastníka.',
+          icon: Icons.error_outline,
+          iconColor: Colors.red.shade600,
+        );
+      }
+    }
   }
 
   void _onFileUploaded(String newFilePath) {

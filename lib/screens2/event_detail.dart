@@ -87,6 +87,11 @@ class _ActionDetailState extends State<ActionDetail> with RouteAware {
         _error = e.toString();
         _isLoading = false;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nepodařilo se načíst účastníky akce. Zkuste to znovu.'),
+        ),
+      );
     }
   }
 

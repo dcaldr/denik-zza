@@ -181,9 +181,9 @@ bash scripts/check-lib-dev-safety.sh
   - [x] CSV import flow now surfaces typed file errors in Czech
   - [x] High-risk screen handlers now guard `mounted` after async saves/refreshes
   - [x] CSV review controller stops mutating after disposal
-  - Add `mounted` checks after every await in screens
-  - Add try/catch in IntakeForm.saveData(), NewRecordPage event handlers, CSV import flow
-  - Show user-friendly Czech error messages on failure
+  - [x] Add `mounted` checks after every await in screens
+  - [x] Add try/catch in IntakeForm.saveData(), NewRecordPage event handlers, CSV import flow
+  - [x] Show user-friendly Czech error messages on failure
 
 - [ ] **Database:**
   - Validate `Future.wait()` results before casting

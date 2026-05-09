@@ -50,12 +50,20 @@ class _OldIntakeFormState extends State<OldIntakeForm> {
     return ParticipantRegistrationForm(
       osoba: selectedPerson,
       onValidate: (validate) => _validateParticipantForm = validate,
-      onOsobaEdited: (osoba) => setState(() => selectedPerson = osoba),
+      onOsobaEdited: (osoba) {
+        if (!mounted) {
+          return;
+        }
+        setState(() => selectedPerson = osoba);
+      },
       onRefresh: _refreshPage,
     );
   }
 
   void _refreshPage() {
+    if (!mounted) {
+      return;
+    }
     setState(() {
       selectedPerson = null;
       _participantRegistrationForm = _createParticipantForm();
@@ -66,29 +74,49 @@ class _OldIntakeFormState extends State<OldIntakeForm> {
   }
 
   Future<void> _loadZpusobilostFolder() async {
-    final folder = await FileManager().getZpusobilostFolder();
-    setState(() => zpusobilostFolder = folder);  }
+    try {
+      final folder = await FileManager().getZpusobilostFolder();
+      if (!mounted) {
+        return;
+      }
+      setState(() => zpusobilostFolder = folder);
+    } catch (_) {
+      if (mounted) {
+        setState(() => zpusobilostFolder = null);
+      }
+    }
+  }
 
   /// Load available persons for autocomplete (minimal implementation for compatibility)
   Future<void> _loadAvailablePersons() async {
     try {
       final persons = await DatabaseWrapper.getDatabase().getParticipantsByCurrentEvent();
+      if (!mounted) {
+        return;
+      }
       setState(() => _availablePersons = persons);
     } catch (e) {
-      setState(() => _availablePersons = []);
+      if (mounted) {
+        setState(() => _availablePersons = []);
+      }
     }
   }
 
   void _onPersonSelected(MemoryOsoba person) {
+    if (!mounted) {
+      return;
+    }
     setState(() {
       selectedPerson = person;
       _participantRegistrationForm = _createParticipantForm();
-    });  }
+    });
+  }
 
   void _onFileUploaded(String newFilePath) {
     if (selectedPerson != null) {
       setState(() => selectedPerson!.potvrzeniPath = newFilePath);
-    }  }
+    }
+  }
 
   Future<void> _handleSave(bool markAsArrived) async {
     if (_validateParticipantForm?.call() ?? false) {
@@ -99,6 +127,9 @@ class _OldIntakeFormState extends State<OldIntakeForm> {
         if (filePath != null && filePath.isNotEmpty) {
           selectedPerson?.potvrzeniPath = filePath;
           await DatabaseWrapper.getDatabase().updateParticipant(osoba: selectedPerson!);
+          if (!mounted) {
+            return;
+          }
         }
 
         if (mounted) {
@@ -115,7 +146,8 @@ class _OldIntakeFormState extends State<OldIntakeForm> {
           const SnackBar(content: Text('něco nedopadlo')),
         );
       }
-    }  }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

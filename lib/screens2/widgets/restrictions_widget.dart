@@ -56,12 +56,24 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
   }
 
   Future<void> _fetchData() async {
-    await _logic.fetchData(widget.participantId);
-    if (mounted) setState(() {});
+    try {
+      await _logic.fetchData(widget.participantId);
+      if (!mounted) {
+        return;
+      }
+      setState(() {});
+    } catch (_) {
+      if (mounted) {
+        setState(() {});
+      }
+    }
   }
 
   void _addItem(String name) {
     if (name.trim().isEmpty) {
+      return;
+    }
+    if (!mounted) {
       return;
     }
     setState(() {
@@ -85,7 +97,7 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
   /// Update ghost text suffix for inline suggestion preview.
   void _updateGhostSuffix(String input) {
     if (input.isEmpty) {
-      if (_ghostSuffix.isNotEmpty) setState(() => _ghostSuffix = '');
+      if (_ghostSuffix.isNotEmpty && mounted) setState(() => _ghostSuffix = '');
       return;
     }
     final normalizedInput = TextTools.normText(input);
@@ -96,7 +108,7 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
     final newSuffix = match.isNotEmpty && match.length > input.length
         ? match.substring(input.length)
         : '';
-    if (newSuffix != _ghostSuffix) {
+    if (newSuffix != _ghostSuffix && mounted) {
       setState(() => _ghostSuffix = newSuffix);
     }
   }

@@ -48,6 +48,9 @@ class _RecordListWidgetState extends State<RecordListWidget> {
   }
 
   Future<void> _fetchRecords() async {
+    if (!mounted) {
+      return;
+    }
     setState(() {
       _isLoading = true;
     });
@@ -55,6 +58,9 @@ class _RecordListWidgetState extends State<RecordListWidget> {
     try {
       final records = await _participantService
           .getParticipantRecords(widget.participant.id);
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _records = records;
         _isLoading = false;
@@ -62,12 +68,15 @@ class _RecordListWidgetState extends State<RecordListWidget> {
       // Notify parent of record count for header badge
       widget.onRecordsLoaded?.call(_records.length);
     } catch (error) {
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _isLoading = false;
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Chyba při načítání záznamů: $error')),
+          const SnackBar(content: Text('Nepodařilo se načíst záznamy. Zkuste to znovu.')),
         );
       }
     }
@@ -194,6 +203,9 @@ class _RecordListItemState extends State<RecordListItem> {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
+        if (!mounted) {
+          return;
+        }
         setState(() {
           _isExpanded = !_isExpanded;
         });

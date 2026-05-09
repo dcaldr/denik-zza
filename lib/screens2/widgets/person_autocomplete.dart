@@ -117,7 +117,9 @@ class _PersonAutocompleteState extends State<PersonAutocomplete> {
               _focusListenerAttached = true;
               _focusListener = () {
                 // Trigger rebuild so optionsBuilder can react to focus changes
-                if (mounted) setState(() {});
+                if (mounted) {
+                  setState(() {});
+                }
               };
               _autocompleteFocusNode?.addListener(_focusListener!);
             }

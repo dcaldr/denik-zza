@@ -36,6 +36,9 @@ class IntakeController extends SafeChangeNotifier {
     
     // Fetch available persons for autocomplete
     await _fetchAvailablePersons();
+    if (isDisposed) {
+      return;
+    }
     
     // Start with a new empty person
     if (selectedPerson == null) {
@@ -72,7 +75,13 @@ class IntakeController extends SafeChangeNotifier {
 
     // Background: fetch restrictions & medications, then update
     await _omezeniLogic.fetchData(person.id);
+    if (isDisposed) {
+      return;
+    }
     await _lekLogic.fetchData(person.id);
+    if (isDisposed) {
+      return;
+    }
     notifyListeners(); // Second update: restrictions/meds now populated
   }
     /// Handle file upload
@@ -126,6 +135,9 @@ class IntakeController extends SafeChangeNotifier {
 
         await _omezeniLogic.update();
         await _lekLogic.update();
+        if (isDisposed) {
+          return false;
+        }
         
         // If successful, automatically reset state for next person
         if (success) {
@@ -151,6 +163,10 @@ class IntakeController extends SafeChangeNotifier {
       await _fetchAvailablePersons();
     } catch (e) {
       // Fetch failed, but continue - availablePersons will be stale but usable
+    }
+
+    if (isDisposed) {
+      return;
     }
 
     notifyListeners();
