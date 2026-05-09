@@ -171,13 +171,14 @@ bash scripts/check-lib-dev-safety.sh
 ### Step 5: Fix Critical Safety Issues
 **Files:** `lib/input/file_manager.dart`, `lib/screens2/**`, `lib/database/drift_database_connector.dart`
 
-- [ ] **File operations:**
+- [x] **File operations:**
   - Add error handling to file copy, temp file cleanup, backup
   - Make backup failures visible instead of silent
   - Validate files exist after upload
   - Add logging for all file operations
 
 - [ ] **Async UI:**
+  - CSV import flow now surfaces typed file errors in Czech
   - Add `mounted` checks after every await in screens
   - Add try/catch in IntakeForm.saveData(), NewRecordPage event handlers, CSV import flow
   - Show user-friendly Czech error messages on failure
