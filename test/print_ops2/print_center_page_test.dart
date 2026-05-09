@@ -7,7 +7,6 @@ import '../utils/base_test_widget.dart';
 
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
-import '../utils/test_configuration.dart';
 
 void main() {
   late AppDatabase database;
@@ -18,8 +17,6 @@ void main() {
   });
 
   tearDown(() async {
-    if (TestConfiguration.isPersist) {
-    }
   });
 
   // Helper not strictly needed if we use BaseTestWidget directly 

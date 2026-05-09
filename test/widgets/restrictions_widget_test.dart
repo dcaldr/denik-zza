@@ -7,7 +7,6 @@ import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_omezeni.dart';
 import '../utils/base_test_widget.dart';
-import '../utils/test_configuration.dart';
 
 /// Tests for RestrictionsWidget behavior:
 /// - Add button functionality
@@ -52,7 +51,6 @@ void main() {
   tearDown(() async {
     // In-memory DB is safe to keep open; closing can intermittently hang
     // when widgets still hold references after test cleanup.
-    if (TestConfiguration.isPersist) {}
   });
 
   // tearDownAll removed (was empty)

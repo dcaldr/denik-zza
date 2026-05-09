@@ -10,15 +10,20 @@ import 'package:denik_zza/utils/app_logger.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
 import 'package:denik_zza/utils/mode_coordinator.dart';
 import 'package:denik_zza/design_system/widgets/center_toast.dart';
+import 'utils/test_output_manager.dart';
 
 class _SilentLogOutput extends LogOutput {
   @override
   void output(OutputEvent event) {}
 }
 
-FutureOr<void> testExecutable(FutureOr<void> Function() testMain) {
+FutureOr<void> testExecutable(FutureOr<void> Function() testMain) async {
   // Ensure binding is initialized for plugins
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  // WIPE STALE ARTIFACTS: System B (local file DBs)
+  // Ensures zero filesystem pollution across test runs.
+  await TestOutputManager.cleanup();
 
   // GLOBAL SETUP:
   // Ensure every test starts in a clean "Testing Mode" (in-memory DB, no direct file access).

@@ -126,51 +126,7 @@ class ModeCoordinator {
     _logger.d('DB path: $dbPath');
   }
 
-  /// @deprecated Use [setIntegrationTestMode] instead.
-  ///
-  /// Canary tests should use `@Tags(['protected'])` for categorization.
-  /// This method now redirects to [setIntegrationTestMode] with a 'canary' folder.
-  @Deprecated('Use setIntegrationTestMode with @Tags for categorization')
-  static Future<void> setCanaryTestMode({required String testName}) async {
-    _currentMode = AppMode.canary; // Keep enum for backward compat
-    _currentTestName = testName;
 
-    await DatabaseWrapper.dispose();
-
-    // Use 'canary' subfolder for backward compatibility
-    final testDir = await _getTestDirectory('canary', currentRunId, testName);
-    _currentTestDirectory = testDir;
-    final dbPath = path.join(testDir.path, 'db.sqlite');
-    DatabaseWrapper.setIntegrationTestMode(dbPath);
-    FileManager().setPersistentTestMode(testDir.path);
-    SystemInterface.registerWith(TestSystemInterface());
-
-    _logger.i(
-        'ModeCoordinator: Canary test mode (deprecated) - $currentRunId/$testName');
-  }
-
-  /// @deprecated Use [setIntegrationTestMode] instead.
-  ///
-  /// Debug mode redirects file operations to test_outputs/ but uses production
-  /// database behavior. For file-based DB, use [setIntegrationTestMode].
-  @Deprecated('Use setIntegrationTestMode for persistent test data')
-  static Future<void> setDebugMode({required String testName}) async {
-    _currentMode = AppMode.debug;
-    _currentTestName = testName;
-    _currentTestDirectory = null;
-
-    await DatabaseWrapper.dispose();
-    // NOTE: Does NOT set DatabaseWrapper mode - uses production DB behavior
-    // Only FileManager paths are redirected
-
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    FileManager().setPersistentTestMode('test_outputs/${testName}_$timestamp');
-
-    // Debug Mode uses REAL system interfaces
-    SystemInterface.registerWith(RealSystemInterface());
-
-    _logger.d('ModeCoordinator: Debug mode (deprecated) - $testName');
-  }
 
   /// Switch to production mode: real database, real file operations, REAL system interface.
   static Future<void> setProductionMode() async {
@@ -224,12 +180,12 @@ class ModeCoordinator {
 
   /// Clean up old test runs, keeping the most recent N.
   ///
-  /// Deletes run folders from both 'integration/' and 'canary/'.
+  /// Deletes run folders from 'integration/'.
   static Future<void> cleanupOldRuns({int keepLast = 5}) async {
     try {
       final docs = await getApplicationDocumentsDirectory();
 
-      for (final category in ['integration', 'canary']) {
+      for (final category in ['integration']) {
         final categoryDir = Directory(
           path.join(docs.path, 'DenikZZA', 'test_outputs', category),
         );
@@ -265,7 +221,7 @@ class ModeCoordinator {
       'currentMode': _currentMode.name,
       'testName': _currentTestName ?? 'none',
       'databaseMode': DatabaseWrapper.getCurrentMode().name,
-      'fileManagerMode': FileManager().isTesting ? 'testing' : 'production',
+      'fileManagerMode': FileManager().currentMode.name,
     };
   }
 }
@@ -278,12 +234,6 @@ enum AppMode {
   /// In-memory database, real file operations in isolated directory
   /// (for integration tests that need to verify file operations)
   integrationTest,
-
-  /// File-based database + mocked OS dialogs (for canary/critical path tests)
-  canary,
-
-  /// Persistent database and files in test_outputs/ (for debugging)
-  debug,
 
   /// Real database and file operations (production)
   production,

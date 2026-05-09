@@ -27,7 +27,6 @@ void main() {
     });
 
     setUp(() async {
-      DatabaseTestHelper.disableDriftWarnings();
       database = await HardcodedTestSetup.setupTestData();
 
       // Get first participant (has records from test data)

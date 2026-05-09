@@ -4,15 +4,13 @@ import 'package:denik_zza/screens2/widgets/record_list_widget.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/database/drift_database/database.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
-import 'utils/database_test_helper.dart';
+
 
 void main() {
   group('RecordListWidget Tests', () {
     late AppDatabase testDb;
 
     setUp(() async {
-      // Mode handled by flutter_test_config.dart
-      DatabaseTestHelper.disableDriftWarnings();
       testDb = AppDatabase.testInMemory();
       DatabaseWrapper.useTestDriftDatabase(testDb);
     });
