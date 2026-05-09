@@ -62,6 +62,8 @@ class DriftDatabaseConnector implements DatabaseInterface {
   Future<int?> addOsobaAndReturnId(MemoryOsoba osoba) async {
     final currentEventId = await _driftDatabase.getCurrentActionID();
     if (currentEventId == null) {
+      AppLogger.l.w(
+          '[Database] addOsobaAndReturnId called without current event; skipping insert');
       return null;
     }
     int? insCompId;
@@ -163,37 +165,26 @@ class DriftDatabaseConnector implements DatabaseInterface {
   Future<List<MemoryOsoba>> getParticipantsByEvent(int idEvent) async {
     List<Participant> participants =
         await _driftDatabase.getParticipantsByAction(idEvent);
-    // now a function
-    // List<MemoryOsoba> memoryParticipants = [];
-    //
-    // for(Participant p in participants) {
-    //   int? insCompFK = p.insuranceCompanyFK;
-    //   InsuranceCompany? ic;
-    //   String? insCompName;
-    //
-    //   if(insCompFK != null) {
-    //     ic = await _driftDatabase.getInsuranceCompanyByID(insCompFK);
-    //     insCompName = ic?.name;
-    //   }
-    //
-    //   memoryParticipants.add(
-    //     MemoryOsoba.fullNamed(id: p.id, jmeno: p.firstName, prijmeni: p.lastName,
-    //     pohlavi: p.gender, adresa: p.address, cisloPojisteni: p.birthNumber,
-    //     datumNarozeni: p.birthDate, telefonRodice: p.parentPhoneNumber,
-    //     zpusobilost: p.eligibleConfirmation, bezinfekcnost: p.nonInfectiousConfirmation,
-    //     wasPrinted: p.wasPrinted, zdravotniPojistovna: insCompName,
-    //         jmenoRodice: p.parentName, emailRodice: p.parentEmail,
-    //         poznamka: p.note, oddil: p.campUnit, prisel: p.arrivedConfirmation,
-    //       potvrzeniPath: p.eligibleConfirmationPath,
-    //
-    //
-    //     )
-    //   );
-    // }
+    if (participants.isEmpty) {
+      return [];
+    }
 
-    //return memoryParticipants;
-    return Future.wait(
-        participants.map(_toMemoryOsoba).toList()); //může být asi i bez wait
+    final mappedParticipants = await Future.wait(
+      participants.map((participant) async {
+        try {
+          return await _toMemoryOsoba(participant);
+        } catch (e, st) {
+          AppLogger.l.e(
+            '[Database] Failed to map participant id=${participant.id} for event=$idEvent',
+            error: e,
+            stackTrace: st,
+          );
+          return null;
+        }
+      }),
+    );
+
+    return mappedParticipants.whereType<MemoryOsoba>().toList();
   }
 
   @override
@@ -379,6 +370,8 @@ class DriftDatabaseConnector implements DatabaseInterface {
     final id = idOverride ?? osoba.id;
     final currentEventId = await _driftDatabase.getCurrentActionID();
     if (currentEventId == null) {
+      AppLogger.l.w(
+          '[Database] updateParticipant called without current event; skipping update for participant id=$id');
       return 0;
     }
     final c = await _toParticipantsCompanion(osoba, currentEventId);
@@ -444,9 +437,20 @@ class DriftDatabaseConnector implements DatabaseInterface {
 
   @override
   Future<MemoryOsoba> getOsobaById(int id) async {
-    return _driftDatabase
-        .getParticipantByID(id)
-        .then((participant) async => await _toMemoryOsoba(participant!));
+    try {
+      final participant = await _driftDatabase.getParticipantByID(id);
+      if (participant == null) {
+        final error = StateError('Participant id=$id was not found');
+        AppLogger.l.e('[Database] getOsobaById failed', error: error);
+        throw error;
+      }
+
+      return await _toMemoryOsoba(participant);
+    } catch (e, st) {
+      AppLogger.l.e('[Database] Failed to load participant id=$id',
+          error: e, stackTrace: st);
+      rethrow;
+    }
   }
 
   @override

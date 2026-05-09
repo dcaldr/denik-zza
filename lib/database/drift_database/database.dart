@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:denik_zza/input/file_manager.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 import 'package:drift/drift.dart';
 
 import 'dart:io';
@@ -181,24 +182,19 @@ class AppDatabase extends _$AppDatabase {
 
   /// Get pinned action ID, returns either int or null
   Future<int?> getPinnedActionID() async {
-    CacheData c = await (select(cache)..where((c) =>
-        c.id.equals(1))).getSingle();
-
-    return c.pinnedActionID;
+    final cacheData = await _readCacheData('getPinnedActionID');
+    return cacheData?.pinnedActionID;
   }
 
   /// Get pinned action ID, returns either int or null
   Future<int?> getCurrentActionID() async {
-    final cacheData = await (select(cache)..where((c) => c.id.equals(1))).getSingleOrNull();
-    if (cacheData == null) {
-      return null; // Return null if no cache data is found
-    }
-    return cacheData.currentActionID;
+    final cacheData = await _readCacheData('getCurrentActionID');
+    return cacheData?.currentActionID;
   }
 
   /// Get printer calibration: true = page 1 on top, false = page 2 on top, null = not calibrated
   Future<bool?> getPrinterPage1OnTop() async {
-    final cacheData = await (select(cache)..where((c) => c.id.equals(1))).getSingleOrNull();
+    final cacheData = await _readCacheData('getPrinterPage1OnTop');
     return cacheData?.printerPage1OnTop;
   }
   /// Get insurance company ID by name
@@ -258,6 +254,17 @@ Future<int> updateEvent(int id, ZzaActionsCompanion action) {
   }
 
   //==================== DELETES ===============================================
+
+  Future<CacheData?> _readCacheData(String operation) async {
+    try {
+      return await (select(cache)..where((c) => c.id.equals(1)))
+          .getSingleOrNull();
+    } catch (e, st) {
+      AppLogger.l.e('[Database] $operation failed while reading cache row',
+          error: e, stackTrace: st);
+      return null;
+    }
+  }
 }
 
 

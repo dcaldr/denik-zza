@@ -142,6 +142,25 @@ void main() {
       });
     });
 
+    group('Database Safety Regression Tests', () {
+      test('first-run cache access returns null instead of crashing', () async {
+        DatabaseWrapper.setTestMode();
+        final connector = DatabaseWrapper.getDatabase() as DriftDatabaseConnector;
+        final db = connector.appDatabase;
+
+        expect(await db.getPinnedActionID(), isNull);
+        expect(await db.getCurrentActionID(), isNull);
+        expect(await db.getPrinterPage1OnTop(), isNull);
+      });
+
+      test('missing participant lookup fails with a clear exception', () async {
+        DatabaseWrapper.setTestMode();
+        final db = DatabaseWrapper.getDatabase() as DriftDatabaseConnector;
+
+        expect(() => db.getOsobaById(999999), throwsStateError);
+      });
+    });
+
     group('Integration Safety Tests', () {
       test('Production app workflow is never affected by test code', () async {
         // Simulate production app startup

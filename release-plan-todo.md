@@ -185,11 +185,12 @@ bash scripts/check-lib-dev-safety.sh
   - [x] Add try/catch in IntakeForm.saveData(), NewRecordPage event handlers, CSV import flow
   - [x] Show user-friendly Czech error messages on failure
 
-- [ ] **Database:**
-  - Validate `Future.wait()` results before casting
-  - Handle null/invalid results safely
-  - Ensure first-run cache access doesn't crash
-  - Add clear error logs
+- [x] **Database:**
+  - [x] Validate `Future.wait()` results before casting
+  - [x] Handle null/invalid results safely
+  - [x] Ensure first-run cache access doesn't crash
+  - [x] Add clear error logs
+  - [x] see proper tests for db 
 
 **Verify:**
 ```bash

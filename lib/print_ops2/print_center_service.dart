@@ -75,8 +75,16 @@ class PrintCenterService {
   }
 
   Future<bool> getParticipantPrintedFlag(int participantId) async {
-    final participant = await _db.getOsobaById(participantId);
-    return participant.wasPrinted ?? false;
+    try {
+      final participant = await _db.getOsobaById(participantId);
+      return participant.wasPrinted ?? false;
+    } catch (e, st) {
+      AppLogger.l.e(
+          'Failed to load participant printed flag for id=$participantId',
+          error: e,
+          stackTrace: st);
+      return false;
+    }
   }
 
   Future<Map<int, bool>> getRecordPrintedFlags(int participantId) async {
