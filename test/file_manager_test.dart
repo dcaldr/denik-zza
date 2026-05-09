@@ -1,9 +1,11 @@
 import 'dart:ui';
 
 import 'package:denik_zza/input/file_manager.dart';
+import 'package:denik_zza/utils/file_exceptions.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:logger/logger.dart';
 import 'dart:io';
+import 'dart:typed_data';
 
 var logger = Logger(
   printer: PrettyPrinter(),
@@ -129,6 +131,45 @@ void main() {
         expect(content, 'dummy-db');
       } finally {
         await dbRoot.delete(recursive: true);
+        await eventsRoot.delete(recursive: true);
+      }
+    });
+
+    test('writeTempCsvBytes uses unique temp names in persist mode', () async {
+      final tempRoot = await Directory.systemTemp.createTemp('fm_temp_csv_');
+      try {
+        final fm = FileManager(testOutputPath: tempRoot.path);
+        final first = await fm.writeTempCsvBytes(
+          Uint8List.fromList(<int>[1, 2, 3]),
+          suggestedName: 'import.csv',
+        );
+        final second = await fm.writeTempCsvBytes(
+          Uint8List.fromList(<int>[4, 5, 6]),
+          suggestedName: 'import.csv',
+        );
+
+        expect(first, isNot(equals(second)));
+        expect(File(first).existsSync(), isTrue);
+        expect(File(second).existsSync(), isTrue);
+        expect(File(first).readAsBytesSync(), equals(<int>[1, 2, 3]));
+        expect(File(second).readAsBytesSync(), equals(<int>[4, 5, 6]));
+      } finally {
+        await tempRoot.delete(recursive: true);
+      }
+    });
+
+    test('putZpusobilost throws a typed exception when source file is missing',
+        () async {
+      final eventsRoot = await Directory.systemTemp.createTemp('fm_upload_');
+      try {
+        final fm = FileManager(isTesting: false);
+        fm.eventDir = eventsRoot;
+
+        expect(
+          () => fm.putZpusobilost(File('${eventsRoot.path}/missing.csv')),
+          throwsA(isA<FileOperationException>()),
+        );
+      } finally {
         await eventsRoot.delete(recursive: true);
       }
     });
