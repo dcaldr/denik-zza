@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../input/file_manager.dart';
 import 'file_viewer_screen_widget.dart';
 import 'package:file_picker/file_picker.dart';
+import '../../utils/file_exceptions.dart';
 
 class FileViewerLogic extends StatefulWidget {
   final Function(String) onFileUploaded;
@@ -11,7 +12,7 @@ class FileViewerLogic extends StatefulWidget {
   const FileViewerLogic({super.key, required this.onFileUploaded});
 
   @override
-  _FileViewerLogicState createState() => _FileViewerLogicState();
+  State<FileViewerLogic> createState() => _FileViewerLogicState();
 }
 
 class _FileViewerLogicState extends State<FileViewerLogic> {
@@ -29,12 +30,18 @@ class _FileViewerLogicState extends State<FileViewerLogic> {
         setState(() {
           _filePath = pickedFile.path;
         });
-        final newFilePath = await FileManager().putZpusobilost(pickedFile);
-        if (!mounted) {
-          return;
-        }
-        if (newFilePath != null) {
+        try {
+          final newFilePath = await FileManager().putZpusobilost(pickedFile);
+          if (!mounted) {
+            return;
+          }
           widget.onFileUploaded(newFilePath);
+        } on FileOperationException catch (_) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Nepodařilo se nahrát soubor. Zkuste to znovu.')),
+          );
+          return;
         }
       }
     } catch (_) {

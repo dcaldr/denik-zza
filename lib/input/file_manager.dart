@@ -407,10 +407,12 @@ class FileManager {
   }
 
   /// Simple backup of the database to event directory
+  /// Throws FileOperationException on any failure (missing directory, file, or copy failure).
   Future<void> backupDB() async {
     if (eventDir == null) {
       if (_mode != FileManagerMode.inMemory) {
         logger.e('Event directory is null');
+        throw FileOperationException('Event directory is null; cannot backup database');
       }
       return;
     }
@@ -419,19 +421,19 @@ class FileManager {
       final dbDir = await getDbFilePath();
       if (dbDir == null) {
         logger.e('Error getting db path');
-        return;
+        throw FileOperationException('Failed to get database file path');
       }
       final dbFile = File('$dbDir/db.sqlite');
       if (!await dbFile.exists()) {
         logger.e('Database file not found for backup: ${dbFile.path}');
-        return;
+        throw FileOperationException('Database file not found: ${dbFile.path}');
       }
       final backupDir = Directory(path.join(eventDir!.path, 'backup'));
       await backupDir.create(recursive: true);
       final newName = await nameCollisionSolver(backupDir, 'db_backup.sqlite');
       if (newName == null) {
         logger.e('Error resolving name collision for backup file');
-        return;
+        throw FileOperationException('Could not resolve unique name for backup file');
       }
       final backupFile = File(path.join(backupDir.path, newName));
       try {
@@ -441,8 +443,11 @@ class FileManager {
         logger.e('Error creating backup (atomic): $e');
         throw FileOperationException('Backup failed', e);
       }
+    } on FileOperationException {
+      rethrow;
     } catch (e) {
       logger.e('Error creating backup: $e');
+      throw FileOperationException('Backup operation failed', e);
     }
   }
 
@@ -466,12 +471,15 @@ class FileManager {
     return Directory(path.join(eventDir!.path, 'zpusobilosti'));
   }
 
-  Future<String?> putZpusobilost(File pickedFile) async {
+  /// Uploads a zpusobilost (qualification document) file to the event directory.
+  /// Returns the filename on success. Throws FileOperationException on any failure.
+  Future<String> putZpusobilost(File pickedFile) async {
     if (eventDir == null) {
       if (_mode != FileManagerMode.inMemory) {
         logger.e('Event directory is null');
+        throw FileOperationException('Event directory is null; cannot upload zpusobilost file');
       }
-      return null;
+      throw FileOperationException('Event directory not set');
     }
 
     try {
@@ -482,7 +490,7 @@ class FileManager {
           zpusobilostDir, pickedFile.uri.pathSegments.last);
       if (newName == null) {
         logger.e('Error resolving name collision for uploaded file');
-        return null;
+        throw FileOperationException('Could not resolve unique name for uploaded file');
       }
 
       final destinationFile = File(path.join(zpusobilostDir.path, newName));
@@ -494,6 +502,8 @@ class FileManager {
         logger.e('Error uploading file atomically: $e');
         throw FileOperationException('Failed to upload file', e);
       }
+    } on FileOperationException {
+      rethrow;
     } catch (e) {
       logger.e('Error uploading file: $e');
       throw FileOperationException('Failed to upload file', e);

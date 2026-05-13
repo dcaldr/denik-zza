@@ -166,7 +166,7 @@ void main() {
         fm.eventDir = eventsRoot;
 
         expect(
-          () => fm.putZpusobilost(File('${eventsRoot.path}/missing.csv')),
+          () async => await fm.putZpusobilost(File('${eventsRoot.path}/missing.csv')),
           throwsA(isA<FileOperationException>()),
         );
       } finally {
