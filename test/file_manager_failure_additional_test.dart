@@ -22,4 +22,15 @@ void main() {
       await temp.delete(recursive: true);
     }
   });
+
+  test('getZpusobilostFolder throws typed exception when eventDir is null',
+      () async {
+    final fm = FileManager(isTesting: false);
+    fm.eventDir = null;
+
+    expect(
+      () async => await fm.getZpusobilostFolder(),
+      throwsA(isA<FileOperationException>()),
+    );
+  });
 }

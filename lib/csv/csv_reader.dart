@@ -82,7 +82,7 @@ CsvReader(this._path){
 
 /// removes first line from csv table (column names)
   List<List<String>>? _removeFirstLine(List<List<String>>? csvTable) {
-    if(csvTable == null){
+    if (csvTable == null || csvTable.isEmpty) {
       return null;
     }
     csvTable.removeAt(0);

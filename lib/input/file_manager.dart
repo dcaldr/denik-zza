@@ -467,7 +467,7 @@ class FileManager {
     if (eventDir == null) {
       logger.e('Event directory is null', stackTrace: StackTrace.current);
       logger.i('FileManager mode: ${_mode.value}');
-      return throw Exception('Event directory is null');
+      throw FileOperationException('Event directory is null; cannot resolve zpusobilost folder');
     }
     return Directory(path.join(eventDir!.path, 'zpusobilosti'));
   }

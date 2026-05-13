@@ -507,7 +507,12 @@ class PrintCenterController extends SafeChangeNotifier {
       try {
         final records = await _service.getRecords(id);
         result[id] = records.isNotEmpty;
-      } catch (_) {
+      } catch (e, st) {
+        AppLogger.l.w(
+          'checkParticipantsWithRecords failed for participantId=$id; defaulting to false',
+          error: e,
+          stackTrace: st,
+        );
         result[id] = false; // Error occurred, consider as no records
       }
     }
@@ -519,7 +524,12 @@ class PrintCenterController extends SafeChangeNotifier {
       int participantId) async {
     try {
       return await _service.getLeky(participantId);
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.l.w(
+        'fetchMedicationsForParticipant failed for participantId=$participantId; returning empty list',
+        error: e,
+        stackTrace: st,
+      );
       return []; // Return empty list on error
     }
   }
@@ -529,7 +539,12 @@ class PrintCenterController extends SafeChangeNotifier {
       int participantId) async {
     try {
       return await _service.getOmezeni(participantId);
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.l.w(
+        'fetchRestrictionsForParticipant failed for participantId=$participantId; returning empty list',
+        error: e,
+        stackTrace: st,
+      );
       return []; // Return empty list on error
     }
   }
@@ -549,7 +564,12 @@ class PrintCenterController extends SafeChangeNotifier {
         'medications': results[1],
         'restrictions': results[2],
       };
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.l.e(
+        'fetchParticipantPdfData failed for participantId=$participantId',
+        error: e,
+        stackTrace: st,
+      );
       return {
         'records': <MemoryZaznam>[],
         'medications': <MemoryLek>[],

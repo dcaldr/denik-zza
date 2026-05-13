@@ -19,6 +19,21 @@ void main() {
         await tmp.delete(recursive: true);
       }
     });
+
+    test('readData returns null for empty csv file instead of throwing',
+        () async {
+      final tmp = await Directory.systemTemp.createTemp('csv_empty_');
+      try {
+        final file = File('${tmp.path}/empty.csv');
+        await file.writeAsString('');
+        final reader = CsvReader(file.path);
+
+        final rows = await reader.readData();
+        expect(rows, isNull);
+      } finally {
+        await tmp.delete(recursive: true);
+      }
+    });
   });
 
   group('InputParser isolation and non-reentrancy', () {
