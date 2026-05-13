@@ -430,6 +430,7 @@ class FileManager {
       }
       final backupDir = Directory(path.join(eventDir!.path, 'backup'));
       await backupDir.create(recursive: true);
+      await preflightWrite(backupDir);
       final newName = await nameCollisionSolver(backupDir, 'db_backup.sqlite');
       if (newName == null) {
         logger.e('Error resolving name collision for backup file');
@@ -482,12 +483,33 @@ class FileManager {
       throw FileOperationException('Event directory not set');
     }
 
+    // Validate file size and name to avoid surprising large uploads or bad names.
+    const int maxUploadFileSize = 5 * 1024 * 1024; // 5 MB
+    const int maxFileNameLength = 200;
+    final originalName = pickedFile.uri.pathSegments.last;
+    if (originalName.length > maxFileNameLength) {
+      logger.w('Filename too long: $originalName');
+      throw FileOperationException('Filename too long');
+    }
+    try {
+      final length = await pickedFile.length();
+      if (length > maxUploadFileSize) {
+        logger.w('File too large: ${pickedFile.path} (${length} bytes)');
+        throw FileOperationException('File too large');
+      }
+    } catch (e) {
+      logger.e('Error inspecting picked file: $e');
+      throw FileOperationException('Failed to inspect picked file', e);
+    }
+
     try {
       final zpusobilostDir = Directory(path.join(eventDir!.path, 'zpusobilosti'));
       await zpusobilostDir.create(recursive: true);
+      await preflightWrite(zpusobilostDir, requiredBytes: await pickedFile.length());
 
-      final newName = await nameCollisionSolver(
-          zpusobilostDir, pickedFile.uri.pathSegments.last);
+      // Sanitize name by removing invalid separators but keep extension
+      final sanitizedName = pickedFile.uri.pathSegments.last.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+      final newName = await nameCollisionSolver(zpusobilostDir, sanitizedName);
       if (newName == null) {
         logger.e('Error resolving name collision for uploaded file');
         throw FileOperationException('Could not resolve unique name for uploaded file');
@@ -569,6 +591,34 @@ class FileManager {
         }
       } catch (_) {}
       return false;
+    }
+  }
+
+  /// Preflight checks before attempting a write-heavy operation.
+  ///
+  /// Ensures `dir` is an existing directory and writable. If `requiredBytes`
+  /// is provided, it logs a warning because cross-platform free-space checks
+  /// are not implemented here. Throws `PermissionDeniedException` or
+  /// `FileOperationException` on failures.
+  Future<void> preflightWrite(Directory dir, {int requiredBytes = 0}) async {
+    // Ensure it's an existing directory
+    final type = await FileSystemEntity.type(dir.path);
+    if (type != FileSystemEntityType.directory) {
+      logger.e('Preflight target is not a directory: ${dir.path}');
+      throw FileOperationException('Preflight target is not a directory: ${dir.path}');
+    }
+
+    // Quick writable/readable probe
+    final ok = await verifyWritableReadable(dir);
+    if (!ok) {
+      logger.e('Preflight IO probe failed for ${dir.path}');
+      throw PermissionDeniedException('No write/read access to: ${dir.path}');
+    }
+
+    if (requiredBytes > 0) {
+      // Cross-platform disk free-space check not implemented; log as note
+      logger.i('PreflightNote: requested requiredBytes=$requiredBytes, ' 
+          'but no reliable free-space check available on this platform');
     }
   }
 
