@@ -10,6 +10,10 @@ import 'package:denik_zza/utils/app_logger.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
+  // Policy: keep negative permission assertion Android-only for stability.
+  // Other platforms have different protected paths and privilege models, which
+  // makes a single cross-platform "permission denied" assertion flaky.
+
   group('FileManager storage permission integration', () {
     setUp(() async {
       await ModeCoordinator.setIntegrationTestMode(
@@ -34,13 +38,13 @@ void main() {
       }
     });
 
-    testWidgets('preflightWrite reports permission failure on Android restricted path',
+    testWidgets('Android-only: preflightWrite reports permission failure on restricted path',
         (tester) async {
-      // This test is intentionally Android-specific: /proc exists on Android/Linux
-      // and is OS-managed read-only content. Writing probe files there should fail.
+      // /proc is OS-managed and read-only for regular app writes on Android.
+      // Writing a probe file there should fail with a permission-style exception.
       if (!Platform.isAndroid) {
         AppLogger.l.i(
-          '[file_manager_android_permission] Skipping: platform is not Android.',
+          '[file_manager_android_permission] Skipping Android-only negative permission assertion.',
         );
         return;
       }
