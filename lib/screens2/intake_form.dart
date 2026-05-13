@@ -11,7 +11,7 @@ import '../input/file_manager.dart';
 
 /// IntakeForm widget for managing participant check-in process
 /// Handles person selection, form editing, restrictions, and file uploads
-@Deprecated('Use ImprovedIntakeForm instead')
+@Deprecated('Use NewIntakeFormImproved instead')
 class OldIntakeForm extends StatefulWidget {
   const OldIntakeForm({super.key});
 
