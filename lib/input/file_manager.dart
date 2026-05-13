@@ -494,7 +494,7 @@ class FileManager {
     try {
       final length = await pickedFile.length();
       if (length > maxUploadFileSize) {
-        logger.w('File too large: ${pickedFile.path} (${length} bytes)');
+        logger.w('File too large: ${pickedFile.path} ($length bytes)');
         throw FileOperationException('File too large');
       }
     } catch (e) {

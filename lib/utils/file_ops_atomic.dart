@@ -6,8 +6,33 @@ import 'package:path/path.dart' as p;
 import 'package:denik_zza/utils/file_exceptions.dart';
 import 'package:denik_zza/utils/temp_file_helper.dart';
 
+typedef AtomicWriteHook = Future<File> Function(File target, Uint8List bytes);
+typedef AtomicCopyHook = Future<File> Function(File source, File destination);
+
+AtomicWriteHook? _testWriteHook;
+AtomicCopyHook? _testCopyHook;
+
+/// Test-only seam for deterministic IO failure simulation.
+void setFileOpsAtomicTestHooks({
+  AtomicWriteHook? writeHook,
+  AtomicCopyHook? copyHook,
+}) {
+  _testWriteHook = writeHook;
+  _testCopyHook = copyHook;
+}
+
+/// Clears test hooks to restore production behavior.
+void resetFileOpsAtomicTestHooks() {
+  _testWriteHook = null;
+  _testCopyHook = null;
+}
+
 /// Write bytes atomically by writing to a temporary sibling file and renaming.
 Future<File> writeBytesAtomic(File target, Uint8List bytes) async {
+  if (_testWriteHook != null) {
+    return _testWriteHook!(target, bytes);
+  }
+
   final dir = target.parent;
   if (!await dir.exists()) {
     await dir.create(recursive: true);
@@ -64,6 +89,10 @@ Future<File> writeBytesAtomic(File target, Uint8List bytes) async {
 
 /// Copy source to destination using an atomic move into place where possible.
 Future<File> copyAtomic(File source, File destination) async {
+  if (_testCopyHook != null) {
+    return _testCopyHook!(source, destination);
+  }
+
   if (!await source.exists()) throw FileOperationException('Source file not found: ${source.path}');
   final destDir = destination.parent;
   if (!await destDir.exists()) await destDir.create(recursive: true);
@@ -116,12 +145,12 @@ Future<File> copyAtomic(File source, File destination) async {
 bool _isPermissionError(FileSystemException e) {
   final osErr = e.osError;
   if (osErr != null) {
-    final msg = (osErr.message ?? '').toLowerCase();
+    final msg = osErr.message.toLowerCase();
     if (msg.contains('permission') || msg.contains('access denied') || osErr.errorCode == 13) {
       return true;
     }
   }
-  final message = (e.message ?? '').toLowerCase();
+  final message = e.message.toLowerCase();
   if (message.contains('permission') || message.contains('access denied')) return true;
   return false;
 }
