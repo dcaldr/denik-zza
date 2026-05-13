@@ -16,6 +16,7 @@ import 'package:denik_zza/design_system/tokens/app_breakpoints.dart';
 import 'package:denik_zza/design_system/tokens/app_radii.dart';
 import 'package:denik_zza/screens2/widgets/memory_restriction_widget.dart';
 import 'package:denik_zza/screens2/widgets/zza_scrollable.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 
 class ParticipantRegistrationForm extends StatefulWidget {
   final bool enableStickyFooter;
@@ -156,7 +157,12 @@ class ParticipantRegistrationFormState
           return;
         }
         setState(() {}); // Refresh UI after loading restrictions
-      } catch (_) {
+      } catch (e, st) {
+        AppLogger.l.w(
+          'Failed to load restrictions for participantId=${widget.osoba!.id}',
+          error: e,
+          stackTrace: st,
+        );
         if (mounted) {
           _showSnackBar('Nepodařilo se načíst omezení.');
         }
@@ -263,7 +269,12 @@ class ParticipantRegistrationFormState
           _showSnackBar('Chyba při ukládání účastníka');
         }
       }
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.l.e(
+        'ParticipantRegistrationForm submit failed',
+        error: e,
+        stackTrace: st,
+      );
       if (mounted) {
         _showSnackBar('Nepodařilo se uložit účastníka. Zkuste to znovu.');
       }

@@ -9,6 +9,7 @@ import 'package:denik_zza/screens2/widgets/person_autocomplete.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:denik_zza/screens2/event_detail.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 
 /// Screen displaying list of participants for the current event with search functionality
 ///
@@ -44,7 +45,9 @@ class _ParticipantListScreenState extends State<ParticipantListScreen> {
       setState(() {
         _currentAction = action;
       });
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.l.w('Loading current action failed in participant list',
+          error: e, stackTrace: st);
       if (mounted) {
         setState(() {
           _currentAction = null;
@@ -61,7 +64,9 @@ class _ParticipantListScreenState extends State<ParticipantListScreen> {
         _allParticipants = participants;
         _displayedParticipants = participants;
       });
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.l.w('Loading participants failed in participant list',
+          error: e, stackTrace: st);
       if (mounted) {
         setState(() {
           _allParticipants = [];

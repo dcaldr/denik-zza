@@ -6,6 +6,7 @@ import 'package:denik_zza/screens2/widgets/intake_main_content.dart';
 import 'package:denik_zza/screens2/widgets/intake_person_row.dart';
 import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 import '../database/database_wrapper.dart';
 import '../input/file_manager.dart';
 
@@ -80,7 +81,8 @@ class _OldIntakeFormState extends State<OldIntakeForm> {
         return;
       }
       setState(() => zpusobilostFolder = folder);
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.l.w('OldIntakeForm failed to load zpusobilost folder', error: e, stackTrace: st);
       if (mounted) {
         setState(() => zpusobilostFolder = null);
       }
@@ -95,7 +97,8 @@ class _OldIntakeFormState extends State<OldIntakeForm> {
         return;
       }
       setState(() => _availablePersons = persons);
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.l.w('OldIntakeForm failed to load available persons', error: e, stackTrace: st);
       if (mounted) {
         setState(() => _availablePersons = []);
       }

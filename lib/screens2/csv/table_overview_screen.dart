@@ -233,9 +233,6 @@ class _TableOverviewScaffoldState extends State<_TableOverviewScaffold> {
   }
 
   bool _areColumnWidthsEqual(List<double> a, List<double> b) {
-    if (identical(a, b)) {
-      return true;
-    }
     if (a.length != b.length) {
       return false;
     }

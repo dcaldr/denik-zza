@@ -5,6 +5,7 @@ import '../../input/file_manager.dart';
 import 'file_viewer_screen_widget.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../utils/file_exceptions.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 
 class FileViewerLogic extends StatefulWidget {
   final Function(String) onFileUploaded;
@@ -36,7 +37,8 @@ class _FileViewerLogicState extends State<FileViewerLogic> {
             return;
           }
           widget.onFileUploaded(newFilePath);
-        } on FileOperationException catch (_) {
+        } on FileOperationException catch (e, st) {
+          AppLogger.l.w('Uploading selected file failed', error: e, stackTrace: st);
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Nepodařilo se nahrát soubor. Zkuste to znovu.')),
@@ -44,7 +46,8 @@ class _FileViewerLogicState extends State<FileViewerLogic> {
           return;
         }
       }
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.l.w('File picker flow failed', error: e, stackTrace: st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Nepodařilo se nahrát soubor. Zkuste to znovu.')),

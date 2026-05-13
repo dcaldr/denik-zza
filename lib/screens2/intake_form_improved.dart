@@ -8,6 +8,7 @@ import 'package:denik_zza/database/in_memory_structures_tmp/memory_osoba.dart';
 import 'package:denik_zza/screens2/participant_registration_form.dart';
 import 'package:denik_zza/screens2/controllers/intake_controller.dart';
 import 'package:denik_zza/database/database_wrapper.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 
 /// Improved IntakeForm widget using IntakeController for business logic
 /// This version separates UI concerns from business logic
@@ -80,7 +81,8 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
       setState(() {
         _isLoading = false;
       });
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.l.e('Intake init failed', error: e, stackTrace: st);
       if (!mounted) return;
       setState(() {
         _isLoading = false;
@@ -124,7 +126,8 @@ class _NewIntakeFormImprovedState extends State<NewIntakeFormImproved> {
   void _onPersonSelected(MemoryOsoba person) async {
     try {
       await _controller.selectPerson(person);
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.l.w('Selecting participant in intake failed', error: e, stackTrace: st);
       if (mounted) {
         CenterToast.show(
           context,
