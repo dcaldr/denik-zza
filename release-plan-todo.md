@@ -192,11 +192,44 @@ bash scripts/check-lib-dev-safety.sh
   - [x] Add clear error logs
   - [x] see proper tests for db 
 
+#### Step 5 Hardening Plan
+**AUDIT RESULTS:** CSV row categories and async UI are solid. **CRITICAL BUG FOUND:** `backupDB()` outer catch swallows exceptions (line 450). Database mapping already safe. Focus: fix FileManager exception contract, add missing CSV boundary tests, update callsites.
+
+- [x] **CSV row-category contract (VERIFIED SOLID):**
+  - Enum and logic already preserve `ok`, `info`, `warn`, `rejected` correctly.
+  - `selectAllValid()` and `validRowCount` already treat warn/info as passing.
+  - `finalizeImport()` respects user decisions; no auto-save of rejected rows.
+  - No code changes needed; tests will lock contract down.
+
+- [ ] **FileManager failure contract (CRITICAL BUG TO FIX):**
+  - Fix `backupDB()` line 450: outer catch swallows `FileOperationException` from `copyAtomic()`.
+  - Convert early-exit null returns to throws: missing `eventDir`, missing `dbDir`, missing `dbFile`, `nameCollisionSolver()` failure.
+  - Convert `putZpusobilost()` early-exit null returns to throw (API-breaking change; update test in file_manager_test.dart line 169).
+  - Keep `inMemory` mode as the only no-op/synthetic path.
+  - **API Impact**: Callers currently don't expect exceptions; will require updating any backupDB() callsites.
+
+- [ ] **CSV boundary-preservation tests (MISSING):**
+  - Add test for one `ok`, one `info`, one `warn`, one `rejected` CSV row to lock category contract.
+  - Add test proving `selectAllValid()` includes `ok`/`info`/`warn` and excludes `rejected`.
+  - Add test proving parser-to-review flow preserves warning status (doesn't hard-reject).
+
+- [x] **Async UI edge guard (VERIFIED SOLID):**
+  - No violations found outside of CSV table screen (already fixed).
+  - Future requirement: all new async screen handlers must use `mounted`/`context.mounted`.
+
+- [ ] **New/improved tests to add:**
+  - Add `backupDB()` failure tests for missing `eventDir` and unavailable source DB (expect `FileOperationException`).
+  - Verify existing `putZpusobilost()` failure test covers missing `eventDir` and copy/rename failure.
+  - Add CSV review regression tests for category boundaries and `selectAllValid()` behavior.
+  - Add regression note: future async handlers must use `mounted`/`context.mounted`.
+
 **Verify:**
 ```bash
 flutter analyze
 flutter test
+flutter test integration_test/tests/protected_flow/jursky_park_true_e2e_test.dart -d windows
 # Should pass with 0 errors
+# flutter analyze should show none issues but focus it only on changed files 
 ```
 
 ---
