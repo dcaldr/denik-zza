@@ -173,6 +173,21 @@ void main() {
         await eventsRoot.delete(recursive: true);
       }
     });
+
+    test('backupDB throws when database file is missing', () async {
+      final eventsRoot = await Directory.systemTemp.createTemp('fm_backup_missing_');
+      try {
+        final fm = FileManager(isTesting: false);
+        fm.eventDir = eventsRoot;
+
+        expect(
+          () async => await fm.backupDB(),
+          throwsA(isA<FileOperationException>()),
+        );
+      } finally {
+        await eventsRoot.delete(recursive: true);
+      }
+    });
   });
 
   group('FileManager event creation integration', () {
