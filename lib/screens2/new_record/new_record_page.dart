@@ -128,9 +128,9 @@ class NewRecordPageState extends State<NewRecordPage> {
       setState(() {
         _availableParticipants = participants;
       });
-    } catch (e) {
-      // Handle error silently or show a message
-      AppLogger.l.e('Error loading participants: $e');
+    } catch (e, st) {
+      // Handle error but log for diagnostics
+      AppLogger.l.e('Error loading participants', error: e, stackTrace: st);
     }
   }
 
@@ -221,9 +221,11 @@ class NewRecordPageState extends State<NewRecordPage> {
         _omezeniList = results[0] as List<MemoryOmezeni>;
         _lekyList = results[1] as List<MemoryLek>;
       });
-    } catch (e) {
+    } catch (e, st) {
       AppLogger.l.w(
-        'Failed to load health data for participant $participantId: $e',
+        'Failed to load health data for participant $participantId',
+        error: e,
+        stackTrace: st,
       );
     }
   }
@@ -438,7 +440,8 @@ class NewRecordPageState extends State<NewRecordPage> {
                 content: Text('Záznam úrazu byl úspěšně uložen do deníku!')),
           );
         }
-      } catch (e) {
+      } catch (e, st) {
+        AppLogger.l.e('Failed to save new record', error: e, stackTrace: st);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

@@ -28,9 +28,10 @@ class IntakeController extends SafeChangeNotifier {
     // (may be null in test environments or when no event is selected)
     try {
       zpusobilostFolder = await FileManager().getZpusobilostFolder();
-    } catch (e) {
+    } catch (e, st) {
       // Event directory not configured - zpusobilost folder unavailable
-      // This is expected in some test scenarios
+      // This is expected in some test scenarios; log for diagnostics
+      _logger.d('Zpusobilost folder unavailable: $e', error: e, stackTrace: st);
       zpusobilostFolder = null;
     }
     
@@ -54,8 +55,8 @@ class IntakeController extends SafeChangeNotifier {
     try {
       _availablePersons = await DatabaseWrapper.getDatabase().getParticipantsByCurrentEvent();
       _logger.i('_fetchAvailablePersons: Loaded ${_availablePersons.length} persons');
-    } catch (e) {
-      _logger.e('_fetchAvailablePersons failed: $e');
+    } catch (e, st) {
+      _logger.e('_fetchAvailablePersons failed', error: e, stackTrace: st);
       _availablePersons = [];
     }
   }
@@ -161,8 +162,9 @@ class IntakeController extends SafeChangeNotifier {
     // Refresh available persons after reset (await to prevent race conditions)
     try {
       await _fetchAvailablePersons();
-    } catch (e) {
+    } catch (e, st) {
       // Fetch failed, but continue - availablePersons will be stale but usable
+      _logger.w('reset: _fetchAvailablePersons failed', error: e, stackTrace: st);
     }
 
     if (isDisposed) {

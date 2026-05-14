@@ -4,6 +4,7 @@ import 'package:denik_zza/design_system/tokens/app_breakpoints.dart';
 import 'package:denik_zza/design_system/tokens/app_spacing.dart';
 import 'package:denik_zza/input/text_tools.dart';
 import 'package:denik_zza/screens2/widgets/zza_scrollable.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 
 class RestrictionsWidget extends StatefulWidget {
   final LogicInterface logic;
@@ -62,7 +63,9 @@ class _RestrictionsWidgetState extends State<RestrictionsWidget> {
         return;
       }
       setState(() {});
-    } catch (_) {
+    } catch (e, st) {
+      // Log unexpected fetch errors for diagnostics but keep UI usable
+      AppLogger.l.w('RestrictionsWidget: fetchData failed', error: e, stackTrace: st);
       if (mounted) {
         setState(() {});
       }
