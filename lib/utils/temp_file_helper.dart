@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
+import 'package:denik_zza/utils/app_logger.dart';
 
 int _tempNameCounter = 0;
 
@@ -26,9 +27,13 @@ Future<void> cleanupOldTemps(Directory dir, {String prefix = '.tmp_', int maxAge
         if (stat.modified.isBefore(cutoff)) {
           try {
             await entity.delete();
-          } catch (_) {}
+          } catch (e, st) {
+            AppLogger.l.w('Failed to delete temp file: ${entity.path}', error: e, stackTrace: st);
+          }
         }
       }
     }
-  } catch (_) {}
+  } catch (e, st) {
+    AppLogger.l.w('Failed during cleanupOldTemps for ${dir.path}', error: e, stackTrace: st);
+  }
 }

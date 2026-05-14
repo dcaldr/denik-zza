@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:path/path.dart' as p;
 import 'package:denik_zza/utils/file_exceptions.dart';
 import 'package:denik_zza/utils/temp_file_helper.dart';
+import 'package:denik_zza/utils/app_logger.dart';
 
 typedef AtomicWriteHook = Future<File> Function(File target, Uint8List bytes);
 typedef AtomicCopyHook = Future<File> Function(File source, File destination);
@@ -57,7 +58,9 @@ Future<File> writeBytesAtomic(File target, Uint8List bytes) async {
           final written = await target.writeAsBytes(bytes, flush: true);
           try {
             if (await tmp.exists()) await tmp.delete();
-          } catch (_) {}
+          } catch (err, st) {
+            AppLogger.l.w('Failed to delete temp file ${tmp.path}', error: err, stackTrace: st);
+          }
           return written;
         } catch (e2) {
           // If this was a permission error, throw a specific exception
@@ -70,7 +73,9 @@ Future<File> writeBytesAtomic(File target, Uint8List bytes) async {
     } catch (e) {
       try {
         if (await tmp.exists()) await tmp.delete();
-      } catch (_) {}
+      } catch (err, st) {
+        AppLogger.l.w('Failed to delete temp file ${tmp.path}', error: err, stackTrace: st);
+      }
       // Non-retryable permission errors should bubble up immediately
       if (e is FileSystemException && _isPermissionError(e)) {
         throw PermissionDeniedException('Permission denied writing atomic bytes to ${target.path}', e);
@@ -115,7 +120,9 @@ Future<File> copyAtomic(File source, File destination) async {
           final copied = await source.copy(destination.path);
           try {
             if (await tmp.exists()) await tmp.delete();
-          } catch (_) {}
+          } catch (err, st) {
+            AppLogger.l.w('Failed to delete temp file ${tmp.path}', error: err, stackTrace: st);
+          }
           return copied;
         } catch (e2) {
           if (e2 is FileSystemException && _isPermissionError(e2)) {
@@ -127,7 +134,9 @@ Future<File> copyAtomic(File source, File destination) async {
     } catch (e) {
       try {
         if (await tmp.exists()) await tmp.delete();
-      } catch (_) {}
+      } catch (err, st) {
+        AppLogger.l.w('Failed to delete temp file ${tmp.path}', error: err, stackTrace: st);
+      }
       if (e is FileSystemException && _isPermissionError(e)) {
         throw PermissionDeniedException('Permission denied during atomic copy to ${destination.path}', e);
       }
