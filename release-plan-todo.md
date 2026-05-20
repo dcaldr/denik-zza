@@ -13,19 +13,19 @@ Ship a safe pre-1.0 release for:
 ## PRE-RELEASE DECISIONS
 
 ### Your Decisions (Confirmed)
-- [ ] **Android Package Name:** `com.github.denik_zza` ✓ CONFIRMED
-- [ ] **Internet Permission:** NOT needed (no backend/cloud) ✓ CONFIRMED
-- [ ] **Release Version:** Pick one:
-  - [ ] `0.99.0+1` (pre-release) <-- picked 
+- [X] **Android Package Name:** `com.github.denik_zza` ✓ CONFIRMED
+- [X] **Internet Permission:** NOT needed (no backend/cloud) ✓ CONFIRMED
+- [X] **Release Version:** Pick one:
+  - [X] `0.99.0+1` (pre-release) <-- picked 
   - [ ] `1.0.0+1` (full release)
-- [ ] **Android Distribution:** Pick one:
+- [X] **Android Distribution:** Pick one:
   - [ ] APK (single file, easier to test)
-  - [ ] AAB (App Bundle, Play Store preferred)  <-- picked
+  - [X] AAB (App Bundle, Play Store preferred)  <-- picked
   - [ ] Both (test with APK, submit AAB)
-- [ ] **Windows Distribution:** Pick one: <-- multiple mainly msix 
-  - [ ] MSIX (Windows Store, auto-updates)
-  - [ ] Installer (.msi)
-  - [ ] ZIP (portable, no install)
+- [X] **Windows Distribution:** Pick one: <-- multiple mainly msix 
+  - [X] MSIX (Windows Store, auto-updates)
+  - [x] Installer (.msi)
+  - [x] ZIP (portable, no install)
   - [ ] Just executable
 
 ### Platform Identifiers (Bundle IDs & App IDs)
@@ -34,10 +34,10 @@ These must match the reverse-domain format and cannot change after store release
 | Platform | Current | Suggested | Your Choice |
 |----------|---------|-----------|-------------|
 | Android | `com.example.denik_zza` | `com.github.denik_zza` | ✓ com.github.denik_zza |
-| iOS | `com.example.denikZza` | `com.github.denik_zza` | _______________ |
-| macOS | `com.example.denikZza` | `com.github.denik_zza` | _______________ |
-| Windows | (no formal ID) | "Deník ZZA" | _______________ |
-| Linux | `com.example.denik_zza` | `com.github.denik_zza` | _______________ |
+| iOS | `com.example.denikZza` | `com.github.denik_zza` | ✓ com.github.denik_zza |
+| macOS | `com.example.denikZza` | `com.github.denik_zza` | ✓ com.github.denik_zza |
+| Windows | (no formal ID) | "Deník ZZA" | ✓ Deník ZZA |
+| Linux | `com.example.denik_zza` | `com.github.denik_zza` | ✓ com.github.denik_zza |
 
 ### Apple Developer Setup (if shipping iOS/macOS)
 - [ ] Have Apple Developer account? YES / NO
@@ -62,8 +62,8 @@ Once set, this applies to ALL platforms and future releases.
 ### Step 1: Set Release Version in One Place
 **File:** `pubspec.yaml`
 
-- [ ] Set `version: X.Y.Z+B` (your release version decision above)
-- [ ] Save and run `flutter pub get`
+- [x] Set `version: X.Y.Z+B` (your release version decision above)
+- [x] Save and run `flutter pub get`
 - [ ] All platforms (Android, iOS, macOS, Windows, Linux) inherit automatically
 
 **Verify:**
@@ -77,7 +77,7 @@ grep "^version:" pubspec.yaml
 ### Step 2: Android Release Setup
 **Files:** `android/app/build.gradle` or `build.gradle.kts`, `android/app/src/main/AndroidManifest.xml`
 
-- [ ] Replace `com.example.denik_zza` with `com.github.denik_zza`
+- [x] Replace `com.example.denik_zza` with `com.github.denik_zza`
 - [ ] Add/update release signing configuration (keystore setup):
   - Create keystore: `keytool -genkey -v -keystore ~/denik_zza.keystore -alias denik_zza -keyalg RSA -keysize 2048 -validity 10000`
   - Store keystore file outside repo (e.g., `~/denik_zza.keystore`)
@@ -238,10 +238,11 @@ flutter test integration_test/tests/protected_flow/jursky_park_true_e2e_test.dar
 **Files:** `windows/runner/Runner.rc`, `pubspec.yaml`
 
 - [ ] Set version format: `X.Y.Z.0` (Windows requires 4 parts, last is 0 for Store compatibility)
-- [ ] Update product metadata in Runner.rc (if not auto-inherited):
-  - PRODUCT_NAME: "Deník ZZA"
-  - COMPANY_NAME: "Your Organization"
-  - VERSION: matches pubspec.yaml
+- [ ] Update product metadata in `windows/runner/Runner.rc` (avoid leaving placeholder values like `com.example` or `com.github`):
+  - `PRODUCT_NAME`: "Deník ZZA"
+  - `CompanyName`: Set to your organization name (or `\0` if personal/independent)
+  - `LegalCopyright`: Set to your app's copyright (e.g. `Copyright (C) 2026. All rights reserved.` or specific entity copyright)
+  - `VERSION`: matches `pubspec.yaml`
 
 **Verify:**
 ```bash
@@ -301,6 +302,7 @@ flutter build windows --release
 **Files:** `macos/Runner/Configs/AppInfo.xcconfig`, `macos/Runner/Release.entitlements`, Xcode project
 
 - [ ] Set bundle ID to `com.github.denik_zza` in AppInfo.xcconfig
+- [ ] Set `PRODUCT_COPYRIGHT` in AppInfo.xcconfig to your organization's copyright line (or generic copyright statement; avoid placeholder values)
 - [ ] Set Development Team ID in Xcode build settings
 - [ ] Update Release.entitlements to include:
   ```xml

@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "denik_zza" "\0"
+            VALUE "CompanyName", "\0"
+            VALUE "FileDescription", "Deník ZZA" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "denik_zza" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2023 com.example. All rights reserved." "\0"
+            VALUE "LegalCopyright", "\0"
             VALUE "OriginalFilename", "denik_zza.exe" "\0"
-            VALUE "ProductName", "denik_zza" "\0"
+            VALUE "ProductName", "Deník ZZA" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

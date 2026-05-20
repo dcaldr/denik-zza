@@ -1,4 +1,4 @@
-package com.example.denik_zza
+package com.github.denik_zza
 
 import io.flutter.embedding.android.FlutterActivity
 
